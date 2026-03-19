@@ -1,8 +1,8 @@
 import { ID, Permission, Query, Role } from 'appwrite'
 import { databases } from './appwrite'
 
-const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID
-const TRIPS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_TRIPS_COLLECTION_ID
+const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID
+const TRIPS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_TRIPS_COLLECTION_ID
 
 export function listTrips(userId) {
   return databases.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
