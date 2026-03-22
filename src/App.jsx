@@ -38,10 +38,13 @@ function App () {
   return (
     <div style={{ fontFamily: 'sans-serif' }}>
       <header style={headerStyles.bar}>
-        <span style={headerStyles.name}>{user.name || user.email}</span>
-        <button onClick={handleLogout} style={headerStyles.button}>
-          Sign Out
-        </button>
+        <span style={headerStyles.wordmark}>⛷️ Ski Tripper</span>
+        <div style={headerStyles.userGroup}>
+          <span style={headerStyles.name}>{user.name || user.email}</span>
+          <button onClick={handleLogout} style={headerStyles.button}>
+            Sign Out
+          </button>
+        </div>
       </header>
       <Trips user={user} />
     </div>
@@ -56,6 +59,16 @@ const headerStyles = {
     padding: '14px 40px',
     borderBottom: '1px solid #eee',
     background: '#fff'
+  },
+  wordmark: {
+    fontSize: '18px',
+    fontWeight: '700',
+    color: '#fd366e'
+  },
+  userGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px'
   },
   name: {
     fontSize: '14px',
