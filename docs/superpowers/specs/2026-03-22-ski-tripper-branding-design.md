@@ -17,7 +17,7 @@ Add "Ski Tripper" branding to the app header and browser tab. The app currently 
 
 ### `index.html`
 
-Update `<title>` from whatever it currently is to `Ski Tripper`. This ensures the browser tab, bookmark, and any shared links show the app name.
+Update `<title>` from `Boys Ski Organiser` to `Ski Tripper`. This ensures the browser tab, bookmark, and any shared links show the app name.
 
 ### `src/App.jsx`
 
