@@ -1,6 +1,6 @@
 import { describe, it, expect, mock, beforeEach } from 'bun:test'
 
-const mockListDocuments = mock(() => Promise.resolve({ documents: [{ $id: '1', name: 'Trip 1' }] }))
+const mockListDocuments = mock(() => Promise.resolve({ documents: [] }))
 const mockCreateDocument = mock(() => Promise.resolve({ $id: 'new-id', name: 'New Trip' }))
 const mockUpdateDocument = mock(() => Promise.resolve({ $id: '1', name: 'Updated Trip' }))
 const mockDeleteDocument = mock(() => Promise.resolve())
@@ -30,6 +30,9 @@ beforeEach(() => {
 
 describe('listTrips', () => {
   it('calls listDocuments and returns documents', async () => {
+    mockListDocuments.mockImplementationOnce(() =>
+      Promise.resolve({ documents: [{ $id: '1', name: 'Trip 1' }] })
+    )
     const result = await listTrips('user-1')
     expect(mockListDocuments).toHaveBeenCalledTimes(1)
     expect(result.documents).toHaveLength(1)
@@ -43,13 +46,47 @@ describe('listTrips', () => {
 })
 
 describe('createTrip', () => {
-  it('calls createDocument and returns the new trip', async () => {
-    const result = await createTrip('user-1', { name: 'New Trip', description: '' })
+  it('checks for code uniqueness before creating', async () => {
+    await createTrip('user-1', { name: 'New Trip', description: '' })
+    // one listDocuments call for the code check, then one createDocument
+    expect(mockListDocuments).toHaveBeenCalledTimes(1)
     expect(mockCreateDocument).toHaveBeenCalledTimes(1)
+  })
+
+  it('includes a 5-character alphanumeric code in the created document', async () => {
+    await createTrip('user-1', { name: 'New Trip' })
+    const [, , , data] = mockCreateDocument.mock.calls[0]
+    expect(data.code).toMatch(/^[A-Z0-9]{5}$/)
+  })
+
+  it('retries if the first code is already taken', async () => {
+    // first code check: taken; second: free
+    mockListDocuments
+      .mockImplementationOnce(() => Promise.resolve({ documents: [{ $id: 'x' }] }))
+      .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
+    await createTrip('user-1', { name: 'New Trip' })
+    expect(mockListDocuments).toHaveBeenCalledTimes(2)
+    expect(mockCreateDocument).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws after 100 failed attempts', async () => {
+    mockListDocuments.mockImplementation(() =>
+      Promise.resolve({ documents: [{ $id: 'x' }] })
+    )
+    await expect(createTrip('user-1', { name: 'New Trip' })).rejects.toThrow(
+      'Could not generate a unique trip code after 100 attempts.'
+    )
+    expect(mockListDocuments).toHaveBeenCalledTimes(100)
+    expect(mockCreateDocument).not.toHaveBeenCalled()
+    mockListDocuments.mockImplementation(() => Promise.resolve({ documents: [] }))
+  })
+
+  it('returns the new trip', async () => {
+    const result = await createTrip('user-1', { name: 'New Trip', description: '' })
     expect(result.$id).toBe('new-id')
   })
 
-  it('propagates errors', async () => {
+  it('propagates createDocument errors', async () => {
     mockCreateDocument.mockImplementationOnce(() => Promise.reject(new Error('Create failed')))
     await expect(createTrip('user-1', { name: 'Trip' })).rejects.toThrow('Create failed')
   })

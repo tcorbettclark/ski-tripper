@@ -15,12 +15,34 @@ export function getTrip (tripId) {
   return databases.getDocument(DATABASE_ID, TRIPS_COLLECTION_ID, tripId)
 }
 
-export function createTrip (userId, data) {
+function generateCode () {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = ''
+  for (let i = 0; i < 5; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return code
+}
+
+async function findUniqueCode () {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const code = generateCode()
+    const existing = await databases.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
+      Query.equal('code', code),
+      Query.limit(1)
+    ])
+    if (existing.documents.length === 0) return code
+  }
+  throw new Error('Could not generate a unique trip code after 100 attempts.')
+}
+
+export async function createTrip (userId, data) {
+  const code = await findUniqueCode()
   return databases.createDocument(
     DATABASE_ID,
     TRIPS_COLLECTION_ID,
     ID.unique(),
-    { userId, ...data },
+    { userId, code, ...data },
     [Permission.read(Role.user(userId)), Permission.write(Role.user(userId))]
   )
 }

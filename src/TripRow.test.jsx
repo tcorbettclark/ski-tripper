@@ -9,7 +9,7 @@ mock.module('./database', () => ({
 
 const { default: TripRow } = await import('./TripRow')
 
-const sampleTrip = { $id: 'trip-1', name: 'Ski Alps', description: 'A great trip' }
+const sampleTrip = { $id: 'trip-1', code: 'ABC12', name: 'Ski Alps', description: 'A great trip' }
 
 const noop = () => {}
 

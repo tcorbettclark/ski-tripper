@@ -9,6 +9,7 @@ export default function TripTable ({ trips, onUpdated, onDeleted }) {
     <table style={styles.table}>
       <thead>
         <tr>
+          <th style={styles.th}>Code</th>
           <th style={styles.th}>Name</th>
           <th style={styles.th}>Description</th>
           <th style={styles.th} />

@@ -7,7 +7,7 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
   if (isEditing) {
     return (
       <tr style={styles.editingTr}>
-        <td style={styles.editingTd} colSpan={3}>
+        <td style={styles.editingTd} colSpan={4}>
           <EditTripForm
             trip={trip}
             onUpdated={(updated) => {
@@ -24,6 +24,7 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
 
   return (
     <tr style={styles.tr}>
+      <td style={styles.codeCell}>{trip.code || '—'}</td>
       <td style={styles.td}>{trip.name}</td>
       <td style={{ ...styles.td, color: '#7a9ab5' }}>{trip.description || '—'}</td>
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
@@ -36,6 +37,15 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
 }
 
 const styles = {
+  codeCell: {
+    padding: '14px 16px',
+    color: '#7a9ab5',
+    verticalAlign: 'top',
+    fontFamily: 'monospace',
+    fontSize: '13px',
+    letterSpacing: '0.08em',
+    whiteSpace: 'nowrap'
+  },
   tr: {
     borderBottom: '1px solid rgba(255,255,255,0.05)'
   },
