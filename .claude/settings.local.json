@@ -1,5 +1,18 @@
 {
   "permissions": {
-    "allow": ["Bash(bun add:*)", "Bash(bun run:*)"]
+    "allow": ["Bash(bun add:*)", "Bash(bun run:*)"],
+    "hooks": {
+      "notification": [
+        {
+          "matcher": "idle_prompt",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "osascript -e 'display notification \"Claude needs your input\" with title \"Claude Code\"'"
+            }
+          ]
+        }
+      ]
+    }
   }
 }
