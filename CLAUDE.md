@@ -38,8 +38,10 @@ bun run preview
 
 ```
 src/
+  main.jsx          — Entry point, mounts App into the DOM
   appwrite.js       — Appwrite client initialization
   database.js       — Database helper functions (CRUD operations)
+  test-setup.js     — Test setup: registers happy-dom globals and RTL jest-dom matchers
   App.jsx           — Root component, auth flow, routing between Login/Signup/Trips
   Login.jsx         — Login form
   Signup.jsx        — Signup form
