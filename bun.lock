@@ -8,6 +8,7 @@
         "appwrite": "^23.0.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
+        "threewords": "^0.0.1",
       },
       "devDependencies": {
         "@happy-dom/global-registrator": "^20.8.4",
@@ -547,6 +548,8 @@
     "supports-preserve-symlinks-flag": ["supports-preserve-symlinks-flag@1.0.0", "", {}, "sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w=="],
 
     "text-table": ["text-table@0.2.0", "", {}, "sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw=="],
+
+    "threewords": ["threewords@0.0.1", "", { "bin": { "threewords": "./bin/cli.js", "3words": "./bin/cli.js" } }, "sha512-ueEm2UnbkueDU8cf/VybAxF1C8NBpjxFzzOB3F/q6x5K+u01HtQ90nJNsrcoL81tYlXnwixHU0uuJGm0gE0TMg=="],
 
     "tsconfig-paths": ["tsconfig-paths@3.15.0", "", { "dependencies": { "@types/json5": "^0.0.29", "json5": "^1.0.2", "minimist": "^1.2.6", "strip-bom": "^3.0.0" } }, "sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg=="],
 

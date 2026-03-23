@@ -53,10 +53,10 @@ describe('createTrip', () => {
     expect(mockCreateDocument).toHaveBeenCalledTimes(1)
   })
 
-  it('includes a 5-character alphanumeric code in the created document', async () => {
+  it('includes a three-word code in the created document', async () => {
     await createTrip('user-1', { name: 'New Trip' })
     const [, , , data] = mockCreateDocument.mock.calls[0]
-    expect(data.code).toMatch(/^[A-Z0-9]{5}$/)
+    expect(data.code).toMatch(/^\w+-\w+-\w+$/)
   })
 
   it('retries if the first code is already taken', async () => {

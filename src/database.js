@@ -1,5 +1,16 @@
 import { ID, Permission, Query, Role } from 'appwrite'
 import { databases } from './appwrite'
+import adjectives from 'threewords/data/adjectives.json'
+import nouns from 'threewords/data/nouns.json'
+
+function randomThreeWords () {
+  const ints = new Uint32Array(3)
+  crypto.getRandomValues(ints)
+  const one = adjectives[ints[0] % adjectives.length]
+  const two = adjectives[ints[1] % adjectives.length]
+  const three = nouns[ints[2] % nouns.length]
+  return `${one}-${two}-${three}`
+}
 
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID
 const TRIPS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_TRIPS_COLLECTION_ID
@@ -15,18 +26,9 @@ export function getTrip (tripId) {
   return databases.getDocument(DATABASE_ID, TRIPS_COLLECTION_ID, tripId)
 }
 
-function generateCode () {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  for (let i = 0; i < 5; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)]
-  }
-  return code
-}
-
 async function findUniqueCode () {
   for (let attempt = 0; attempt < 100; attempt++) {
-    const code = generateCode()
+    const code = randomThreeWords()
     const existing = await databases.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
       Query.equal('code', code),
       Query.limit(1)
