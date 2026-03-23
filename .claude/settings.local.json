@@ -3,7 +3,9 @@
     "allow": [
       "Bash(bun add:*)",
       "Bash(bun run:*)",
-      "Skill(git-commit)"
+      "Skill(git-commit)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"style: reformat settings and testing spec for consistency:*)"
     ],
     "hooks": {
       "notification": [

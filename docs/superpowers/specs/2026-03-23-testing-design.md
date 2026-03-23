@@ -8,6 +8,7 @@
 ## Context
 
 The project had zero test coverage. The goals were:
+
 1. Lock in existing behaviour as a regression baseline
 2. Establish infrastructure so new features can be built test-first
 
@@ -15,12 +16,12 @@ The project had zero test coverage. The goals were:
 
 ## Stack Decision
 
-| Layer | Choice | Rationale |
-|---|---|---|
-| Test runner | Bun test (built-in) | Zero config, native to project's runtime |
-| DOM environment | happy-dom via `@happy-dom/global-registrator` | Registered via preload before RTL loads |
-| Component testing | `@testing-library/react` + `@testing-library/user-event` | Industry standard for React 18 |
-| Matchers | `@testing-library/jest-dom` | DOM-specific assertions (toBeInTheDocument, toHaveValue, etc.) |
+| Layer             | Choice                                                   | Rationale                                                      |
+| ----------------- | -------------------------------------------------------- | -------------------------------------------------------------- |
+| Test runner       | Bun test (built-in)                                      | Zero config, native to project's runtime                       |
+| DOM environment   | happy-dom via `@happy-dom/global-registrator`            | Registered via preload before RTL loads                        |
+| Component testing | `@testing-library/react` + `@testing-library/user-event` | Industry standard for React 18                                 |
+| Matchers          | `@testing-library/jest-dom`                              | DOM-specific assertions (toBeInTheDocument, toHaveValue, etc.) |
 
 ---
 
@@ -31,16 +32,16 @@ RTL's `screen` object initialises at module evaluation time and checks for `docu
 The fix: `test-setup.js` uses **dynamic imports** for `@testing-library/react` and `@testing-library/jest-dom/matchers`, so they load only after `GlobalRegistrator.register()` has run.
 
 ```js
-import { GlobalRegistrator } from '@happy-dom/global-registrator'
-import { afterEach, expect } from 'bun:test'
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
+import { afterEach, expect } from "bun:test";
 
-GlobalRegistrator.register() // must come first
+GlobalRegistrator.register(); // must come first
 
-const matchers = await import('@testing-library/jest-dom/matchers')
-const { cleanup } = await import('@testing-library/react')
+const matchers = await import("@testing-library/jest-dom/matchers");
+const { cleanup } = await import("@testing-library/react");
 
-expect.extend(matchers)
-afterEach(cleanup)
+expect.extend(matchers);
+afterEach(cleanup);
 ```
 
 ---
