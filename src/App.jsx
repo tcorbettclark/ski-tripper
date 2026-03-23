@@ -36,9 +36,9 @@ function App () {
   }
 
   return (
-    <div style={{ fontFamily: 'sans-serif' }}>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#0b1929', minHeight: '100vh' }}>
       <header style={headerStyles.bar}>
-        <span style={headerStyles.wordmark}>⛷️ Ski Tripper</span>
+        <span style={headerStyles.wordmark}>⛷ Ski Tripper</span>
         <div style={headerStyles.userGroup}>
           <span style={headerStyles.name}>{user.name || user.email}</span>
           <button onClick={handleLogout} style={headerStyles.button}>
@@ -56,33 +56,43 @@ const headerStyles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '14px 40px',
-    borderBottom: '1px solid #eee',
-    background: '#fff'
+    padding: '0 48px',
+    height: '64px',
+    borderBottom: '1px solid rgba(255,255,255,0.07)',
+    background: 'rgba(11,25,41,0.98)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100
   },
   wordmark: {
-    fontSize: '18px',
-    fontWeight: '700',
-    color: '#fd366e'
+    fontFamily: "'Cormorant Garamond', Georgia, serif",
+    fontSize: '22px',
+    fontWeight: '600',
+    color: '#fd366e',
+    letterSpacing: '0.02em'
   },
   userGroup: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px'
+    gap: '20px'
   },
   name: {
-    fontSize: '14px',
-    color: '#444'
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
+    color: '#7a9ab5',
+    letterSpacing: '0.02em'
   },
   button: {
-    padding: '8px 18px',
-    borderRadius: '8px',
-    border: 'none',
-    background: '#fd366e',
-    color: '#fff',
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer'
+    padding: '7px 18px',
+    borderRadius: '6px',
+    border: '1px solid rgba(253,54,110,0.3)',
+    background: 'transparent',
+    color: '#fd366e',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.02em'
   }
 }
 

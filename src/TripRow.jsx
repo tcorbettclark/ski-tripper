@@ -25,7 +25,7 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
   return (
     <tr style={styles.tr}>
       <td style={styles.td}>{trip.name}</td>
-      <td style={styles.td}>{trip.description || '—'}</td>
+      <td style={{ ...styles.td, color: '#7a9ab5' }}>{trip.description || '—'}</td>
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
         <button onClick={() => setIsEditing(true)} style={styles.editButton}>
           Edit
@@ -37,30 +37,36 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
 
 const styles = {
   tr: {
-    borderBottom: '1px solid #eee'
+    borderBottom: '1px solid rgba(255,255,255,0.05)'
   },
   td: {
-    padding: '10px 14px',
-    color: '#333',
-    verticalAlign: 'top'
+    padding: '14px 16px',
+    color: '#c8dce8',
+    verticalAlign: 'top',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '14px',
+    lineHeight: '1.5'
   },
   editingTr: {
-    borderBottom: '1px solid #fbc8d4',
-    borderTop: '1px solid #fbc8d4',
-    background: '#fff5f7'
+    borderBottom: '1px solid rgba(253,54,110,0.2)',
+    borderTop: '1px solid rgba(253,54,110,0.2)',
+    background: 'rgba(253,54,110,0.04)'
   },
   editingTd: {
-    padding: '16px 20px',
+    padding: '20px 24px',
     verticalAlign: 'top',
-    borderLeft: '3px solid #fd366e'
+    borderLeft: '2px solid #fd366e'
   },
   editButton: {
-    padding: '5px 14px',
-    borderRadius: '6px',
-    border: '1px solid #ddd',
-    background: '#fff',
-    color: '#444',
-    fontSize: '13px',
-    cursor: 'pointer'
+    padding: '5px 16px',
+    borderRadius: '5px',
+    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'transparent',
+    color: '#7a9ab5',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em'
   }
 }

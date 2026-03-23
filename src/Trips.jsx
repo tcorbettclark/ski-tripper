@@ -30,7 +30,7 @@ export default function Trips ({ user }) {
   }
 
   if (loading) return <p style={styles.message}>Loading trips…</p>
-  if (error) { return <p style={{ ...styles.message, color: '#e53e3e' }}>{error}</p> }
+  if (error) { return <p style={{ ...styles.message, color: '#ff6b6b' }}>{error}</p> }
 
   return (
     <div style={styles.container}>
@@ -46,15 +46,16 @@ export default function Trips ({ user }) {
 
 const styles = {
   container: {
-    padding: '40px',
-    fontFamily: 'sans-serif',
-    maxWidth: '900px',
-    margin: '0 auto'
+    padding: '40px 48px',
+    maxWidth: '960px',
+    margin: '0 auto',
+    fontFamily: "'DM Sans', sans-serif"
   },
   message: {
-    color: '#666',
-    fontFamily: 'sans-serif',
-    padding: '40px',
-    textAlign: 'center'
+    color: '#7a9ab5',
+    fontFamily: "'DM Sans', sans-serif",
+    padding: '80px',
+    textAlign: 'center',
+    fontSize: '15px'
   }
 }

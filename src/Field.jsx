@@ -25,17 +25,23 @@ const styles = {
   field: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '5px'
+    gap: '7px'
   },
   label: {
-    fontSize: '13px',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '11px',
     fontWeight: '500',
-    color: '#555'
+    color: '#7a9ab5',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase'
   },
   input: {
-    padding: '8px 12px',
+    padding: '10px 14px',
     borderRadius: '7px',
-    border: '1px solid #ddd',
+    border: '1px solid rgba(255,255,255,0.1)',
+    background: '#0b1929',
+    color: '#e8f2f8',
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
     outline: 'none'
   }

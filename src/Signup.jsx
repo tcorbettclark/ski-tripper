@@ -28,6 +28,7 @@ export default function Signup ({ onSignup, onSwitchToLogin }) {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
+        <p style={styles.eyebrow}>⛷ Ski Tripper</p>
         <h1 style={styles.title}>Create Account</h1>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.field}>
@@ -86,73 +87,98 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#f5f5f5'
+    background: 'linear-gradient(160deg, #091522 0%, #0f2236 35%, #152a42 65%, #0b1929 100%)',
+    padding: '24px'
   },
   card: {
-    background: '#fff',
-    borderRadius: '12px',
-    padding: '40px',
+    background: '#122033',
+    borderRadius: '16px',
+    padding: '48px 44px',
     width: '100%',
-    maxWidth: '400px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.08)'
+    maxWidth: '420px',
+    border: '1px solid rgba(255,255,255,0.08)',
+    boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(253,54,110,0.04)'
+  },
+  eyebrow: {
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '11px',
+    fontWeight: '500',
+    letterSpacing: '0.14em',
+    color: '#fd366e',
+    textTransform: 'uppercase',
+    marginBottom: '14px'
   },
   title: {
-    marginBottom: '28px',
-    fontSize: '24px',
+    fontFamily: "'Cormorant Garamond', Georgia, serif",
+    marginBottom: '32px',
+    fontSize: '38px',
     fontWeight: '600',
-    color: '#111'
+    color: '#e8f2f8',
+    lineHeight: '1.1'
   },
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px'
+    gap: '20px'
   },
   field: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '6px',
+    gap: '8px',
     textAlign: 'left'
   },
   label: {
-    fontSize: '14px',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '11px',
     fontWeight: '500',
-    color: '#444'
+    color: '#7a9ab5',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase'
   },
   input: {
-    padding: '10px 14px',
+    padding: '12px 16px',
     borderRadius: '8px',
-    border: '1px solid #ddd',
+    border: '1px solid rgba(255,255,255,0.1)',
+    background: '#0b1929',
+    color: '#e8f2f8',
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: '15px',
     outline: 'none'
   },
   error: {
-    color: '#e53e3e',
-    fontSize: '14px',
+    color: '#ff6b6b',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
     margin: '0'
   },
   button: {
-    marginTop: '8px',
-    padding: '12px',
+    marginTop: '4px',
+    padding: '14px',
     borderRadius: '8px',
     border: 'none',
     background: '#fd366e',
     color: '#fff',
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: '15px',
     fontWeight: '600',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    letterSpacing: '0.02em'
   },
   switchText: {
-    marginTop: '20px',
-    fontSize: '14px',
-    color: '#666'
+    marginTop: '28px',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
+    color: '#7a9ab5',
+    textAlign: 'center'
   },
   switchLink: {
     background: 'none',
     border: 'none',
     color: '#fd366e',
-    fontWeight: '600',
+    fontFamily: "'DM Sans', sans-serif",
+    fontWeight: '500',
     cursor: 'pointer',
-    fontSize: '14px',
+    fontSize: '13px',
     padding: '0'
   }
 }

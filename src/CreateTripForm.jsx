@@ -78,46 +78,54 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: '20px'
+    marginBottom: '28px',
+    paddingBottom: '20px',
+    borderBottom: '1px solid rgba(255,255,255,0.07)'
   },
   heading: {
-    fontSize: '22px',
+    fontFamily: "'Cormorant Garamond', Georgia, serif",
+    fontSize: '30px',
     fontWeight: '600',
-    color: '#111',
-    margin: 0
+    color: '#e8f2f8',
+    margin: 0,
+    letterSpacing: '-0.01em'
   },
   newButton: {
-    padding: '8px 18px',
-    borderRadius: '8px',
+    padding: '9px 22px',
+    borderRadius: '7px',
     border: 'none',
     background: '#fd366e',
     color: '#fff',
-    fontSize: '14px',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
     fontWeight: '600',
-    cursor: 'pointer'
+    cursor: 'pointer',
+    letterSpacing: '0.02em'
   },
   form: {
-    background: '#f9f9f9',
-    border: '1px solid #eee',
-    borderRadius: '10px',
-    padding: '24px',
-    marginBottom: '28px',
+    background: '#122033',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '12px',
+    padding: '28px',
+    marginBottom: '32px',
     display: 'flex',
     flexDirection: 'column',
-    gap: '16px'
+    gap: '20px'
   },
   error: {
-    color: '#e53e3e',
+    color: '#ff6b6b',
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: '13px',
     margin: 0
   },
   saveButton: {
     alignSelf: 'flex-start',
-    padding: '9px 22px',
-    borderRadius: '8px',
+    padding: '10px 24px',
+    borderRadius: '7px',
     border: 'none',
     background: '#fd366e',
     color: '#fff',
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer'

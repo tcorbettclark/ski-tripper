@@ -2,7 +2,7 @@ import TripRow from './TripRow'
 
 export default function TripTable ({ trips, onUpdated, onDeleted }) {
   if (trips.length === 0) {
-    return <p style={styles.empty}>No trips yet.</p>
+    return <p style={styles.empty}>No trips yet. Add one above.</p>
   }
 
   return (
@@ -30,21 +30,29 @@ export default function TripTable ({ trips, onUpdated, onDeleted }) {
 
 const styles = {
   empty: {
-    color: '#666',
-    padding: '40px',
-    textAlign: 'center'
+    color: '#7a9ab5',
+    fontFamily: "'DM Sans', sans-serif",
+    padding: '60px 40px',
+    textAlign: 'center',
+    fontSize: '15px',
+    fontStyle: 'italic'
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px'
   },
   th: {
     textAlign: 'left',
-    padding: '10px 14px',
-    background: '#f5f5f5',
-    borderBottom: '2px solid #e0e0e0',
-    fontWeight: '600',
-    color: '#444'
+    padding: '12px 16px',
+    background: '#122033',
+    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '11px',
+    fontWeight: '500',
+    color: '#7a9ab5',
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase'
   }
 }

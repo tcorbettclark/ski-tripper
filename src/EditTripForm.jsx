@@ -79,46 +79,51 @@ const styles = {
   form: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
-    padding: '12px 0'
+    gap: '14px',
+    padding: '8px 0'
   },
   error: {
-    color: '#e53e3e',
+    color: '#ff6b6b',
+    fontFamily: "'DM Sans', sans-serif",
     fontSize: '13px',
     margin: 0
   },
   actions: {
     display: 'flex',
-    gap: '8px'
+    gap: '8px',
+    alignItems: 'center'
   },
   saveButton: {
-    padding: '8px 18px',
-    borderRadius: '8px',
+    padding: '8px 20px',
+    borderRadius: '6px',
     border: 'none',
     background: '#fd366e',
     color: '#fff',
-    fontSize: '14px',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer'
   },
   cancelButton: {
-    padding: '8px 18px',
-    borderRadius: '8px',
-    border: '1px solid #ddd',
-    background: '#fff',
-    color: '#444',
-    fontSize: '14px',
-    fontWeight: '600',
+    padding: '8px 20px',
+    borderRadius: '6px',
+    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'transparent',
+    color: '#7a9ab5',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
+    fontWeight: '500',
     cursor: 'pointer'
   },
   deleteButton: {
-    padding: '8px 18px',
-    borderRadius: '8px',
-    border: 'none',
-    background: '#fff',
-    color: '#e53e3e',
-    fontSize: '14px',
-    fontWeight: '600',
+    padding: '8px 20px',
+    borderRadius: '6px',
+    border: '1px solid rgba(255,107,107,0.25)',
+    background: 'transparent',
+    color: '#ff6b6b',
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '13px',
+    fontWeight: '500',
     cursor: 'pointer',
     marginLeft: 'auto'
   }
