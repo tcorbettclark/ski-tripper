@@ -5,20 +5,37 @@
       "Bash(bun run:*)",
       "Skill(git-commit)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"style: reformat settings and testing spec for consistency:*)"
+      "Bash(git commit)"
+    ]
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "idle_prompt",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude needs your input\" with title \"Claude Code\"'"
+          }
+        ]
+      }
     ],
-    "hooks": {
-      "notification": [
-        {
-          "matcher": "idle_prompt",
-          "hooks": [
-            {
-              "type": "command",
-              "command": "osascript -e 'display notification \"Claude needs your input\" with title \"Claude Code\"'"
-            }
-          ]
-        }
-      ]
-    }
+    "Stop": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun format 2>/dev/null || true",
+            "statusMessage": "Formatting..."
+          },
+          {
+            "type": "command",
+            "command": "bun lint 2>/dev/null || true",
+            "statusMessage": "Linting..."
+          }
+        ]
+      }
+    ]
   }
 }
