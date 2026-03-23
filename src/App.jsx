@@ -36,7 +36,7 @@ function App () {
   }
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#0b1929', minHeight: '100vh' }}>
+    <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#07111f', minHeight: '100vh' }}>
       <header style={headerStyles.bar}>
         <span style={headerStyles.wordmark}>⛷ Ski Tripper</span>
         <div style={headerStyles.userGroup}>
@@ -58,8 +58,8 @@ const headerStyles = {
     justifyContent: 'space-between',
     padding: '0 48px',
     height: '64px',
-    borderBottom: '1px solid rgba(255,255,255,0.07)',
-    background: 'rgba(11,25,41,0.98)',
+    borderBottom: '1px solid rgba(100,190,230,0.1)',
+    background: 'rgba(7,17,31,0.98)',
     position: 'sticky',
     top: 0,
     zIndex: 100
@@ -68,7 +68,7 @@ const headerStyles = {
     fontFamily: "'Cormorant Garamond', Georgia, serif",
     fontSize: '22px',
     fontWeight: '600',
-    color: '#fd366e',
+    color: '#3bbde8',
     letterSpacing: '0.02em'
   },
   userGroup: {
@@ -79,15 +79,15 @@ const headerStyles = {
   name: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '13px',
-    color: '#7a9ab5',
+    color: '#6a94ae',
     letterSpacing: '0.02em'
   },
   button: {
     padding: '7px 18px',
     borderRadius: '6px',
-    border: '1px solid rgba(253,54,110,0.3)',
+    border: '1px solid rgba(59,189,232,0.3)',
     background: 'transparent',
-    color: '#fd366e',
+    color: '#3bbde8',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '13px',
     fontWeight: '500',

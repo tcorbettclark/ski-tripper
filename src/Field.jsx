@@ -31,16 +31,16 @@ const styles = {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '11px',
     fontWeight: '500',
-    color: '#7a9ab5',
+    color: '#6a94ae',
     letterSpacing: '0.08em',
     textTransform: 'uppercase'
   },
   input: {
     padding: '10px 14px',
     borderRadius: '7px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    background: '#0b1929',
-    color: '#e8f2f8',
+    border: '1px solid rgba(100,190,230,0.12)',
+    background: '#060f1b',
+    color: '#edf6fc',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
     outline: 'none'

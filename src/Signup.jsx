@@ -87,24 +87,24 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: 'linear-gradient(160deg, #091522 0%, #0f2236 35%, #152a42 65%, #0b1929 100%)',
+    background: 'linear-gradient(160deg, #040c18 0%, #081626 35%, #0c1e32 65%, #07111f 100%)',
     padding: '24px'
   },
   card: {
-    background: '#122033',
+    background: '#0d1e30',
     borderRadius: '16px',
     padding: '48px 44px',
     width: '100%',
     maxWidth: '420px',
-    border: '1px solid rgba(255,255,255,0.08)',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(253,54,110,0.04)'
+    border: '1px solid rgba(100,190,230,0.12)',
+    boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,189,232,0.04)'
   },
   eyebrow: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '11px',
     fontWeight: '500',
     letterSpacing: '0.14em',
-    color: '#fd366e',
+    color: '#3bbde8',
     textTransform: 'uppercase',
     marginBottom: '14px'
   },
@@ -113,7 +113,7 @@ const styles = {
     marginBottom: '32px',
     fontSize: '38px',
     fontWeight: '600',
-    color: '#e8f2f8',
+    color: '#edf6fc',
     lineHeight: '1.1'
   },
   form: {
@@ -131,16 +131,16 @@ const styles = {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '11px',
     fontWeight: '500',
-    color: '#7a9ab5',
+    color: '#6a94ae',
     letterSpacing: '0.08em',
     textTransform: 'uppercase'
   },
   input: {
     padding: '12px 16px',
     borderRadius: '8px',
-    border: '1px solid rgba(255,255,255,0.1)',
-    background: '#0b1929',
-    color: '#e8f2f8',
+    border: '1px solid rgba(100,190,230,0.12)',
+    background: '#060f1b',
+    color: '#edf6fc',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '15px',
     outline: 'none'
@@ -156,8 +156,8 @@ const styles = {
     padding: '14px',
     borderRadius: '8px',
     border: 'none',
-    background: '#fd366e',
-    color: '#fff',
+    background: '#3bbde8',
+    color: '#07111f',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '15px',
     fontWeight: '600',
@@ -168,13 +168,13 @@ const styles = {
     marginTop: '28px',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '13px',
-    color: '#7a9ab5',
+    color: '#6a94ae',
     textAlign: 'center'
   },
   switchLink: {
     background: 'none',
     border: 'none',
-    color: '#fd366e',
+    color: '#3bbde8',
     fontFamily: "'DM Sans', sans-serif",
     fontWeight: '500',
     cursor: 'pointer',

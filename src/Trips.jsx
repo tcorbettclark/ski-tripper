@@ -52,7 +52,7 @@ const styles = {
     fontFamily: "'DM Sans', sans-serif"
   },
   message: {
-    color: '#7a9ab5',
+    color: '#6a94ae',
     fontFamily: "'DM Sans', sans-serif",
     padding: '80px',
     textAlign: 'center',

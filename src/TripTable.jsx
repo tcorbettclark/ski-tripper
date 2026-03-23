@@ -31,7 +31,7 @@ export default function TripTable ({ trips, onUpdated, onDeleted }) {
 
 const styles = {
   empty: {
-    color: '#7a9ab5',
+    color: '#6a94ae',
     fontFamily: "'DM Sans', sans-serif",
     padding: '60px 40px',
     textAlign: 'center',
@@ -47,12 +47,12 @@ const styles = {
   th: {
     textAlign: 'left',
     padding: '12px 16px',
-    background: '#122033',
-    borderBottom: '1px solid rgba(255,255,255,0.08)',
+    background: '#0d1e30',
+    borderBottom: '1px solid rgba(100,190,230,0.1)',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '11px',
     fontWeight: '500',
-    color: '#7a9ab5',
+    color: '#6a94ae',
     letterSpacing: '0.1em',
     textTransform: 'uppercase'
   }

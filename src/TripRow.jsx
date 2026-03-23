@@ -26,7 +26,7 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
     <tr style={styles.tr}>
       <td style={styles.codeCell}>{trip.code || '—'}</td>
       <td style={styles.td}>{trip.name}</td>
-      <td style={{ ...styles.td, color: '#7a9ab5' }}>{trip.description || '—'}</td>
+      <td style={{ ...styles.td, color: '#6a94ae' }}>{trip.description || '—'}</td>
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
         <button onClick={() => setIsEditing(true)} style={styles.editButton}>
           Edit
@@ -39,7 +39,7 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
 const styles = {
   codeCell: {
     padding: '14px 16px',
-    color: '#7a9ab5',
+    color: '#6a94ae',
     verticalAlign: 'top',
     fontFamily: 'monospace',
     fontSize: '13px',
@@ -47,32 +47,32 @@ const styles = {
     whiteSpace: 'nowrap'
   },
   tr: {
-    borderBottom: '1px solid rgba(255,255,255,0.05)'
+    borderBottom: '1px solid rgba(100,190,230,0.07)'
   },
   td: {
     padding: '14px 16px',
-    color: '#c8dce8',
+    color: '#b0cedf',
     verticalAlign: 'top',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
     lineHeight: '1.5'
   },
   editingTr: {
-    borderBottom: '1px solid rgba(253,54,110,0.2)',
-    borderTop: '1px solid rgba(253,54,110,0.2)',
-    background: 'rgba(253,54,110,0.04)'
+    borderBottom: '1px solid rgba(59,189,232,0.2)',
+    borderTop: '1px solid rgba(59,189,232,0.2)',
+    background: 'rgba(59,189,232,0.04)'
   },
   editingTd: {
     padding: '20px 24px',
     verticalAlign: 'top',
-    borderLeft: '2px solid #fd366e'
+    borderLeft: '2px solid #3bbde8'
   },
   editButton: {
     padding: '5px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(255,255,255,0.1)',
+    border: '1px solid rgba(100,190,230,0.15)',
     background: 'transparent',
-    color: '#7a9ab5',
+    color: '#6a94ae',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '12px',
     fontWeight: '500',

@@ -80,13 +80,13 @@ const styles = {
     justifyContent: 'space-between',
     marginBottom: '28px',
     paddingBottom: '20px',
-    borderBottom: '1px solid rgba(255,255,255,0.07)'
+    borderBottom: '1px solid rgba(100,190,230,0.1)'
   },
   heading: {
     fontFamily: "'Cormorant Garamond', Georgia, serif",
     fontSize: '30px',
     fontWeight: '600',
-    color: '#e8f2f8',
+    color: '#edf6fc',
     margin: 0,
     letterSpacing: '-0.01em'
   },
@@ -94,8 +94,8 @@ const styles = {
     padding: '9px 22px',
     borderRadius: '7px',
     border: 'none',
-    background: '#fd366e',
-    color: '#fff',
+    background: '#3bbde8',
+    color: '#07111f',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '13px',
     fontWeight: '600',
@@ -103,8 +103,8 @@ const styles = {
     letterSpacing: '0.02em'
   },
   form: {
-    background: '#122033',
-    border: '1px solid rgba(255,255,255,0.08)',
+    background: '#0d1e30',
+    border: '1px solid rgba(100,190,230,0.1)',
     borderRadius: '12px',
     padding: '28px',
     marginBottom: '32px',
@@ -123,8 +123,8 @@ const styles = {
     padding: '10px 24px',
     borderRadius: '7px',
     border: 'none',
-    background: '#fd366e',
-    color: '#fff',
+    background: '#3bbde8',
+    color: '#07111f',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
     fontWeight: '600',
