@@ -82,6 +82,13 @@ APPWRITE_API_KEY=           # Server-side API key (not prefixed, not exposed to 
 
 Restart the dev server after changing `.env` values.
 
+## Testing
+
+- Tests use Bun's test runner + React Testing Library (`@testing-library/react`)
+- Run tests: `bun test`
+- Test files live alongside source files (`src/*.test.jsx`, `src/database.test.js`)
+- Each component test uses a `render*` helper with default no-op props; override only what the test cares about
+
 ## Do NOT
 
 - Use TypeScript
