@@ -59,6 +59,12 @@ describe('createTrip', () => {
     expect(data.code).toMatch(/^\w+-\w+-\w+$/)
   })
 
+  it('generates a lowercase code', async () => {
+    await createTrip('user-1', { name: 'New Trip' })
+    const [, , , data] = mockCreateDocument.mock.calls[0]
+    expect(data.code).toBe(data.code.toLowerCase())
+  })
+
   it('retries if the first code is already taken', async () => {
     // first code check: taken; second: free
     mockListDocuments
