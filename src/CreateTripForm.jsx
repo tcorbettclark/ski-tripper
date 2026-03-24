@@ -34,7 +34,7 @@ export default function CreateTripForm ({ user, onCreated }) {
   return (
     <div style={styles.wrapper}>
       <div style={styles.toolbar}>
-        <h2 style={styles.heading}>Trips</h2>
+        <h2 style={styles.heading}>Trips I am coordinating</h2>
         <button
           onClick={() => {
             setShowForm((v) => !v)

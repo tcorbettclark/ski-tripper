@@ -16,9 +16,9 @@ const sampleTrips = [
 
 const noop = () => {}
 
-async function renderTable (trips) {
+async function renderTable (trips, props = {}) {
   await act(async () => {
-    render(<TripTable trips={trips} onUpdated={noop} onDeleted={noop} />)
+    render(<TripTable trips={trips} onUpdated={noop} onDeleted={noop} {...props} />)
   })
 }
 
@@ -37,5 +37,15 @@ describe('TripTable', () => {
   it('does not render the empty message when trips exist', async () => {
     await renderTable(sampleTrips)
     expect(screen.queryByText('No trips yet.')).not.toBeInTheDocument()
+  })
+
+  it('shows the Co-ordinator column header by default', async () => {
+    await renderTable(sampleTrips)
+    expect(screen.getByText('Co-ordinator')).toBeInTheDocument()
+  })
+
+  it('hides the Co-ordinator column header when showCoordinator is false', async () => {
+    await renderTable(sampleTrips, { showCoordinator: false })
+    expect(screen.queryByText('Co-ordinator')).not.toBeInTheDocument()
   })
 })

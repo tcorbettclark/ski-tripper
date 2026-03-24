@@ -101,6 +101,12 @@ export async function listParticipatedTrips (userId) {
 }
 
 export async function joinTrip (userId, tripId) {
+  const { documents } = await databases.listDocuments(
+    DATABASE_ID,
+    PARTICIPANTS_COLLECTION_ID,
+    [Query.equal('userId', userId), Query.equal('tripId', tripId), Query.limit(1)]
+  )
+  if (documents.length > 0) throw new Error('You have already joined this trip.')
   return databases.createDocument(
     DATABASE_ID,
     PARTICIPANTS_COLLECTION_ID,

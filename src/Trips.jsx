@@ -57,6 +57,7 @@ export default function Trips ({ user }) {
         userId={user.$id}
         onUpdated={handleUpdated}
         onDeleted={handleDeleted}
+        showCoordinator={false}
       />
 
       <div style={styles.divider} />

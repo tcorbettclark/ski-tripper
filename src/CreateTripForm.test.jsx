@@ -23,6 +23,11 @@ function renderForm (props = {}) {
 describe('CreateTripForm', () => {
   beforeEach(() => mockCreateTrip.mockClear())
 
+  it('shows the "Trips I am coordinating" heading', () => {
+    renderForm()
+    expect(screen.getByText('Trips I am coordinating')).toBeInTheDocument()
+  })
+
   it('hides the form on mount and shows the new trip button', () => {
     renderForm()
     expect(screen.queryAllByRole('textbox')).toHaveLength(0)

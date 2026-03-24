@@ -3,17 +3,18 @@ import EditTripForm from './EditTripForm'
 import { leaveTrip, getUserById } from './database'
 import { colors, fonts, borders } from './theme'
 
-export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft }) {
+export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft, showCoordinator = true }) {
   const [isEditing, setIsEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [leaveError, setLeaveError] = useState('')
   const [coordinator, setCoordinator] = useState(null)
 
   useEffect(() => {
+    if (!showCoordinator) return
     getUserById(trip.userId)
       .then(setCoordinator)
       .catch(() => {})
-  }, [trip.userId])
+  }, [trip.userId, showCoordinator])
 
   async function handleLeave () {
     setLeaveError('')
@@ -30,7 +31,7 @@ export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft })
   if (isEditing) {
     return (
       <tr style={styles.editingTr}>
-        <td style={styles.editingTd} colSpan={5}>
+        <td style={styles.editingTd} colSpan={showCoordinator ? 5 : 4}>
           <EditTripForm
             trip={trip}
             onUpdated={(updated) => {
@@ -50,9 +51,11 @@ export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft })
       <td style={styles.codeCell}>{trip.code || '—'}</td>
       <td style={styles.td}>{trip.name}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>{trip.description || '—'}</td>
-      <td style={{ ...styles.td, color: colors.textSecondary }} title={coordinator?.email || undefined}>
-        {coordinator?.name || coordinator?.email || '—'}
-      </td>
+      {showCoordinator && (
+        <td style={{ ...styles.td, color: colors.textSecondary }} title={coordinator?.email || undefined}>
+          {coordinator?.name || coordinator?.email || '—'}
+        </td>
+      )}
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
         {onLeft
           ? (

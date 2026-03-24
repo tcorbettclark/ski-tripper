@@ -17,7 +17,6 @@ export default function JoinTripForm ({ user, onJoined }) {
       const res = await getTripByCode(code.trim().toLowerCase())
       if (res.documents.length === 0) throw new Error('No trip found with that code.')
       const trip = res.documents[0]
-      if (trip.userId === user.$id) throw new Error("You can't join your own trip.")
       await joinTrip(user.$id, trip.$id)
       onJoined(trip)
       setCode('')
@@ -32,7 +31,7 @@ export default function JoinTripForm ({ user, onJoined }) {
   return (
     <div style={styles.wrapper}>
       <div style={styles.toolbar}>
-        <h2 style={styles.heading}>Trips you're joining</h2>
+        <h2 style={styles.heading}>Trips I am joining</h2>
         <button
           onClick={() => {
             setShowForm((v) => !v)

@@ -39,6 +39,11 @@ describe('TripRow', () => {
     expect(screen.getByText('Alice')).toBeInTheDocument()
   })
 
+  it('hides the coordinator cell when showCoordinator is false', async () => {
+    await renderRow(sampleTrip, { showCoordinator: false })
+    expect(screen.queryByText('Alice')).not.toBeInTheDocument()
+  })
+
   it('shows a dash when description is empty', async () => {
     await renderRow({ ...sampleTrip, description: '' })
     expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(1)

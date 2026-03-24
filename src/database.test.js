@@ -19,7 +19,7 @@ mock.module('./appwrite', () => ({
   }
 }))
 
-const { listTrips, createTrip, updateTrip, deleteTrip } = await import('./database')
+const { listTrips, createTrip, updateTrip, deleteTrip, joinTrip } = await import('./database')
 
 beforeEach(() => {
   mockListDocuments.mockClear()
@@ -102,6 +102,22 @@ describe('updateTrip', () => {
   it('propagates errors', async () => {
     mockUpdateDocument.mockImplementationOnce(() => Promise.reject(new Error('Update failed')))
     await expect(updateTrip('trip-1', {})).rejects.toThrow('Update failed')
+  })
+})
+
+describe('joinTrip', () => {
+  it('creates a participation record when none exists', async () => {
+    mockListDocuments.mockImplementationOnce(() => Promise.resolve({ documents: [] }))
+    await joinTrip('user-1', 'trip-1')
+    expect(mockCreateDocument).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when the user has already joined the trip', async () => {
+    mockListDocuments.mockImplementationOnce(() =>
+      Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+    )
+    await expect(joinTrip('user-1', 'trip-1')).rejects.toThrow('You have already joined this trip.')
+    expect(mockCreateDocument).not.toHaveBeenCalled()
   })
 })
 
