@@ -80,7 +80,15 @@ export function updateTrip (tripId, data) {
   )
 }
 
-export function deleteTrip (tripId) {
+export async function deleteTrip (tripId) {
+  const { documents } = await databases.listDocuments(
+    DATABASE_ID,
+    PARTICIPANTS_COLLECTION_ID,
+    [Query.equal('tripId', tripId), Query.limit(100)]
+  )
+  await Promise.all(
+    documents.map((p) => databases.deleteDocument(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, p.$id))
+  )
   return databases.deleteDocument(DATABASE_ID, TRIPS_COLLECTION_ID, tripId)
 }
 

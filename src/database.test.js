@@ -128,12 +128,22 @@ describe('joinTrip', () => {
 })
 
 describe('deleteTrip', () => {
-  it('calls deleteDocument with the tripId', async () => {
+  it('deletes participants then the trip', async () => {
+    mockListDocuments.mockImplementationOnce(() =>
+      Promise.resolve({ documents: [{ $id: 'p-1' }, { $id: 'p-2' }] })
+    )
+    await deleteTrip('trip-1')
+    expect(mockDeleteDocument).toHaveBeenCalledTimes(3)
+  })
+
+  it('deletes the trip even when there are no participants', async () => {
+    mockListDocuments.mockImplementationOnce(() => Promise.resolve({ documents: [] }))
     await deleteTrip('trip-1')
     expect(mockDeleteDocument).toHaveBeenCalledTimes(1)
   })
 
   it('propagates errors', async () => {
+    mockListDocuments.mockImplementationOnce(() => Promise.resolve({ documents: [] }))
     mockDeleteDocument.mockImplementationOnce(() => Promise.reject(new Error('Delete failed')))
     await expect(deleteTrip('trip-1')).rejects.toThrow('Delete failed')
   })
