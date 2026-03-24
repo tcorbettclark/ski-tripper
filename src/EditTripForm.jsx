@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { updateTrip, deleteTrip } from './database'
 import Field from './Field'
+import { colors, fonts, borders } from './theme'
 
 export default function EditTripForm ({ trip, onUpdated, onDeleted, onCancel }) {
   const [form, setForm] = useState({
@@ -83,8 +84,8 @@ const styles = {
     padding: '8px 0'
   },
   error: {
-    color: '#ff6b6b',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.error,
+    fontFamily: fonts.body,
     fontSize: '13px',
     margin: 0
   },
@@ -97,9 +98,9 @@ const styles = {
     padding: '8px 20px',
     borderRadius: '6px',
     border: 'none',
-    background: '#3bbde8',
-    color: '#07111f',
-    fontFamily: "'DM Sans', sans-serif",
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer'
@@ -107,10 +108,10 @@ const styles = {
   cancelButton: {
     padding: '8px 20px',
     borderRadius: '6px',
-    border: '1px solid rgba(100,190,230,0.15)',
+    border: borders.muted,
     background: 'transparent',
-    color: '#6a94ae',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
     fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer'
@@ -120,8 +121,8 @@ const styles = {
     borderRadius: '6px',
     border: '1px solid rgba(255,107,107,0.25)',
     background: 'transparent',
-    color: '#ff6b6b',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.error,
+    fontFamily: fonts.body,
     fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer',

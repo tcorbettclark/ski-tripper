@@ -1,4 +1,5 @@
 import TripRow from './TripRow'
+import { colors, fonts, borders } from './theme'
 
 export default function TripTable ({ trips, onUpdated, onDeleted }) {
   if (trips.length === 0) {
@@ -31,8 +32,8 @@ export default function TripTable ({ trips, onUpdated, onDeleted }) {
 
 const styles = {
   empty: {
-    color: '#6a94ae',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
     padding: '60px 40px',
     textAlign: 'center',
     fontSize: '15px',
@@ -41,18 +42,18 @@ const styles = {
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: '14px'
   },
   th: {
     textAlign: 'left',
     padding: '12px 16px',
-    background: '#0d1e30',
-    borderBottom: '1px solid rgba(100,190,230,0.1)',
-    fontFamily: "'DM Sans', sans-serif",
+    background: colors.bgCard,
+    borderBottom: borders.subtle,
+    fontFamily: fonts.body,
     fontSize: '11px',
     fontWeight: '500',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     letterSpacing: '0.1em',
     textTransform: 'uppercase'
   }

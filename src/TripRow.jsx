@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import EditTripForm from './EditTripForm'
+import { colors, fonts, borders } from './theme'
 
 export default function TripRow ({ trip, onUpdated, onDeleted }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -26,7 +27,7 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
     <tr style={styles.tr}>
       <td style={styles.codeCell}>{trip.code || '—'}</td>
       <td style={styles.td}>{trip.name}</td>
-      <td style={{ ...styles.td, color: '#6a94ae' }}>{trip.description || '—'}</td>
+      <td style={{ ...styles.td, color: colors.textSecondary }}>{trip.description || '—'}</td>
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
         <button onClick={() => setIsEditing(true)} style={styles.editButton}>
           Edit
@@ -39,9 +40,9 @@ export default function TripRow ({ trip, onUpdated, onDeleted }) {
 const styles = {
   codeCell: {
     padding: '14px 16px',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     verticalAlign: 'top',
-    fontFamily: 'monospace',
+    fontFamily: fonts.mono,
     fontSize: '13px',
     letterSpacing: '0.08em',
     whiteSpace: 'nowrap'
@@ -51,9 +52,9 @@ const styles = {
   },
   td: {
     padding: '14px 16px',
-    color: '#b0cedf',
+    color: colors.textData,
     verticalAlign: 'top',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: '14px',
     lineHeight: '1.5'
   },
@@ -65,15 +66,15 @@ const styles = {
   editingTd: {
     padding: '20px 24px',
     verticalAlign: 'top',
-    borderLeft: '2px solid #3bbde8'
+    borderLeft: `2px solid ${colors.accent}`
   },
   editButton: {
     padding: '5px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(100,190,230,0.15)',
+    border: borders.muted,
     background: 'transparent',
-    color: '#6a94ae',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
     fontSize: '12px',
     fontWeight: '500',
     cursor: 'pointer',

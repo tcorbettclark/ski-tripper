@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { listTrips } from './database'
 import CreateTripForm from './CreateTripForm'
 import TripTable from './TripTable'
+import { colors, fonts } from './theme'
 
 export default function Trips ({ user }) {
   const [trips, setTrips] = useState([])
@@ -30,7 +31,7 @@ export default function Trips ({ user }) {
   }
 
   if (loading) return <p style={styles.message}>Loading trips…</p>
-  if (error) { return <p style={{ ...styles.message, color: '#ff6b6b' }}>{error}</p> }
+  if (error) { return <p style={{ ...styles.message, color: colors.error }}>{error}</p> }
 
   return (
     <div style={styles.container}>
@@ -49,11 +50,11 @@ const styles = {
     padding: '40px 48px',
     maxWidth: '960px',
     margin: '0 auto',
-    fontFamily: "'DM Sans', sans-serif"
+    fontFamily: fonts.body
   },
   message: {
-    color: '#6a94ae',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
     padding: '80px',
     textAlign: 'center',
     fontSize: '15px'

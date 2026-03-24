@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { createTrip } from './database'
 import Field from './Field'
+import { colors, fonts, borders } from './theme'
 
 const EMPTY_FORM = { name: '', description: '' }
 
@@ -80,13 +81,13 @@ const styles = {
     justifyContent: 'space-between',
     marginBottom: '28px',
     paddingBottom: '20px',
-    borderBottom: '1px solid rgba(100,190,230,0.1)'
+    borderBottom: borders.subtle
   },
   heading: {
-    fontFamily: "'Cormorant Garamond', Georgia, serif",
+    fontFamily: fonts.display,
     fontSize: '30px',
     fontWeight: '600',
-    color: '#edf6fc',
+    color: colors.textPrimary,
     margin: 0,
     letterSpacing: '-0.01em'
   },
@@ -94,17 +95,17 @@ const styles = {
     padding: '9px 22px',
     borderRadius: '7px',
     border: 'none',
-    background: '#3bbde8',
-    color: '#07111f',
-    fontFamily: "'DM Sans', sans-serif",
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer',
     letterSpacing: '0.02em'
   },
   form: {
-    background: '#0d1e30',
-    border: '1px solid rgba(100,190,230,0.1)',
+    background: colors.bgCard,
+    border: borders.subtle,
     borderRadius: '12px',
     padding: '28px',
     marginBottom: '32px',
@@ -113,8 +114,8 @@ const styles = {
     gap: '20px'
   },
   error: {
-    color: '#ff6b6b',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.error,
+    fontFamily: fonts.body,
     fontSize: '13px',
     margin: 0
   },
@@ -123,9 +124,9 @@ const styles = {
     padding: '10px 24px',
     borderRadius: '7px',
     border: 'none',
-    background: '#3bbde8',
-    color: '#07111f',
-    fontFamily: "'DM Sans', sans-serif",
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer'

@@ -3,6 +3,7 @@ import { account } from './appwrite'
 import Login from './Login'
 import Signup from './Signup'
 import Trips from './Trips'
+import { colors, fonts, borders } from './theme'
 
 function App () {
   const [user, setUser] = useState(null)
@@ -36,7 +37,7 @@ function App () {
   }
 
   return (
-    <div style={{ fontFamily: "'DM Sans', sans-serif", background: '#07111f', minHeight: '100vh' }}>
+    <div style={{ fontFamily: fonts.body, background: colors.bgPrimary, minHeight: '100vh' }}>
       <header style={headerStyles.bar}>
         <span style={headerStyles.wordmark}>⛷ Ski Tripper</span>
         <div style={headerStyles.userGroup}>
@@ -58,17 +59,17 @@ const headerStyles = {
     justifyContent: 'space-between',
     padding: '0 48px',
     height: '64px',
-    borderBottom: '1px solid rgba(100,190,230,0.1)',
+    borderBottom: borders.subtle,
     background: 'rgba(7,17,31,0.98)',
     position: 'sticky',
     top: 0,
     zIndex: 100
   },
   wordmark: {
-    fontFamily: "'Cormorant Garamond', Georgia, serif",
+    fontFamily: fonts.display,
     fontSize: '22px',
     fontWeight: '600',
-    color: '#3bbde8',
+    color: colors.accent,
     letterSpacing: '0.02em'
   },
   userGroup: {
@@ -77,18 +78,18 @@ const headerStyles = {
     gap: '20px'
   },
   name: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: '13px',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     letterSpacing: '0.02em'
   },
   button: {
     padding: '7px 18px',
     borderRadius: '6px',
-    border: '1px solid rgba(59,189,232,0.3)',
+    border: borders.accent,
     background: 'transparent',
-    color: '#3bbde8',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.accent,
+    fontFamily: fonts.body,
     fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer',

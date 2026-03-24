@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ID } from 'appwrite'
 import { account } from './appwrite'
+import { colors, fonts, borders } from './theme'
 
 export default function Signup ({ onSignup, onSwitchToLogin }) {
   const [name, setName] = useState('')
@@ -91,29 +92,29 @@ const styles = {
     padding: '24px'
   },
   card: {
-    background: '#0d1e30',
+    background: colors.bgCard,
     borderRadius: '16px',
     padding: '48px 44px',
     width: '100%',
     maxWidth: '420px',
-    border: '1px solid rgba(100,190,230,0.12)',
+    border: borders.card,
     boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,189,232,0.04)'
   },
   eyebrow: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: '11px',
     fontWeight: '500',
     letterSpacing: '0.14em',
-    color: '#3bbde8',
+    color: colors.accent,
     textTransform: 'uppercase',
     marginBottom: '14px'
   },
   title: {
-    fontFamily: "'Cormorant Garamond', Georgia, serif",
+    fontFamily: fonts.display,
     marginBottom: '32px',
     fontSize: '38px',
     fontWeight: '600',
-    color: '#edf6fc',
+    color: colors.textPrimary,
     lineHeight: '1.1'
   },
   form: {
@@ -128,26 +129,26 @@ const styles = {
     textAlign: 'left'
   },
   label: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: '11px',
     fontWeight: '500',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     letterSpacing: '0.08em',
     textTransform: 'uppercase'
   },
   input: {
     padding: '12px 16px',
     borderRadius: '8px',
-    border: '1px solid rgba(100,190,230,0.12)',
-    background: '#060f1b',
-    color: '#edf6fc',
-    fontFamily: "'DM Sans', sans-serif",
+    border: borders.card,
+    background: colors.bgInput,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
     fontSize: '15px',
     outline: 'none'
   },
   error: {
-    color: '#ff6b6b',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.error,
+    fontFamily: fonts.body,
     fontSize: '13px',
     margin: '0'
   },
@@ -156,9 +157,9 @@ const styles = {
     padding: '14px',
     borderRadius: '8px',
     border: 'none',
-    background: '#3bbde8',
-    color: '#07111f',
-    fontFamily: "'DM Sans', sans-serif",
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
     fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
@@ -166,16 +167,16 @@ const styles = {
   },
   switchText: {
     marginTop: '28px',
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: '13px',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     textAlign: 'center'
   },
   switchLink: {
     background: 'none',
     border: 'none',
-    color: '#3bbde8',
-    fontFamily: "'DM Sans', sans-serif",
+    color: colors.accent,
+    fontFamily: fonts.body,
     fontWeight: '500',
     cursor: 'pointer',
     fontSize: '13px',
