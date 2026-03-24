@@ -30,8 +30,8 @@ describe('TripTable', () => {
 
   it('renders a row for each trip', async () => {
     await renderTable(sampleTrips)
-    expect(screen.getByText('Ski Alps')).toBeInTheDocument()
-    expect(screen.getByText('Whistler')).toBeInTheDocument()
+    expect(screen.getByText('Alpine trip')).toBeInTheDocument()
+    expect(screen.getByText('Canada trip')).toBeInTheDocument()
   })
 
   it('does not render the empty message when trips exist', async () => {

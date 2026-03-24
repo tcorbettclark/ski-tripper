@@ -31,7 +31,7 @@ export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft, s
   if (isEditing) {
     return (
       <tr style={styles.editingTr}>
-        <td style={styles.editingTd} colSpan={showCoordinator ? 5 : 4}>
+        <td style={styles.editingTd} colSpan={showCoordinator ? 4 : 3}>
           <EditTripForm
             trip={trip}
             onUpdated={(updated) => {
@@ -49,7 +49,6 @@ export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft, s
   return (
     <tr style={styles.tr}>
       <td style={styles.codeCell}>{trip.code || '—'}</td>
-      <td style={styles.td}>{trip.name}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>{trip.description || '—'}</td>
       {showCoordinator && (
         <td style={{ ...styles.td, color: colors.textSecondary }} title={coordinator?.email || undefined}>

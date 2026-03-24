@@ -28,9 +28,8 @@ async function renderRow (trip, props = {}) {
 }
 
 describe('TripRow', () => {
-  it('displays the trip name and description', async () => {
+  it('displays the trip description', async () => {
     await renderRow(sampleTrip)
-    expect(screen.getByText('Ski Alps')).toBeInTheDocument()
     expect(screen.getByText('A great trip')).toBeInTheDocument()
   })
 

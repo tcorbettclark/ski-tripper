@@ -38,7 +38,7 @@ describe('CreateTripForm', () => {
     const user = userEvent.setup()
     renderForm()
     await user.click(screen.getByRole('button', { name: /new trip/i }))
-    expect(screen.getAllByRole('textbox')).toHaveLength(2)
+    expect(screen.getAllByRole('textbox')).toHaveLength(1)
   })
 
   it('calls createTrip and onCreated when a valid form is submitted', async () => {
@@ -47,11 +47,11 @@ describe('CreateTripForm', () => {
     renderForm({ onCreated: handleCreated })
 
     await user.click(screen.getByRole('button', { name: /new trip/i }))
-    await user.type(screen.getAllByRole('textbox')[0], 'Ski Alps')
+    await user.type(screen.getByRole('textbox'), 'A trip to the Alps in February')
     await user.click(screen.getByRole('button', { name: /save trip/i }))
 
     await waitFor(() => {
-      expect(mockCreateTrip).toHaveBeenCalledWith('user-1', { name: 'Ski Alps', description: '' })
+      expect(mockCreateTrip).toHaveBeenCalledWith('user-1', { description: 'A trip to the Alps in February' })
       expect(handleCreated).toHaveBeenCalledTimes(1)
     })
   })
@@ -61,7 +61,7 @@ describe('CreateTripForm', () => {
     renderForm()
 
     await user.click(screen.getByRole('button', { name: /new trip/i }))
-    await user.type(screen.getAllByRole('textbox')[0], 'Ski Alps')
+    await user.type(screen.getByRole('textbox'), 'A trip to the Alps in February')
     await user.click(screen.getByRole('button', { name: /save trip/i }))
 
     await waitFor(() => {
@@ -75,7 +75,7 @@ describe('CreateTripForm', () => {
     renderForm()
 
     await user.click(screen.getByRole('button', { name: /new trip/i }))
-    await user.type(screen.getAllByRole('textbox')[0], 'Ski Alps')
+    await user.type(screen.getByRole('textbox'), 'A trip to the Alps in February')
     await user.click(screen.getByRole('button', { name: /save trip/i }))
 
     await waitFor(() => {

@@ -3,7 +3,7 @@ import { createTrip } from './database'
 import Field from './Field'
 import { colors, fonts, borders } from './theme'
 
-const EMPTY_FORM = { name: '', description: '' }
+const EMPTY_FORM = { description: '' }
 
 export default function CreateTripForm ({ user, onCreated }) {
   const [showForm, setShowForm] = useState(false)
@@ -49,17 +49,12 @@ export default function CreateTripForm ({ user, onCreated }) {
       {showForm && (
         <form onSubmit={handleSubmit} style={styles.form}>
           <Field
-            label='Name'
-            name='name'
-            value={form.name}
-            onChange={handleChange}
-            required
-          />
-          <Field
             label='Description'
             name='description'
             value={form.description}
             onChange={handleChange}
+            placeholder="e.g. 5 days in Val d'Isère, late February, intermediate+ skiers"
+            required
           />
           {error && <p style={styles.error}>{error}</p>}
           <button type='submit' disabled={saving} style={styles.saveButton}>

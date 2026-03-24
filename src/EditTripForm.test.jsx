@@ -36,11 +36,9 @@ describe('EditTripForm', () => {
     mockDeleteTrip.mockClear()
   })
 
-  it('pre-fills the name and description fields from the trip prop', () => {
+  it('pre-fills the description field from the trip prop', () => {
     renderForm()
-    const inputs = screen.getAllByRole('textbox')
-    expect(inputs[0]).toHaveValue('Ski Alps')
-    expect(inputs[1]).toHaveValue('A great trip')
+    expect(screen.getByRole('textbox')).toHaveValue('A great trip')
   })
 
   it('calls updateTrip and onUpdated when the form is saved', async () => {
@@ -48,15 +46,14 @@ describe('EditTripForm', () => {
     const handleUpdated = mock(() => {})
     renderForm({ onUpdated: handleUpdated })
 
-    const nameInput = screen.getAllByRole('textbox')[0]
-    await user.clear(nameInput)
-    await user.type(nameInput, 'New Name')
+    const descInput = screen.getByRole('textbox')
+    await user.clear(descInput)
+    await user.type(descInput, 'Updated description')
     await user.click(screen.getByRole('button', { name: /^save$/i }))
 
     await waitFor(() => {
       expect(mockUpdateTrip).toHaveBeenCalledWith('trip-1', {
-        name: 'New Name',
-        description: 'A great trip'
+        description: 'Updated description'
       })
       expect(handleUpdated).toHaveBeenCalledTimes(1)
     })

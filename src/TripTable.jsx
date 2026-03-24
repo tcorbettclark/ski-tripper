@@ -11,7 +11,6 @@ export default function TripTable ({ trips, userId, onUpdated, onDeleted, onLeft
       <thead>
         <tr>
           <th style={styles.th}>Code</th>
-          <th style={styles.th}>Name</th>
           <th style={styles.th}>Description</th>
           {showCoordinator && <th style={styles.th}>Co-ordinator</th>}
           <th style={styles.th} />

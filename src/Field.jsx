@@ -6,7 +6,8 @@ export default function Field ({
   value,
   onChange,
   type = 'text',
-  required
+  required,
+  placeholder
 }) {
   return (
     <div style={styles.field}>
@@ -17,6 +18,7 @@ export default function Field ({
         value={value}
         onChange={onChange}
         required={required}
+        placeholder={placeholder}
         style={styles.input}
       />
     </div>

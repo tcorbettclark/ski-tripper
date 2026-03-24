@@ -5,7 +5,6 @@ import { colors, fonts, borders } from './theme'
 
 export default function EditTripForm ({ trip, onUpdated, onDeleted, onCancel }) {
   const [form, setForm] = useState({
-    name: trip.name,
     description: trip.description || ''
   })
   const [saving, setSaving] = useState(false)
@@ -43,17 +42,11 @@ export default function EditTripForm ({ trip, onUpdated, onDeleted, onCancel }) 
   return (
     <form onSubmit={handleSubmit} style={styles.form}>
       <Field
-        label='Name'
-        name='name'
-        value={form.name}
-        onChange={handleChange}
-        required
-      />
-      <Field
         label='Description'
         name='description'
         value={form.description}
         onChange={handleChange}
+        required
       />
       {error && <p style={styles.error}>{error}</p>}
       <div style={styles.actions}>
