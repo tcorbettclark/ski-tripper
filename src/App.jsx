@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { account as _account } from './backend'
-import Login from './Login'
-import Signup from './Signup'
+import AuthForm from './AuthForm'
 import Trips from './Trips'
 import { colors, fonts, borders } from './theme'
 
@@ -28,13 +27,12 @@ function App ({
   if (checking) return null
 
   if (!user) {
-    if (page === 'signup') {
-      return (
-        <Signup onSignup={setUser} onSwitchToLogin={() => setPage('login')} />
-      )
-    }
     return (
-      <Login onLogin={setUser} onSwitchToSignup={() => setPage('signup')} />
+      <AuthForm
+        mode={page}
+        onSuccess={setUser}
+        onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
+      />
     )
   }
 

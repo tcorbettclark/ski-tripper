@@ -1,4 +1,4 @@
-import { colors, fonts, borders } from './theme'
+import { fieldStyles } from './theme'
 
 export default function Field ({
   label,
@@ -7,8 +7,11 @@ export default function Field ({
   onChange,
   type = 'text',
   required,
-  placeholder
+  placeholder,
+  variant = 'default'
 }) {
+  const styles = fieldStyles[variant] || fieldStyles.default
+
   return (
     <div style={styles.field}>
       <label style={styles.label}>{label}</label>
@@ -23,30 +26,4 @@ export default function Field ({
       />
     </div>
   )
-}
-
-const styles = {
-  field: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '7px'
-  },
-  label: {
-    fontFamily: fonts.body,
-    fontSize: '11px',
-    fontWeight: '500',
-    color: colors.textSecondary,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase'
-  },
-  input: {
-    padding: '10px 14px',
-    borderRadius: '7px',
-    border: borders.card,
-    background: colors.bgInput,
-    color: colors.textPrimary,
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    outline: 'none'
-  }
 }

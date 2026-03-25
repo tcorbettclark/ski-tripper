@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { getTripByCode as _getTripByCode, joinTrip as _joinTrip } from './backend'
 import Field from './Field'
-import { colors, fonts, borders } from './theme'
+import { colors, borders, formStyles } from './theme'
 
 export default function JoinTripForm ({
   user,
@@ -43,12 +43,12 @@ export default function JoinTripForm ({
         placeholder='e.g. colourful-skinny-screwdriver'
         required
       />
-      {error && <p style={styles.error}>{error}</p>}
+      {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
-        <button type='submit' disabled={saving} style={styles.saveButton}>
+        <button type='submit' disabled={saving} style={formStyles.saveButton}>
           {saving ? 'Joining…' : 'Join Trip'}
         </button>
-        <button type='button' onClick={onDismiss} style={styles.cancelButton}>
+        <button type='button' onClick={onDismiss} style={formStyles.cancelButton}>
           Cancel
         </button>
       </div>
@@ -67,36 +67,9 @@ const styles = {
     flexDirection: 'column',
     gap: '20px'
   },
-  error: {
-    color: colors.error,
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    margin: 0
-  },
   actions: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px'
-  },
-  saveButton: {
-    padding: '10px 24px',
-    borderRadius: '7px',
-    border: 'none',
-    background: colors.accent,
-    color: colors.bgPrimary,
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer'
-  },
-  cancelButton: {
-    padding: '10px 16px',
-    borderRadius: '7px',
-    border: 'none',
-    background: 'transparent',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    cursor: 'pointer'
   }
 }

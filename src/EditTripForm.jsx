@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { updateTrip as _updateTrip, deleteTrip as _deleteTrip } from './backend'
 import Field from './Field'
-import { colors, fonts, borders } from './theme'
+import { colors, borders, formStyles } from './theme'
 
 export default function EditTripForm ({
   trip,
@@ -55,7 +55,7 @@ export default function EditTripForm ({
         onChange={handleChange}
         required
       />
-      {error && <p style={styles.error}>{error}</p>}
+      {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
         <button type='submit' disabled={saving} style={styles.saveButton}>
           {saving ? 'Saving…' : 'Save'}
@@ -83,12 +83,6 @@ const styles = {
     gap: '14px',
     padding: '8px 0'
   },
-  error: {
-    color: colors.error,
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    margin: 0
-  },
   actions: {
     display: 'flex',
     gap: '8px',
@@ -100,7 +94,7 @@ const styles = {
     border: 'none',
     background: colors.accent,
     color: colors.bgPrimary,
-    fontFamily: fonts.body,
+    fontFamily: formStyles.saveButton.fontFamily,
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer'
@@ -111,7 +105,7 @@ const styles = {
     border: borders.muted,
     background: 'transparent',
     color: colors.textSecondary,
-    fontFamily: fonts.body,
+    fontFamily: formStyles.cancelButton.fontFamily,
     fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer'
@@ -122,7 +116,7 @@ const styles = {
     border: '1px solid rgba(255,107,107,0.25)',
     background: 'transparent',
     color: colors.error,
-    fontFamily: fonts.body,
+    fontFamily: formStyles.cancelButton.fontFamily,
     fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer',
