@@ -5,7 +5,7 @@ import Trips from './Trips'
 
 const testUser = { $id: 'user-1', name: 'Test User', email: 'test@example.com' }
 const defaultUser = { name: 'Test User', email: 'test@example.com' }
-const defaultTrip = { $id: 'new-trip', description: 'New Trip', code: 'aaa-bbb-ccc', userId: 'user-1' }
+const defaultTrip = { $id: 'new-trip', description: 'New Trip', code: 'aaa-bbb-ccc' }
 
 function renderTrips (props = {}) {
   return render(
@@ -52,9 +52,10 @@ describe('Trips', () => {
       renderTrips({
         listTrips: () => Promise.resolve({
           documents: [
-            { $id: 't-1', description: "Val d'Isere week", code: 'aaa-bbb-ccc', userId: 'user-1' },
-            { $id: 't-2', description: 'Chamonix weekend', code: 'ddd-eee-fff', userId: 'user-1' }
-          ]
+            { $id: 't-1', description: "Val d'Isere week", code: 'aaa-bbb-ccc' },
+            { $id: 't-2', description: 'Chamonix weekend', code: 'ddd-eee-fff' }
+          ],
+          coordinatorUserIds: { 't-1': 'user-1', 't-2': 'user-1' }
         })
       })
     })
@@ -78,7 +79,7 @@ describe('Trips', () => {
   })
 
   it('removes the row when a coordinated trip that is also in participatedTrips is deleted', async () => {
-    const trip = { $id: 't-1', description: 'Alps trip', code: 'aaa-bbb-ccc', userId: 'user-1' }
+    const trip = { $id: 't-1', description: 'Alps trip', code: 'aaa-bbb-ccc' }
 
     const originalConfirm = window.confirm
     window.confirm = () => true
@@ -86,7 +87,7 @@ describe('Trips', () => {
     const user = userEvent.setup()
     await act(async () => {
       renderTrips({
-        listTrips: () => Promise.resolve({ documents: [trip] }),
+        listTrips: () => Promise.resolve({ documents: [trip], coordinatorUserIds: { 't-1': 'user-1' } }),
         listParticipatedTrips: () => Promise.resolve([trip])
       })
     })
@@ -106,7 +107,7 @@ describe('Trips', () => {
     const user = userEvent.setup()
     await act(async () => {
       renderTrips({
-        createTrip: () => Promise.resolve({ $id: 'new-trip', description: 'Alps in February', code: 'aaa-bbb-ccc', userId: 'user-1' })
+        createTrip: () => Promise.resolve({ $id: 'new-trip', description: 'Alps in February', code: 'aaa-bbb-ccc' })
       })
     })
     await waitFor(() => screen.getByRole('button', { name: /new trip/i }))

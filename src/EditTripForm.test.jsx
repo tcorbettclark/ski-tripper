@@ -4,13 +4,14 @@ import userEvent from '@testing-library/user-event'
 import EditTripForm from './EditTripForm'
 
 const sampleTrip = { $id: 'trip-1', name: 'Ski Alps', description: 'A great trip' }
-const defaultUpdated = { $id: 'trip-1', description: 'Updated', code: 'aaa-bbb-ccc', userId: 'user-1' }
+const defaultUpdated = { $id: 'trip-1', description: 'Updated', code: 'aaa-bbb-ccc' }
 const noop = () => {}
 
 function renderForm (props = {}) {
   return render(
     <EditTripForm
       trip={sampleTrip}
+      userId='user-1'
       onUpdated={noop}
       onDeleted={noop}
       onCancel={noop}
@@ -41,7 +42,7 @@ describe('EditTripForm', () => {
     await waitFor(() => {
       expect(mockUpdate).toHaveBeenCalledWith('trip-1', {
         description: 'Updated description'
-      })
+      }, 'user-1')
       expect(handleUpdated).toHaveBeenCalledTimes(1)
     })
   })
@@ -56,7 +57,7 @@ describe('EditTripForm', () => {
     await user.click(screen.getByRole('button', { name: /delete/i }))
 
     await waitFor(() => {
-      expect(mockDelete).toHaveBeenCalledWith('trip-1')
+      expect(mockDelete).toHaveBeenCalledWith('trip-1', 'user-1')
       expect(handleDeleted).toHaveBeenCalledTimes(1)
     })
   })

@@ -4,26 +4,30 @@ import {
   leaveTrip as _leaveTrip,
   getUserById as _getUserById,
   updateTrip as _updateTrip,
-  deleteTrip as _deleteTrip
+  deleteTrip as _deleteTrip,
+  getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
 import { colors, fonts, borders } from './theme'
 
 export default function TripRow ({
   trip,
   userId,
+  coordinatorUserId,
   onUpdated,
   onDeleted,
   onLeft,
   leaveTrip = _leaveTrip,
   getUserById = _getUserById,
   updateTrip = _updateTrip,
-  deleteTrip = _deleteTrip
+  deleteTrip = _deleteTrip,
+  getCoordinatorParticipant = _getCoordinatorParticipant
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [leaveError, setLeaveError] = useState('')
   const [coordinator, setCoordinator] = useState(null)
   const [copied, setCopied] = useState(false)
+  const [coordinatorUserIdResolved, setCoordinatorUserIdResolved] = useState(coordinatorUserId)
 
   const handleCopy = useCallback(() => {
     if (!trip.code) return
@@ -34,10 +38,22 @@ export default function TripRow ({
   }, [trip.code])
 
   useEffect(() => {
-    getUserById(trip.userId)
-      .then(setCoordinator)
-      .catch(() => {})
-  }, [trip.userId])
+    if (coordinatorUserIdResolved) {
+      getUserById(coordinatorUserIdResolved)
+        .then(setCoordinator)
+        .catch(() => {})
+    } else {
+      getCoordinatorParticipant(trip.$id)
+        .then(({ documents }) => {
+          if (documents.length === 0) return
+          const cid = documents[0].userId
+          setCoordinatorUserIdResolved(cid)
+          return getUserById(cid)
+        })
+        .then((c) => { if (c) setCoordinator(c) })
+        .catch(() => {})
+    }
+  }, [coordinatorUserIdResolved])
 
   async function handleLeave () {
     setLeaveError('')
@@ -57,6 +73,7 @@ export default function TripRow ({
         <td style={styles.editingTd} colSpan={4}>
           <EditTripForm
             trip={trip}
+            userId={userId}
             onUpdated={(updated) => {
               onUpdated(updated)
               setIsEditing(false)
@@ -90,12 +107,12 @@ export default function TripRow ({
       </td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>{trip.description || '—'}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }} title={coordinator?.email || undefined}>
-        {trip.userId === userId
+        {coordinatorUserIdResolved === userId
           ? `${coordinator?.name || coordinator?.email || '—'} (me)`
           : coordinator?.name || coordinator?.email || '—'}
       </td>
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
-        {trip.userId === userId
+        {coordinatorUserIdResolved === userId
           ? (
             <button onClick={() => setIsEditing(true)} style={styles.editButton}>
               Edit

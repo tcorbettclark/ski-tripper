@@ -3,13 +3,15 @@ import {
   leaveTrip as _leaveTrip,
   getUserById as _getUserById,
   updateTrip as _updateTrip,
-  deleteTrip as _deleteTrip
+  deleteTrip as _deleteTrip,
+  getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
 import { colors, fonts, borders } from './theme'
 
 export default function TripTable ({
   trips,
   userId,
+  coordinatorUserIds = {},
   onUpdated,
   onDeleted,
   onLeft,
@@ -17,7 +19,8 @@ export default function TripTable ({
   leaveTrip = _leaveTrip,
   getUserById = _getUserById,
   updateTrip = _updateTrip,
-  deleteTrip = _deleteTrip
+  deleteTrip = _deleteTrip,
+  getCoordinatorParticipant = _getCoordinatorParticipant
 }) {
   if (trips.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
@@ -39,6 +42,7 @@ export default function TripTable ({
             key={trip.$id}
             trip={trip}
             userId={userId}
+            coordinatorUserId={coordinatorUserIds[trip.$id]}
             onUpdated={onUpdated}
             onDeleted={onDeleted}
             onLeft={onLeft}
@@ -46,6 +50,7 @@ export default function TripTable ({
             getUserById={getUserById}
             updateTrip={updateTrip}
             deleteTrip={deleteTrip}
+            getCoordinatorParticipant={getCoordinatorParticipant}
           />
         ))}
       </tbody>

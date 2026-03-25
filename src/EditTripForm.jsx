@@ -5,6 +5,7 @@ import { colors, borders, formStyles } from './theme'
 
 export default function EditTripForm ({
   trip,
+  userId,
   onUpdated,
   onDeleted,
   onCancel,
@@ -26,7 +27,7 @@ export default function EditTripForm ({
     setError('')
     setSaving(true)
     try {
-      const updated = await updateTrip(trip.$id, form)
+      const updated = await updateTrip(trip.$id, form, userId)
       onUpdated(updated)
     } catch (err) {
       setError(err.message)
@@ -38,7 +39,7 @@ export default function EditTripForm ({
     if (!window.confirm('Delete this trip?')) return
     setSaving(true)
     try {
-      await deleteTrip(trip.$id)
+      await deleteTrip(trip.$id, userId)
       onDeleted()
     } catch (err) {
       setError(err.message)

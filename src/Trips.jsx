@@ -29,6 +29,7 @@ export default function Trips ({
 }) {
   const [trips, setTrips] = useState([])
   const [participatedTrips, setParticipatedTrips] = useState([])
+  const [coordinatorUserIds, setCoordinatorUserIds] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -41,6 +42,7 @@ export default function Trips ({
     ])
       .then(([ownRes, participated]) => {
         setTrips(ownRes.documents)
+        setCoordinatorUserIds(ownRes.coordinatorUserIds)
         setParticipatedTrips(participated)
       })
       .catch((err) => setError(err.message))
@@ -49,6 +51,7 @@ export default function Trips ({
 
   function handleCreated (trip) {
     setTrips((t) => [trip, ...t])
+    setCoordinatorUserIds((m) => ({ ...m, [trip.$id]: user.$id }))
   }
 
   function handleUpdated (updated) {
@@ -60,6 +63,11 @@ export default function Trips ({
   function handleDeleted (id) {
     setTrips((t) => t.filter((trip) => trip.$id !== id))
     setParticipatedTrips((t) => t.filter((trip) => trip.$id !== id))
+    setCoordinatorUserIds((m) => {
+      const copy = { ...m }
+      delete copy[id]
+      return copy
+    })
   }
 
   function handleJoined (trip) {
@@ -117,6 +125,7 @@ export default function Trips ({
       <TripTable
         trips={allTrips}
         userId={user.$id}
+        coordinatorUserIds={coordinatorUserIds}
         onUpdated={handleUpdated}
         onDeleted={handleDeleted}
         onLeft={handleLeft}

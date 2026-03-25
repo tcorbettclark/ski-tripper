@@ -3,8 +3,8 @@ import { render, screen, act } from '@testing-library/react'
 import TripTable from './TripTable'
 
 const sampleTrips = [
-  { $id: '1', name: 'Ski Alps', description: 'Alpine trip', userId: 'user-1' },
-  { $id: '2', name: 'Whistler', description: 'Canada trip', userId: 'user-1' }
+  { $id: '1', name: 'Ski Alps', description: 'Alpine trip' },
+  { $id: '2', name: 'Whistler', description: 'Canada trip' }
 ]
 
 const noop = () => {}
@@ -15,6 +15,8 @@ async function renderTable (trips, props = {}) {
     render(
       <TripTable
         trips={trips}
+        userId='user-1'
+        coordinatorUserIds={{}}
         onUpdated={noop}
         onDeleted={noop}
         getUserById={() => Promise.resolve(defaultUser)}
@@ -60,13 +62,13 @@ describe('TripTable', () => {
   })
 
   it('shows Leave buttons when the current user does not own the trips', async () => {
-    await renderTable(sampleTrips, { userId: 'user-2', onLeft: () => {} })
+    await renderTable(sampleTrips, { userId: 'user-2', onLeft: () => {}, coordinatorUserIds: { 1: 'user-1', 2: 'user-1' }, getCoordinatorParticipant: () => Promise.resolve({ documents: [{ userId: 'user-1' }] }) })
     const leaveButtons = screen.getAllByRole('button', { name: /leave/i })
     expect(leaveButtons).toHaveLength(sampleTrips.length)
   })
 
   it('shows Edit buttons when the current user owns the trips', async () => {
-    await renderTable(sampleTrips, { userId: 'user-1' })
+    await renderTable(sampleTrips, { userId: 'user-1', coordinatorUserIds: { 1: 'user-1', 2: 'user-1' } })
     const editButtons = screen.getAllByRole('button', { name: /edit/i })
     expect(editButtons).toHaveLength(sampleTrips.length)
   })

@@ -3,9 +3,9 @@ import { render, screen, act, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import TripRow from './TripRow'
 
-const sampleTrip = { $id: 'trip-1', code: 'ABC12', name: 'Ski Alps', description: 'A great trip', userId: 'user-1' }
+const sampleTrip = { $id: 'trip-1', code: 'ABC12', name: 'Ski Alps', description: 'A great trip' }
 const defaultUser = { name: 'Test User', email: 'test@example.com' }
-const defaultUpdated = { $id: 'trip-1', description: 'Updated', code: 'aaa-bbb-ccc', userId: 'user-1' }
+const defaultUpdated = { $id: 'trip-1', description: 'Updated', code: 'aaa-bbb-ccc' }
 
 const noop = () => {}
 
@@ -22,6 +22,8 @@ async function renderRow (trip, props = {}) {
             leaveTrip={() => Promise.resolve()}
             updateTrip={() => Promise.resolve(defaultUpdated)}
             deleteTrip={() => Promise.resolve()}
+            getCoordinatorParticipant={() =>
+              Promise.resolve({ documents: [{ userId: 'user-1' }] })}
             {...props}
           />
         </tbody>
@@ -64,19 +66,19 @@ describe('TripRow', () => {
   })
 
   it('shows the Edit button when the trip belongs to the current user', async () => {
-    await renderRow(sampleTrip, { userId: 'user-1' })
+    await renderRow(sampleTrip, { userId: 'user-1', coordinatorUserId: 'user-1' })
     expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /leave/i })).not.toBeInTheDocument()
   })
 
   it('shows the Leave button when the trip belongs to another user', async () => {
-    await renderRow(sampleTrip, { userId: 'user-2', onLeft: noop })
+    await renderRow(sampleTrip, { userId: 'user-2', coordinatorUserId: 'user-1', onLeft: noop })
     expect(screen.getByRole('button', { name: /leave/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument()
   })
 
   it('appends "(me)" to the coordinator name when the trip belongs to the current user', async () => {
-    await renderRow(sampleTrip, { userId: 'user-1' })
+    await renderRow(sampleTrip, { userId: 'user-1', coordinatorUserId: 'user-1' })
     expect(screen.getByText('Test User (me)')).toBeInTheDocument()
   })
 

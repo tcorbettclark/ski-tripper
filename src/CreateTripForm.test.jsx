@@ -5,7 +5,7 @@ import CreateTripForm from './CreateTripForm'
 
 const noop = () => {}
 const testUser = { $id: 'user-1', name: 'Test User', email: 'test@example.com' }
-const defaultTrip = { $id: 'new-trip', description: 'New Trip', code: 'aaa-bbb-ccc', userId: 'user-1' }
+const defaultTrip = { $id: 'new-trip', description: 'New Trip', code: 'aaa-bbb-ccc' }
 
 function renderForm (props = {}) {
   return render(

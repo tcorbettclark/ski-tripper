@@ -24,14 +24,29 @@ function makeDb (overrides = {}) {
 }
 
 describe('listTrips', () => {
-  it('calls listDocuments and returns documents', async () => {
-    const db = makeDb({
-      listDocuments: mock(() => Promise.resolve({ documents: [{ $id: '1', name: 'Trip 1' }] }))
-    })
+  it('returns documents and coordinatorUserIds from participant query', async () => {
+    const listDocuments = mock()
+    listDocuments
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'trip-1', name: 'Trip 1' }] })
+      )
+    const db = makeDb({ listDocuments })
     const result = await listTrips('user-1', db)
-    expect(db.listDocuments).toHaveBeenCalledTimes(1)
     expect(result.documents).toHaveLength(1)
     expect(result.documents[0].name).toBe('Trip 1')
+    expect(result.coordinatorUserIds).toEqual({ 'trip-1': 'user-1' })
+  })
+
+  it('returns empty when user has no coordinated trips', async () => {
+    const db = makeDb({
+      listDocuments: mock(() => Promise.resolve({ documents: [] }))
+    })
+    const result = await listTrips('user-1', db)
+    expect(result.documents).toHaveLength(0)
+    expect(result.coordinatorUserIds).toEqual({})
   })
 
   it('propagates errors', async () => {
@@ -141,6 +156,14 @@ describe('createTrip', () => {
     expect(result.$id).toBe('new-id')
   })
 
+  it('creates the initial participant with role coordinator', async () => {
+    const db = makeDb()
+    await createTrip('user-1', { name: 'New Trip' }, db)
+    const participantData = db.createDocument.mock.calls[1][3]
+    expect(participantData.role).toBe('coordinator')
+    expect(participantData.userId).toBe('user-1')
+  })
+
   it('propagates createDocument errors', async () => {
     const db = makeDb({
       createDocument: mock(() => Promise.reject(new Error('Create failed')))
@@ -150,26 +173,51 @@ describe('createTrip', () => {
 })
 
 describe('updateTrip', () => {
-  it('calls updateDocument and returns the updated trip', async () => {
-    const db = makeDb()
-    const result = await updateTrip('trip-1', { name: 'Updated Trip' }, db)
+  it('calls updateDocument and returns the updated trip when caller is coordinator', async () => {
+    const db = makeDb({
+      listDocuments: mock(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+      )
+    })
+    const result = await updateTrip('trip-1', { name: 'Updated Trip' }, 'user-1', db)
     expect(db.updateDocument).toHaveBeenCalledTimes(1)
     expect(result.name).toBe('Updated Trip')
   })
 
+  it('throws when the caller is not the coordinator', async () => {
+    const db = makeDb({
+      listDocuments: mock(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'other-user' }] })
+      )
+    })
+    await expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow('Only the coordinator can edit this trip.')
+  })
+
+  it('throws when there is no coordinator for the trip', async () => {
+    const db = makeDb({
+      listDocuments: mock(() => Promise.resolve({ documents: [] }))
+    })
+    await expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow('Only the coordinator can edit this trip.')
+  })
+
   it('propagates errors', async () => {
     const db = makeDb({
+      listDocuments: mock(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+      ),
       updateDocument: mock(() => Promise.reject(new Error('Update failed')))
     })
-    await expect(updateTrip('trip-1', {}, db)).rejects.toThrow('Update failed')
+    await expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow('Update failed')
   })
 })
 
 describe('joinTrip', () => {
-  it('creates a participation record when none exists', async () => {
+  it('creates a participation record with role participant when none exists', async () => {
     const db = makeDb()
     await joinTrip('user-1', 'trip-1', db)
     expect(db.createDocument).toHaveBeenCalledTimes(1)
+    const participantData = db.createDocument.mock.calls[0][3]
+    expect(participantData.role).toBe('participant')
   })
 
   it('throws when the user has already joined the trip', async () => {
@@ -260,26 +308,44 @@ describe('getUserById', () => {
 })
 
 describe('deleteTrip', () => {
-  it('deletes participants then the trip', async () => {
-    const db = makeDb({
-      listDocuments: mock(() =>
+  it('throws when the caller is not the coordinator', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'other-user' }] })
+      )
+    const db = makeDb({ listDocuments })
+    await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow('Only the coordinator can delete this trip.')
+  })
+
+  it('deletes participants then the trip when caller is coordinator', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+      )
+      .mockImplementationOnce(() =>
         Promise.resolve({ documents: [{ $id: 'p-1' }, { $id: 'p-2' }] })
       )
-    })
-    await deleteTrip('trip-1', db)
+    const db = makeDb({ listDocuments })
+    await deleteTrip('trip-1', 'user-1', db)
     expect(db.deleteDocument).toHaveBeenCalledTimes(3)
   })
 
-  it('deletes the trip even when there are no participants', async () => {
-    const db = makeDb()
-    await deleteTrip('trip-1', db)
-    expect(db.deleteDocument).toHaveBeenCalledTimes(1)
+  it('throws when there are no participants (no coordinator)', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
+    const db = makeDb({ listDocuments })
+    await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow('Only the coordinator can delete this trip.')
   })
 
   it('propagates errors', async () => {
-    const db = makeDb({
-      deleteDocument: mock(() => Promise.reject(new Error('Delete failed')))
-    })
-    await expect(deleteTrip('trip-1', db)).rejects.toThrow('Delete failed')
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [] })
+      )
+    const db = makeDb({ listDocuments, deleteDocument: mock(() => Promise.reject(new Error('Delete failed'))) })
+    await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow('Delete failed')
   })
 })

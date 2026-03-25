@@ -23,11 +23,39 @@ const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID
 const TRIPS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_TRIPS_COLLECTION_ID
 const PARTICIPANTS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_PARTICIPANTS_COLLECTION_ID
 
-export function listTrips (userId, db = databases) {
-  return db.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
-    Query.equal('userId', userId),
-    Query.orderDesc('$createdAt')
+export function getCoordinatorParticipant (tripId, db = databases) {
+  return db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
+    Query.equal('tripId', tripId),
+    Query.equal('role', 'coordinator'),
+    Query.limit(1)
   ])
+}
+
+export async function listTrips (userId, db = databases) {
+  const { documents: coordinatorParticipants } = await db.listDocuments(
+    DATABASE_ID,
+    PARTICIPANTS_COLLECTION_ID,
+    [
+      Query.equal('userId', userId),
+      Query.equal('role', 'coordinator'),
+      Query.orderDesc('$createdAt')
+    ]
+  )
+  if (coordinatorParticipants.length === 0) {
+    return { documents: [], coordinatorUserIds: {} }
+  }
+  const tripIds = coordinatorParticipants.map((p) => p.tripId)
+  const coordinatorUserIds = Object.fromEntries(
+    coordinatorParticipants.map((p) => [p.tripId, p.userId])
+  )
+  const { documents: trips } = await db.listDocuments(
+    DATABASE_ID,
+    TRIPS_COLLECTION_ID,
+    [Query.equal('$id', tripIds)]
+  )
+  const tripMap = Object.fromEntries(trips.map((t) => [t.$id, t]))
+  const orderedTrips = tripIds.map((id) => tripMap[id]).filter(Boolean)
+  return { documents: orderedTrips, coordinatorUserIds }
 }
 
 export function getTrip (tripId, db = databases) {
@@ -66,7 +94,7 @@ export async function createTrip (userId, data, db = databases) {
     DATABASE_ID,
     PARTICIPANTS_COLLECTION_ID,
     ID.unique(),
-    { userId, tripId: trip.$id },
+    { userId, tripId: trip.$id, role: 'coordinator' },
     [Permission.read(Role.user(userId)), Permission.write(Role.user(userId))]
   )
   return trip
@@ -86,7 +114,11 @@ export async function getUserById (userId) {
   return res.json()
 }
 
-export function updateTrip (tripId, data, db = databases) {
+export async function updateTrip (tripId, data, userId, db = databases) {
+  const { documents } = await getCoordinatorParticipant(tripId, db)
+  if (documents.length === 0 || documents[0].userId !== userId) {
+    throw new Error('Only the coordinator can edit this trip.')
+  }
   return db.updateDocument(
     DATABASE_ID,
     TRIPS_COLLECTION_ID,
@@ -95,7 +127,11 @@ export function updateTrip (tripId, data, db = databases) {
   )
 }
 
-export async function deleteTrip (tripId, db = databases) {
+export async function deleteTrip (tripId, userId, db = databases) {
+  const { documents: coordinatorDocs } = await getCoordinatorParticipant(tripId, db)
+  if (coordinatorDocs.length === 0 || coordinatorDocs[0].userId !== userId) {
+    throw new Error('Only the coordinator can delete this trip.')
+  }
   const { documents } = await db.listDocuments(
     DATABASE_ID,
     PARTICIPANTS_COLLECTION_ID,
@@ -134,7 +170,7 @@ export async function joinTrip (userId, tripId, db = databases) {
     DATABASE_ID,
     PARTICIPANTS_COLLECTION_ID,
     ID.unique(),
-    { userId, tripId },
+    { userId, tripId, role: 'participant' },
     [Permission.read(Role.user(userId)), Permission.write(Role.user(userId))]
   )
 }
