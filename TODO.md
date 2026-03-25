@@ -3,6 +3,10 @@
 - [ ] Don’t add a database entry to participate in own trips, but infer it. => Fewer database transactions and cleaner state.
 - [ ] In fact, remove user id from trips and only use participants with a role. Normalises and allows multiple Coordinators in the future
 
+# Technical
+- [ ] Check the deprecated appwrite.databases.* functions in database.js
+- [ ] Switch to Typescript
+
 # Helper text
 
 - [ ] In “New Trip” form, explain using text above
