@@ -87,7 +87,7 @@ export async function createTrip (userId, data, db = databases) {
     DATABASE_ID,
     TRIPS_COLLECTION_ID,
     ID.unique(),
-    { userId, code, ...data },
+    { code, ...data },
     [Permission.read(Role.users()), Permission.write(Role.user(userId))]
   )
   await db.createDocument(
