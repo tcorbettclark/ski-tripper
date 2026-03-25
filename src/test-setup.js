@@ -1,3 +1,4 @@
+/* global localStorage */
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import { afterEach, expect } from 'bun:test'
 
