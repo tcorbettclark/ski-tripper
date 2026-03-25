@@ -1,7 +1,24 @@
 import TripRow from './TripRow'
+import {
+  leaveTrip as _leaveTrip,
+  getUserById as _getUserById,
+  updateTrip as _updateTrip,
+  deleteTrip as _deleteTrip
+} from './database'
 import { colors, fonts, borders } from './theme'
 
-export default function TripTable ({ trips, userId, onUpdated, onDeleted, onLeft, emptyMessage = 'No trips yet. Add one above.' }) {
+export default function TripTable ({
+  trips,
+  userId,
+  onUpdated,
+  onDeleted,
+  onLeft,
+  emptyMessage = 'No trips yet. Add one above.',
+  leaveTrip = _leaveTrip,
+  getUserById = _getUserById,
+  updateTrip = _updateTrip,
+  deleteTrip = _deleteTrip
+}) {
   if (trips.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
   }
@@ -25,6 +42,10 @@ export default function TripTable ({ trips, userId, onUpdated, onDeleted, onLeft
             onUpdated={onUpdated}
             onDeleted={onDeleted}
             onLeft={onLeft}
+            leaveTrip={leaveTrip}
+            getUserById={getUserById}
+            updateTrip={updateTrip}
+            deleteTrip={deleteTrip}
           />
         ))}
       </tbody>

@@ -1,8 +1,13 @@
 import { useState } from 'react'
-import { account } from './appwrite'
+import { account as _account } from './appwrite'
 import { colors, fonts, borders } from './theme'
 
-export default function Login ({ onLogin, onSwitchToSignup }) {
+export default function Login ({
+  onLogin,
+  onSwitchToSignup,
+  createEmailPasswordSession = (email, password) => _account.createEmailPasswordSession(email, password),
+  accountGet = () => _account.get()
+}) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -13,8 +18,8 @@ export default function Login ({ onLogin, onSwitchToSignup }) {
     setError('')
     setLoading(true)
     try {
-      await account.createEmailPasswordSession(email, password)
-      const user = await account.get()
+      await createEmailPasswordSession(email, password)
+      const user = await accountGet()
       onLogin(user)
     } catch (err) {
       setError(err.message)

@@ -1,36 +1,24 @@
-import { describe, it, expect, mock, beforeEach } from 'bun:test'
+import { describe, it, expect, mock } from 'bun:test'
 import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import Login from './Login'
 
-const mockCreateEmailPasswordSession = mock(() => Promise.resolve())
-const mockAccountGet = mock(() =>
-  Promise.resolve({ $id: 'u-1', name: 'Alice', email: 'alice@example.com' })
-)
-
-mock.module('./appwrite', () => ({
-  account: {
-    createEmailPasswordSession: mockCreateEmailPasswordSession,
-    get: mockAccountGet
-  }
-}))
-
-const { default: Login } = await import('./Login')
-
+const defaultUser = { $id: 'user-1', name: 'Test User', email: 'test@example.com' }
 const noop = () => {}
 
 function renderLogin (props = {}) {
-  return render(<Login onLogin={noop} onSwitchToSignup={noop} {...props} />)
+  return render(
+    <Login
+      onLogin={noop}
+      onSwitchToSignup={noop}
+      createEmailPasswordSession={() => Promise.resolve()}
+      accountGet={() => Promise.resolve(defaultUser)}
+      {...props}
+    />
+  )
 }
 
 describe('Login', () => {
-  beforeEach(() => {
-    mockCreateEmailPasswordSession.mockClear()
-    mockAccountGet.mockClear()
-    mockAccountGet.mockImplementation(() =>
-      Promise.resolve({ $id: 'u-1', name: 'Alice', email: 'alice@example.com' })
-    )
-  })
-
   it('shows the Sign In heading', () => {
     renderLogin()
     expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument()
@@ -44,25 +32,25 @@ describe('Login', () => {
 
   it('calls createEmailPasswordSession and onLogin with the user on submit', async () => {
     const user = userEvent.setup()
+    const mockSession = mock(() => Promise.resolve())
     const handleLogin = mock(() => {})
-    const { container } = renderLogin({ onLogin: handleLogin })
+    const { container } = renderLogin({ createEmailPasswordSession: mockSession, onLogin: handleLogin })
 
     await user.type(container.querySelector('[type="email"]'), 'alice@example.com')
     await user.type(container.querySelector('[type="password"]'), 'secret123')
     await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
     await waitFor(() => {
-      expect(mockCreateEmailPasswordSession).toHaveBeenCalledWith('alice@example.com', 'secret123')
-      expect(handleLogin).toHaveBeenCalledWith({ $id: 'u-1', name: 'Alice', email: 'alice@example.com' })
+      expect(mockSession).toHaveBeenCalledWith('alice@example.com', 'secret123')
+      expect(handleLogin).toHaveBeenCalledWith(defaultUser)
     })
   })
 
   it('shows an error message when login fails', async () => {
-    mockCreateEmailPasswordSession.mockImplementationOnce(() =>
-      Promise.reject(new Error('Invalid credentials'))
-    )
     const user = userEvent.setup()
-    const { container } = renderLogin()
+    const { container } = renderLogin({
+      createEmailPasswordSession: () => Promise.reject(new Error('Invalid credentials'))
+    })
 
     await user.type(container.querySelector('[type="email"]'), 'bad@example.com')
     await user.type(container.querySelector('[type="password"]'), 'wrongpass')
@@ -84,11 +72,10 @@ describe('Login', () => {
 
   it('disables the submit button while signing in', async () => {
     let resolveSession
-    mockCreateEmailPasswordSession.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveSession = resolve })
-    )
     const user = userEvent.setup()
-    const { container } = renderLogin()
+    const { container } = renderLogin({
+      createEmailPasswordSession: () => new Promise((resolve) => { resolveSession = resolve })
+    })
 
     await user.type(container.querySelector('[type="email"]'), 'alice@example.com')
     await user.type(container.querySelector('[type="password"]'), 'secret123')

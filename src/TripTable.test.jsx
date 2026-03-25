@@ -1,14 +1,6 @@
-import { describe, it, expect, mock } from 'bun:test'
+import { describe, it, expect } from 'bun:test'
 import { render, screen, act } from '@testing-library/react'
-
-mock.module('./database', () => ({
-  updateTrip: mock(() => Promise.resolve()),
-  deleteTrip: mock(() => Promise.resolve()),
-  leaveTrip: mock(() => Promise.resolve()),
-  getUserById: mock(() => Promise.resolve({ name: 'Alice', email: 'alice@example.com' }))
-}))
-
-const { default: TripTable } = await import('./TripTable')
+import TripTable from './TripTable'
 
 const sampleTrips = [
   { $id: '1', name: 'Ski Alps', description: 'Alpine trip', userId: 'user-1' },
@@ -16,10 +8,22 @@ const sampleTrips = [
 ]
 
 const noop = () => {}
+const defaultUser = { name: 'Test User', email: 'test@example.com' }
 
 async function renderTable (trips, props = {}) {
   await act(async () => {
-    render(<TripTable trips={trips} onUpdated={noop} onDeleted={noop} {...props} />)
+    render(
+      <TripTable
+        trips={trips}
+        onUpdated={noop}
+        onDeleted={noop}
+        getUserById={() => Promise.resolve(defaultUser)}
+        leaveTrip={() => Promise.resolve()}
+        updateTrip={() => Promise.resolve({})}
+        deleteTrip={() => Promise.resolve()}
+        {...props}
+      />
+    )
   })
 }
 

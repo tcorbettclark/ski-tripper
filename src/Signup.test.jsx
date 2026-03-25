@@ -1,43 +1,26 @@
-import { describe, it, expect, mock, beforeEach } from 'bun:test'
+import { describe, it, expect, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import Signup from './Signup'
 
-const mockAccountCreate = mock(() => Promise.resolve())
-const mockCreateEmailPasswordSession = mock(() => Promise.resolve())
-const mockAccountGet = mock(() =>
-  Promise.resolve({ $id: 'u-1', name: 'Alice', email: 'alice@example.com' })
-)
-
-mock.module('./appwrite', () => ({
-  account: {
-    create: mockAccountCreate,
-    createEmailPasswordSession: mockCreateEmailPasswordSession,
-    get: mockAccountGet
-  }
-}))
-
-mock.module('appwrite', () => ({
-  ID: { unique: () => 'generated-id' }
-}))
-
-const { default: Signup } = await import('./Signup')
-
+const defaultUser = { $id: 'user-1', name: 'Test User', email: 'test@example.com' }
 const noop = () => {}
 
 function renderSignup (props = {}) {
-  return render(<Signup onSignup={noop} onSwitchToLogin={noop} {...props} />)
+  return render(
+    <Signup
+      onSignup={noop}
+      onSwitchToLogin={noop}
+      accountCreate={() => Promise.resolve()}
+      createEmailPasswordSession={() => Promise.resolve()}
+      accountGet={() => Promise.resolve(defaultUser)}
+      generateId={() => 'generated-id'}
+      {...props}
+    />
+  )
 }
 
 describe('Signup', () => {
-  beforeEach(() => {
-    mockAccountCreate.mockClear()
-    mockCreateEmailPasswordSession.mockClear()
-    mockAccountGet.mockClear()
-    mockAccountGet.mockImplementation(() =>
-      Promise.resolve({ $id: 'u-1', name: 'Alice', email: 'alice@example.com' })
-    )
-  })
-
   it('shows the Create Account heading', () => {
     renderSignup()
     expect(screen.getByRole('heading', { name: /create account/i })).toBeInTheDocument()
@@ -52,8 +35,14 @@ describe('Signup', () => {
 
   it('calls account.create, createEmailPasswordSession, and onSignup on submit', async () => {
     const user = userEvent.setup()
+    const mockCreate = mock(() => Promise.resolve())
+    const mockSession = mock(() => Promise.resolve())
     const handleSignup = mock(() => {})
-    const { container } = renderSignup({ onSignup: handleSignup })
+    const { container } = renderSignup({
+      accountCreate: mockCreate,
+      createEmailPasswordSession: mockSession,
+      onSignup: handleSignup
+    })
 
     await user.type(container.querySelector('[type="text"]'), 'Alice')
     await user.type(container.querySelector('[type="email"]'), 'alice@example.com')
@@ -61,21 +50,22 @@ describe('Signup', () => {
     await user.click(screen.getByRole('button', { name: /sign up/i }))
 
     await waitFor(() => {
-      expect(mockAccountCreate).toHaveBeenCalledWith(
+      expect(mockCreate).toHaveBeenCalledWith(
         'generated-id',
         'alice@example.com',
         'password123',
         'Alice'
       )
-      expect(mockCreateEmailPasswordSession).toHaveBeenCalledWith('alice@example.com', 'password123')
-      expect(handleSignup).toHaveBeenCalledWith({ $id: 'u-1', name: 'Alice', email: 'alice@example.com' })
+      expect(mockSession).toHaveBeenCalledWith('alice@example.com', 'password123')
+      expect(handleSignup).toHaveBeenCalledWith(defaultUser)
     })
   })
 
   it('shows an error message when account creation fails', async () => {
-    mockAccountCreate.mockImplementationOnce(() => Promise.reject(new Error('Email already in use')))
     const user = userEvent.setup()
-    const { container } = renderSignup()
+    const { container } = renderSignup({
+      accountCreate: () => Promise.reject(new Error('Email already in use'))
+    })
 
     await user.type(container.querySelector('[type="text"]'), 'Alice')
     await user.type(container.querySelector('[type="email"]'), 'alice@example.com')

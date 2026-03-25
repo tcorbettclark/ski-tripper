@@ -1,28 +1,25 @@
-import { describe, it, expect, mock, beforeEach } from 'bun:test'
+import { describe, it, expect, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-
-const mockCreateTrip = mock(() =>
-  Promise.resolve({ $id: 'new-id', name: 'Test Trip', description: '' })
-)
-
-mock.module('./database', () => ({
-  createTrip: mockCreateTrip
-}))
-
-const { default: CreateTripForm } = await import('./CreateTripForm')
+import CreateTripForm from './CreateTripForm'
 
 const noop = () => {}
-
 const testUser = { $id: 'user-1', name: 'Test User', email: 'test@example.com' }
+const defaultTrip = { $id: 'new-trip', description: 'New Trip', code: 'aaa-bbb-ccc', userId: 'user-1' }
 
 function renderForm (props = {}) {
-  return render(<CreateTripForm user={testUser} onCreated={noop} onDismiss={noop} {...props} />)
+  return render(
+    <CreateTripForm
+      user={testUser}
+      onCreated={noop}
+      onDismiss={noop}
+      createTrip={() => Promise.resolve(defaultTrip)}
+      {...props}
+    />
+  )
 }
 
 describe('CreateTripForm', () => {
-  beforeEach(() => mockCreateTrip.mockClear())
-
   it('shows the description field', () => {
     renderForm()
     expect(screen.getByRole('textbox')).toBeInTheDocument()
@@ -30,14 +27,15 @@ describe('CreateTripForm', () => {
 
   it('calls createTrip and onCreated when a valid form is submitted', async () => {
     const user = userEvent.setup()
+    const mockCreate = mock(() => Promise.resolve(defaultTrip))
     const handleCreated = mock(() => {})
-    renderForm({ onCreated: handleCreated })
+    renderForm({ createTrip: mockCreate, onCreated: handleCreated })
 
     await user.type(screen.getByRole('textbox'), 'A trip to the Alps in February')
     await user.click(screen.getByRole('button', { name: /save trip/i }))
 
     await waitFor(() => {
-      expect(mockCreateTrip).toHaveBeenCalledWith('user-1', { description: 'A trip to the Alps in February' })
+      expect(mockCreate).toHaveBeenCalledWith('user-1', { description: 'A trip to the Alps in February' })
       expect(handleCreated).toHaveBeenCalledTimes(1)
     })
   })
@@ -65,9 +63,8 @@ describe('CreateTripForm', () => {
   })
 
   it('displays an error message when the API call fails', async () => {
-    mockCreateTrip.mockImplementationOnce(() => Promise.reject(new Error('API error')))
     const user = userEvent.setup()
-    renderForm()
+    renderForm({ createTrip: () => Promise.reject(new Error('API error')) })
 
     await user.type(screen.getByRole('textbox'), 'A trip to the Alps in February')
     await user.click(screen.getByRole('button', { name: /save trip/i }))

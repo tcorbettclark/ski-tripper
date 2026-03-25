@@ -1,9 +1,16 @@
 import { useState } from 'react'
-import { updateTrip, deleteTrip } from './database'
+import { updateTrip as _updateTrip, deleteTrip as _deleteTrip } from './database'
 import Field from './Field'
 import { colors, fonts, borders } from './theme'
 
-export default function EditTripForm ({ trip, onUpdated, onDeleted, onCancel }) {
+export default function EditTripForm ({
+  trip,
+  onUpdated,
+  onDeleted,
+  onCancel,
+  updateTrip = _updateTrip,
+  deleteTrip = _deleteTrip
+}) {
   const [form, setForm] = useState({
     description: trip.description || ''
   })

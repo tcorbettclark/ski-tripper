@@ -1,11 +1,32 @@
 import { useEffect, useState } from 'react'
-import { listTrips, listParticipatedTrips } from './database'
+import {
+  listTrips as _listTrips,
+  listParticipatedTrips as _listParticipatedTrips,
+  createTrip as _createTrip,
+  getTripByCode as _getTripByCode,
+  joinTrip as _joinTrip,
+  updateTrip as _updateTrip,
+  deleteTrip as _deleteTrip,
+  leaveTrip as _leaveTrip,
+  getUserById as _getUserById
+} from './database'
 import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'
 import { colors, fonts, borders } from './theme'
 
-export default function Trips ({ user }) {
+export default function Trips ({
+  user,
+  listTrips = _listTrips,
+  listParticipatedTrips = _listParticipatedTrips,
+  createTrip = _createTrip,
+  getTripByCode = _getTripByCode,
+  joinTrip = _joinTrip,
+  updateTrip = _updateTrip,
+  deleteTrip = _deleteTrip,
+  leaveTrip = _leaveTrip,
+  getUserById = _getUserById
+}) {
   const [trips, setTrips] = useState([])
   const [participatedTrips, setParticipatedTrips] = useState([])
   const [loading, setLoading] = useState(true)
@@ -80,6 +101,7 @@ export default function Trips ({ user }) {
           user={user}
           onCreated={handleCreated}
           onDismiss={() => setShowCreateForm(false)}
+          createTrip={createTrip}
         />
       )}
       {showJoinForm && (
@@ -87,6 +109,8 @@ export default function Trips ({ user }) {
           user={user}
           onJoined={handleJoined}
           onDismiss={() => setShowJoinForm(false)}
+          getTripByCode={getTripByCode}
+          joinTrip={joinTrip}
         />
       )}
 
@@ -97,6 +121,10 @@ export default function Trips ({ user }) {
         onDeleted={handleDeleted}
         onLeft={handleLeft}
         emptyMessage='No trips yet. Create one or join one above.'
+        updateTrip={updateTrip}
+        deleteTrip={deleteTrip}
+        leaveTrip={leaveTrip}
+        getUserById={getUserById}
       />
     </div>
   )

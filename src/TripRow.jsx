@@ -1,9 +1,24 @@
 import { useState, useEffect, useCallback } from 'react'
 import EditTripForm from './EditTripForm'
-import { leaveTrip, getUserById } from './database'
+import {
+  leaveTrip as _leaveTrip,
+  getUserById as _getUserById,
+  updateTrip as _updateTrip,
+  deleteTrip as _deleteTrip
+} from './database'
 import { colors, fonts, borders } from './theme'
 
-export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft }) {
+export default function TripRow ({
+  trip,
+  userId,
+  onUpdated,
+  onDeleted,
+  onLeft,
+  leaveTrip = _leaveTrip,
+  getUserById = _getUserById,
+  updateTrip = _updateTrip,
+  deleteTrip = _deleteTrip
+}) {
   const [isEditing, setIsEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [leaveError, setLeaveError] = useState('')
@@ -48,6 +63,8 @@ export default function TripRow ({ trip, userId, onUpdated, onDeleted, onLeft })
             }}
             onDeleted={() => { setIsEditing(false); onDeleted(trip.$id) }}
             onCancel={() => setIsEditing(false)}
+            updateTrip={updateTrip}
+            deleteTrip={deleteTrip}
           />
         </td>
       </tr>

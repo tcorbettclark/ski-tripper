@@ -9,4 +9,9 @@ const matchers = await import('@testing-library/jest-dom/matchers')
 const { cleanup } = await import('@testing-library/react')
 
 expect.extend(matchers)
-afterEach(cleanup)
+
+afterEach(() => {
+  cleanup()
+  document.body.innerHTML = ''
+  localStorage.clear()
+})

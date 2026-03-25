@@ -1,19 +1,11 @@
 import { describe, it, expect, mock, beforeEach } from 'bun:test'
 import { render, screen, act, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-
-const mockLeaveTrip = mock(() => Promise.resolve())
-
-mock.module('./database', () => ({
-  updateTrip: mock(() => Promise.resolve()),
-  deleteTrip: mock(() => Promise.resolve()),
-  leaveTrip: mockLeaveTrip,
-  getUserById: mock(() => Promise.resolve({ name: 'Alice', email: 'alice@example.com' }))
-}))
-
-const { default: TripRow } = await import('./TripRow')
+import TripRow from './TripRow'
 
 const sampleTrip = { $id: 'trip-1', code: 'ABC12', name: 'Ski Alps', description: 'A great trip', userId: 'user-1' }
+const defaultUser = { name: 'Test User', email: 'test@example.com' }
+const defaultUpdated = { $id: 'trip-1', description: 'Updated', code: 'aaa-bbb-ccc', userId: 'user-1' }
 
 const noop = () => {}
 
@@ -22,7 +14,16 @@ async function renderRow (trip, props = {}) {
     render(
       <table>
         <tbody>
-          <TripRow trip={trip} onUpdated={noop} onDeleted={noop} {...props} />
+          <TripRow
+            trip={trip}
+            onUpdated={noop}
+            onDeleted={noop}
+            getUserById={() => Promise.resolve(defaultUser)}
+            leaveTrip={() => Promise.resolve()}
+            updateTrip={() => Promise.resolve(defaultUpdated)}
+            deleteTrip={() => Promise.resolve()}
+            {...props}
+          />
         </tbody>
       </table>
     )
@@ -33,7 +34,6 @@ describe('TripRow', () => {
   let mockWriteText
 
   beforeEach(() => {
-    mockLeaveTrip.mockClear()
     mockWriteText = mock(() => Promise.resolve())
     navigator.clipboard.writeText = mockWriteText
   })
@@ -55,7 +55,7 @@ describe('TripRow', () => {
 
   it('shows the coordinator name', async () => {
     await renderRow(sampleTrip)
-    expect(screen.getByText('Alice')).toBeInTheDocument()
+    expect(screen.getByText('Test User')).toBeInTheDocument()
   })
 
   it('shows a dash when description is empty', async () => {
@@ -77,24 +77,28 @@ describe('TripRow', () => {
 
   it('appends "(me)" to the coordinator name when the trip belongs to the current user', async () => {
     await renderRow(sampleTrip, { userId: 'user-1' })
-    expect(screen.getByText('Alice (me)')).toBeInTheDocument()
+    expect(screen.getByText('Test User (me)')).toBeInTheDocument()
   })
 
   it('calls leaveTrip and onLeft when Leave is clicked', async () => {
     const user = userEvent.setup()
+    const mockLeave = mock(() => Promise.resolve())
     const handleLeft = mock(() => {})
-    await renderRow(sampleTrip, { userId: 'user-2', onLeft: handleLeft })
+    await renderRow(sampleTrip, { userId: 'user-2', onLeft: handleLeft, leaveTrip: mockLeave })
     await user.click(screen.getByRole('button', { name: /leave/i }))
     await waitFor(() => {
-      expect(mockLeaveTrip).toHaveBeenCalledWith('user-2', 'trip-1')
+      expect(mockLeave).toHaveBeenCalledWith('user-2', 'trip-1')
       expect(handleLeft).toHaveBeenCalledWith('trip-1')
     })
   })
 
   it('shows an error message when leaving fails', async () => {
-    mockLeaveTrip.mockImplementationOnce(() => Promise.reject(new Error('Cannot leave')))
     const user = userEvent.setup()
-    await renderRow(sampleTrip, { userId: 'user-2', onLeft: noop })
+    await renderRow(sampleTrip, {
+      userId: 'user-2',
+      onLeft: noop,
+      leaveTrip: () => Promise.reject(new Error('Cannot leave'))
+    })
     await user.click(screen.getByRole('button', { name: /leave/i }))
     await waitFor(() => {
       expect(screen.getByText('Cannot leave')).toBeInTheDocument()

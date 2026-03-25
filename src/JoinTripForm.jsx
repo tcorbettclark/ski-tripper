@@ -1,9 +1,15 @@
 import { useState } from 'react'
-import { getTripByCode, joinTrip } from './database'
+import { getTripByCode as _getTripByCode, joinTrip as _joinTrip } from './database'
 import Field from './Field'
 import { colors, fonts, borders } from './theme'
 
-export default function JoinTripForm ({ user, onJoined, onDismiss }) {
+export default function JoinTripForm ({
+  user,
+  onJoined,
+  onDismiss,
+  getTripByCode = _getTripByCode,
+  joinTrip = _joinTrip
+}) {
   const [code, setCode] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')

@@ -1,25 +1,27 @@
 import { useEffect, useState } from 'react'
-import { account } from './appwrite'
+import { account as _account } from './appwrite'
 import Login from './Login'
 import Signup from './Signup'
 import Trips from './Trips'
 import { colors, fonts, borders } from './theme'
 
-function App () {
+function App ({
+  accountGet = () => _account.get(),
+  deleteSession = () => _account.deleteSession('current')
+}) {
   const [user, setUser] = useState(null)
   const [checking, setChecking] = useState(true)
   const [page, setPage] = useState('login')
 
   useEffect(() => {
-    account
-      .get()
+    accountGet()
       .then(setUser)
       .catch(() => setUser(null))
       .finally(() => setChecking(false))
   }, [])
 
   async function handleLogout () {
-    await account.deleteSession('current')
+    await deleteSession()
     setUser(null)
   }
 
