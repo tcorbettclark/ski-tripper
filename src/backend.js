@@ -1,7 +1,14 @@
-import { ID, Permission, Query, Role } from 'appwrite'
-import { databases } from './appwrite'
+import { Client, Account, Databases, ID, Permission, Query, Role } from 'appwrite'
 import adjectives from 'threewords/data/adjectives.json'
 import nouns from 'threewords/data/nouns.json'
+
+const client = new Client()
+  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT)
+  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID)
+
+export const account = new Account(client)
+export const databases = new Databases(client)
+export default client
 
 function randomThreeWords () {
   const ints = new Uint32Array(3)

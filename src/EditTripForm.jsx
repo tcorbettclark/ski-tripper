@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { updateTrip as _updateTrip, deleteTrip as _deleteTrip } from './database'
+import { updateTrip as _updateTrip, deleteTrip as _deleteTrip } from './backend'
 import Field from './Field'
 import { colors, fonts, borders } from './theme'
 

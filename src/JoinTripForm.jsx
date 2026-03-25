@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getTripByCode as _getTripByCode, joinTrip as _joinTrip } from './database'
+import { getTripByCode as _getTripByCode, joinTrip as _joinTrip } from './backend'
 import Field from './Field'
 import { colors, fonts, borders } from './theme'
 

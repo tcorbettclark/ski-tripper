@@ -5,7 +5,7 @@ import {
   getUserById as _getUserById,
   updateTrip as _updateTrip,
   deleteTrip as _deleteTrip
-} from './database'
+} from './backend'
 import { colors, fonts, borders } from './theme'
 
 export default function TripRow ({

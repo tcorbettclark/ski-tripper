@@ -10,7 +10,7 @@ import {
   listParticipatedTrips,
   leaveTrip,
   getUserById
-} from './database'
+} from './backend'
 
 function makeDb (overrides = {}) {
   return {

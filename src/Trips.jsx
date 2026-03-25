@@ -9,7 +9,7 @@ import {
   deleteTrip as _deleteTrip,
   leaveTrip as _leaveTrip,
   getUserById as _getUserById
-} from './database'
+} from './backend'
 import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'

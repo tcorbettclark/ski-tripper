@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { account as _account } from './appwrite'
+import { account as _account } from './backend'
 import { colors, fonts, borders } from './theme'
 
 export default function Login ({

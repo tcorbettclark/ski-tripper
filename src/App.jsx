@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { account as _account } from './appwrite'
+import { account as _account } from './backend'
 import Login from './Login'
 import Signup from './Signup'
 import Trips from './Trips'
