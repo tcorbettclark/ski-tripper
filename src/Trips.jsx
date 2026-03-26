@@ -19,6 +19,7 @@ import { colors, fonts, borders } from './theme'
 export default function Trips ({
   user,
   onJoinedTrip,
+  onViewProposals,
   listTrips = _listTrips,
   listParticipatedTrips = _listParticipatedTrips,
   createTrip = _createTrip,
@@ -140,6 +141,7 @@ export default function Trips ({
         onUpdated={handleUpdated}
         onDeleted={handleDeleted}
         onLeft={handleLeft}
+        onViewProposals={onViewProposals}
         emptyMessage='No trips yet. Create one or join one above.'
         updateTrip={updateTrip}
         deleteTrip={deleteTrip}

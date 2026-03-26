@@ -15,6 +15,7 @@ export default function TripTable ({
   onUpdated,
   onDeleted,
   onLeft,
+  onViewProposals,
   emptyMessage = 'No trips yet. Add one above.',
   leaveTrip = _leaveTrip,
   getUserById = _getUserById,
@@ -33,7 +34,7 @@ export default function TripTable ({
           <th style={styles.th}>Code</th>
           <th style={styles.th}>Description</th>
           <th style={styles.th}>Co-ordinator</th>
-          <th style={styles.th} />
+          <th style={styles.th}>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -46,7 +47,8 @@ export default function TripTable ({
             onUpdated={onUpdated}
             onDeleted={onDeleted}
             onLeft={onLeft}
-            columnCount={4}
+            onViewProposals={onViewProposals}
+            columnCount={5}
             leaveTrip={leaveTrip}
             getUserById={getUserById}
             updateTrip={updateTrip}

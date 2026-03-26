@@ -17,6 +17,7 @@ function App ({
   const [checking, setChecking] = useState(true)
   const [page, setPage] = useState('login')
   const [activePage, setActivePage] = useState('trips')
+  const [proposalsSelectedTripId, setProposalsSelectedTripId] = useState(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
 
   const handleJoinedTrip = useCallback(() => {
@@ -74,12 +75,23 @@ function App ({
       </header>
       {activePage === 'trips' && (
         <ErrorBoundary>
-          <Trips user={user} onJoinedTrip={handleJoinedTrip} />
+          <Trips
+            user={user}
+            onJoinedTrip={handleJoinedTrip}
+            onViewProposals={(tripId) => {
+              setProposalsSelectedTripId(tripId)
+              setActivePage('proposals')
+            }}
+          />
         </ErrorBoundary>
       )}
       {activePage === 'proposals' && (
         <ErrorBoundary>
-          <Proposals user={user} key={refreshProposalsKey} />
+          <Proposals
+            user={user}
+            key={refreshProposalsKey}
+            selectedTripId={proposalsSelectedTripId}
+          />
         </ErrorBoundary>
       )}
     </div>

@@ -16,6 +16,7 @@ import { colors, fonts, borders } from './theme'
 export default function Proposals ({
   user,
   refreshTrips,
+  selectedTripId: initialSelectedTripId,
   listParticipatedTrips = _listParticipatedTrips,
   listProposals = _listProposals,
   createProposal = _createProposal,
@@ -25,7 +26,7 @@ export default function Proposals ({
   getUserById = _getUserById
 }) {
   const [trips, setTrips] = useState([])
-  const [selectedTripId, setSelectedTripId] = useState(null)
+  const [selectedTripId, setSelectedTripId] = useState(initialSelectedTripId || null)
   const [proposals, setProposals] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -39,6 +40,12 @@ export default function Proposals ({
     mountedRef.current = true
     return () => { mountedRef.current = false }
   }, [])
+
+  useEffect(() => {
+    if (initialSelectedTripId) {
+      setSelectedTripId(initialSelectedTripId)
+    }
+  }, [initialSelectedTripId])
 
   useEffect(() => {
     listParticipatedTrips(user.$id)

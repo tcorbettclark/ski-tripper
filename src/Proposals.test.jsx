@@ -167,4 +167,52 @@ describe('Proposals', () => {
       expect(screen.getByRole('button', { name: /\+ new proposal/i })).toBeInTheDocument()
     })
   })
+
+  it('pre-selects a trip when selectedTripId prop is provided', async () => {
+    const listProposals = mock(() => Promise.resolve({ documents: sampleProposals }))
+    await act(async () => {
+      renderProposals({
+        selectedTripId: 'trip-2',
+        listParticipatedTrips: mock(() => Promise.resolve({ documents: sampleTrips })),
+        listProposals
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('combobox')).toBeInTheDocument()
+    })
+    await waitFor(() => {
+      expect(listProposals).toHaveBeenCalledWith('trip-2', 'user-1')
+    })
+  })
+
+  it('selects a different trip when selectedTripId prop changes', async () => {
+    const listProposals = mock(() => Promise.resolve({ documents: sampleProposals }))
+    const { rerender } = await act(async () => {
+      return renderProposals({
+        selectedTripId: 'trip-1',
+        listParticipatedTrips: mock(() => Promise.resolve({ documents: sampleTrips })),
+        listProposals
+      })
+    })
+    await waitFor(() => {
+      expect(listProposals).toHaveBeenCalledWith('trip-1', 'user-1')
+    })
+    listProposals.mockClear()
+    await act(async () => {
+      rerender(<Proposals
+        user={user}
+        selectedTripId='trip-2'
+        listParticipatedTrips={mock(() => Promise.resolve({ documents: sampleTrips }))}
+        listProposals={listProposals}
+        createProposal={mock(() => Promise.resolve({ $id: 'p-new' }))}
+        updateProposal={mock(() => Promise.resolve({ $id: 'p-1' }))}
+        deleteProposal={mock(() => Promise.resolve())}
+        submitProposal={mock(() => Promise.resolve({ $id: 'p-1', state: 'SUBMITTED' }))}
+        getUserById={mock(() => Promise.resolve({ name: 'Alice', email: 'alice@example.com' }))}
+               />)
+    })
+    await waitFor(() => {
+      expect(listProposals).toHaveBeenCalledWith('trip-2', 'user-1')
+    })
+  })
 })

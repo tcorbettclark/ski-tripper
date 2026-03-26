@@ -16,7 +16,8 @@ export default function TripRow ({
   onUpdated,
   onDeleted,
   onLeft,
-  columnCount = 4,
+  onViewProposals,
+  columnCount = 5,
   leaveTrip = _leaveTrip,
   getUserById = _getUserById,
   updateTrip = _updateTrip,
@@ -124,6 +125,9 @@ export default function TripRow ({
           : coordinator?.name || coordinator?.email || '—'}
       </td>
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
+        <button onClick={() => onViewProposals(trip.$id)} style={styles.proposalsButton}>
+          Proposals
+        </button>
         {coordinatorUserIdResolved === userId
           ? (
             <button onClick={() => setIsEditing(true)} style={styles.editButton}>
@@ -205,6 +209,19 @@ const styles = {
     fontWeight: '500',
     cursor: 'pointer',
     letterSpacing: '0.03em'
+  },
+  proposalsButton: {
+    padding: '5px 16px',
+    borderRadius: '5px',
+    border: `1px solid ${colors.accent}`,
+    background: 'transparent',
+    color: colors.accent,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em',
+    marginRight: '8px'
   },
   leaveButton: {
     padding: '5px 16px',

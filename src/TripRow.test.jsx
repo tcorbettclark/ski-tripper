@@ -82,6 +82,24 @@ describe('TripRow', () => {
     expect(screen.getByText('Test User (me)')).toBeInTheDocument()
   })
 
+  it('calls onViewProposals when Proposals button is clicked', async () => {
+    const user = userEvent.setup()
+    const handleViewProposals = mock(() => {})
+    await renderRow(sampleTrip, { onViewProposals: handleViewProposals })
+    await user.click(screen.getByRole('button', { name: /proposals/i }))
+    expect(handleViewProposals).toHaveBeenCalledWith('trip-1')
+  })
+
+  it('shows Proposals button for non-coordinator users', async () => {
+    await renderRow(sampleTrip, { userId: 'user-2', coordinatorUserId: 'user-1' })
+    expect(screen.getByRole('button', { name: /proposals/i })).toBeInTheDocument()
+  })
+
+  it('shows Proposals button for coordinator users', async () => {
+    await renderRow(sampleTrip, { userId: 'user-1', coordinatorUserId: 'user-1' })
+    expect(screen.getByRole('button', { name: /proposals/i })).toBeInTheDocument()
+  })
+
   it('calls leaveTrip and onLeft when Leave is clicked', async () => {
     const user = userEvent.setup()
     const mockLeave = mock(() => Promise.resolve())
