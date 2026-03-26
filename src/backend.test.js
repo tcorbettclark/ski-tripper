@@ -20,6 +20,8 @@ import {
   createPoll,
   closePoll,
   listPolls,
+  upsertVote,
+  listVotes,
 } from './backend'
 
 function makeDb (overrides = {}) {
@@ -781,6 +783,132 @@ describe('listPolls', () => {
   it('throws when user is not a participant', async () => {
     const db = makeDb()
     await expect(listPolls('trip-1', 'user-1', db)).rejects.toThrow(
+      'You must be a participant to access proposals.',
+    )
+  })
+})
+
+describe('upsertVote', () => {
+  it('creates a vote document when no existing vote', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          documents: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }],
+        }),
+      )
+      .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
+    const db = makeDb({
+      listDocuments,
+      getDocument: mock(() =>
+        Promise.resolve({
+          $id: 'poll-1',
+          state: 'OPEN',
+          proposalIds: ['p-1', 'p-2', 'p-3'],
+        }),
+      ),
+    })
+    await upsertVote('poll-1', 'trip-1', 'user-1', ['p-1'], [2], db)
+    expect(db.createDocument).toHaveBeenCalledTimes(1)
+    const [, , , data] = db.createDocument.mock.calls[0]
+    expect(data.pollId).toBe('poll-1')
+    expect(data.userId).toBe('user-1')
+    expect(data.proposalIds).toEqual(['p-1'])
+    expect(data.tokenCounts).toEqual([2])
+  })
+
+  it('updates existing vote document when one already exists', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          documents: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }],
+        }),
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'vote-1' }] }),
+      )
+    const db = makeDb({
+      listDocuments,
+      getDocument: mock(() =>
+        Promise.resolve({
+          $id: 'poll-1',
+          state: 'OPEN',
+          proposalIds: ['p-1', 'p-2', 'p-3'],
+        }),
+      ),
+    })
+    await upsertVote('poll-1', 'trip-1', 'user-1', ['p-2'], [1], db)
+    expect(db.updateDocument).toHaveBeenCalledTimes(1)
+    const [, , docId] = db.updateDocument.mock.calls[0]
+    expect(docId).toBe('vote-1')
+    expect(db.createDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when poll is not OPEN', async () => {
+    const listDocuments = mock(() =>
+      Promise.resolve({ documents: [{ $id: 'part-1', userId: 'user-1' }] }),
+    )
+    const db = makeDb({
+      listDocuments,
+      getDocument: mock(() =>
+        Promise.resolve({
+          $id: 'poll-1',
+          state: 'CLOSED',
+          proposalIds: ['p-1'],
+        }),
+      ),
+    })
+    await expect(
+      upsertVote('poll-1', 'trip-1', 'user-1', [], [], db),
+    ).rejects.toThrow('Voting is only allowed on open polls.')
+  })
+
+  it('throws when total tokens exceed the number of proposals', async () => {
+    const listDocuments = mock(() =>
+      Promise.resolve({ documents: [{ $id: 'part-1', userId: 'user-1' }] }),
+    )
+    const db = makeDb({
+      listDocuments,
+      getDocument: mock(() =>
+        Promise.resolve({
+          $id: 'poll-1',
+          state: 'OPEN',
+          proposalIds: ['p-1', 'p-2'],
+        }),
+      ),
+    })
+    await expect(
+      upsertVote('poll-1', 'trip-1', 'user-1', ['p-1'], [3], db),
+    ).rejects.toThrow('Total tokens cannot exceed 2.')
+  })
+
+  it('throws when user is not a participant', async () => {
+    const db = makeDb()
+    await expect(
+      upsertVote('poll-1', 'trip-1', 'user-1', [], [], db),
+    ).rejects.toThrow('You must be a participant to access proposals.')
+  })
+})
+
+describe('listVotes', () => {
+  it('returns vote documents when user is a participant', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          documents: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }],
+        }),
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'v-1', pollId: 'poll-1' }] }),
+      )
+    const db = makeDb({ listDocuments })
+    const result = await listVotes('poll-1', 'trip-1', 'user-1', db)
+    expect(result.documents).toHaveLength(1)
+    expect(result.documents[0].$id).toBe('v-1')
+  })
+
+  it('throws when user is not a participant', async () => {
+    const db = makeDb()
+    await expect(listVotes('poll-1', 'trip-1', 'user-1', db)).rejects.toThrow(
       'You must be a participant to access proposals.',
     )
   })

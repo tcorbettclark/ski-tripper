@@ -325,3 +325,53 @@ export async function listPolls (tripId, userId, db = databases) {
     Query.limit(50),
   ])
 }
+
+export async function upsertVote (
+  pollId,
+  tripId,
+  userId,
+  proposalIds,
+  tokenCounts,
+  db = databases,
+) {
+  await _verifyParticipant(tripId, userId, db)
+  const poll = await db.getDocument(DATABASE_ID, POLLS_COLLECTION_ID, pollId)
+  if (poll.state !== 'OPEN')
+    throw new Error('Voting is only allowed on open polls.')
+  const total = tokenCounts.reduce((a, b) => a + b, 0)
+  if (total > poll.proposalIds.length) {
+    throw new Error(`Total tokens cannot exceed ${poll.proposalIds.length}.`)
+  }
+  const { documents } = await db.listDocuments(
+    DATABASE_ID,
+    VOTES_COLLECTION_ID,
+    [
+      Query.equal('pollId', pollId),
+      Query.equal('userId', userId),
+      Query.limit(1),
+    ],
+  )
+  if (documents.length > 0) {
+    return db.updateDocument(
+      DATABASE_ID,
+      VOTES_COLLECTION_ID,
+      documents[0].$id,
+      { proposalIds, tokenCounts },
+    )
+  }
+  return db.createDocument(
+    DATABASE_ID,
+    VOTES_COLLECTION_ID,
+    ID.unique(),
+    { pollId, tripId, userId, proposalIds, tokenCounts },
+    [Permission.read(Role.users()), Permission.write(Role.user(userId))],
+  )
+}
+
+export async function listVotes (pollId, tripId, userId, db = databases) {
+  await _verifyParticipant(tripId, userId, db)
+  return db.listDocuments(DATABASE_ID, VOTES_COLLECTION_ID, [
+    Query.equal('pollId', pollId),
+    Query.limit(200),
+  ])
+}
