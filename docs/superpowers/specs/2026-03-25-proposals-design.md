@@ -18,20 +18,20 @@ Add a proposals system where trip participants can create, edit, and submit trip
 
 ### Appwrite Collection: `Proposals`
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `tripId` | string | yes | Reference to the trip |
-| `userId` | string | yes | Creator ID |
-| `state` | string | yes | `DRAFT` or `SUBMITTED` |
-| `resortName` | string | yes | Name of ski resort |
-| `altitudeRange` | string | yes | e.g. "1800m - 3200m" |
-| `country` | string | yes | Country location |
-| `nearestAirport` | string | yes | Airport code or name |
-| `transferTime` | string | yes | e.g. "1h 30m" |
-| `accommodationName` | string | yes | Hotel/chalet name |
-| `accommodationUrl` | string | no | Link to accommodation |
-| `approximateCost` | string | yes | Cost estimate |
-| `description` | string | yes | General description |
+| Field               | Type   | Required | Notes                  |
+| ------------------- | ------ | -------- | ---------------------- |
+| `tripId`            | string | yes      | Reference to the trip  |
+| `userId`            | string | yes      | Creator ID             |
+| `state`             | string | yes      | `DRAFT` or `SUBMITTED` |
+| `resortName`        | string | yes      | Name of ski resort     |
+| `altitudeRange`     | string | yes      | e.g. "1800m - 3200m"   |
+| `country`           | string | yes      | Country location       |
+| `nearestAirport`    | string | yes      | Airport code or name   |
+| `transferTime`      | string | yes      | e.g. "1h 30m"          |
+| `accommodationName` | string | yes      | Hotel/chalet name      |
+| `accommodationUrl`  | string | no       | Link to accommodation  |
+| `approximateCost`   | string | yes      | Cost estimate          |
+| `description`       | string | yes      | General description    |
 
 **Permissions:** Document-level with read access for trip participants, write access for creator only in DRAFT state.
 
@@ -42,33 +42,39 @@ Add a proposals system where trip participants can create, edit, and submit trip
 Add to `src/backend.js`:
 
 ### `createProposal(tripId, userId, data, db = databases)`
+
 - Creates proposal in DRAFT state
 - Verifies user is a trip participant (exists in Participants collection with tripId)
 - Returns created proposal document
 
 ### `listProposals(tripId, userId, db = databases)`
+
 - Lists all proposals for a trip
 - Verifies user is a trip participant
 - Returns `{ documents: [...] }` with proposals ordered by `$createdAt` descending
 
 ### `getProposal(proposalId, userId, db = databases)`
+
 - Gets single proposal
 - Verifies user is a trip participant
 - Returns proposal document
 
 ### `updateProposal(proposalId, userId, data, db = databases)`
+
 - Updates proposal fields
 - Verifies: (1) user is creator AND (2) state is DRAFT
 - Throws error if not creator or not DRAFT
 - Returns updated proposal
 
 ### `deleteProposal(proposalId, userId, db = databases)`
+
 - Deletes proposal
 - Verifies: (1) user is creator AND (2) state is DRAFT
 - Throws error if not creator or not DRAFT
 - Returns void
 
 ### `submitProposal(proposalId, userId, db = databases)`
+
 - Transitions state from DRAFT to SUBMITTED
 - Verifies user is creator
 - Throws error if not creator or not DRAFT
@@ -77,9 +83,11 @@ Add to `src/backend.js`:
 ## UI Components
 
 ### `Proposals.jsx` (new)
+
 Main container component. Similar pattern to `Trips.jsx`.
 
 **State:**
+
 - `trips` — trips user has joined (for selector)
 - `selectedTripId` — currently selected trip
 - `proposals` — proposals for selected trip
@@ -89,15 +97,18 @@ Main container component. Similar pattern to `Trips.jsx`.
 - `editingProposalId` — ID of proposal being edited
 
 **Behavior:**
+
 - On mount, fetch trips user has joined (using existing `listParticipatedTrips`)
 - Show trip selector dropdown
 - When trip selected, fetch proposals for that trip
 - Show create button, proposals table, and conditional forms
 
 ### `ProposalsTable.jsx` (new)
+
 Table component for proposals. Similar pattern to `TripTable.jsx`.
 
 **Columns:**
+
 - Resort Name
 - Country
 - Altitude Range
@@ -106,17 +117,21 @@ Table component for proposals. Similar pattern to `TripTable.jsx`.
 - Actions (conditional)
 
 ### `ProposalsRow.jsx` (new)
+
 Individual row component. Similar pattern to `TripRow.jsx`.
 
 **Actions (conditional):**
+
 - Edit button — only for creator AND state is DRAFT
 - Delete button — only for creator AND state is DRAFT
 - Submit button — only for creator AND state is DRAFT
 
 ### `CreateProposalForm.jsx` (new)
+
 Form for creating new proposals. Similar pattern to `CreateTripForm.jsx`.
 
 **Fields:**
+
 - Resort Name (required)
 - Altitude Range (required)
 - Country (required)
@@ -128,14 +143,17 @@ Form for creating new proposals. Similar pattern to `CreateTripForm.jsx`.
 - Description (required, textarea)
 
 ### `EditProposalForm.jsx` (new)
+
 Form for editing DRAFT proposals. Similar pattern to `EditTripForm.jsx`.
 
 Same fields as CreateProposalForm, pre-populated with existing values.
 
 ### `App.jsx` (modify)
+
 Add navigation to Proposals page when logged in.
 
 **Navigation items:**
+
 - Trips (existing)
 - Proposals (new)
 
@@ -145,30 +163,30 @@ Follow existing patterns from `Trips.jsx`:
 
 ```jsx
 // Parent state
-const [proposals, setProposals] = useState([])
-const [selectedTripId, setSelectedTripId] = useState(null)
-const [showCreateForm, setShowCreateForm] = useState(false)
-const [editingProposalId, setEditingProposalId] = useState(null)
+const [proposals, setProposals] = useState([]);
+const [selectedTripId, setSelectedTripId] = useState(null);
+const [showCreateForm, setShowCreateForm] = useState(false);
+const [editingProposalId, setEditingProposalId] = useState(null);
 
 // Callback handlers
 function handleCreated(proposal) {
-  setProposals(p => [proposal, ...p])
+  setProposals((p) => [proposal, ...p]);
 }
 
 function handleUpdated(updated) {
-  setProposals(p => p.map(prop =>
-    prop.$id === updated.$id ? updated : prop
-  ))
+  setProposals((p) =>
+    p.map((prop) => (prop.$id === updated.$id ? updated : prop)),
+  );
 }
 
 function handleDeleted(id) {
-  setProposals(p => p.filter(prop => prop.$id !== id))
+  setProposals((p) => p.filter((prop) => prop.$id !== id));
 }
 
 function handleSubmitted(updated) {
-  setProposals(p => p.map(prop =>
-    prop.$id === updated.$id ? updated : prop
-  ))
+  setProposals((p) =>
+    p.map((prop) => (prop.$id === updated.$id ? updated : prop)),
+  );
 }
 ```
 
@@ -195,6 +213,7 @@ src/
 ## Testing
 
 Follow existing test patterns:
+
 - Test file alongside each component
 - Mock backend functions
 - Test render, interactions, error states
