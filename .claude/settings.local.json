@@ -6,7 +6,11 @@
       "Skill(git-commit)",
       "Bash(git add:*)",
       "Bash(git commit)",
-      "Bash(bun test:*)"
+      "Bash(bun test:*)",
+      "Bash(/Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/scripts/start-server.sh --project-dir /Users/tcorbettclark/Projects/ski-tripper)",
+      "Bash(/Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/start-server.sh --project-dir /Users/tcorbettclark/Projects/ski-tripper)",
+      "Bash(git commit:*)",
+      "Bash(/Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/stop-server.sh /Users/tcorbettclark/Projects/ski-tripper/.superpowers/brainstorm/11469-1774465764)"
     ]
   },
   "hooks": {
