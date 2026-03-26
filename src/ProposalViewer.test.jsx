@@ -68,6 +68,7 @@ async function renderViewer (props = {}) {
   await act(async () => {
     result = render(<ProposalViewer {...defaults} {...props} />)
   })
+  await act(async () => {}) // flush getUserById promise resolution
   return { ...defaults, ...props, ...result }
 }
 
