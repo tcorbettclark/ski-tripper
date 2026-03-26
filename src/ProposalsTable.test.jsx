@@ -62,7 +62,6 @@ describe('ProposalsTable', () => {
     await renderProposalsTable({ proposals: [sampleProposal] })
     expect(screen.getByText('Resort Name')).toBeInTheDocument()
     expect(screen.getByText('Country')).toBeInTheDocument()
-    expect(screen.getByText('Altitude Range')).toBeInTheDocument()
     expect(screen.getByText('Status')).toBeInTheDocument()
   })
 

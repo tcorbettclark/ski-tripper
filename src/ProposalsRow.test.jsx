@@ -55,11 +55,6 @@ describe('ProposalsRow', () => {
     expect(screen.getByText('France')).toBeInTheDocument()
   })
 
-  it('shows the altitude range', async () => {
-    await renderProposalsRow()
-    expect(screen.getByText('1850m - 3456m')).toBeInTheDocument()
-  })
-
   it('shows creator name', async () => {
     await renderProposalsRow()
     expect(screen.getByText('Alice')).toBeInTheDocument()

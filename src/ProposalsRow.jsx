@@ -53,7 +53,7 @@ export default function ProposalsRow ({
   if (isEditing) {
     return (
       <tr style={styles.editingTr}>
-        <td style={styles.editingTd} colSpan={6}>
+        <td style={styles.editingTd} colSpan={5}>
           <EditProposalForm
             proposal={proposal}
             userId={userId}
@@ -75,7 +75,6 @@ export default function ProposalsRow ({
     <tr style={styles.tr}>
       <td style={styles.td}>{proposal.resortName || '—'}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>{proposal.country || '—'}</td>
-      <td style={{ ...styles.td, color: colors.textSecondary }}>{proposal.altitudeRange || '—'}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }} title={creator?.email || undefined}>
         {creator?.name || creator?.email || '—'}
       </td>

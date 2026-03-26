@@ -34,10 +34,9 @@ export default function ProposalsTable ({
           <tr>
             <th style={styles.th}>Resort Name</th>
             <th style={styles.th}>Country</th>
-            <th style={styles.th}>Altitude Range</th>
             <th style={styles.th}>Creator</th>
             <th style={styles.th}>Status</th>
-            <th style={styles.th} />
+            <th style={{ ...styles.th, minWidth: '160px' }} />
           </tr>
         </thead>
         <tbody>
