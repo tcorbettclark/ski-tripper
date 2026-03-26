@@ -23,6 +23,8 @@ const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID
 const TRIPS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_TRIPS_COLLECTION_ID
 const PARTICIPANTS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_PARTICIPANTS_COLLECTION_ID
 const PROPOSALS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_PROPOSALS_COLLECTION_ID
+const POLLS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_POLLS_COLLECTION_ID
+const VOTES_COLLECTION_ID = process.env.PUBLIC_APPWRITE_VOTES_COLLECTION_ID
 
 export function getCoordinatorParticipant (tripId, db = databases) {
   return db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
@@ -264,4 +266,62 @@ export async function rejectProposal (proposalId, userId, db = databases) {
   return db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, {
     state: 'REJECTED',
   })
+}
+
+export async function createPoll (tripId, userId, db = databases) {
+  const { documents: coordDocs } = await getCoordinatorParticipant(tripId, db)
+  if (coordDocs.length === 0 || coordDocs[0].userId !== userId) {
+    throw new Error('Only the coordinator can create a poll.')
+  }
+  const { documents: openPolls } = await db.listDocuments(
+    DATABASE_ID,
+    POLLS_COLLECTION_ID,
+    [
+      Query.equal('tripId', tripId),
+      Query.equal('state', 'OPEN'),
+      Query.limit(1),
+    ],
+  )
+  if (openPolls.length > 0)
+    throw new Error('A poll is already open for this trip.')
+  const { documents: proposals } = await db.listDocuments(
+    DATABASE_ID,
+    PROPOSALS_COLLECTION_ID,
+    [
+      Query.equal('tripId', tripId),
+      Query.equal('state', 'SUBMITTED'),
+      Query.limit(100),
+    ],
+  )
+  if (proposals.length === 0)
+    throw new Error('No submitted proposals to poll on.')
+  const proposalIds = proposals.map((p) => p.$id)
+  return db.createDocument(
+    DATABASE_ID,
+    POLLS_COLLECTION_ID,
+    ID.unique(),
+    { tripId, createdBy: userId, state: 'OPEN', proposalIds },
+    [Permission.read(Role.users()), Permission.write(Role.user(userId))],
+  )
+}
+
+export async function closePoll (pollId, userId, db = databases) {
+  const poll = await db.getDocument(DATABASE_ID, POLLS_COLLECTION_ID, pollId)
+  if (poll.state !== 'OPEN') throw new Error('Only open polls can be closed.')
+  const { documents } = await getCoordinatorParticipant(poll.tripId, db)
+  if (documents.length === 0 || documents[0].userId !== userId) {
+    throw new Error('Only the coordinator can close a poll.')
+  }
+  return db.updateDocument(DATABASE_ID, POLLS_COLLECTION_ID, pollId, {
+    state: 'CLOSED',
+  })
+}
+
+export async function listPolls (tripId, userId, db = databases) {
+  await _verifyParticipant(tripId, userId, db)
+  return db.listDocuments(DATABASE_ID, POLLS_COLLECTION_ID, [
+    Query.equal('tripId', tripId),
+    Query.orderDesc('$createdAt'),
+    Query.limit(50),
+  ])
 }

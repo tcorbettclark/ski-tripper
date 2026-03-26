@@ -16,7 +16,10 @@ import {
   updateProposal,
   deleteProposal,
   submitProposal,
-  rejectProposal
+  rejectProposal,
+  createPoll,
+  closePoll,
+  listPolls,
 } from './backend'
 
 function makeDb (overrides = {}) {
@@ -636,6 +639,149 @@ describe('rejectProposal', () => {
     })
     await expect(rejectProposal('p-1', 'coord-1', db)).rejects.toThrow(
       'Not found',
+    )
+  })
+})
+
+describe('createPoll', () => {
+  it('creates a poll with OPEN state and proposal snapshot when caller is coordinator', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] }),
+      )
+      .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'prop-1' }, { $id: 'prop-2' }] }),
+      )
+    const db = makeDb({ listDocuments })
+    await createPoll('trip-1', 'coord-1', db)
+    expect(db.createDocument).toHaveBeenCalledTimes(1)
+    const [, , , data] = db.createDocument.mock.calls[0]
+    expect(data.state).toBe('OPEN')
+    expect(data.proposalIds).toEqual(['prop-1', 'prop-2'])
+    expect(data.tripId).toBe('trip-1')
+    expect(data.createdBy).toBe('coord-1')
+  })
+
+  it('throws when caller is not the coordinator', async () => {
+    const listDocuments = mock(() =>
+      Promise.resolve({ documents: [{ $id: 'part-1', userId: 'other-user' }] }),
+    )
+    const db = makeDb({ listDocuments })
+    await expect(createPoll('trip-1', 'user-1', db)).rejects.toThrow(
+      'Only the coordinator can create a poll.',
+    )
+    expect(db.createDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when a poll is already open for this trip', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] }),
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'poll-1', state: 'OPEN' }] }),
+      )
+    const db = makeDb({ listDocuments })
+    await expect(createPoll('trip-1', 'coord-1', db)).rejects.toThrow(
+      'A poll is already open for this trip.',
+    )
+    expect(db.createDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when there are no submitted proposals', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] }),
+      )
+      .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
+    const db = makeDb({ listDocuments })
+    await expect(createPoll('trip-1', 'coord-1', db)).rejects.toThrow(
+      'No submitted proposals to poll on.',
+    )
+    expect(db.createDocument).not.toHaveBeenCalled()
+  })
+})
+
+describe('closePoll', () => {
+  it('sets state to CLOSED when caller is coordinator and poll is OPEN', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'poll-1', tripId: 'trip-1', state: 'OPEN' }),
+      ),
+      listDocuments: mock(() =>
+        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] }),
+      ),
+    })
+    await closePoll('poll-1', 'coord-1', db)
+    expect(db.updateDocument).toHaveBeenCalledTimes(1)
+    const [, , , data] = db.updateDocument.mock.calls[0]
+    expect(data.state).toBe('CLOSED')
+  })
+
+  it('throws when poll is not OPEN', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'poll-1', tripId: 'trip-1', state: 'CLOSED' }),
+      ),
+    })
+    await expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow(
+      'Only open polls can be closed.',
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when caller is not the coordinator', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'poll-1', tripId: 'trip-1', state: 'OPEN' }),
+      ),
+      listDocuments: mock(() =>
+        Promise.resolve({
+          documents: [{ $id: 'part-1', userId: 'other-coord' }],
+        }),
+      ),
+    })
+    await expect(closePoll('poll-1', 'user-1', db)).rejects.toThrow(
+      'Only the coordinator can close a poll.',
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('propagates errors', async () => {
+    const db = makeDb({
+      getDocument: mock(() => Promise.reject(new Error('Not found'))),
+    })
+    await expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow(
+      'Not found',
+    )
+  })
+})
+
+describe('listPolls', () => {
+  it('returns polls when user is a participant', async () => {
+    const listDocuments = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          documents: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }],
+        }),
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          documents: [{ $id: 'poll-1', tripId: 'trip-1', state: 'OPEN' }],
+        }),
+      )
+    const db = makeDb({ listDocuments })
+    const result = await listPolls('trip-1', 'user-1', db)
+    expect(result.documents).toHaveLength(1)
+    expect(result.documents[0].$id).toBe('poll-1')
+  })
+
+  it('throws when user is not a participant', async () => {
+    const db = makeDb()
+    await expect(listPolls('trip-1', 'user-1', db)).rejects.toThrow(
+      'You must be a participant to access proposals.',
     )
   })
 })
