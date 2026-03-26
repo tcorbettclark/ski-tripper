@@ -22,6 +22,7 @@ function randomThreeWords () {
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID
 const TRIPS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_TRIPS_COLLECTION_ID
 const PARTICIPANTS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_PARTICIPANTS_COLLECTION_ID
+const PROPOSALS_COLLECTION_ID = process.env.PUBLIC_APPWRITE_PROPOSALS_COLLECTION_ID
 
 export function getCoordinatorParticipant (tripId, db = databases) {
   return db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
@@ -183,4 +184,59 @@ export async function leaveTrip (userId, tripId, db = databases) {
   )
   if (documents.length === 0) throw new Error('Participation record not found.')
   return db.deleteDocument(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, documents[0].$id)
+}
+
+async function verifyParticipant (tripId, userId, db) {
+  const { documents } = await db.listDocuments(
+    DATABASE_ID,
+    PARTICIPANTS_COLLECTION_ID,
+    [Query.equal('tripId', tripId), Query.equal('userId', userId), Query.limit(1)]
+  )
+  if (documents.length === 0) throw new Error('You must be a participant to create a proposal.')
+}
+
+export async function createProposal (tripId, userId, data, db = databases) {
+  await verifyParticipant(tripId, userId, db)
+  return db.createDocument(
+    DATABASE_ID,
+    PROPOSALS_COLLECTION_ID,
+    ID.unique(),
+    { tripId, userId, state: 'DRAFT', ...data },
+    [Permission.read(Role.users()), Permission.write(Role.user(userId))]
+  )
+}
+
+export async function listProposals (tripId, userId, db = databases) {
+  await verifyParticipant(tripId, userId, db)
+  return db.listDocuments(DATABASE_ID, PROPOSALS_COLLECTION_ID, [
+    Query.equal('tripId', tripId),
+    Query.orderDesc('$createdAt')
+  ])
+}
+
+export async function getProposal (proposalId, userId, db = databases) {
+  const proposal = await db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  await verifyParticipant(proposal.tripId, userId, db)
+  return proposal
+}
+
+export async function updateProposal (proposalId, userId, data, db = databases) {
+  const proposal = await db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  if (proposal.userId !== userId) throw new Error('Only the creator can edit this proposal.')
+  if (proposal.state !== 'DRAFT') throw new Error('Only draft proposals can be edited.')
+  return db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, data)
+}
+
+export async function deleteProposal (proposalId, userId, db = databases) {
+  const proposal = await db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  if (proposal.userId !== userId) throw new Error('Only the creator can delete this proposal.')
+  if (proposal.state !== 'DRAFT') throw new Error('Only draft proposals can be deleted.')
+  return db.deleteDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+}
+
+export async function submitProposal (proposalId, userId, db = databases) {
+  const proposal = await db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  if (proposal.userId !== userId) throw new Error('Only the creator can submit this proposal.')
+  if (proposal.state !== 'DRAFT') throw new Error('Only draft proposals can be submitted.')
+  return db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, { state: 'SUBMITTED' })
 }

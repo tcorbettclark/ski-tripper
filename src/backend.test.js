@@ -9,7 +9,13 @@ import {
   joinTrip,
   listParticipatedTrips,
   leaveTrip,
-  getUserById
+  getUserById,
+  createProposal,
+  listProposals,
+  getProposal,
+  updateProposal,
+  deleteProposal,
+  submitProposal
 } from './backend'
 
 function makeDb (overrides = {}) {
@@ -304,6 +310,247 @@ describe('getUserById', () => {
   it('throws when the response is not ok', async () => {
     global.fetch = mock(() => Promise.resolve({ ok: false }))
     await expect(getUserById('u-1')).rejects.toThrow('Failed to fetch user')
+  })
+})
+
+describe('createProposal', () => {
+  it('creates a proposal document when user is a participant', async () => {
+    const listDocuments = mock(() =>
+      Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+    )
+    const db = makeDb({ listDocuments })
+    const result = await createProposal('trip-1', 'user-1', { name: 'Alps Trip' }, db)
+    expect(db.createDocument).toHaveBeenCalledTimes(1)
+    const [, , , data] = db.createDocument.mock.calls[0]
+    expect(data.tripId).toBe('trip-1')
+    expect(data.userId).toBe('user-1')
+    expect(data.state).toBe('DRAFT')
+    expect(data.name).toBe('Alps Trip')
+    expect(result.$id).toBe('new-id')
+  })
+
+  it('throws when user is not a participant', async () => {
+    const db = makeDb()
+    await expect(createProposal('trip-1', 'user-1', {}, db)).rejects.toThrow(
+      'You must be a participant to create a proposal.'
+    )
+    expect(db.createDocument).not.toHaveBeenCalled()
+  })
+
+  it('propagates errors', async () => {
+    const listDocuments = mock(() =>
+      Promise.resolve({ documents: [{ $id: 'p-1' }] })
+    )
+    const db = makeDb({
+      listDocuments,
+      createDocument: mock(() => Promise.reject(new Error('Create failed')))
+    })
+    await expect(createProposal('trip-1', 'user-1', {}, db)).rejects.toThrow('Create failed')
+  })
+})
+
+describe('listProposals', () => {
+  it('returns documents when user is a participant', async () => {
+    const listDocuments = mock()
+    listDocuments
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ documents: [{ $id: 'prop-1', tripId: 'trip-1' }] })
+      )
+    const db = makeDb({ listDocuments })
+    const result = await listProposals('trip-1', 'user-1', db)
+    expect(result.documents).toHaveLength(1)
+    expect(result.documents[0].$id).toBe('prop-1')
+  })
+
+  it('throws when user is not a participant', async () => {
+    const db = makeDb()
+    await expect(listProposals('trip-1', 'user-1', db)).rejects.toThrow(
+      'You must be a participant to create a proposal.'
+    )
+  })
+
+  it('propagates errors', async () => {
+    const db = makeDb({
+      listDocuments: mock(() => Promise.reject(new Error('Network error')))
+    })
+    await expect(listProposals('trip-1', 'user-1', db)).rejects.toThrow('Network error')
+  })
+})
+
+describe('getProposal', () => {
+  it('returns the proposal when user is a participant', async () => {
+    const getDocument = mock(() =>
+      Promise.resolve({ $id: 'prop-1', tripId: 'trip-1', userId: 'user-1', state: 'DRAFT' })
+    )
+    const listDocuments = mock(() =>
+      Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+    )
+    const db = makeDb({ getDocument, listDocuments })
+    const result = await getProposal('prop-1', 'user-1', db)
+    expect(result.$id).toBe('prop-1')
+  })
+
+  it('throws when user is not a participant in the proposal trip', async () => {
+    const getDocument = mock(() =>
+      Promise.resolve({ $id: 'prop-1', tripId: 'trip-1', userId: 'other-user', state: 'DRAFT' })
+    )
+    const db = makeDb({ getDocument })
+    await expect(getProposal('prop-1', 'user-1', db)).rejects.toThrow(
+      'You must be a participant to create a proposal.'
+    )
+  })
+
+  it('propagates getDocument errors', async () => {
+    const db = makeDb({
+      getDocument: mock(() => Promise.reject(new Error('Not found')))
+    })
+    await expect(getProposal('prop-1', 'user-1', db)).rejects.toThrow('Not found')
+  })
+})
+
+describe('updateProposal', () => {
+  it('updates the proposal when user is the creator and state is DRAFT', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+      )
+    })
+    const result = await updateProposal('prop-1', 'user-1', { name: 'Updated' }, db)
+    expect(db.updateDocument).toHaveBeenCalledTimes(1)
+    expect(result.$id).toBe('1')
+  })
+
+  it('throws when user is not the creator', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'other-user', state: 'DRAFT' })
+      )
+    })
+    await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
+      'Only the creator can edit this proposal.'
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when proposal is not in DRAFT state', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'SUBMITTED' })
+      )
+    })
+    await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
+      'Only draft proposals can be edited.'
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('propagates errors', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+      ),
+      updateDocument: mock(() => Promise.reject(new Error('Update failed')))
+    })
+    await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow('Update failed')
+  })
+})
+
+describe('deleteProposal', () => {
+  it('deletes the proposal when user is the creator and state is DRAFT', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+      )
+    })
+    await deleteProposal('prop-1', 'user-1', db)
+    expect(db.deleteDocument).toHaveBeenCalledTimes(1)
+    const [, , deletedId] = db.deleteDocument.mock.calls[0]
+    expect(deletedId).toBe('prop-1')
+  })
+
+  it('throws when user is not the creator', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'other-user', state: 'DRAFT' })
+      )
+    })
+    await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
+      'Only the creator can delete this proposal.'
+    )
+    expect(db.deleteDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when proposal is not in DRAFT state', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'SUBMITTED' })
+      )
+    })
+    await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
+      'Only draft proposals can be deleted.'
+    )
+    expect(db.deleteDocument).not.toHaveBeenCalled()
+  })
+
+  it('propagates errors', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+      ),
+      deleteDocument: mock(() => Promise.reject(new Error('Delete failed')))
+    })
+    await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow('Delete failed')
+  })
+})
+
+describe('submitProposal', () => {
+  it('updates state to SUBMITTED when user is the creator and state is DRAFT', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+      )
+    })
+    await submitProposal('prop-1', 'user-1', db)
+    expect(db.updateDocument).toHaveBeenCalledTimes(1)
+    const [, , , data] = db.updateDocument.mock.calls[0]
+    expect(data.state).toBe('SUBMITTED')
+  })
+
+  it('throws when user is not the creator', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'other-user', state: 'DRAFT' })
+      )
+    })
+    await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
+      'Only the creator can submit this proposal.'
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when proposal is not in DRAFT state', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'SUBMITTED' })
+      )
+    })
+    await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
+      'Only draft proposals can be submitted.'
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('propagates errors', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+      ),
+      updateDocument: mock(() => Promise.reject(new Error('Update failed')))
+    })
+    await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow('Update failed')
   })
 })
 
