@@ -10,7 +10,9 @@
       "Bash(/Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/scripts/start-server.sh --project-dir /Users/tcorbettclark/Projects/ski-tripper)",
       "Bash(/Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/start-server.sh --project-dir /Users/tcorbettclark/Projects/ski-tripper)",
       "Bash(git commit:*)",
-      "Bash(/Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/stop-server.sh /Users/tcorbettclark/Projects/ski-tripper/.superpowers/brainstorm/11469-1774465764)"
+      "Bash(/Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/skills/brainstorming/scripts/stop-server.sh /Users/tcorbettclark/Projects/ski-tripper/.superpowers/brainstorm/11469-1774465764)",
+      "Bash(ls:*)",
+      "Bash(grep -r \"mock.module\\\\|mockModule\\\\|jest.mock\" /Users/tcorbettclark/Projects/ski-tripper/.worktrees/proposals/ --include=*.js --include=*.jsx --include=*.ts)"
     ]
   },
   "hooks": {
