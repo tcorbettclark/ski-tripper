@@ -1,4 +1,5 @@
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, mock } from 'bun:test'
 import ProposalsTable from './ProposalsTable'
 
@@ -68,5 +69,35 @@ describe('ProposalsTable', () => {
   it('does not render a table when proposals is empty', async () => {
     await renderProposalsTable()
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
+  it('clicking View on a row opens the viewer for that proposal', async () => {
+    const user = userEvent.setup()
+    const proposals = [
+      { ...sampleProposal, $id: 'p-1', resortName: "Val d'Isère" },
+      { ...sampleProposal, $id: 'p-2', resortName: 'Chamonix' }
+    ]
+    await renderProposalsTable({ proposals })
+    const viewButtons = screen.getAllByRole('button', { name: /^view$/i })
+    await act(async () => {
+      await user.click(viewButtons[1])
+    })
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Chamonix')).toBeInTheDocument()
+    expect(within(dialog).getByText('2 of 2')).toBeInTheDocument()
+  })
+
+  it('closing the viewer hides it', async () => {
+    const user = userEvent.setup()
+    const proposals = [{ ...sampleProposal, $id: 'p-1', resortName: "Val d'Isère" }]
+    await renderProposalsTable({ proposals })
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: /^view$/i }))
+    })
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    await act(async () => {
+      await user.click(screen.getByRole('button', { name: /close/i }))
+    })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

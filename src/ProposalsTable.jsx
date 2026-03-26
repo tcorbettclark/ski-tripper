@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import ProposalsRow from './ProposalsRow'
+import ProposalViewer from './ProposalViewer'
 import {
   updateProposal as _updateProposal,
   deleteProposal as _deleteProposal,
@@ -19,39 +21,52 @@ export default function ProposalsTable ({
   submitProposal = _submitProposal,
   getUserById = _getUserById
 }) {
+  const [viewingIndex, setViewingIndex] = useState(null)
+
   if (proposals.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
   }
 
   return (
-    <table style={styles.table}>
-      <thead>
-        <tr>
-          <th style={styles.th}>Resort Name</th>
-          <th style={styles.th}>Country</th>
-          <th style={styles.th}>Altitude Range</th>
-          <th style={styles.th}>Creator</th>
-          <th style={styles.th}>Status</th>
-          <th style={styles.th} />
-        </tr>
-      </thead>
-      <tbody>
-        {proposals.map((proposal) => (
-          <ProposalsRow
-            key={proposal.$id}
-            proposal={proposal}
-            userId={userId}
-            onUpdated={onUpdated}
-            onDeleted={onDeleted}
-            onSubmitted={onSubmitted}
-            updateProposal={updateProposal}
-            deleteProposal={deleteProposal}
-            submitProposal={submitProposal}
-            getUserById={getUserById}
-          />
-        ))}
-      </tbody>
-    </table>
+    <>
+      <table style={styles.table}>
+        <thead>
+          <tr>
+            <th style={styles.th}>Resort Name</th>
+            <th style={styles.th}>Country</th>
+            <th style={styles.th}>Altitude Range</th>
+            <th style={styles.th}>Creator</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th} />
+          </tr>
+        </thead>
+        <tbody>
+          {proposals.map((proposal, index) => (
+            <ProposalsRow
+              key={proposal.$id}
+              proposal={proposal}
+              userId={userId}
+              onUpdated={onUpdated}
+              onDeleted={onDeleted}
+              onSubmitted={onSubmitted}
+              onView={() => setViewingIndex(index)}
+              updateProposal={updateProposal}
+              deleteProposal={deleteProposal}
+              submitProposal={submitProposal}
+              getUserById={getUserById}
+            />
+          ))}
+        </tbody>
+      </table>
+      {viewingIndex !== null && (
+        <ProposalViewer
+          proposals={proposals}
+          initialIndex={viewingIndex}
+          onClose={() => setViewingIndex(null)}
+          getUserById={getUserById}
+        />
+      )}
+    </>
   )
 }
 
