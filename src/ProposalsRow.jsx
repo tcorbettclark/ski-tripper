@@ -14,6 +14,7 @@ export default function ProposalsRow ({
   onUpdated,
   onDeleted,
   onSubmitted,
+  onView = () => {},
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
@@ -84,17 +85,22 @@ export default function ProposalsRow ({
         </span>
       </td>
       <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>
-        {canAct && (
-          <div style={styles.actions}>
-            <button onClick={() => setIsEditing(true)} style={styles.editButton}>
-              Edit
-            </button>
-            <button onClick={handleSubmit} disabled={submitting} style={styles.submitButton}>
-              {submitting ? 'Submitting…' : 'Submit'}
-            </button>
-            {submitError && <p style={styles.errorText}>{submitError}</p>}
-          </div>
-        )}
+        <div style={styles.actions}>
+          <button onClick={onView} style={styles.viewButton}>
+            View
+          </button>
+          {canAct && (
+            <>
+              <button onClick={() => setIsEditing(true)} style={styles.editButton}>
+                Edit
+              </button>
+              <button onClick={handleSubmit} disabled={submitting} style={styles.submitButton}>
+                {submitting ? 'Submitting…' : 'Submit'}
+              </button>
+              {submitError && <p style={styles.errorText}>{submitError}</p>}
+            </>
+          )}
+        </div>
       </td>
     </tr>
   )
@@ -127,6 +133,18 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     flexWrap: 'wrap'
+  },
+  viewButton: {
+    padding: '5px 16px',
+    borderRadius: '5px',
+    border: borders.muted,
+    background: 'transparent',
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em'
   },
   editButton: {
     padding: '5px 16px',

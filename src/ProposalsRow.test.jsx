@@ -25,6 +25,7 @@ async function renderProposalsRow (props = {}) {
     onUpdated: mock(() => {}),
     onDeleted: mock(() => {}),
     onSubmitted: mock(() => {}),
+    onView: mock(() => {}),
     updateProposal: mock(() => Promise.resolve()),
     deleteProposal: mock(() => Promise.resolve()),
     submitProposal: mock(() => Promise.resolve()),
@@ -125,5 +126,25 @@ describe('ProposalsRow', () => {
     await waitFor(() => {
       expect(screen.getByText('Cannot submit')).toBeInTheDocument()
     })
+  })
+
+  it('shows a View button for all users regardless of ownership', async () => {
+    await renderProposalsRow({ userId: 'user-2' })
+    expect(screen.getByRole('button', { name: /^view$/i })).toBeInTheDocument()
+  })
+
+  it('shows a View button for submitted proposals', async () => {
+    await renderProposalsRow({
+      proposal: { ...sampleProposal, state: 'SUBMITTED' }
+    })
+    expect(screen.getByRole('button', { name: /^view$/i })).toBeInTheDocument()
+  })
+
+  it('calls onView when View is clicked', async () => {
+    const user = userEvent.setup()
+    const onView = mock(() => {})
+    await renderProposalsRow({ onView })
+    await user.click(screen.getByRole('button', { name: /^view$/i }))
+    expect(onView).toHaveBeenCalledTimes(1)
   })
 })
