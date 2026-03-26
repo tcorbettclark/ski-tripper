@@ -24,7 +24,7 @@ export default function ProposalViewer ({
         .then(setCreator)
         .catch(() => {})
     }
-  }, [proposal.$id])
+  }, [proposal.$id, getUserById])
 
   useEffect(() => {
     function handleKeyDown (e) {
@@ -55,6 +55,7 @@ export default function ProposalViewer ({
     <div
       role='dialog'
       aria-modal='true'
+      aria-labelledby='viewer-title'
       onClick={onClose}
       style={styles.backdrop}
     >
@@ -84,7 +85,7 @@ export default function ProposalViewer ({
             <div style={styles.counter}>
               {currentIndex + 1} of {proposals.length}
             </div>
-            <div style={styles.resortName}>{proposal.resortName || '—'}</div>
+            <div id='viewer-title' style={styles.resortName}>{proposal.resortName || '—'}</div>
             <div style={styles.subHeader}>
               <span>{proposal.country || '—'}</span>
               {proposal.country && proposal.state && ' · '}
@@ -141,6 +142,7 @@ export default function ProposalViewer ({
           {proposals.map((_, i) => (
             <div
               key={i}
+              aria-hidden='true'
               style={i === currentIndex ? styles.dotActive : styles.dotInactive}
             />
           ))}
