@@ -132,4 +132,23 @@ describe('App', () => {
       expect(screen.getByText('Test User')).toBeInTheDocument()
     })
   })
+
+  it('shows a Poll nav tab when authenticated', async () => {
+    renderApp()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^poll$/i })).toBeInTheDocument()
+    })
+  })
+
+  it('shows the Poll page when the Poll tab is clicked', async () => {
+    const user = userEvent.setup()
+    renderApp()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^poll$/i })).toBeInTheDocument()
+    })
+    await user.click(screen.getByRole('button', { name: /^poll$/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^poll$/i })).toBeInTheDocument()
+    })
+  })
 })

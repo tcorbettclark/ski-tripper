@@ -3,6 +3,7 @@ import { account as _account } from './backend'
 import AuthForm from './AuthForm'
 import Trips from './Trips'
 import Proposals from './Proposals'
+import Poll from './Poll'
 import ErrorBoundary from './ErrorBoundary'
 import { colors, fonts, borders } from './theme'
 
@@ -65,6 +66,16 @@ function App ({
           >
             Proposals
           </button>
+          <button
+            onClick={() => setActivePage('poll')}
+            style={
+              activePage === 'poll'
+                ? headerStyles.navTabActive
+                : headerStyles.navTab
+            }
+          >
+            Poll
+          </button>
         </nav>
         <div style={headerStyles.userGroup}>
           <span style={headerStyles.name}>{user.name || user.email}</span>
@@ -92,6 +103,11 @@ function App ({
             key={refreshProposalsKey}
             selectedTripId={proposalsSelectedTripId}
           />
+        </ErrorBoundary>
+      )}
+      {activePage === 'poll' && (
+        <ErrorBoundary>
+          <Poll user={user} />
         </ErrorBoundary>
       )}
     </div>
