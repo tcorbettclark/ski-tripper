@@ -22,13 +22,16 @@ async function renderProposalsRow (props = {}) {
   const defaults = {
     proposal: sampleProposal,
     userId: 'user-1',
+    isCoordinator: false,
     onUpdated: mock(() => {}),
     onDeleted: mock(() => {}),
     onSubmitted: mock(() => {}),
+    onRejected: mock(() => {}),
     onView: mock(() => {}),
     updateProposal: mock(() => Promise.resolve()),
     deleteProposal: mock(() => Promise.resolve()),
     submitProposal: mock(() => Promise.resolve()),
+    rejectProposal: mock(() => Promise.resolve()),
     getUserById: mock(() => Promise.resolve({ name: 'Alice', email: 'alice@example.com' }))
   }
   let result
@@ -141,5 +144,86 @@ describe('ProposalsRow', () => {
     await renderProposalsRow({ onView })
     await user.click(screen.getByRole('button', { name: /^view$/i }))
     expect(onView).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows the REJECTED status badge', async () => {
+    await renderProposalsRow({
+      proposal: { ...sampleProposal, state: 'REJECTED' },
+    })
+    expect(screen.getByText('REJECTED')).toBeInTheDocument()
+  })
+
+  it('shows no action buttons for REJECTED proposals', async () => {
+    await renderProposalsRow({
+      proposal: { ...sampleProposal, state: 'REJECTED' },
+    })
+    expect(
+      screen.queryByRole('button', { name: /^view$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /^edit$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /^submit$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /^reject$/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows Reject button when isCoordinator and proposal is SUBMITTED', async () => {
+    await renderProposalsRow({
+      isCoordinator: true,
+      proposal: { ...sampleProposal, state: 'SUBMITTED' },
+    })
+    expect(screen.getByRole('button', { name: /^reject$/i })).toBeInTheDocument()
+  })
+
+  it('does not show Reject button when not coordinator', async () => {
+    await renderProposalsRow({
+      isCoordinator: false,
+      proposal: { ...sampleProposal, state: 'SUBMITTED' },
+    })
+    expect(
+      screen.queryByRole('button', { name: /^reject$/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('does not show Reject button for DRAFT proposals even when coordinator', async () => {
+    await renderProposalsRow({ isCoordinator: true })
+    expect(
+      screen.queryByRole('button', { name: /^reject$/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('calls rejectProposal and onRejected when Reject is clicked', async () => {
+    const user = userEvent.setup()
+    const rejectedProposal = { ...sampleProposal, state: 'REJECTED' }
+    const rejectProposal = mock(() => Promise.resolve(rejectedProposal))
+    const onRejected = mock(() => {})
+    await renderProposalsRow({
+      isCoordinator: true,
+      proposal: { ...sampleProposal, state: 'SUBMITTED' },
+      rejectProposal,
+      onRejected,
+    })
+    await user.click(screen.getByRole('button', { name: /^reject$/i }))
+    await waitFor(() => {
+      expect(rejectProposal).toHaveBeenCalledWith('p-1', 'user-1')
+      expect(onRejected).toHaveBeenCalledWith(rejectedProposal)
+    })
+  })
+
+  it('shows an error when rejectProposal fails', async () => {
+    const user = userEvent.setup()
+    await renderProposalsRow({
+      isCoordinator: true,
+      proposal: { ...sampleProposal, state: 'SUBMITTED' },
+      rejectProposal: mock(() => Promise.reject(new Error('Cannot reject'))),
+    })
+    await user.click(screen.getByRole('button', { name: /^reject$/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Cannot reject')).toBeInTheDocument()
+    })
   })
 })
