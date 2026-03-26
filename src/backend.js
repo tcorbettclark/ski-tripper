@@ -252,3 +252,16 @@ export async function submitProposal (proposalId, userId, db = databases) {
   if (proposal.state !== 'DRAFT') throw new Error('Only draft proposals can be submitted.')
   return db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, { state: 'SUBMITTED' })
 }
+
+export async function rejectProposal (proposalId, userId, db = databases) {
+  const proposal = await db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  if (proposal.state !== 'SUBMITTED')
+    throw new Error('Only submitted proposals can be rejected.')
+  const { documents } = await getCoordinatorParticipant(proposal.tripId, db)
+  if (documents.length === 0 || documents[0].userId !== userId) {
+    throw new Error('Only the coordinator can reject this proposal.')
+  }
+  return db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, {
+    state: 'REJECTED',
+  })
+}

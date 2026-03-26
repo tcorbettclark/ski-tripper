@@ -15,7 +15,8 @@ import {
   getProposal,
   updateProposal,
   deleteProposal,
-  submitProposal
+  submitProposal,
+  rejectProposal
 } from './backend'
 
 function makeDb (overrides = {}) {
@@ -566,6 +567,76 @@ describe('submitProposal', () => {
       updateDocument: mock(() => Promise.reject(new Error('Update failed')))
     })
     await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow('Update failed')
+  })
+})
+
+describe('rejectProposal', () => {
+  it('sets state to REJECTED when caller is coordinator and proposal is SUBMITTED', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({
+          $id: 'p-1',
+          userId: 'creator-1',
+          tripId: 'trip-1',
+          state: 'SUBMITTED',
+        }),
+      ),
+      listDocuments: mock(() =>
+        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] }),
+      ),
+    })
+    await rejectProposal('p-1', 'coord-1', db)
+    expect(db.updateDocument).toHaveBeenCalledTimes(1)
+    const [, , , data] = db.updateDocument.mock.calls[0]
+    expect(data.state).toBe('REJECTED')
+  })
+
+  it('throws when proposal state is not SUBMITTED', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({
+          $id: 'p-1',
+          userId: 'creator-1',
+          tripId: 'trip-1',
+          state: 'DRAFT',
+        }),
+      ),
+    })
+    await expect(rejectProposal('p-1', 'coord-1', db)).rejects.toThrow(
+      'Only submitted proposals can be rejected.',
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('throws when caller is not the coordinator', async () => {
+    const db = makeDb({
+      getDocument: mock(() =>
+        Promise.resolve({
+          $id: 'p-1',
+          userId: 'creator-1',
+          tripId: 'trip-1',
+          state: 'SUBMITTED',
+        }),
+      ),
+      listDocuments: mock(() =>
+        Promise.resolve({
+          documents: [{ $id: 'part-1', userId: 'other-coord' }],
+        }),
+      ),
+    })
+    await expect(rejectProposal('p-1', 'user-1', db)).rejects.toThrow(
+      'Only the coordinator can reject this proposal.',
+    )
+    expect(db.updateDocument).not.toHaveBeenCalled()
+  })
+
+  it('propagates errors', async () => {
+    const db = makeDb({
+      getDocument: mock(() => Promise.reject(new Error('Not found'))),
+    })
+    await expect(rejectProposal('p-1', 'coord-1', db)).rejects.toThrow(
+      'Not found',
+    )
   })
 })
 
