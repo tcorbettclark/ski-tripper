@@ -16,6 +16,7 @@ jobs:
       PUBLIC_APPWRITE_DATABASE_ID: 69b80ecc00135af5ff33
       PUBLIC_APPWRITE_TRIPS_COLLECTION_ID: trips
       PUBLIC_APPWRITE_PARTICIPANTS_COLLECTION_ID: participants
+      PUBLIC_APPWRITE_PROPOSALS_COLLECTION_ID: proposals
     steps:
       - name: Checkout
         uses: actions/checkout@v4
