@@ -147,7 +147,20 @@ export default function TripOverview ({
           {trip.code && (
             <div style={styles.detailRow}>
               <span style={styles.detailLabel}>Code</span>
-              <span style={styles.mono}>{trip.code}</span>
+              <span style={styles.codeWithCopy}>
+                <span style={styles.mono}>{trip.code}</span>
+                <button
+                  onClick={handleCopyCode}
+                  style={styles.copyButton}
+                  title='Copy invite code'
+                  aria-label='Copy invite code'
+                >
+                  {codeCopied ? '✓' : '⧉'}
+                </button>
+                <span style={styles.copyFeedback}>
+                  {codeCopied ? 'Copied!' : codeCopyError || '(share this code to invite participants)'}
+                </span>
+              </span>
             </div>
           )}
           {trip.description && (
@@ -169,23 +182,6 @@ export default function TripOverview ({
 
       <div style={styles.card}>
         <h3 style={styles.cardTitle}>Participants ({participants.length})</h3>
-        {trip.code && (
-          <div style={styles.inviteRow}>
-            <span style={styles.inviteLabel}>Share this code to invite more participants:</span>
-            <span style={styles.inviteCode}>
-              <span style={styles.mono}>{trip.code}</span>
-              <button
-                onClick={handleCopyCode}
-                style={styles.copyButton}
-                title='Copy invite code'
-                aria-label='Copy invite code'
-              >
-                {codeCopied ? '✓' : '⧉'}
-              </button>
-              {codeCopyError && <span style={styles.copyError}>{codeCopyError}</span>}
-            </span>
-          </div>
-        )}
         {loading
           ? <p style={styles.loading}>Loading participants…</p>
           : (
@@ -276,6 +272,7 @@ const styles = {
   },
   detailRow: {
     display: 'flex',
+    alignItems: 'center',
     gap: '16px'
   },
   detailLabel: {
@@ -298,22 +295,7 @@ const styles = {
     color: colors.accent,
     letterSpacing: '0.05em'
   },
-  inviteRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    margin: '12px 0 16px',
-    padding: '10px 14px',
-    background: 'rgba(59,189,232,0.05)',
-    border: '1px solid rgba(59,189,232,0.15)',
-    borderRadius: '8px'
-  },
-  inviteLabel: {
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    color: colors.textSecondary
-  },
-  inviteCode: {
+  codeWithCopy: {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px'
@@ -328,10 +310,11 @@ const styles = {
     lineHeight: 1,
     opacity: 0.7
   },
-  copyError: {
-    color: colors.error,
+  copyFeedback: {
     fontFamily: fonts.body,
-    fontSize: '11px'
+    fontSize: '11px',
+    color: colors.textSecondary,
+    marginLeft: '4px'
   },
   participantList: {
     listStyle: 'none',
