@@ -6,6 +6,7 @@
 
 - Don’t use space to show code in trip.
 - Where do the dates go? In the trip?
+- A coordinator should be able to put a REJECTED proposal back to SUBMITTED (e.g. in case they made a mistake).
 
 # Technical
 
