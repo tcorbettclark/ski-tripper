@@ -1,5 +1,7 @@
 dist
 node_modules
+.agents
+.claude
 
 # Leave all js* alone to be handled by eslint.
 **/*.js

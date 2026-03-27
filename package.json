@@ -8,8 +8,8 @@
     "preview": "bun server.js",
     "test": "bun test --max-concurrency 1",
     "test:watch": "bun test --watch --max-concurrency 1",
-    "lint": "bun standard --fix .",
-    "format": "bun prettier --write ."
+    "lint": "bun run standard --fix --ignore .agents .",
+    "format": "bun run prettier --write ."
   },
   "dependencies": {
     "appwrite": "^23.0.0",
