@@ -158,7 +158,8 @@ function App ({
                 leaveTrip={leaveTrip}
                 getCoordinatorParticipant={getCoordinatorParticipant}
                 getUserById={getUserById}
-                onLeft={handleViewAllTrips}
+                onLeft={() => { setTrips((ts) => ts.filter((t) => t.$id !== selectedTripId)); handleViewAllTrips() }}
+                onDeleted={() => { setTrips((ts) => ts.filter((t) => t.$id !== selectedTripId)); handleViewAllTrips() }}
                 onUpdated={(updated) => setTrips((ts) => ts.map((t) => t.$id === updated.$id ? updated : t))}
               />
             </ErrorBoundary>

@@ -20,7 +20,8 @@ export default function TripOverview ({
   deleteTrip = _deleteTrip,
   leaveTrip = _leaveTrip,
   onLeft,
-  onUpdated
+  onUpdated,
+  onDeleted
 }) {
   const [participants, setParticipants] = useState([])
   const [coordinator, setCoordinator] = useState(null)
@@ -114,7 +115,7 @@ export default function TripOverview ({
             trip={trip}
             userId={user.$id}
             onUpdated={(updated) => { setIsEditing(false); onUpdated?.(updated) }}
-            onDeleted={() => {}}
+            onDeleted={() => onDeleted?.()}
             onCancel={() => setIsEditing(false)}
             updateTrip={updateTrip}
             deleteTrip={deleteTrip}
