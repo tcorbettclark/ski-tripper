@@ -9,8 +9,8 @@ const updatedTrip = { $id: 'trip-1', code: 'abc-123', description: 'New descript
 
 const noop = () => {}
 
-function renderOverview (props = {}) {
-  return render(
+async function renderOverview (props = {}) {
+  render(
     <TripOverview
       trip={trip}
       user={currentUser}
@@ -25,25 +25,23 @@ function renderOverview (props = {}) {
       {...props}
     />
   )
+  await waitFor(() => expect(screen.queryByText('Loading participants…')).not.toBeInTheDocument())
 }
 
 describe('TripOverview', () => {
-  it('shows the trip description', () => {
-    renderOverview()
+  it('shows the trip description', async () => {
+    await renderOverview()
     expect(screen.getByText('Old description')).toBeInTheDocument()
   })
 
   it('shows the Edit button for the coordinator', async () => {
-    renderOverview()
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /^edit$/i })).toBeInTheDocument()
-    })
+    await renderOverview()
+    expect(screen.getByRole('button', { name: /^edit$/i })).toBeInTheDocument()
   })
 
   it('shows EditTripForm when Edit is clicked', async () => {
     const ue = userEvent.setup()
-    renderOverview()
-    await waitFor(() => screen.getByRole('button', { name: /^edit$/i }))
+    await renderOverview()
     await ue.click(screen.getByRole('button', { name: /^edit$/i }))
     expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument()
   })
@@ -51,9 +49,8 @@ describe('TripOverview', () => {
   it('calls onUpdated with the updated trip after saving', async () => {
     const ue = userEvent.setup()
     const handleUpdated = mock(() => {})
-    renderOverview({ onUpdated: handleUpdated })
+    await renderOverview({ onUpdated: handleUpdated })
 
-    await waitFor(() => screen.getByRole('button', { name: /^edit$/i }))
     await ue.click(screen.getByRole('button', { name: /^edit$/i }))
 
     const descInput = screen.getByRole('textbox')
@@ -68,9 +65,8 @@ describe('TripOverview', () => {
 
   it('exits edit mode after saving', async () => {
     const ue = userEvent.setup()
-    renderOverview()
+    await renderOverview()
 
-    await waitFor(() => screen.getByRole('button', { name: /^edit$/i }))
     await ue.click(screen.getByRole('button', { name: /^edit$/i }))
     await ue.click(screen.getByRole('button', { name: /^save$/i }))
 
