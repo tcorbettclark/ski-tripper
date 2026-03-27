@@ -34,6 +34,13 @@ export default function PollVoting ({
   const remaining = maxTokens - totalUsed
   remainingRef.current = remaining
 
+  const [flyingTokens, setFlyingTokens] = useState([])
+  const [flightTrigger, setFlightTrigger] = useState(0)
+  const flyIdRef = useRef(0)
+  const pendingFlightRef = useRef(null) // { fromRect, target: proposalId | 'pile' }
+  const pileZoneRef = useRef(null)
+  const zoneRefs = useRef({}) // { [proposalId]: DOM element }
+
   useLayoutEffect(() => {
     function onPointerMove (e) {
       if (!dragRef.current) return
@@ -135,6 +142,44 @@ export default function PollVoting ({
     }
   }, []) // stable — uses refs for current state values
 
+  useLayoutEffect(() => {
+    const pending = pendingFlightRef.current
+    if (!pending?.fromRect) return
+    pendingFlightRef.current = null
+
+    let toRect
+    if (pending.target === 'pile') {
+      const pileTokens = pileZoneRef.current?.querySelectorAll('[data-testid="pile-token"]')
+      toRect = pileTokens?.[0]?.getBoundingClientRect() ??
+        pileZoneRef.current?.getBoundingClientRect()
+    } else {
+      const zoneEl = zoneRefs.current[pending.target]
+      const placed = zoneEl?.querySelectorAll('[data-testid="placed-token"]')
+      toRect = placed?.[placed.length - 1]?.getBoundingClientRect() ??
+        zoneEl?.getBoundingClientRect()
+    }
+
+    if (!toRect) return
+
+    const id = ++flyIdRef.current
+    setFlyingTokens((prev) => [
+      ...prev,
+      {
+        id,
+        from: {
+          cx: pending.fromRect.left + pending.fromRect.width / 2,
+          cy: pending.fromRect.top + pending.fromRect.height / 2,
+          size: pending.fromRect.width
+        },
+        to: {
+          cx: toRect.left + toRect.width / 2,
+          cy: toRect.top + toRect.height / 2,
+          size: toRect.width
+        }
+      }
+    ])
+  }, [flightTrigger])
+
   function startDrag (e, source) {
     if (e.pointerType === 'mouse' && e.button !== 0) return
     dragRef.current = {
@@ -145,6 +190,16 @@ export default function PollVoting ({
     }
   }
 
+  function capturePileTokenRect () {
+    const tokens = pileZoneRef.current?.querySelectorAll('[data-testid="pile-token"]')
+    return tokens?.[0]?.getBoundingClientRect() ?? null
+  }
+
+  function captureZoneTokenRect (proposalId) {
+    const tokens = zoneRefs.current[proposalId]?.querySelectorAll('[data-testid="placed-token"]')
+    return tokens?.[0]?.getBoundingClientRect() ?? null
+  }
+
   function handlePileZoneClick () {
     if (suppressClickRef.current) { suppressClickRef.current = false; return }
     setSaved(false)
@@ -152,10 +207,13 @@ export default function PollVoting ({
       if (selectedToken.source === 'pile') {
         setSelectedToken(null)
       } else {
+        const fromRect = captureZoneTokenRect(selectedToken.source)
+        pendingFlightRef.current = { fromRect, target: 'pile' }
         setAllocations((prev) => ({
           ...prev,
           [selectedToken.source]: prev[selectedToken.source] - 1
         }))
+        setFlightTrigger((v) => v + 1)
         setSelectedToken(null)
       }
     } else {
@@ -170,15 +228,19 @@ export default function PollVoting ({
       const source = selectedToken.source
       if (source === proposalId) {
         setSelectedToken(null)
-      } else if (source === 'pile') {
-        setAllocations((prev) => ({ ...prev, [proposalId]: prev[proposalId] + 1 }))
-        setSelectedToken(null)
       } else {
-        setAllocations((prev) => ({
-          ...prev,
-          [source]: prev[source] - 1,
-          [proposalId]: prev[proposalId] + 1
-        }))
+        const fromRect = source === 'pile' ? capturePileTokenRect() : captureZoneTokenRect(source)
+        pendingFlightRef.current = { fromRect, target: proposalId }
+        if (source === 'pile') {
+          setAllocations((prev) => ({ ...prev, [proposalId]: prev[proposalId] + 1 }))
+        } else {
+          setAllocations((prev) => ({
+            ...prev,
+            [source]: prev[source] - 1,
+            [proposalId]: prev[proposalId] + 1
+          }))
+        }
+        setFlightTrigger((v) => v + 1)
         setSelectedToken(null)
       }
     } else {
@@ -210,12 +272,21 @@ export default function PollVoting ({
 
   return (
     <div style={styles.container}>
+      {flyingTokens.map((ft) => (
+        <FlyingToken
+          key={ft.id}
+          from={ft.from}
+          to={ft.to}
+          onDone={() => setFlyingTokens((prev) => prev.filter((f) => f.id !== ft.id))}
+        />
+      ))}
       <div style={styles.sectionLabel}>
         Your tokens · {remaining} remaining
       </div>
 
       {/* Token pile */}
       <div
+        ref={pileZoneRef}
         data-testid='pile-zone'
         aria-selected={selectedToken?.source === 'pile' ? 'true' : 'false'}
         style={{
@@ -250,6 +321,7 @@ export default function PollVoting ({
           return (
             <div
               key={proposalId}
+              ref={(el) => { zoneRefs.current[proposalId] = el }}
               data-testid={`zone-${proposalId}`}
               data-zone={proposalId}
               style={{
@@ -449,4 +521,52 @@ const styles = {
     fontSize: '12px',
     margin: '8px 0 0'
   }
+}
+
+function FlyingToken ({ from, to, onDone }) {
+  const ref = useRef(null)
+
+  useLayoutEffect(() => {
+    if (!ref.current) return
+    // Invert: snap back to start with no transition
+    ref.current.style.transition = 'none'
+    ref.current.style.transform = 'none'
+
+    // Play: next two frames ensure the browser has painted the inverted position
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        if (!ref.current) return
+        const dx = to.cx - from.cx
+        const dy = to.cy - from.cy
+        const scale = to.size / from.size
+        ref.current.style.transition = 'transform 280ms ease-out'
+        ref.current.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`
+      })
+    })
+  }, [])
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        left: from.cx - from.size / 2,
+        top: from.cy - from.size / 2,
+        width: from.size,
+        height: from.size,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle at 35% 35%, rgba(59,189,232,0.3), rgba(59,189,232,0.1))',
+        border: '2px solid rgba(59,189,232,0.6)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: `${from.size * 0.47}px`,
+        pointerEvents: 'none',
+        zIndex: 9999
+      }}
+      onTransitionEnd={onDone}
+    >
+      🪙
+    </div>
+  )
 }
