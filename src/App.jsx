@@ -5,7 +5,9 @@ import {
   listParticipatedTrips as _listParticipatedTrips,
   updateTrip as _updateTrip,
   deleteTrip as _deleteTrip,
-  leaveTrip as _leaveTrip
+  leaveTrip as _leaveTrip,
+  getCoordinatorParticipant as _getCoordinatorParticipant,
+  getUserById as _getUserById
 } from './backend'
 import AuthForm from './AuthForm'
 import Header from './Header'
@@ -23,6 +25,8 @@ const defaultListParticipatedTrips = _listParticipatedTrips.bind(_listParticipat
 const defaultUpdateTrip = _updateTrip.bind(_updateTrip)
 const defaultDeleteTrip = _deleteTrip.bind(_deleteTrip)
 const defaultLeaveTrip = _leaveTrip.bind(_leaveTrip)
+const defaultGetCoordinatorParticipant = _getCoordinatorParticipant.bind(_getCoordinatorParticipant)
+const defaultGetUserById = _getUserById.bind(_getUserById)
 
 function App ({
   accountGet = defaultAccountGet,
@@ -31,7 +35,9 @@ function App ({
   listParticipatedTrips = defaultListParticipatedTrips,
   updateTrip = defaultUpdateTrip,
   deleteTrip = defaultDeleteTrip,
-  leaveTrip = defaultLeaveTrip
+  leaveTrip = defaultLeaveTrip,
+  getCoordinatorParticipant = defaultGetCoordinatorParticipant,
+  getUserById = defaultGetUserById
 }) {
   const [user, setUser] = useState(null)
   const [checking, setChecking] = useState(true)
@@ -134,7 +140,10 @@ function App ({
                 updateTrip={updateTrip}
                 deleteTrip={deleteTrip}
                 leaveTrip={leaveTrip}
+                getCoordinatorParticipant={getCoordinatorParticipant}
+                getUserById={getUserById}
                 onLeft={handleViewAllTrips}
+                onUpdated={(updated) => setTrips((ts) => ts.map((t) => t.$id === updated.$id ? updated : t))}
               />
             </ErrorBoundary>
           )}

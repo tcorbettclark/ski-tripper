@@ -19,7 +19,8 @@ export default function TripOverview ({
   updateTrip = _updateTrip,
   deleteTrip = _deleteTrip,
   leaveTrip = _leaveTrip,
-  onLeft
+  onLeft,
+  onUpdated
 }) {
   const [participants, setParticipants] = useState([])
   const [coordinator, setCoordinator] = useState(null)
@@ -112,7 +113,7 @@ export default function TripOverview ({
           <EditTripForm
             trip={trip}
             userId={user.$id}
-            onUpdated={() => setIsEditing(false)}
+            onUpdated={(updated) => { setIsEditing(false); onUpdated?.(updated) }}
             onDeleted={() => {}}
             onCancel={() => setIsEditing(false)}
             updateTrip={updateTrip}

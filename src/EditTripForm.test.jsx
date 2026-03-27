@@ -43,7 +43,7 @@ describe('EditTripForm', () => {
       expect(mockUpdate).toHaveBeenCalledWith('trip-1', {
         description: 'Updated description'
       }, 'user-1')
-      expect(handleUpdated).toHaveBeenCalledTimes(1)
+      expect(handleUpdated).toHaveBeenCalledWith(defaultUpdated)
     })
   })
 

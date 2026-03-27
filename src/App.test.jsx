@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event'
 import App from './App'
 
 const defaultUser = { $id: 'user-1', name: 'Test User', email: 'test@example.com' }
+const sampleTrip = { $id: 'trip-1', code: 'abc-123', description: 'Alps adventure' }
+const updatedTrip = { $id: 'trip-1', code: 'abc-123', description: 'Dolomites adventure' }
 
 function renderApp (props = {}) {
   return render(
@@ -12,6 +14,19 @@ function renderApp (props = {}) {
       deleteSession={() => Promise.resolve()}
       listTrips={() => Promise.resolve({ documents: [] })}
       listParticipatedTrips={() => Promise.resolve({ documents: [] })}
+      {...props}
+    />
+  )
+}
+
+function renderAppWithTrip (props = {}) {
+  return render(
+    <App
+      accountGet={() => Promise.resolve(defaultUser)}
+      deleteSession={() => Promise.resolve()}
+      listTrips={() => Promise.resolve({ documents: [sampleTrip] })}
+      listParticipatedTrips={() => Promise.resolve({ documents: [] })}
+      updateTrip={() => Promise.resolve(updatedTrip)}
       {...props}
     />
   )
@@ -88,5 +103,67 @@ describe('App', () => {
       expect(mockDelete).toHaveBeenCalledTimes(1)
       expect(screen.getByRole('heading', { name: /sign in/i })).toBeInTheDocument()
     })
+  })
+
+  it('shows the trip description in the trip table', async () => {
+    renderAppWithTrip()
+    await waitFor(() => {
+      expect(screen.getByText('Alps adventure')).toBeInTheDocument()
+    })
+  })
+
+  it('shows the trip description in the detail panel when navigating to a trip', async () => {
+    const ue = userEvent.setup()
+    renderAppWithTrip()
+
+    await waitFor(() => screen.getByText('Alps adventure'))
+    await ue.click(screen.getByText('Alps adventure'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Trip Details')).toBeInTheDocument()
+      expect(screen.getAllByText('Alps adventure').length).toBeGreaterThan(0)
+    })
+  })
+
+  it('updates the trip description in the detail panel and table after editing', async () => {
+    const ue = userEvent.setup()
+    const getCoordinatorParticipant = () =>
+      Promise.resolve({ documents: [{ userId: 'user-1', role: 'coordinator' }] })
+    const getUserById = () => Promise.resolve(defaultUser)
+    const listParticipatedTrips = () => Promise.resolve({ documents: [] })
+
+    render(
+      <App
+        accountGet={() => Promise.resolve(defaultUser)}
+        deleteSession={() => Promise.resolve()}
+        listTrips={() => Promise.resolve({ documents: [sampleTrip] })}
+        listParticipatedTrips={listParticipatedTrips}
+        updateTrip={() => Promise.resolve(updatedTrip)}
+        getCoordinatorParticipant={getCoordinatorParticipant}
+        getUserById={getUserById}
+      />
+    )
+
+    // Navigate to trip detail
+    await waitFor(() => screen.getByText('Alps adventure'))
+    await ue.click(screen.getByText('Alps adventure'))
+    await waitFor(() => screen.getByText('Trip Details'))
+
+    // Click Edit (visible because user is coordinator)
+    await waitFor(() => screen.getByRole('button', { name: /^edit$/i }))
+    await ue.click(screen.getByRole('button', { name: /^edit$/i }))
+
+    // Save the form
+    await ue.click(screen.getByRole('button', { name: /^save$/i }))
+
+    // Detail panel and header both show the updated description
+    await waitFor(() => {
+      expect(screen.getAllByText('Dolomites adventure').length).toBeGreaterThan(0)
+    })
+
+    // Navigating back to the list also shows the updated description in the table
+    await ue.click(screen.getByRole('button', { name: /my trips/i }))
+    await waitFor(() => screen.getByRole('heading', { name: /^my trips$/i }))
+    expect(screen.getByText('Dolomites adventure')).toBeInTheDocument()
   })
 })
