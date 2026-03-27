@@ -49,8 +49,21 @@ function App ({
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
 
   const handleJoinedTrip = useCallback(() => {
+    Promise.all([
+      listTrips(user.$id),
+      listParticipatedTrips(user.$id)
+    ])
+      .then(([ownRes, participatedRes]) => {
+        const coordinatedIds = new Set(ownRes.documents.map((t) => t.$id))
+        const allTrips = [
+          ...ownRes.documents,
+          ...participatedRes.documents.filter((t) => !coordinatedIds.has(t.$id))
+        ]
+        setTrips(allTrips)
+      })
+      .catch((err) => console.error('Failed to load trips:', err))
     setRefreshProposalsKey((k) => k + 1)
-  }, [])
+  }, [user, listTrips, listParticipatedTrips])
 
   useEffect(() => {
     accountGet()
