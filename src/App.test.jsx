@@ -10,6 +10,7 @@ function renderApp (props = {}) {
     <App
       accountGet={() => Promise.resolve(defaultUser)}
       deleteSession={() => Promise.resolve()}
+      listParticipatedTrips={() => Promise.resolve({ documents: [] })}
       {...props}
     />
   )
