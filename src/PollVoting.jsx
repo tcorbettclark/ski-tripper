@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { upsertVote as _upsertVote } from './backend'
 import { colors, fonts, borders } from './theme'
 
@@ -12,7 +12,6 @@ export default function PollVoting ({
 }) {
   const proposalMap = Object.fromEntries(proposals.map((p) => [p.$id, p]))
 
-  // eslint-disable-next-line no-unused-vars
   const [allocations, setAllocations] = useState(() => {
     const init = {}
     poll.proposalIds.forEach((id) => { init[id] = 0 })
@@ -24,10 +23,53 @@ export default function PollVoting ({
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [selectedToken, setSelectedToken] = useState(null) // { source: 'pile' | proposalId }
+  const suppressClickRef = useRef(false)
 
   const maxTokens = poll.proposalIds.length
   const totalUsed = Object.values(allocations).reduce((a, b) => a + b, 0)
   const remaining = maxTokens - totalUsed
+
+  function handlePileZoneClick () {
+    if (suppressClickRef.current) { suppressClickRef.current = false; return }
+    setSaved(false)
+    if (selectedToken) {
+      if (selectedToken.source === 'pile') {
+        setSelectedToken(null)
+      } else {
+        setAllocations((prev) => ({
+          ...prev,
+          [selectedToken.source]: prev[selectedToken.source] - 1
+        }))
+        setSelectedToken(null)
+      }
+    } else {
+      if (remaining > 0) setSelectedToken({ source: 'pile' })
+    }
+  }
+
+  function handleProposalClick (proposalId) {
+    if (suppressClickRef.current) { suppressClickRef.current = false; return }
+    setSaved(false)
+    if (selectedToken) {
+      const source = selectedToken.source
+      if (source === proposalId) {
+        setSelectedToken(null)
+      } else if (source === 'pile') {
+        setAllocations((prev) => ({ ...prev, [proposalId]: prev[proposalId] + 1 }))
+        setSelectedToken(null)
+      } else {
+        setAllocations((prev) => ({
+          ...prev,
+          [source]: prev[source] - 1,
+          [proposalId]: prev[proposalId] + 1
+        }))
+        setSelectedToken(null)
+      }
+    } else {
+      if (allocations[proposalId] > 0) setSelectedToken({ source: proposalId })
+    }
+  }
 
   async function handleSave () {
     setSaving(true)
@@ -60,13 +102,27 @@ export default function PollVoting ({
       {/* Token pile */}
       <div
         data-testid='pile-zone'
-        aria-selected='false'
-        style={styles.pileZone}
+        aria-selected={selectedToken?.source === 'pile' ? 'true' : 'false'}
+        style={{
+          ...styles.pileZone,
+          ...(selectedToken && selectedToken.source !== 'pile' ? styles.pileZoneHighlight : {})
+        }}
+        data-zone='pile'
+        onClick={handlePileZoneClick}
       >
         {remaining === 0
           ? <span style={styles.pileEmpty}>All tokens placed</span>
           : Array.from({ length: remaining }, (_, i) => (
-            <div key={i} data-testid='pile-token' style={styles.token}>🪙</div>
+            <div
+              key={i}
+              data-testid='pile-token'
+              style={{
+                ...styles.token,
+                ...(selectedToken?.source === 'pile' && i === 0 ? styles.tokenSelected : {})
+              }}
+            >
+              🪙
+            </div>
           ))}
       </div>
 
@@ -80,7 +136,12 @@ export default function PollVoting ({
               key={proposalId}
               data-testid={`zone-${proposalId}`}
               data-zone={proposalId}
-              style={styles.proposalCard}
+              style={{
+                ...styles.proposalCard,
+                ...(selectedToken && selectedToken.source !== proposalId ? styles.proposalCardHighlight : {}),
+                ...(selectedToken?.source === proposalId ? styles.proposalCardSelected : {})
+              }}
+              onClick={() => handleProposalClick(proposalId)}
             >
               <div style={styles.proposalHeader}>
                 <span style={styles.proposalName}>
@@ -99,7 +160,10 @@ export default function PollVoting ({
                     <div
                       key={i}
                       data-testid='placed-token'
-                      style={styles.tokenSmall}
+                      style={{
+                        ...styles.tokenSmall,
+                        ...(selectedToken?.source === proposalId && i === 0 ? styles.tokenSmallSelected : {})
+                      }}
                     >
                       🪙
                     </div>
@@ -143,7 +207,9 @@ const styles = {
     gap: '8px',
     padding: '12px 14px',
     background: 'rgba(59,189,232,0.04)',
-    border: '1px dashed rgba(59,189,232,0.25)',
+    borderWidth: '1px',
+    borderStyle: 'dashed',
+    borderColor: 'rgba(59,189,232,0.25)',
     borderRadius: '10px',
     minHeight: '58px',
     alignItems: 'center',
@@ -200,7 +266,9 @@ const styles = {
   proposalCard: {
     padding: '12px 14px',
     background: colors.bgCard,
-    border: borders.card,
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'rgba(100,190,230,0.12)',
     borderRadius: '10px',
     cursor: 'pointer'
   },
