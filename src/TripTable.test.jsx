@@ -47,11 +47,6 @@ describe('TripTable', () => {
     expect(screen.getByText('Co-ordinator')).toBeInTheDocument()
   })
 
-  it('shows the Code column header', async () => {
-    await renderTable(sampleTrips)
-    expect(screen.getByText('Code')).toBeInTheDocument()
-  })
-
   it('shows a custom empty message when provided', async () => {
     await renderTable([], { emptyMessage: "You haven't joined any trips yet." })
     expect(screen.getByText("You haven't joined any trips yet.")).toBeInTheDocument()

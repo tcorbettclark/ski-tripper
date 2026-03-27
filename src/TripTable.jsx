@@ -17,7 +17,6 @@ export default function TripTable ({
     <table style={styles.table}>
       <thead>
         <tr>
-          <th style={styles.th}>Code</th>
           <th style={styles.th}>Description</th>
           <th style={styles.th}>Co-ordinator</th>
         </tr>
