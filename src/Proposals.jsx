@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import {
-  listParticipatedTrips as _listParticipatedTrips,
   listProposals as _listProposals,
   createProposal as _createProposal,
   updateProposal as _updateProposal,
@@ -17,9 +16,8 @@ import { colors, fonts, borders } from './theme'
 
 export default function Proposals ({
   user,
-  refreshTrips,
-  selectedTripId: initialSelectedTripId,
-  listParticipatedTrips = _listParticipatedTrips,
+  selectedTripId,
+  onRefresh,
   listProposals = _listProposals,
   createProposal = _createProposal,
   updateProposal = _updateProposal,
@@ -29,11 +27,8 @@ export default function Proposals ({
   getCoordinatorParticipant = _getCoordinatorParticipant,
   getUserById = _getUserById
 }) {
-  const [trips, setTrips] = useState([])
-  const [selectedTripId, setSelectedTripId] = useState(initialSelectedTripId || null)
   const [proposals, setProposals] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [randomizing, setRandomizing] = useState(false)
   const [proposalsLoading, setProposalsLoading] = useState(false)
@@ -47,31 +42,13 @@ export default function Proposals ({
   }, [])
 
   useEffect(() => {
-    if (initialSelectedTripId) {
-      setSelectedTripId(initialSelectedTripId)
-    }
-  }, [initialSelectedTripId])
-
-  useEffect(() => {
-    listParticipatedTrips(user.$id)
-      .then((result) => {
-        if (mountedRef.current) {
-          setTrips(result.documents)
-          if (result.documents.length === 1 && !selectedTripId) {
-            setSelectedTripId(result.documents[0].$id)
-          }
-        }
-      })
-      .catch((err) => { if (mountedRef.current) setError(err.message) })
-      .finally(() => { if (mountedRef.current) setLoading(false) })
-  }, [user.$id])
-
-  useEffect(() => {
     if (!selectedTripId) {
       setProposals([])
       setIsCoordinator(false)
+      setLoading(false)
       return
     }
+    setLoading(false)
     setProposalsLoading(true)
     setProposalsError('')
     Promise.all([
@@ -121,7 +98,6 @@ export default function Proposals ({
   }, [])
 
   if (loading) return <p style={styles.message}>Loading…</p>
-  if (error) return <p style={{ ...styles.message, color: colors.error }}>{error}</p>
 
   return (
     <div style={styles.container}>
@@ -146,23 +122,9 @@ export default function Proposals ({
         )}
       </div>
 
-      {trips.length === 0
-        ? <p style={styles.message}>Join a trip first to create proposals.</p>
-        : (
-          <select
-            value={selectedTripId || ''}
-            onChange={(e) => {
-              setSelectedTripId(e.target.value || null)
-              setShowCreateForm(false)
-            }}
-            style={styles.select}
-          >
-            <option value=''>— Select a trip —</option>
-            {trips.map((trip) => (
-              <option key={trip.$id} value={trip.$id}>{trip.description || trip.code || trip.$id}</option>
-            ))}
-          </select>
-          )}
+      {!selectedTripId && (
+        <p style={styles.promptMessage}>Select a trip above to view proposals.</p>
+      )}
 
       {showCreateForm && selectedTripId && (
         <CreateProposalForm
@@ -212,6 +174,13 @@ const styles = {
     textAlign: 'center',
     fontSize: '15px'
   },
+  promptMessage: {
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    padding: '40px',
+    textAlign: 'center',
+    fontSize: '15px'
+  },
   toolbar: {
     display: 'flex',
     alignItems: 'center',
@@ -255,17 +224,5 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     letterSpacing: '0.02em'
-  },
-  select: {
-    padding: '10px 14px',
-    borderRadius: '7px',
-    border: borders.muted,
-    background: colors.bgInput,
-    color: colors.textPrimary,
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    outline: 'none',
-    marginBottom: '24px',
-    width: '100%'
   }
 }

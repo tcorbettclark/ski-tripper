@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import {
-  listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
   listProposals as _listProposals,
   listVotes as _listVotes,
@@ -15,8 +14,8 @@ import { colors, fonts, borders } from './theme'
 
 export default function Poll ({
   user,
-  selectedTripId: initialSelectedTripId,
-  listParticipatedTrips = _listParticipatedTrips,
+  selectedTripId,
+  onTripChange,
   listPolls = _listPolls,
   listProposals = _listProposals,
   listVotes = _listVotes,
@@ -25,12 +24,7 @@ export default function Poll ({
   upsertVote = _upsertVote,
   getCoordinatorParticipant = _getCoordinatorParticipant
 }) {
-  const [trips, setTrips] = useState([])
-  const [selectedTripId, setSelectedTripId] = useState(
-    initialSelectedTripId || null
-  )
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [activePoll, setActivePoll] = useState(null)
   const [pastPolls, setPastPolls] = useState([])
   const [proposals, setProposals] = useState([])
@@ -52,31 +46,16 @@ export default function Poll ({
   }, [])
 
   useEffect(() => {
-    listParticipatedTrips(user.$id)
-      .then((result) => {
-        if (!mountedRef.current) return
-        setTrips(result.documents)
-        if (result.documents.length === 1 && !selectedTripId) {
-          setSelectedTripId(result.documents[0].$id)
-        }
-      })
-      .catch((err) => {
-        if (mountedRef.current) setError(err.message)
-      })
-      .finally(() => {
-        if (mountedRef.current) setLoading(false)
-      })
-  }, [user.$id])
-
-  useEffect(() => {
     if (!selectedTripId) {
       setActivePoll(null)
       setPastPolls([])
       setProposals([])
       setVotes([])
       setIsCoordinator(false)
+      setLoading(false)
       return
     }
+    setLoading(false)
     setPollsLoading(true)
     setPollsError('')
     setCreateError('')
@@ -156,7 +135,6 @@ export default function Poll ({
   const myVote = votes.find((v) => v.userId === user.$id) || null
 
   if (loading) return <p style={styles.message}>Loading…</p>
-  if (error) { return <p style={{ ...styles.message, color: colors.error }}>{error}</p> }
 
   return (
     <div style={styles.container}>
@@ -164,26 +142,9 @@ export default function Poll ({
         <h2 style={styles.heading}>Poll</h2>
       </div>
 
-      {trips.length === 0
-        ? (
-          <p style={styles.message}>
-            Join a trip first to create or vote in polls.
-          </p>
-          )
-        : (
-          <select
-            value={selectedTripId || ''}
-            onChange={(e) => setSelectedTripId(e.target.value || null)}
-            style={styles.select}
-          >
-            <option value=''>— Select a trip —</option>
-            {trips.map((trip) => (
-              <option key={trip.$id} value={trip.$id}>
-                {trip.description || trip.code || trip.$id}
-              </option>
-            ))}
-          </select>
-          )}
+      {!selectedTripId && (
+        <p style={styles.promptMessage}>Select a trip above to view polls.</p>
+      )}
 
       {pollsLoading && <p style={styles.message}>Loading poll…</p>}
       {pollsError && (
@@ -332,17 +293,12 @@ const styles = {
     margin: 0,
     letterSpacing: '-0.01em'
   },
-  select: {
-    padding: '10px 14px',
-    borderRadius: '7px',
-    border: borders.muted,
-    background: colors.bgInput,
-    color: colors.textPrimary,
+  promptMessage: {
+    color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
-    outline: 'none',
-    marginBottom: '24px',
-    width: '100%'
+    padding: '40px',
+    textAlign: 'center',
+    fontSize: '15px'
   },
   pollPanel: {
     border: borders.card,

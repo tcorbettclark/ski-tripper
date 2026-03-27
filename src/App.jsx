@@ -1,5 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
-import { account as _account } from './backend'
+import {
+  account as _account,
+  listParticipatedTrips as _listParticipatedTrips
+} from './backend'
 import AuthForm from './AuthForm'
 import Trips from './Trips'
 import Proposals from './Proposals'
@@ -9,16 +12,19 @@ import { colors, fonts, borders } from './theme'
 
 const defaultAccountGet = _account.get.bind(_account)
 const defaultDeleteSession = _account.deleteSession.bind(_account, 'current')
+const defaultListParticipatedTrips = _listParticipatedTrips.bind(_listParticipatedTrips)
 
 function App ({
   accountGet = defaultAccountGet,
-  deleteSession = defaultDeleteSession
+  deleteSession = defaultDeleteSession,
+  listParticipatedTrips = defaultListParticipatedTrips
 }) {
   const [user, setUser] = useState(null)
   const [checking, setChecking] = useState(true)
   const [page, setPage] = useState('login')
   const [activePage, setActivePage] = useState('trips')
-  const [proposalsSelectedTripId, setProposalsSelectedTripId] = useState(null)
+  const [trips, setTrips] = useState([])
+  const [selectedTripId, setSelectedTripId] = useState(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
 
   const handleJoinedTrip = useCallback(() => {
@@ -31,6 +37,17 @@ function App ({
       .catch(() => setUser(null))
       .finally(() => setChecking(false))
   }, [accountGet])
+
+  useEffect(() => {
+    if (!user) return
+    listParticipatedTrips(user.$id)
+      .then((result) => {
+        setTrips(result.documents)
+        if (result.documents.length === 1 && !selectedTripId) {
+          setSelectedTripId(result.documents[0].$id)
+        }
+      })
+  }, [user, listParticipatedTrips])
 
   async function handleLogout () {
     await deleteSession()
@@ -77,6 +94,18 @@ function App ({
             Poll
           </button>
         </nav>
+        {activePage !== 'trips' && trips.length > 0 && (
+          <select
+            value={selectedTripId || ''}
+            onChange={(e) => setSelectedTripId(e.target.value || null)}
+            style={headerStyles.tripSelect}
+          >
+            <option value=''>— Select trip —</option>
+            {trips.map((trip) => (
+              <option key={trip.$id} value={trip.$id}>{trip.description || trip.code || trip.$id}</option>
+            ))}
+          </select>
+        )}
         <div style={headerStyles.userGroup}>
           <span style={headerStyles.name}>{user.name || user.email}</span>
           <button onClick={handleLogout} style={headerStyles.button}>
@@ -90,7 +119,7 @@ function App ({
             user={user}
             onJoinedTrip={handleJoinedTrip}
             onViewProposals={(tripId) => {
-              setProposalsSelectedTripId(tripId)
+              setSelectedTripId(tripId)
               setActivePage('proposals')
             }}
           />
@@ -101,13 +130,19 @@ function App ({
           <Proposals
             user={user}
             key={refreshProposalsKey}
-            selectedTripId={proposalsSelectedTripId}
+            selectedTripId={selectedTripId}
+            onTripChange={setSelectedTripId}
+            onRefresh={() => setRefreshProposalsKey((k) => k + 1)}
           />
         </ErrorBoundary>
       )}
       {activePage === 'poll' && (
         <ErrorBoundary>
-          <Poll user={user} />
+          <Poll
+            user={user}
+            selectedTripId={selectedTripId}
+            onTripChange={setSelectedTripId}
+          />
         </ErrorBoundary>
       )}
     </div>
@@ -125,7 +160,19 @@ const headerStyles = {
     background: 'rgba(7,17,31,0.98)',
     position: 'sticky',
     top: 0,
-    zIndex: 100
+    zIndex: 100,
+    gap: '24px'
+  },
+  tripSelect: {
+    padding: '7px 12px',
+    borderRadius: '6px',
+    border: borders.muted,
+    background: colors.bgInput,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    outline: 'none',
+    minWidth: '180px'
   },
   wordmark: {
     fontFamily: fonts.display,
