@@ -1,4 +1,4 @@
-import { describe, it, expect, mock } from 'bun:test'
+import { describe, it, expect } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import ParticipantList from './ParticipantList'
 
@@ -50,19 +50,20 @@ describe('ParticipantList', () => {
       render () { return this.state.error ? <span>caught: {this.state.error.message}</span> : this.props.children }
     }
 
-    const spy = mock(() => {})
     const originalError = console.error
-    console.error = spy
-
-    render(
-      <ErrorBoundary>
-        <ParticipantList
-          tripId='trip-1'
-          listTripParticipants={() => Promise.reject(new Error('boom'))}
-        />
-      </ErrorBoundary>
-    )
-    await waitFor(() => expect(screen.getByText('caught: boom')).toBeInTheDocument())
-    console.error = originalError
+    console.error = () => {}
+    try {
+      render(
+        <ErrorBoundary>
+          <ParticipantList
+            tripId='trip-1'
+            listTripParticipants={() => Promise.reject(new Error('boom'))}
+          />
+        </ErrorBoundary>
+      )
+      await waitFor(() => expect(screen.getByText('caught: boom')).toBeInTheDocument())
+    } finally {
+      console.error = originalError
+    }
   })
 })
