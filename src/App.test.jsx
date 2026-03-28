@@ -129,7 +129,7 @@ describe('App', () => {
   it('updates the trip description in the detail panel and table after editing', async () => {
     const ue = userEvent.setup()
     const getCoordinatorParticipant = () =>
-      Promise.resolve({ documents: [{ userId: 'user-1', role: 'coordinator', userName: 'Test User' }] })
+      Promise.resolve({ documents: [{ ParticipantUserId: 'user-1', role: 'coordinator', ParticipantUserName: 'Test User' }] })
     const listParticipatedTrips = () => Promise.resolve({ documents: [] })
 
     render(

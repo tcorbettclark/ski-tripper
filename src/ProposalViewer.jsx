@@ -121,7 +121,7 @@ export default function ProposalViewer ({
           <div style={{ gridColumn: '1/-1' }}>
             <div style={styles.fieldLabel}>Proposed By</div>
             <div style={styles.fieldValue}>
-              {proposal.creatorName || '—'}
+              {proposal.ProposerUserName || '—'}
             </div>
           </div>
         </div>

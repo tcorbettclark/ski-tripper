@@ -28,7 +28,7 @@ export default function ProposalsRow ({
   const [rejecting, setRejecting] = useState(false)
   const [rejectError, setRejectError] = useState('')
 
-  const isOwner = userId === proposal.userId
+  const isOwner = userId === proposal.ProposerUserId
   const isDraft = proposal.state === 'DRAFT'
   const isRejected = proposal.state === 'REJECTED'
   const canAct = isOwner && isDraft
@@ -86,7 +86,7 @@ export default function ProposalsRow ({
       <td style={styles.td}>{proposal.resortName || '—'}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>{proposal.country || '—'}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>
-        {proposal.creatorName || '—'}
+        {proposal.ProposerUserName || '—'}
       </td>
       <td style={styles.td}>
         <span

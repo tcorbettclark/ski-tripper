@@ -11,8 +11,8 @@ import ProposalViewer from './ProposalViewer'
 
 const p1 = {
   $id: 'p-1',
-  userId: 'user-1',
-  creatorName: 'Alice',
+  ProposerUserId: 'user-1',
+  ProposerUserName: 'Alice',
   state: 'SUBMITTED',
   resortName: "Val d'Isère",
   country: 'France',
@@ -27,8 +27,8 @@ const p1 = {
 
 const p2 = {
   $id: 'p-2',
-  userId: 'user-2',
-  creatorName: 'Bob',
+  ProposerUserId: 'user-2',
+  ProposerUserName: 'Bob',
   state: 'DRAFT',
   resortName: 'Chamonix',
   country: 'France',
@@ -43,8 +43,8 @@ const p2 = {
 
 const p3 = {
   $id: 'p-3',
-  userId: 'user-3',
-  creatorName: 'Carol',
+  ProposerUserId: 'user-3',
+  ProposerUserName: 'Carol',
   state: 'DRAFT',
   resortName: 'Verbier',
   country: 'Switzerland',

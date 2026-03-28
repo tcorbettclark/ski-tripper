@@ -45,7 +45,7 @@ describe('Poll', () => {
       renderPoll({
         tripId: 'trip-1',
         getCoordinatorParticipant: mock(() =>
-          Promise.resolve({ documents: [{ $id: 'part-1', userId: 'user-1' }] })
+          Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'user-1' }] })
         )
       })
     })
@@ -84,7 +84,7 @@ describe('Poll', () => {
         tripId: 'trip-1',
         listPolls: mock(() => Promise.resolve({ documents: [openPoll] })),
         getCoordinatorParticipant: mock(() =>
-          Promise.resolve({ documents: [{ $id: 'part-1', userId: 'user-1' }] })
+          Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'user-1' }] })
         )
       })
     })

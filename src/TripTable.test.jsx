@@ -14,9 +14,8 @@ async function renderTable (trips, props = {}) {
     render(
       <TripTable
         trips={trips}
-        userId='user-1'
         onSelectTrip={noop}
-        getCoordinatorParticipant={() => Promise.resolve({ documents: [{ userId: 'user-1', userName: 'Test User' }] })}
+        getCoordinatorParticipant={() => Promise.resolve({ documents: [{ ParticipantUserId: 'user-1', ParticipantUserName: 'Test User' }] })}
         {...props}
       />
     )

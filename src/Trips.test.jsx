@@ -19,7 +19,7 @@ function renderTrips (props = {}) {
       updateTrip={() => Promise.resolve(defaultTrip)}
       deleteTrip={() => Promise.resolve()}
       leaveTrip={() => Promise.resolve()}
-      getCoordinatorParticipant={() => Promise.resolve({ documents: [{ userId: 'user-1', userName: 'Test User' }] })}
+      getCoordinatorParticipant={() => Promise.resolve({ documents: [{ ParticipantUserId: 'user-1', ParticipantUserName: 'Test User' }] })}
     />
   )
 }

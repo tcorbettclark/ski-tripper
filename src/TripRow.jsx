@@ -6,7 +6,6 @@ import { colors, fonts } from './theme'
 
 export default function TripRow ({
   trip,
-  userId,
   onSelectTrip,
   getCoordinatorParticipant = _getCoordinatorParticipant
 }) {
@@ -23,10 +22,10 @@ export default function TripRow ({
     getCoordinatorParticipant(trip.$id)
       .then(({ documents }) => {
         if (!mountedRef.current || documents.length === 0) return
-        setCoordinator({ name: documents[0].userName })
+        setCoordinator({ name: documents[0].ParticipantUserName })
       })
       .catch((err) => console.error('Failed to fetch coordinator:', err))
-  }, [trip.$id, userId])
+  }, [trip.$id])
 
   return (
     <tr

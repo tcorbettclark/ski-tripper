@@ -5,8 +5,8 @@ import ProposalsTable from './ProposalsTable'
 
 const sampleProposal = {
   $id: 'p-1',
-  userId: 'user-1',
-  creatorName: 'Alice',
+  ProposerUserId: 'user-1',
+  ProposerUserName: 'Alice',
   state: 'DRAFT',
   resortName: "Val d'Isère",
   country: 'France',

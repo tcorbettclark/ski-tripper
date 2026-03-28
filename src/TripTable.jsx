@@ -3,7 +3,6 @@ import { colors, fonts, borders } from './theme'
 
 export default function TripTable ({
   trips,
-  userId,
   onSelectTrip,
   emptyMessage = 'No trips yet. Add one above.',
   getCoordinatorParticipant
@@ -25,7 +24,6 @@ export default function TripTable ({
           <TripRow
             key={trip.$id}
             trip={trip}
-            userId={userId}
             onSelectTrip={onSelectTrip}
             getCoordinatorParticipant={getCoordinatorParticipant}
           />

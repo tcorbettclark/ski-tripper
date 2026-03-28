@@ -14,10 +14,9 @@ async function renderRow (trip, props = {}) {
         <tbody>
           <TripRow
             trip={trip}
-            userId={props.userId || 'user-1'}
             onSelectTrip={props.onSelectTrip || noop}
             getCoordinatorParticipant={() =>
-              Promise.resolve({ documents: [{ userId: props.coordinatorUserId || 'user-1', userName: 'Test User' }] })}
+              Promise.resolve({ documents: [{ ParticipantUserId: props.coordinatorUserId || 'user-1', ParticipantUserName: 'Test User' }] })}
           />
         </tbody>
       </table>

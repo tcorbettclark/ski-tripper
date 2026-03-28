@@ -68,7 +68,7 @@ export default function Poll ({
         if (!mountedRef.current) return
         setIsCoordinator(
           coordResult.documents.length > 0 &&
-            coordResult.documents[0].userId === user.$id
+            coordResult.documents[0].ParticipantUserId === user.$id
         )
         setProposals(proposalsResult.documents)
         const open =
@@ -106,7 +106,7 @@ export default function Poll ({
     setCreatingPoll(true)
     setCreateError('')
     try {
-      const poll = await createPoll(tripId, user.$id)
+      const poll = await createPoll(tripId, user.$id, user.name)
       setActivePoll(poll)
       setVotes([])
     } catch (err) {
@@ -131,7 +131,7 @@ export default function Poll ({
   }
 
   const hasSubmittedProposals = proposals.some((p) => p.state === 'SUBMITTED')
-  const myVote = votes.find((v) => v.userId === user.$id) || null
+  const myVote = votes.find((v) => v.VoterUserId === user.$id) || null
 
   if (loading) return <p style={styles.message}>Loading…</p>
 

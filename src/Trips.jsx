@@ -77,7 +77,6 @@ export default function Trips ({
 
       <TripTable
         trips={trips}
-        userId={user.$id}
         onSelectTrip={onSelectTrip}
         emptyMessage='No trips yet. Create one or join one above.'
         getCoordinatorParticipant={getCoordinatorParticipant}

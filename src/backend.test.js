@@ -39,7 +39,7 @@ describe('listTrips', () => {
     const listDocuments = mock()
     listDocuments
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }] })
       )
       .mockImplementationOnce(() =>
         Promise.resolve({ documents: [{ $id: 'trip-1', name: 'Trip 1' }] })
@@ -172,8 +172,8 @@ describe('createTrip', () => {
     await createTrip('user-1', 'Alice', { name: 'New Trip' }, db)
     const participantData = db.createDocument.mock.calls[1][3]
     expect(participantData.role).toBe('coordinator')
-    expect(participantData.userId).toBe('user-1')
-    expect(participantData.userName).toBe('Alice')
+    expect(participantData.ParticipantUserId).toBe('user-1')
+    expect(participantData.ParticipantUserName).toBe('Alice')
   })
 
   it('propagates createDocument errors', async () => {
@@ -188,7 +188,7 @@ describe('updateTrip', () => {
   it('calls updateDocument and returns the updated trip when caller is coordinator', async () => {
     const db = makeDb({
       listDocuments: mock(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'user-1' }] })
       )
     })
     const result = await updateTrip('trip-1', { name: 'Updated Trip' }, 'user-1', db)
@@ -199,7 +199,7 @@ describe('updateTrip', () => {
   it('throws when the caller is not the coordinator', async () => {
     const db = makeDb({
       listDocuments: mock(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'other-user' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'other-user' }] })
       )
     })
     await expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow('Only the coordinator can edit this trip.')
@@ -215,7 +215,7 @@ describe('updateTrip', () => {
   it('propagates errors', async () => {
     const db = makeDb({
       listDocuments: mock(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'user-1' }] })
       ),
       updateDocument: mock(() => Promise.reject(new Error('Update failed')))
     })
@@ -230,13 +230,13 @@ describe('joinTrip', () => {
     expect(db.createDocument).toHaveBeenCalledTimes(1)
     const participantData = db.createDocument.mock.calls[0][3]
     expect(participantData.role).toBe('participant')
-    expect(participantData.userName).toBe('Alice')
+    expect(participantData.ParticipantUserName).toBe('Alice')
   })
 
   it('throws when the user has already joined the trip', async () => {
     const db = makeDb({
       listDocuments: mock(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }] })
       )
     })
     await expect(joinTrip('user-1', 'Alice', 'trip-1', db)).rejects.toThrow('You have already joined this trip.')
@@ -307,15 +307,15 @@ describe('listParticipatedTrips', () => {
 describe('createProposal', () => {
   it('creates a proposal document when user is a participant', async () => {
     const listDocuments = mock(() =>
-      Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
+      Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }] })
     )
     const db = makeDb({ listDocuments })
     const result = await createProposal('trip-1', 'user-1', 'Alice', { name: 'Alps Trip' }, db)
     expect(db.createDocument).toHaveBeenCalledTimes(1)
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.tripId).toBe('trip-1')
-    expect(data.userId).toBe('user-1')
-    expect(data.creatorName).toBe('Alice')
+    expect(data.ProposerUserId).toBe('user-1')
+    expect(data.ProposerUserName).toBe('Alice')
     expect(data.state).toBe('DRAFT')
     expect(data.name).toBe('Alps Trip')
     expect(result.$id).toBe('new-id')
@@ -407,7 +407,7 @@ describe('updateProposal', () => {
   it('updates the proposal when user is the creator and state is DRAFT', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'DRAFT' })
       )
     })
     const result = await updateProposal('prop-1', 'user-1', { name: 'Updated' }, db)
@@ -418,22 +418,22 @@ describe('updateProposal', () => {
   it('strips state, tripId, and userId from data before updating', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'DRAFT' })
       )
     })
-    await updateProposal('prop-1', 'user-1', { name: 'Updated', state: 'SUBMITTED', tripId: 'other-trip', userId: 'other-user' }, db)
+    await updateProposal('prop-1', 'user-1', { name: 'Updated', state: 'SUBMITTED', tripId: 'other-trip', ProposerUserId: 'other-user' }, db)
     expect(db.updateDocument).toHaveBeenCalledTimes(1)
     const [, , , data] = db.updateDocument.mock.calls[0]
     expect(data.name).toBe('Updated')
     expect(data.state).toBeUndefined()
     expect(data.tripId).toBeUndefined()
-    expect(data.userId).toBeUndefined()
+    expect(data.ProposerUserId).toBeUndefined()
   })
 
   it('throws when user is not the creator', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'other-user', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'other-user', state: 'DRAFT' })
       )
     })
     await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
@@ -445,7 +445,7 @@ describe('updateProposal', () => {
   it('throws when proposal is not in DRAFT state', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'SUBMITTED' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'SUBMITTED' })
       )
     })
     await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
@@ -457,7 +457,7 @@ describe('updateProposal', () => {
   it('propagates errors', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'DRAFT' })
       ),
       updateDocument: mock(() => Promise.reject(new Error('Update failed')))
     })
@@ -469,7 +469,7 @@ describe('deleteProposal', () => {
   it('deletes the proposal when user is the creator and state is DRAFT', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'DRAFT' })
       )
     })
     await deleteProposal('prop-1', 'user-1', db)
@@ -481,7 +481,7 @@ describe('deleteProposal', () => {
   it('throws when user is not the creator', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'other-user', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'other-user', state: 'DRAFT' })
       )
     })
     await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
@@ -493,7 +493,7 @@ describe('deleteProposal', () => {
   it('throws when proposal is not in DRAFT state', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'SUBMITTED' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'SUBMITTED' })
       )
     })
     await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
@@ -505,7 +505,7 @@ describe('deleteProposal', () => {
   it('propagates errors', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'DRAFT' })
       ),
       deleteDocument: mock(() => Promise.reject(new Error('Delete failed')))
     })
@@ -517,7 +517,7 @@ describe('submitProposal', () => {
   it('updates state to SUBMITTED when user is the creator and state is DRAFT', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'DRAFT' })
       )
     })
     await submitProposal('prop-1', 'user-1', db)
@@ -529,7 +529,7 @@ describe('submitProposal', () => {
   it('throws when user is not the creator', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'other-user', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'other-user', state: 'DRAFT' })
       )
     })
     await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
@@ -541,7 +541,7 @@ describe('submitProposal', () => {
   it('throws when proposal is not in DRAFT state', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'SUBMITTED' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'SUBMITTED' })
       )
     })
     await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
@@ -553,7 +553,7 @@ describe('submitProposal', () => {
   it('propagates errors', async () => {
     const db = makeDb({
       getDocument: mock(() =>
-        Promise.resolve({ $id: 'prop-1', userId: 'user-1', state: 'DRAFT' })
+        Promise.resolve({ $id: 'prop-1', ProposerUserId: 'user-1', state: 'DRAFT' })
       ),
       updateDocument: mock(() => Promise.reject(new Error('Update failed')))
     })
@@ -567,13 +567,13 @@ describe('rejectProposal', () => {
       getDocument: mock(() =>
         Promise.resolve({
           $id: 'p-1',
-          userId: 'creator-1',
+          ProposerUserId: 'creator-1',
           tripId: 'trip-1',
           state: 'SUBMITTED'
         })
       ),
       listDocuments: mock(() =>
-        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] })
+        Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }] })
       )
     })
     await rejectProposal('p-1', 'coord-1', db)
@@ -587,7 +587,7 @@ describe('rejectProposal', () => {
       getDocument: mock(() =>
         Promise.resolve({
           $id: 'p-1',
-          userId: 'creator-1',
+          ProposerUserId: 'creator-1',
           tripId: 'trip-1',
           state: 'DRAFT'
         })
@@ -604,14 +604,14 @@ describe('rejectProposal', () => {
       getDocument: mock(() =>
         Promise.resolve({
           $id: 'p-1',
-          userId: 'creator-1',
+          ProposerUserId: 'creator-1',
           tripId: 'trip-1',
           state: 'SUBMITTED'
         })
       ),
       listDocuments: mock(() =>
         Promise.resolve({
-          documents: [{ $id: 'part-1', userId: 'other-coord' }]
+          documents: [{ $id: 'part-1', ParticipantUserId: 'other-coord' }]
         })
       )
     })
@@ -635,28 +635,29 @@ describe('createPoll', () => {
   it('creates a poll with OPEN state and proposal snapshot when caller is coordinator', async () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] })
+        Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }] })
       )
       .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
       .mockImplementationOnce(() =>
         Promise.resolve({ documents: [{ $id: 'prop-1' }, { $id: 'prop-2' }] })
       )
     const db = makeDb({ listDocuments })
-    await createPoll('trip-1', 'coord-1', db)
+    await createPoll('trip-1', 'coord-1', 'Coordinator Name', db)
     expect(db.createDocument).toHaveBeenCalledTimes(1)
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.state).toBe('OPEN')
     expect(data.proposalIds).toEqual(['prop-1', 'prop-2'])
     expect(data.tripId).toBe('trip-1')
-    expect(data.createdBy).toBe('coord-1')
+    expect(data.PollCreatorUserId).toBe('coord-1')
+    expect(data.PollCreatorUserName).toBe('Coordinator Name')
   })
 
   it('throws when caller is not the coordinator', async () => {
     const listDocuments = mock(() =>
-      Promise.resolve({ documents: [{ $id: 'part-1', userId: 'other-user' }] })
+      Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'other-user' }] })
     )
     const db = makeDb({ listDocuments })
-    await expect(createPoll('trip-1', 'user-1', db)).rejects.toThrow(
+    await expect(createPoll('trip-1', 'user-1', 'User Name', db)).rejects.toThrow(
       'Only the coordinator can create a poll.'
     )
     expect(db.createDocument).not.toHaveBeenCalled()
@@ -665,13 +666,13 @@ describe('createPoll', () => {
   it('throws when a poll is already open for this trip', async () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] })
+        Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }] })
       )
       .mockImplementationOnce(() =>
         Promise.resolve({ documents: [{ $id: 'poll-1', state: 'OPEN' }] })
       )
     const db = makeDb({ listDocuments })
-    await expect(createPoll('trip-1', 'coord-1', db)).rejects.toThrow(
+    await expect(createPoll('trip-1', 'coord-1', 'Coordinator Name', db)).rejects.toThrow(
       'A poll is already open for this trip.'
     )
     expect(db.createDocument).not.toHaveBeenCalled()
@@ -680,12 +681,12 @@ describe('createPoll', () => {
   it('throws when there are no submitted proposals', async () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] })
+        Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }] })
       )
       .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
       .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
     const db = makeDb({ listDocuments })
-    await expect(createPoll('trip-1', 'coord-1', db)).rejects.toThrow(
+    await expect(createPoll('trip-1', 'coord-1', 'Coordinator Name', db)).rejects.toThrow(
       'No submitted proposals to poll on.'
     )
     expect(db.createDocument).not.toHaveBeenCalled()
@@ -699,7 +700,7 @@ describe('closePoll', () => {
         Promise.resolve({ $id: 'poll-1', tripId: 'trip-1', state: 'OPEN' })
       ),
       listDocuments: mock(() =>
-        Promise.resolve({ documents: [{ $id: 'part-1', userId: 'coord-1' }] })
+        Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }] })
       )
     })
     await closePoll('poll-1', 'coord-1', db)
@@ -727,7 +728,7 @@ describe('closePoll', () => {
       ),
       listDocuments: mock(() =>
         Promise.resolve({
-          documents: [{ $id: 'part-1', userId: 'other-coord' }]
+          documents: [{ $id: 'part-1', ParticipantUserId: 'other-coord' }]
         })
       )
     })
@@ -779,7 +780,7 @@ describe('upsertVote', () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          documents: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }]
+          documents: [{ $id: 'part-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }]
         })
       )
       .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
@@ -797,7 +798,7 @@ describe('upsertVote', () => {
     expect(db.createDocument).toHaveBeenCalledTimes(1)
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.pollId).toBe('poll-1')
-    expect(data.userId).toBe('user-1')
+    expect(data.VoterUserId).toBe('user-1')
     expect(data.proposalIds).toEqual(['p-1'])
     expect(data.tokenCounts).toEqual([2])
   })
@@ -880,7 +881,7 @@ describe('listVotes', () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          documents: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }]
+          documents: [{ $id: 'part-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }]
         })
       )
       .mockImplementationOnce(() =>
@@ -904,7 +905,7 @@ describe('deleteTrip', () => {
   it('throws when the caller is not the coordinator', async () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'other-user' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'other-user' }] })
       )
     const db = makeDb({ listDocuments })
     await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow('Only the coordinator can delete this trip.')
@@ -913,7 +914,7 @@ describe('deleteTrip', () => {
   it('deletes participants then the trip when caller is coordinator', async () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'user-1' }] })
       )
       .mockImplementationOnce(() =>
         Promise.resolve({ documents: [{ $id: 'p-1' }, { $id: 'p-2' }] })
@@ -933,7 +934,7 @@ describe('deleteTrip', () => {
   it('propagates errors', async () => {
     const listDocuments = mock()
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1' }] })
+        Promise.resolve({ documents: [{ $id: 'p-1', ParticipantUserId: 'user-1' }] })
       )
       .mockImplementationOnce(() =>
         Promise.resolve({ documents: [] })

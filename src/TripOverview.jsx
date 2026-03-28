@@ -23,7 +23,6 @@ export default function TripOverview ({
 }) {
   const [participants, setParticipants] = useState([])
   const [coordinator, setCoordinator] = useState(null)
-  const [coordinatorUserId, setCoordinatorUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -43,11 +42,10 @@ export default function TripOverview ({
     getCoordinatorParticipant(trip.$id)
       .then(({ documents }) => {
         if (!mountedRef.current || documents.length === 0) return
-        const cid = documents[0].userId
+        const cid = documents[0].ParticipantUserId
         if (mountedRef.current) {
-          setCoordinatorUserId(cid)
           setIsCoordinator(cid === user.$id)
-          setCoordinator({ name: documents[0].userName })
+          setCoordinator({ name: documents[0].ParticipantUserName })
         }
       })
       .catch((err) => console.error('Failed to load coordinator:', err))
@@ -60,9 +58,9 @@ export default function TripOverview ({
         if (!mountedRef.current) return
         const tripParticipants = documents.filter((p) => p.tripId === trip.$id)
         const withRoles = tripParticipants.map((p) => ({
-          name: p.userName,
+          name: p.ParticipantUserName,
           role: p.role,
-          userId: p.userId
+          ParticipantUserId: p.ParticipantUserId
         }))
         setParticipants(withRoles)
       })
@@ -146,7 +144,7 @@ export default function TripOverview ({
             <span style={styles.detailLabel}>Coordinator</span>
             <span style={styles.detailValue}>
               {coordinator
-                ? `${coordinator.name || coordinator.email}${coordinatorUserId === user.$id ? ' (me)' : ''}`
+                ? `${coordinator.name || coordinator.email}`
                 : '…'}
             </span>
           </div>
@@ -164,7 +162,7 @@ export default function TripOverview ({
                   {codeCopied ? '✓' : '⧉'}
                 </button>
                 <span style={styles.copyFeedback}>
-                  {codeCopied ? 'Copied!' : codeCopyError || '(share this code to invite participants)'}
+                  {codeCopied ? 'Copied!' : codeCopyError || '(share this code with others so they can join)'}
                 </span>
               </span>
             </div>
@@ -182,7 +180,6 @@ export default function TripOverview ({
                 <li key={p.$id || p.email} style={styles.participantItem}>
                   <span style={styles.participantName}>
                     {p.name || p.email}
-                    {p.userId === user.$id && ' (me)'}
                   </span>
                   <span style={styles.participantRole}>{p.role}</span>
                 </li>
