@@ -21,7 +21,7 @@ export default function CreateProposalForm ({
   onCreated,
   onDismiss,
   createProposal = _createProposal,
-  accountGet = _account.get
+  accountGet = _account.get.bind(_account)
 }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)

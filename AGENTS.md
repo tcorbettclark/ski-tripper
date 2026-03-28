@@ -48,7 +48,7 @@ Co-Authored-By: (agent name and attribution byline)
 
 - One component per file, filename matches component name, default export only
 - Functional components with hooks only
-- Destructure props in signature: `function App({ accountGet = _account.get })`
+- Destructure props in signature: `function App({ accountGet = _account.get.bind(_account) })`
 - No Context API, Redux, Zustand — data flows via callback props (`onCreated`, etc.)
 - Let errors propagate — catch at ErrorBoundary
 

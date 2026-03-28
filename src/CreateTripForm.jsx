@@ -5,7 +5,7 @@ import { colors, borders, formStyles } from './theme'
 
 const EMPTY_FORM = { description: '' }
 
-export default function CreateTripForm ({ user, onCreated, onDismiss, createTrip = _createTrip, accountGet = _account.get }) {
+export default function CreateTripForm ({ user, onCreated, onDismiss, createTrip = _createTrip, accountGet = _account.get.bind(_account) }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')

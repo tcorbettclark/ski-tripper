@@ -9,7 +9,7 @@ export default function JoinTripForm ({
   onDismiss,
   getTripByCode = _getTripByCode,
   joinTrip = _joinTrip,
-  accountGet = _account.get
+  accountGet = _account.get.bind(_account)
 }) {
   const [code, setCode] = useState('')
   const [saving, setSaving] = useState(false)
