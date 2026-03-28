@@ -83,6 +83,8 @@ describe('Proposals', () => {
         updateProposal={mock(() => Promise.resolve({ $id: 'p-1' }))}
         deleteProposal={mock(() => Promise.resolve())}
         submitProposal={mock(() => Promise.resolve({ $id: 'p-1', state: 'SUBMITTED' }))}
+        rejectProposal={mock(() => Promise.resolve({ $id: 'p-1', state: 'REJECTED' }))}
+        getCoordinatorParticipant={mock(() => Promise.resolve({ documents: [] }))}
                />)
     })
     await waitFor(() => {
