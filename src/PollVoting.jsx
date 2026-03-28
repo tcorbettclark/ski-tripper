@@ -32,6 +32,16 @@ export default function PollVoting ({
   const totalUsed = Object.values(allocations).reduce((a, b) => a + b, 0)
   const remaining = maxTokens - totalUsed
 
+  const savedAllocations = {}
+  if (myVote) {
+    myVote.proposalIds.forEach((id, i) => {
+      savedAllocations[id] = myVote.tokenCounts[i] || 0
+    })
+  }
+  const isUnchanged = myVote && poll.proposalIds.every(
+    (id) => allocations[id] === (savedAllocations[id] || 0)
+  )
+
   function handleAdd (proposalId) {
     setSaved(false)
     setAllocations((prev) => ({ ...prev, [proposalId]: prev[proposalId] + 1 }))
@@ -115,8 +125,11 @@ export default function PollVoting ({
         </span>
         <button
           onClick={handleSave}
-          disabled={saving}
-          style={styles.saveButton}
+          disabled={saving || isUnchanged}
+          style={{
+            ...styles.saveButton,
+            ...(isUnchanged ? styles.saveButtonDisabled : {})
+          }}
         >
           {saving ? 'Saving…' : 'Save Vote'}
         </button>
@@ -197,6 +210,10 @@ const styles = {
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer'
+  },
+  saveButtonDisabled: {
+    opacity: 0.4,
+    cursor: 'default'
   },
   savedText: {
     color: colors.accent,

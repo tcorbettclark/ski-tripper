@@ -151,4 +151,34 @@ describe('PollVoting', () => {
       expect(screen.getByText('Vote failed')).toBeInTheDocument()
     })
   })
+
+  it('Save button disabled when current allocation matches saved vote', () => {
+    const myVote = { proposalIds: ['p-1', 'p-2'], tokenCounts: [2, 1] }
+    renderPollVoting({ myVote })
+    expect(screen.getByRole('button', { name: /save vote/i })).toBeDisabled()
+  })
+
+  it('Save button enabled when current allocation differs from saved vote', async () => {
+    const user = userEvent.setup()
+    const myVote = { proposalIds: ['p-1'], tokenCounts: [1] }
+    renderPollVoting({ myVote })
+    await user.click(
+      screen.getByRole('button', { name: /add vote to Verbier/i })
+    )
+    expect(screen.getByRole('button', { name: /save vote/i })).not.toBeDisabled()
+  })
+
+  it('Save button disabled after incrementing then decrementing back to saved value', async () => {
+    const user = userEvent.setup()
+    const myVote = { proposalIds: ['p-1'], tokenCounts: [1] }
+    renderPollVoting({ myVote })
+    await user.click(
+      screen.getByRole('button', { name: /add vote to Chamonix/i })
+    )
+    expect(screen.getByRole('button', { name: /save vote/i })).not.toBeDisabled()
+    await user.click(
+      screen.getByRole('button', { name: /remove vote from Chamonix/i })
+    )
+    expect(screen.getByRole('button', { name: /save vote/i })).toBeDisabled()
+  })
 })
