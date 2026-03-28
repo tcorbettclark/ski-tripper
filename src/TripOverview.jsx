@@ -1,18 +1,19 @@
 import { useEffect, useState, useRef } from 'react'
 import {
-  listParticipatedTrips as _listParticipatedTrips,
+  listTripParticipants as _listTripParticipants,
   getCoordinatorParticipant as _getCoordinatorParticipant,
   updateTrip as _updateTrip,
   deleteTrip as _deleteTrip,
   leaveTrip as _leaveTrip
 } from './backend'
 import EditTripForm from './EditTripForm'
+import ParticipantList from './ParticipantList'
 import { colors, fonts, borders } from './theme'
 
 export default function TripOverview ({
   trip,
   user,
-  listParticipatedTrips = _listParticipatedTrips,
+  listTripParticipants = _listTripParticipants,
   getCoordinatorParticipant = _getCoordinatorParticipant,
   updateTrip = _updateTrip,
   deleteTrip = _deleteTrip,
@@ -21,9 +22,7 @@ export default function TripOverview ({
   onUpdated,
   onDeleted
 }) {
-  const [participants, setParticipants] = useState([])
   const [coordinator, setCoordinator] = useState(null)
-  const [loading, setLoading] = useState(true)
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
@@ -49,23 +48,6 @@ export default function TripOverview ({
         }
       })
       .catch((err) => console.error('Failed to load coordinator:', err))
-  }, [trip, user.$id])
-
-  useEffect(() => {
-    if (!trip) return
-    listParticipatedTrips(user.$id)
-      .then(({ documents }) => {
-        if (!mountedRef.current) return
-        const tripParticipants = documents.filter((p) => p.tripId === trip.$id)
-        const withRoles = tripParticipants.map((p) => ({
-          name: p.ParticipantUserName,
-          role: p.role,
-          ParticipantUserId: p.ParticipantUserId
-        }))
-        setParticipants(withRoles)
-      })
-      .catch((err) => console.error('Failed to load participants:', err))
-      .finally(() => { if (mountedRef.current) setLoading(false) })
   }, [trip, user.$id])
 
   function handleCopyCode () {
@@ -171,21 +153,8 @@ export default function TripOverview ({
       </div>
 
       <div style={styles.card}>
-        <h3 style={styles.cardTitle}>Participants ({participants.length})</h3>
-        {loading
-          ? <p style={styles.loading}>Loading participants…</p>
-          : (
-            <ul style={styles.participantList}>
-              {participants.map((p) => (
-                <li key={p.$id || p.email} style={styles.participantItem}>
-                  <span style={styles.participantName}>
-                    {p.name || p.email}
-                  </span>
-                  <span style={styles.participantRole}>{p.role}</span>
-                </li>
-              ))}
-            </ul>
-            )}
+        <h3 style={styles.cardTitle}>Participants</h3>
+        <ParticipantList tripId={trip.$id} listTripParticipants={listTripParticipants} />
       </div>
     </div>
   )

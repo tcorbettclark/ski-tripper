@@ -3,6 +3,7 @@ import {
   account as _account,
   listTrips as _listTrips,
   listParticipatedTrips as _listParticipatedTrips,
+  listTripParticipants as _listTripParticipants,
   updateTrip as _updateTrip,
   deleteTrip as _deleteTrip,
   leaveTrip as _leaveTrip,
@@ -21,6 +22,7 @@ const defaultAccountGet = _account.get.bind(_account)
 const defaultDeleteSession = _account.deleteSession.bind(_account, 'current')
 const defaultListTrips = _listTrips.bind(_listTrips)
 const defaultListParticipatedTrips = _listParticipatedTrips.bind(_listParticipatedTrips)
+const defaultListTripParticipants = _listTripParticipants.bind(_listTripParticipants)
 const defaultUpdateTrip = _updateTrip.bind(_updateTrip)
 const defaultDeleteTrip = _deleteTrip.bind(_deleteTrip)
 const defaultLeaveTrip = _leaveTrip.bind(_leaveTrip)
@@ -31,6 +33,7 @@ function App ({
   deleteSession = defaultDeleteSession,
   listTrips = defaultListTrips,
   listParticipatedTrips = defaultListParticipatedTrips,
+  listTripParticipants = defaultListTripParticipants,
   updateTrip = defaultUpdateTrip,
   deleteTrip = defaultDeleteTrip,
   leaveTrip = defaultLeaveTrip,
@@ -148,7 +151,7 @@ function App ({
               <TripOverview
                 trip={selectedTrip}
                 user={user}
-                listParticipatedTrips={listParticipatedTrips}
+                listTripParticipants={listTripParticipants}
                 updateTrip={updateTrip}
                 deleteTrip={deleteTrip}
                 leaveTrip={leaveTrip}
