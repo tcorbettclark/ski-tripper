@@ -6,7 +6,6 @@ import {
   updateTrip as _updateTrip,
   deleteTrip as _deleteTrip,
   leaveTrip as _leaveTrip,
-  getUserById as _getUserById,
   getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
 import CreateTripForm from './CreateTripForm'
@@ -25,7 +24,6 @@ export default function Trips ({
   updateTrip = _updateTrip,
   deleteTrip = _deleteTrip,
   leaveTrip = _leaveTrip,
-  getUserById = _getUserById,
   getCoordinatorParticipant = _getCoordinatorParticipant
 }) {
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -82,7 +80,6 @@ export default function Trips ({
         userId={user.$id}
         onSelectTrip={onSelectTrip}
         emptyMessage='No trips yet. Create one or join one above.'
-        getUserById={getUserById}
         getCoordinatorParticipant={getCoordinatorParticipant}
       />
     </div>

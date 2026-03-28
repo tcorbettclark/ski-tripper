@@ -6,6 +6,7 @@ import ProposalsTable from './ProposalsTable'
 const sampleProposal = {
   $id: 'p-1',
   userId: 'user-1',
+  creatorName: 'Alice',
   state: 'DRAFT',
   resortName: "Val d'Isère",
   country: 'France',
@@ -30,10 +31,7 @@ async function renderProposalsTable (props = {}) {
     updateProposal: mock(() => Promise.resolve()),
     deleteProposal: mock(() => Promise.resolve()),
     submitProposal: mock(() => Promise.resolve()),
-    rejectProposal: mock(() => Promise.resolve()),
-    getUserById: mock(() =>
-      Promise.resolve({ name: 'Alice', email: 'alice@example.com' })
-    )
+    rejectProposal: mock(() => Promise.resolve())
   }
   let result
   await act(async () => {

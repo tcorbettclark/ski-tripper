@@ -5,8 +5,7 @@ import {
   updateProposal as _updateProposal,
   deleteProposal as _deleteProposal,
   submitProposal as _submitProposal,
-  rejectProposal as _rejectProposal,
-  getUserById as _getUserById
+  rejectProposal as _rejectProposal
 } from './backend'
 import { colors, fonts, borders } from './theme'
 
@@ -22,8 +21,7 @@ export default function ProposalsTable ({
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
-  rejectProposal = _rejectProposal,
-  getUserById = _getUserById
+  rejectProposal = _rejectProposal
 }) {
   const [viewingIndex, setViewingIndex] = useState(null)
 
@@ -59,7 +57,6 @@ export default function ProposalsTable ({
               deleteProposal={deleteProposal}
               submitProposal={submitProposal}
               rejectProposal={rejectProposal}
-              getUserById={getUserById}
             />
           ))}
         </tbody>
@@ -69,7 +66,6 @@ export default function ProposalsTable ({
           proposals={proposals}
           initialIndex={viewingIndex}
           onClose={() => setViewingIndex(null)}
-          getUserById={getUserById}
         />
       )}
     </>

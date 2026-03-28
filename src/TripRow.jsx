@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import {
-  getUserById as _getUserById,
   getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
 import { colors, fonts } from './theme'
@@ -9,7 +8,6 @@ export default function TripRow ({
   trip,
   userId,
   onSelectTrip,
-  getUserById = _getUserById,
   getCoordinatorParticipant = _getCoordinatorParticipant
 }) {
   const [coordinator, setCoordinator] = useState(null)
@@ -25,9 +23,8 @@ export default function TripRow ({
     getCoordinatorParticipant(trip.$id)
       .then(({ documents }) => {
         if (!mountedRef.current || documents.length === 0) return
-        return getUserById(documents[0].userId)
+        setCoordinator({ name: documents[0].userName })
       })
-      .then((c) => { if (mountedRef.current && c) setCoordinator(c) })
       .catch((err) => console.error('Failed to fetch coordinator:', err))
   }, [trip.$id, userId])
 

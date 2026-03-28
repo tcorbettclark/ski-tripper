@@ -16,6 +16,7 @@ function renderForm (props = {}) {
       onDismiss={noop}
       getTripByCode={() => Promise.resolve({ documents: [] })}
       joinTrip={() => Promise.resolve()}
+      accountGet={() => Promise.resolve(testUser)}
       {...props}
     />
   )
@@ -79,7 +80,7 @@ describe('JoinTripForm', () => {
     await user.click(screen.getByRole('button', { name: /join trip/i }))
 
     await waitFor(() => {
-      expect(mockJoin).toHaveBeenCalledWith('user-1', 'trip-1')
+      expect(mockJoin).toHaveBeenCalledWith('user-1', 'Test User', 'trip-1')
       expect(handleJoined).toHaveBeenCalledWith(ownTrip)
     })
   })

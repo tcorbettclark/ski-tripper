@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react'
 import {
   listParticipatedTrips as _listParticipatedTrips,
   getCoordinatorParticipant as _getCoordinatorParticipant,
-  getUserById as _getUserById,
   updateTrip as _updateTrip,
   deleteTrip as _deleteTrip,
   leaveTrip as _leaveTrip
@@ -15,7 +14,6 @@ export default function TripOverview ({
   user,
   listParticipatedTrips = _listParticipatedTrips,
   getCoordinatorParticipant = _getCoordinatorParticipant,
-  getUserById = _getUserById,
   updateTrip = _updateTrip,
   deleteTrip = _deleteTrip,
   leaveTrip = _leaveTrip,
@@ -49,10 +47,9 @@ export default function TripOverview ({
         if (mountedRef.current) {
           setCoordinatorUserId(cid)
           setIsCoordinator(cid === user.$id)
+          setCoordinator({ name: documents[0].userName })
         }
-        return getUserById(cid)
       })
-      .then((c) => { if (mountedRef.current && c) setCoordinator(c) })
       .catch((err) => console.error('Failed to load coordinator:', err))
   }, [trip, user.$id])
 
@@ -62,16 +59,10 @@ export default function TripOverview ({
       .then(({ documents }) => {
         if (!mountedRef.current) return
         const tripParticipants = documents.filter((p) => p.tripId === trip.$id)
-        const userIds = tripParticipants.map((p) => p.userId)
-        return Promise.all(userIds.map((id) => getUserById(id)))
-          .then((users) => ({ tripParticipants, users }))
-      })
-      .then(({ tripParticipants, users }) => {
-        if (!mountedRef.current || !users) return
-        const withRoles = users.map((u, i) => ({
-          ...u,
-          role: tripParticipants[i]?.role,
-          userId: tripParticipants[i]?.userId
+        const withRoles = tripParticipants.map((p) => ({
+          name: p.userName,
+          role: p.role,
+          userId: p.userId
         }))
         setParticipants(withRoles)
       })

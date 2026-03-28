@@ -28,7 +28,6 @@ function renderAppWithTrip (props = {}) {
       listParticipatedTrips={() => Promise.resolve({ documents: [] })}
       updateTrip={() => Promise.resolve(updatedTrip)}
       getCoordinatorParticipant={() => Promise.resolve({ documents: [] })}
-      getUserById={() => Promise.resolve(defaultUser)}
       {...props}
     />
   )
@@ -130,8 +129,7 @@ describe('App', () => {
   it('updates the trip description in the detail panel and table after editing', async () => {
     const ue = userEvent.setup()
     const getCoordinatorParticipant = () =>
-      Promise.resolve({ documents: [{ userId: 'user-1', role: 'coordinator' }] })
-    const getUserById = () => Promise.resolve(defaultUser)
+      Promise.resolve({ documents: [{ userId: 'user-1', role: 'coordinator', userName: 'Test User' }] })
     const listParticipatedTrips = () => Promise.resolve({ documents: [] })
 
     render(
@@ -142,7 +140,6 @@ describe('App', () => {
         listParticipatedTrips={listParticipatedTrips}
         updateTrip={() => Promise.resolve(updatedTrip)}
         getCoordinatorParticipant={getCoordinatorParticipant}
-        getUserById={getUserById}
       />
     )
 

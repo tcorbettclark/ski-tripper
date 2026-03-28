@@ -3,8 +3,7 @@ import {
   screen,
   waitFor,
   act,
-  fireEvent,
-  within
+  fireEvent
 } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, mock } from 'bun:test'
@@ -13,6 +12,7 @@ import ProposalViewer from './ProposalViewer'
 const p1 = {
   $id: 'p-1',
   userId: 'user-1',
+  creatorName: 'Alice',
   state: 'SUBMITTED',
   resortName: "Val d'Isère",
   country: 'France',
@@ -28,6 +28,7 @@ const p1 = {
 const p2 = {
   $id: 'p-2',
   userId: 'user-2',
+  creatorName: 'Bob',
   state: 'DRAFT',
   resortName: 'Chamonix',
   country: 'France',
@@ -43,6 +44,7 @@ const p2 = {
 const p3 = {
   $id: 'p-3',
   userId: 'user-3',
+  creatorName: 'Carol',
   state: 'DRAFT',
   resortName: 'Verbier',
   country: 'Switzerland',
@@ -59,16 +61,12 @@ async function renderViewer (props = {}) {
   const defaults = {
     proposals: [p1, p2, p3],
     initialIndex: 0,
-    onClose: mock(() => {}),
-    getUserById: mock(() =>
-      Promise.resolve({ name: 'Alice', email: 'alice@example.com' })
-    )
+    onClose: mock(() => {})
   }
   let result
   await act(async () => {
     result = render(<ProposalViewer {...defaults} {...props} />)
   })
-  await act(async () => {}) // flush getUserById promise resolution
   return { ...defaults, ...props, ...result }
 }
 
@@ -113,21 +111,10 @@ describe('ProposalViewer', () => {
     expect(screen.getByText('1 of 3')).toBeInTheDocument()
   })
 
-  it('shows creator name from getUserById', async () => {
+  it('shows creator name', async () => {
     await renderViewer()
     await waitFor(() => {
       expect(screen.getByText('Alice')).toBeInTheDocument()
-    })
-  })
-
-  it('falls back to — when getUserById fails', async () => {
-    await renderViewer({
-      getUserById: mock(() => Promise.reject(new Error('fail')))
-    })
-    await waitFor(() => {
-      // The creator field shows — when fetch fails
-      const dialog = screen.getByRole('dialog')
-      expect(within(dialog).getAllByText('—').length).toBeGreaterThan(0)
     })
   })
 

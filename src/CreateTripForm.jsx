@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { createTrip as _createTrip } from './backend'
+import { createTrip as _createTrip, account as _account } from './backend'
 import Field from './Field'
 import { colors, borders, formStyles } from './theme'
 
 const EMPTY_FORM = { description: '' }
 
-export default function CreateTripForm ({ user, onCreated, onDismiss, createTrip = _createTrip }) {
+export default function CreateTripForm ({ user, onCreated, onDismiss, createTrip = _createTrip, accountGet = _account.get }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -19,7 +19,8 @@ export default function CreateTripForm ({ user, onCreated, onDismiss, createTrip
     setError('')
     setSaving(true)
     try {
-      const trip = await createTrip(user.$id, form)
+      const userAccount = await accountGet()
+      const trip = await createTrip(user.$id, userAccount.name, form)
       onCreated(trip)
       setForm(EMPTY_FORM)
       onDismiss()

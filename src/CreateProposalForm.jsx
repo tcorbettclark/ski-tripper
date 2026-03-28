@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { createProposal as _createProposal } from './backend'
+import { createProposal as _createProposal, account as _account } from './backend'
 import Field from './Field'
 import { colors, fonts, borders, formStyles, fieldStyles } from './theme'
 
@@ -20,7 +20,8 @@ export default function CreateProposalForm ({
   userId,
   onCreated,
   onDismiss,
-  createProposal = _createProposal
+  createProposal = _createProposal,
+  accountGet = _account.get
 }) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -35,7 +36,8 @@ export default function CreateProposalForm ({
     setError('')
     setSaving(true)
     try {
-      const proposal = await createProposal(tripId, userId, form)
+      const userAccount = await accountGet()
+      const proposal = await createProposal(tripId, userId, userAccount.name, form)
       onCreated(proposal)
       setForm(EMPTY_FORM)
       onDismiss()

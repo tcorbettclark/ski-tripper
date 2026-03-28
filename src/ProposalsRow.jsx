@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import EditProposalForm from './EditProposalForm'
 import {
   updateProposal as _updateProposal,
   deleteProposal as _deleteProposal,
   submitProposal as _submitProposal,
-  rejectProposal as _rejectProposal,
-  getUserById as _getUserById
+  rejectProposal as _rejectProposal
 } from './backend'
 import { colors, fonts, borders } from './theme'
 
@@ -21,23 +20,13 @@ export default function ProposalsRow ({
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
-  rejectProposal = _rejectProposal,
-  getUserById = _getUserById
+  rejectProposal = _rejectProposal
 }) {
   const [isEditing, setIsEditing] = useState(false)
-  const [creator, setCreator] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [rejectError, setRejectError] = useState('')
-
-  useEffect(() => {
-    if (proposal.userId) {
-      getUserById(proposal.userId)
-        .then(setCreator)
-        .catch(() => {})
-    }
-  }, [proposal.userId])
 
   const isOwner = userId === proposal.userId
   const isDraft = proposal.state === 'DRAFT'
@@ -96,8 +85,8 @@ export default function ProposalsRow ({
     <tr style={styles.tr}>
       <td style={styles.td}>{proposal.resortName || '—'}</td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>{proposal.country || '—'}</td>
-      <td style={{ ...styles.td, color: colors.textSecondary }} title={creator?.email || undefined}>
-        {creator?.name || creator?.email || '—'}
+      <td style={{ ...styles.td, color: colors.textSecondary }}>
+        {proposal.creatorName || '—'}
       </td>
       <td style={styles.td}>
         <span

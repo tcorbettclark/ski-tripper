@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event'
 import TripRow from './TripRow'
 
 const sampleTrip = { $id: 'trip-1', code: 'ABC12', name: 'Ski Alps', description: 'A great trip' }
-const defaultUser = { name: 'Test User', email: 'test@example.com' }
 
 const noop = () => {}
 
@@ -17,9 +16,8 @@ async function renderRow (trip, props = {}) {
             trip={trip}
             userId={props.userId || 'user-1'}
             onSelectTrip={props.onSelectTrip || noop}
-            getUserById={() => Promise.resolve(defaultUser)}
             getCoordinatorParticipant={() =>
-              Promise.resolve({ documents: [{ userId: props.coordinatorUserId || 'user-1' }] })}
+              Promise.resolve({ documents: [{ userId: props.coordinatorUserId || 'user-1', userName: 'Test User' }] })}
           />
         </tbody>
       </table>

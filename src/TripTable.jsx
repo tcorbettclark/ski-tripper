@@ -6,7 +6,6 @@ export default function TripTable ({
   userId,
   onSelectTrip,
   emptyMessage = 'No trips yet. Add one above.',
-  getUserById,
   getCoordinatorParticipant
 }) {
   if (trips.length === 0) {
@@ -28,7 +27,6 @@ export default function TripTable ({
             trip={trip}
             userId={userId}
             onSelectTrip={onSelectTrip}
-            getUserById={getUserById}
             getCoordinatorParticipant={getCoordinatorParticipant}
           />
         ))}

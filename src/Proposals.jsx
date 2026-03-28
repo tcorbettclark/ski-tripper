@@ -6,8 +6,7 @@ import {
   deleteProposal as _deleteProposal,
   submitProposal as _submitProposal,
   rejectProposal as _rejectProposal,
-  getCoordinatorParticipant as _getCoordinatorParticipant,
-  getUserById as _getUserById
+  getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
 import CreateProposalForm from './CreateProposalForm'
 import { randomProposal } from './randomProposal'
@@ -24,8 +23,7 @@ export default function Proposals ({
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
-  getCoordinatorParticipant = _getCoordinatorParticipant,
-  getUserById = _getUserById
+  getCoordinatorParticipant = _getCoordinatorParticipant
 }) {
   const [proposals, setProposals] = useState([])
   const [loading, setLoading] = useState(true)
@@ -86,7 +84,7 @@ export default function Proposals ({
   async function handleRandomProposal () {
     setRandomizing(true)
     try {
-      const proposal = await createProposal(tripId, user.$id, randomProposal())
+      const proposal = await createProposal(tripId, user.$id, user.name, randomProposal())
       handleCreated(proposal)
     } finally {
       setRandomizing(false)
@@ -149,7 +147,6 @@ export default function Proposals ({
           deleteProposal={deleteProposal}
           submitProposal={submitProposal}
           rejectProposal={rejectProposal}
-          getUserById={getUserById}
         />
       )}
     </div>

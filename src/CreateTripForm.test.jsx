@@ -14,6 +14,7 @@ function renderForm (props = {}) {
       onCreated={noop}
       onDismiss={noop}
       createTrip={() => Promise.resolve(defaultTrip)}
+      accountGet={() => Promise.resolve(testUser)}
       {...props}
     />
   )
@@ -35,7 +36,7 @@ describe('CreateTripForm', () => {
     await user.click(screen.getByRole('button', { name: /save trip/i }))
 
     await waitFor(() => {
-      expect(mockCreate).toHaveBeenCalledWith('user-1', { description: 'A trip to the Alps in February' })
+      expect(mockCreate).toHaveBeenCalledWith('user-1', 'Test User', { description: 'A trip to the Alps in February' })
       expect(handleCreated).toHaveBeenCalledTimes(1)
     })
   })

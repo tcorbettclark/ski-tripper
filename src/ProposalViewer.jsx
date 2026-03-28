@@ -1,30 +1,18 @@
 import { useState, useEffect } from 'react'
-import { getUserById as _getUserById } from './backend'
 import { colors, fonts, borders } from './theme'
 
 export default function ProposalViewer ({
   proposals,
   initialIndex,
-  onClose,
-  getUserById = _getUserById
+  onClose
 }) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
-  const [creator, setCreator] = useState(null)
   const [touchStartX, setTouchStartX] = useState(null)
 
   const proposal = proposals[currentIndex]
   const isFirst = currentIndex === 0
   const isLast = currentIndex === proposals.length - 1
   const isDraft = proposal.state === 'DRAFT'
-
-  useEffect(() => {
-    setCreator(null)
-    if (proposal.userId) {
-      getUserById(proposal.userId)
-        .then(setCreator)
-        .catch(() => {})
-    }
-  }, [proposal.$id, getUserById])
 
   useEffect(() => {
     function handleKeyDown (e) {
@@ -133,7 +121,7 @@ export default function ProposalViewer ({
           <div style={{ gridColumn: '1/-1' }}>
             <div style={styles.fieldLabel}>Proposed By</div>
             <div style={styles.fieldValue}>
-              {creator?.name || creator?.email || '—'}
+              {proposal.creatorName || '—'}
             </div>
           </div>
         </div>

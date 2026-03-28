@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getTripByCode as _getTripByCode, joinTrip as _joinTrip } from './backend'
+import { getTripByCode as _getTripByCode, joinTrip as _joinTrip, account as _account } from './backend'
 import Field from './Field'
 import { colors, borders, formStyles } from './theme'
 
@@ -8,7 +8,8 @@ export default function JoinTripForm ({
   onJoined,
   onDismiss,
   getTripByCode = _getTripByCode,
-  joinTrip = _joinTrip
+  joinTrip = _joinTrip,
+  accountGet = _account.get
 }) {
   const [code, setCode] = useState('')
   const [saving, setSaving] = useState(false)
@@ -22,7 +23,8 @@ export default function JoinTripForm ({
       const res = await getTripByCode(code.trim().toLowerCase())
       if (res.documents.length === 0) throw new Error('No trip found with that code.')
       const trip = res.documents[0]
-      await joinTrip(user.$id, trip.$id)
+      const userAccount = await accountGet()
+      await joinTrip(user.$id, userAccount.name, trip.$id)
       onJoined(trip)
       setCode('')
       onDismiss()

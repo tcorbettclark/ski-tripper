@@ -8,7 +8,8 @@ function renderForm (props = {}) {
     userId: 'user-1',
     onCreated: mock(() => {}),
     onDismiss: mock(() => {}),
-    createProposal: mock(() => Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" }))
+    createProposal: mock(() => Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })),
+    accountGet: () => Promise.resolve({ $id: 'user-1', name: 'Alice' })
   }
   const utils = render(<CreateProposalForm {...defaults} {...props} />)
   return { ...utils, ...defaults, ...props }
@@ -53,9 +54,10 @@ describe('CreateProposalForm', () => {
       expect(createProposal).toHaveBeenCalledTimes(1)
     })
 
-    const [calledTripId, calledUserId, calledData] = createProposal.mock.calls[0]
+    const [calledTripId, calledUserId, calledCreatorName, calledData] = createProposal.mock.calls[0]
     expect(calledTripId).toBe('trip-1')
     expect(calledUserId).toBe('user-1')
+    expect(calledCreatorName).toBe('Alice')
     expect(calledData.resortName).toBe("Val d'Isère")
     expect(calledData.country).toBe('France')
     expect(calledData.altitudeRange).toBe('1800m - 3200m')

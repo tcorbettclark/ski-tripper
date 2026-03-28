@@ -8,7 +8,6 @@ const sampleTrips = [
 ]
 
 const noop = () => {}
-const defaultUser = { name: 'Test User', email: 'test@example.com' }
 
 async function renderTable (trips, props = {}) {
   await act(async () => {
@@ -17,8 +16,7 @@ async function renderTable (trips, props = {}) {
         trips={trips}
         userId='user-1'
         onSelectTrip={noop}
-        getUserById={() => Promise.resolve(defaultUser)}
-        getCoordinatorParticipant={() => Promise.resolve({ documents: [] })}
+        getCoordinatorParticipant={() => Promise.resolve({ documents: [{ userId: 'user-1', userName: 'Test User' }] })}
         {...props}
       />
     )

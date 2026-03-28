@@ -18,8 +18,7 @@ function renderProposals (props = {}) {
     deleteProposal: mock(() => Promise.resolve()),
     submitProposal: mock(() => Promise.resolve({ $id: 'p-1', state: 'SUBMITTED' })),
     rejectProposal: mock(() => Promise.resolve({ $id: 'p-1', state: 'REJECTED' })),
-    getCoordinatorParticipant: mock(() => Promise.resolve({ documents: [] })),
-    getUserById: mock(() => Promise.resolve({ name: 'Alice', email: 'alice@example.com' }))
+    getCoordinatorParticipant: mock(() => Promise.resolve({ documents: [] }))
   }
   return render(<Proposals {...defaults} {...props} />)
 }
@@ -84,7 +83,6 @@ describe('Proposals', () => {
         updateProposal={mock(() => Promise.resolve({ $id: 'p-1' }))}
         deleteProposal={mock(() => Promise.resolve())}
         submitProposal={mock(() => Promise.resolve({ $id: 'p-1', state: 'SUBMITTED' }))}
-        getUserById={mock(() => Promise.resolve({ name: 'Alice', email: 'alice@example.com' }))}
                />)
     })
     await waitFor(() => {
