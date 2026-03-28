@@ -85,7 +85,7 @@ async function findUniqueCode (db = databases) {
   throw new Error('Could not generate a unique trip code after 100 attempts.')
 }
 
-export async function createTrip (userId, data, db = databases) {
+export async function createTrip (userId, userName, data, db = databases) {
   const code = await findUniqueCode(db)
   const trip = await db.createDocument(
     DATABASE_ID,
@@ -98,29 +98,11 @@ export async function createTrip (userId, data, db = databases) {
     DATABASE_ID,
     PARTICIPANTS_COLLECTION_ID,
     ID.unique(),
-    { userId, tripId: trip.$id, role: 'coordinator' },
+    { userId, userName, tripId: trip.$id, role: 'coordinator' },
     [Permission.read(Role.user(userId)), Permission.write(Role.user(userId))]
   )
   return trip
 }
-
-export async function getUserById (userId) {
-  const res = await fetch(
-    `${process.env.PUBLIC_APPWRITE_ENDPOINT}/users/${userId}`,
-    {
-      headers: {
-        'X-Appwrite-Project': process.env.PUBLIC_APPWRITE_PROJECT_ID,
-        'X-Appwrite-Key': process.env.PUBLIC_APPWRITE_READ_USERS_API_KEY
-      }
-    }
-  )
-  if (!res.ok) throw new Error('Failed to fetch user')
-  return res.json()
-}
-
-// Note: PUBLIC_APPWRITE_READ_USERS_API_KEY is intentionally exposed (prefixed PUBLIC_)
-// because it is a read-only key used to fetch user display names for the coordinator
-// column. This is acceptable for this use case; do not use a full API key here.
 
 export async function updateTrip (tripId, data, userId, db = databases) {
   const { documents } = await getCoordinatorParticipant(tripId, db)
@@ -167,7 +149,7 @@ export async function listParticipatedTrips (userId, db = databases) {
   return { documents: trips }
 }
 
-export async function joinTrip (userId, tripId, db = databases) {
+export async function joinTrip (userId, userName, tripId, db = databases) {
   try {
     await db.getDocument(DATABASE_ID, TRIPS_COLLECTION_ID, tripId)
   } catch {
@@ -183,7 +165,7 @@ export async function joinTrip (userId, tripId, db = databases) {
     DATABASE_ID,
     PARTICIPANTS_COLLECTION_ID,
     ID.unique(),
-    { userId, tripId, role: 'participant' },
+    { userId, userName, tripId, role: 'participant' },
     [Permission.read(Role.user(userId)), Permission.write(Role.user(userId))]
   )
 }
@@ -207,13 +189,13 @@ async function _verifyParticipant (tripId, userId, db) {
   if (documents.length === 0) throw new Error('You must be a participant to access proposals.')
 }
 
-export async function createProposal (tripId, userId, data, db = databases) {
+export async function createProposal (tripId, userId, creatorName, data, db = databases) {
   await _verifyParticipant(tripId, userId, db)
   return db.createDocument(
     DATABASE_ID,
     PROPOSALS_COLLECTION_ID,
     ID.unique(),
-    { tripId, userId, state: 'DRAFT', ...data },
+    { tripId, userId, creatorName, state: 'DRAFT', ...data },
     [Permission.read(Role.users()), Permission.write(Role.user(userId))]
   )
 }

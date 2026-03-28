@@ -9,7 +9,6 @@ import {
   joinTrip,
   listParticipatedTrips,
   leaveTrip,
-  getUserById,
   createProposal,
   listProposals,
   getProposal,
@@ -120,7 +119,7 @@ describe('getTripByCode', () => {
 describe('createTrip', () => {
   it('checks for code uniqueness before creating', async () => {
     const db = makeDb()
-    await createTrip('user-1', { name: 'New Trip', description: '' }, db)
+    await createTrip('user-1', 'Alice', { name: 'New Trip', description: '' }, db)
     // one listDocuments call for the code check, then two createDocument calls (trip + participant)
     expect(db.listDocuments).toHaveBeenCalledTimes(1)
     expect(db.createDocument).toHaveBeenCalledTimes(2)
@@ -128,14 +127,14 @@ describe('createTrip', () => {
 
   it('includes a three-word code in the created document', async () => {
     const db = makeDb()
-    await createTrip('user-1', { name: 'New Trip' }, db)
+    await createTrip('user-1', 'Alice', { name: 'New Trip' }, db)
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.code).toMatch(/^\w+-\w+-\w+$/)
   })
 
   it('generates a lowercase code', async () => {
     const db = makeDb()
-    await createTrip('user-1', { name: 'New Trip' }, db)
+    await createTrip('user-1', 'Alice', { name: 'New Trip' }, db)
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.code).toBe(data.code.toLowerCase())
   })
@@ -146,7 +145,7 @@ describe('createTrip', () => {
       .mockImplementationOnce(() => Promise.resolve({ documents: [{ $id: 'x' }] }))
       .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
     const db = makeDb({ listDocuments })
-    await createTrip('user-1', { name: 'New Trip' }, db)
+    await createTrip('user-1', 'Alice', { name: 'New Trip' }, db)
     expect(db.listDocuments).toHaveBeenCalledTimes(2)
     expect(db.createDocument).toHaveBeenCalledTimes(2)
   })
@@ -155,7 +154,7 @@ describe('createTrip', () => {
     const db = makeDb({
       listDocuments: mock(() => Promise.resolve({ documents: [{ $id: 'x' }] }))
     })
-    await expect(createTrip('user-1', { name: 'New Trip' }, db)).rejects.toThrow(
+    await expect(createTrip('user-1', 'Alice', { name: 'New Trip' }, db)).rejects.toThrow(
       'Could not generate a unique trip code after 100 attempts.'
     )
     expect(db.listDocuments).toHaveBeenCalledTimes(100)
@@ -164,23 +163,24 @@ describe('createTrip', () => {
 
   it('returns the new trip', async () => {
     const db = makeDb()
-    const result = await createTrip('user-1', { name: 'New Trip', description: '' }, db)
+    const result = await createTrip('user-1', 'Alice', { name: 'New Trip', description: '' }, db)
     expect(result.$id).toBe('new-id')
   })
 
   it('creates the initial participant with role coordinator', async () => {
     const db = makeDb()
-    await createTrip('user-1', { name: 'New Trip' }, db)
+    await createTrip('user-1', 'Alice', { name: 'New Trip' }, db)
     const participantData = db.createDocument.mock.calls[1][3]
     expect(participantData.role).toBe('coordinator')
     expect(participantData.userId).toBe('user-1')
+    expect(participantData.userName).toBe('Alice')
   })
 
   it('propagates createDocument errors', async () => {
     const db = makeDb({
       createDocument: mock(() => Promise.reject(new Error('Create failed')))
     })
-    await expect(createTrip('user-1', { name: 'Trip' }, db)).rejects.toThrow('Create failed')
+    await expect(createTrip('user-1', 'Alice', { name: 'Trip' }, db)).rejects.toThrow('Create failed')
   })
 })
 
@@ -226,10 +226,11 @@ describe('updateTrip', () => {
 describe('joinTrip', () => {
   it('creates a participation record with role participant when none exists', async () => {
     const db = makeDb()
-    await joinTrip('user-1', 'trip-1', db)
+    await joinTrip('user-1', 'Alice', 'trip-1', db)
     expect(db.createDocument).toHaveBeenCalledTimes(1)
     const participantData = db.createDocument.mock.calls[0][3]
     expect(participantData.role).toBe('participant')
+    expect(participantData.userName).toBe('Alice')
   })
 
   it('throws when the user has already joined the trip', async () => {
@@ -238,7 +239,7 @@ describe('joinTrip', () => {
         Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
       )
     })
-    await expect(joinTrip('user-1', 'trip-1', db)).rejects.toThrow('You have already joined this trip.')
+    await expect(joinTrip('user-1', 'Alice', 'trip-1', db)).rejects.toThrow('You have already joined this trip.')
     expect(db.createDocument).not.toHaveBeenCalled()
   })
 })
@@ -303,33 +304,18 @@ describe('listParticipatedTrips', () => {
   })
 })
 
-describe('getUserById', () => {
-  it('fetches user data and returns the parsed JSON', async () => {
-    global.fetch = mock(() =>
-      Promise.resolve({ ok: true, json: () => Promise.resolve({ $id: 'u-1', name: 'Alice' }) })
-    )
-    const result = await getUserById('u-1')
-    expect(result.name).toBe('Alice')
-    expect(global.fetch).toHaveBeenCalledTimes(1)
-  })
-
-  it('throws when the response is not ok', async () => {
-    global.fetch = mock(() => Promise.resolve({ ok: false }))
-    await expect(getUserById('u-1')).rejects.toThrow('Failed to fetch user')
-  })
-})
-
 describe('createProposal', () => {
   it('creates a proposal document when user is a participant', async () => {
     const listDocuments = mock(() =>
       Promise.resolve({ documents: [{ $id: 'p-1', userId: 'user-1', tripId: 'trip-1' }] })
     )
     const db = makeDb({ listDocuments })
-    const result = await createProposal('trip-1', 'user-1', { name: 'Alps Trip' }, db)
+    const result = await createProposal('trip-1', 'user-1', 'Alice', { name: 'Alps Trip' }, db)
     expect(db.createDocument).toHaveBeenCalledTimes(1)
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.tripId).toBe('trip-1')
     expect(data.userId).toBe('user-1')
+    expect(data.creatorName).toBe('Alice')
     expect(data.state).toBe('DRAFT')
     expect(data.name).toBe('Alps Trip')
     expect(result.$id).toBe('new-id')
@@ -337,7 +323,7 @@ describe('createProposal', () => {
 
   it('throws when user is not a participant', async () => {
     const db = makeDb()
-    await expect(createProposal('trip-1', 'user-1', {}, db)).rejects.toThrow(
+    await expect(createProposal('trip-1', 'user-1', 'Alice', {}, db)).rejects.toThrow(
       'You must be a participant to access proposals.'
     )
     expect(db.createDocument).not.toHaveBeenCalled()
@@ -351,7 +337,7 @@ describe('createProposal', () => {
       listDocuments,
       createDocument: mock(() => Promise.reject(new Error('Create failed')))
     })
-    await expect(createProposal('trip-1', 'user-1', {}, db)).rejects.toThrow('Create failed')
+    await expect(createProposal('trip-1', 'user-1', 'Alice', {}, db)).rejects.toThrow('Create failed')
   })
 })
 
