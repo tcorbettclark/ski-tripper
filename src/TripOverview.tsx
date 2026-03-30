@@ -6,11 +6,31 @@ import {
   deleteTrip as _deleteTrip,
   leaveTrip as _leaveTrip
 } from './backend'
+import type { Models } from 'appwrite'
 import EditTripForm from './EditTripForm'
 import ParticipantList from './ParticipantList'
 import { colors, fonts, borders } from './theme'
 
-export default function TripOverview ({
+interface Trip {
+  $id: string
+  code?: string
+  description?: string
+}
+
+interface TripOverviewProps {
+  trip: Trip
+  user: Models.User
+  listTripParticipants?: (tripId: string) => Promise<{ documents: Array<{ $id: string; ParticipantUserName: string; role: 'coordinator' | 'participant' }> }>
+  getCoordinatorParticipant?: (tripId: string) => Promise<{ documents: Array<{ ParticipantUserId: string; ParticipantUserName: string }> }>
+  updateTrip?: (tripId: string, data: { description: string }, userId: string) => Promise<unknown>
+  deleteTrip?: (tripId: string, userId: string) => Promise<void>
+  leaveTrip?: (userId: string, tripId: string) => Promise<void>
+  onLeft?: () => void
+  onUpdated?: (trip: unknown) => void
+  onDeleted?: () => void
+}
+
+export default function TripOverview({
   trip,
   user,
   listTripParticipants = _listTripParticipants,
@@ -21,8 +41,8 @@ export default function TripOverview ({
   onLeft,
   onUpdated,
   onDeleted
-}) {
-  const [coordinator, setCoordinator] = useState(null)
+}: TripOverviewProps) {
+  const [coordinator, setCoordinator] = useState<{ name: string } | null>(null)
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
@@ -50,7 +70,7 @@ export default function TripOverview ({
       .catch((err) => console.error('Failed to load coordinator:', err))
   }, [trip, user.$id])
 
-  function handleCopyCode () {
+  function handleCopyCode() {
     if (!trip.code) return
     navigator.clipboard.writeText(trip.code).then(() => {
       if (!mountedRef.current) return
@@ -63,14 +83,14 @@ export default function TripOverview ({
     })
   }
 
-  async function handleLeave () {
+  async function handleLeave() {
     setLeaveError('')
     setLeaving(true)
     try {
       await leaveTrip(user.$id, trip.$id)
       onLeft?.()
-    } catch (err) {
-      setLeaveError(err.message)
+    } catch (err: unknown) {
+      setLeaveError(err instanceof Error ? err.message : String(err))
       setLeaving(false)
     }
   }
@@ -126,7 +146,7 @@ export default function TripOverview ({
             <span style={styles.detailLabel}>Coordinator</span>
             <span style={styles.detailValue}>
               {coordinator
-                ? `${coordinator.name || coordinator.email}`
+                ? `${coordinator.name}`
                 : '…'}
             </span>
           </div>
@@ -307,4 +327,4 @@ const styles = {
     color: colors.textSecondary,
     fontSize: '14px'
   }
-}
+} as const

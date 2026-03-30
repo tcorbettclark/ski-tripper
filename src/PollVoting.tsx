@@ -2,21 +2,52 @@ import { useState } from 'react'
 import { upsertVote as _upsertVote } from './backend'
 import { colors, fonts, borders } from './theme'
 
-export default function PollVoting ({
+interface Vote {
+  proposalIds: string[]
+  tokenCounts: number[]
+}
+
+interface Proposal {
+  $id: string
+  resortName?: string
+}
+
+interface Poll {
+  $id: string
+  tripId: string
+  proposalIds: string[]
+}
+
+interface PollVotingProps {
+  poll: Poll
+  proposals: Proposal[]
+  myVote: Vote | null
+  userId: string
+  onVoteSaved: (vote: unknown) => void
+  upsertVote?: (
+    pollId: string,
+    tripId: string,
+    userId: string,
+    proposalIds: string[],
+    tokenCounts: number[]
+  ) => Promise<unknown>
+}
+
+export default function PollVoting({
   poll,
   proposals,
   myVote,
   userId,
   onVoteSaved,
   upsertVote = _upsertVote
-}) {
+}: PollVotingProps) {
   const proposalMap = Object.fromEntries(proposals.map((p) => [p.$id, p]))
   const sortedProposalIds = [...poll.proposalIds].sort((a, b) =>
     (proposalMap[a]?.resortName || '').localeCompare(proposalMap[b]?.resortName || '')
   )
 
-  const [allocations, setAllocations] = useState(() => {
-    const init = {}
+  const [allocations, setAllocations] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {}
     sortedProposalIds.forEach((id) => {
       init[id] = 0
     })
@@ -34,7 +65,7 @@ export default function PollVoting ({
   const totalUsed = Object.values(allocations).reduce((a, b) => a + b, 0)
   const remaining = maxTokens - totalUsed
 
-  const savedAllocations = {}
+  const savedAllocations: Record<string, number> = {}
   if (myVote) {
     myVote.proposalIds.forEach((id, i) => {
       savedAllocations[id] = myVote.tokenCounts[i] || 0
@@ -44,15 +75,15 @@ export default function PollVoting ({
     (id) => allocations[id] === (savedAllocations[id] || 0)
   )
 
-  function handleAdd (proposalId) {
+  function handleAdd(proposalId: string) {
     setAllocations((prev) => ({ ...prev, [proposalId]: prev[proposalId] + 1 }))
   }
 
-  function handleRemove (proposalId) {
+  function handleRemove(proposalId: string) {
     setAllocations((prev) => ({ ...prev, [proposalId]: prev[proposalId] - 1 }))
   }
 
-  async function handleSave () {
+  async function handleSave() {
     setSaving(true)
     setSaveError('')
     const nonZeroIds = sortedProposalIds.filter((id) => allocations[id] > 0)
@@ -65,8 +96,8 @@ export default function PollVoting ({
         nonZeroIds.map((id) => allocations[id])
       )
       onVoteSaved(result)
-    } catch (err) {
-      setSaveError(err.message)
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
     }
@@ -123,7 +154,7 @@ export default function PollVoting ({
         </span>
         <button
           onClick={handleSave}
-          disabled={saving || isUnchanged}
+          disabled={saving || !!isUnchanged}
           style={{
             ...styles.saveButton,
             ...(isUnchanged ? styles.saveButtonDisabled : {})
@@ -218,4 +249,4 @@ const styles = {
     fontSize: '12px',
     margin: '8px 0 0'
   }
-}
+} as const

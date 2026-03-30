@@ -3,7 +3,30 @@ import { updateProposal as _updateProposal, deleteProposal as _deleteProposal } 
 import Field from './Field'
 import { colors, fonts, borders, formStyles, fieldStyles } from './theme'
 
-export default function EditProposalForm ({
+interface Proposal {
+  $id: string
+  resortName?: string
+  country?: string
+  altitudeRange?: string
+  nearestAirport?: string
+  transferTime?: string
+  accommodationName?: string
+  accommodationUrl?: string
+  approximateCost?: string
+  description?: string
+}
+
+interface EditProposalFormProps {
+  proposal: Proposal
+  userId: string
+  onUpdated: (proposal: unknown) => void
+  onDeleted: (proposalId: string) => void
+  onCancel: () => void
+  updateProposal?: (proposalId: string, userId: string, data: Partial<Proposal>) => Promise<unknown>
+  deleteProposal?: (proposalId: string, userId: string) => Promise<void>
+}
+
+export default function EditProposalForm({
   proposal,
   userId,
   onUpdated,
@@ -11,7 +34,7 @@ export default function EditProposalForm ({
   onCancel,
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal
-}) {
+}: EditProposalFormProps) {
   const [form, setForm] = useState({
     resortName: proposal.resortName || '',
     country: proposal.country || '',
@@ -26,31 +49,31 @@ export default function EditProposalForm ({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  function handleChange (e) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  async function handleSubmit (e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSaving(true)
     try {
       const updated = await updateProposal(proposal.$id, userId, form)
       onUpdated(updated)
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
       setSaving(false)
     }
   }
 
-  async function handleDelete () {
+  async function handleDelete() {
     if (!window.confirm('Delete this proposal?')) return
     setSaving(true)
     try {
       await deleteProposal(proposal.$id, userId)
       onDeleted(proposal.$id)
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
       setSaving(false)
     }
   }
@@ -154,4 +177,4 @@ const styles = {
   saveButton: { padding: '8px 20px', borderRadius: '6px', border: 'none', background: colors.accent, color: colors.bgPrimary, fontFamily: formStyles.saveButton.fontFamily, fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
   cancelButton: { padding: '8px 20px', borderRadius: '6px', border: borders.muted, background: 'transparent', color: colors.textSecondary, fontFamily: formStyles.cancelButton.fontFamily, fontSize: '13px', fontWeight: '500', cursor: 'pointer' },
   deleteButton: { padding: '8px 20px', borderRadius: '6px', border: '1px solid rgba(255,107,107,0.25)', background: 'transparent', color: colors.error, fontFamily: formStyles.cancelButton.fontFamily, fontSize: '13px', fontWeight: '500', cursor: 'pointer', marginLeft: 'auto' }
-}
+} as const

@@ -1,7 +1,22 @@
 import { useState } from 'react'
 import { createProposal as _createProposal, account as _account } from './backend'
+import type { Models } from 'appwrite'
 import Field from './Field'
 import { colors, fonts, borders, formStyles, fieldStyles } from './theme'
+
+interface CreateProposalFormProps {
+  tripId: string
+  userId: string
+  onCreated: (proposal: unknown) => void
+  onDismiss: () => void
+  createProposal?: (
+    tripId: string,
+    userId: string,
+    userName: string,
+    data: { title: string; description: string; resortName: string; country: string; altitudeRange: string; nearestAirport: string; transferTime: string; accommodationName: string; accommodationUrl: string; approximateCost: string }
+  ) => Promise<unknown>
+  accountGet?: () => Promise<Models.User>
+}
 
 const EMPTY_FORM = {
   resortName: '',
@@ -15,34 +30,45 @@ const EMPTY_FORM = {
   description: ''
 }
 
-export default function CreateProposalForm ({
+export default function CreateProposalForm({
   tripId,
   userId,
   onCreated,
   onDismiss,
   createProposal = _createProposal,
   accountGet = _account.get.bind(_account)
-}) {
+}: CreateProposalFormProps) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  function handleChange (e) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  async function handleSubmit (e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSaving(true)
     try {
       const userAccount = await accountGet()
-      const proposal = await createProposal(tripId, userId, userAccount.name, form)
+      const proposal = await createProposal(tripId, userId, userAccount.name, {
+        title: form.resortName,
+        description: form.description,
+        resortName: form.resortName,
+        country: form.country,
+        altitudeRange: form.altitudeRange,
+        nearestAirport: form.nearestAirport,
+        transferTime: form.transferTime,
+        accommodationName: form.accommodationName,
+        accommodationUrl: form.accommodationUrl,
+        approximateCost: form.approximateCost
+      })
       onCreated(proposal)
       setForm(EMPTY_FORM)
       onDismiss()
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
     }
@@ -160,4 +186,4 @@ const styles = {
     alignItems: 'center',
     gap: '12px'
   }
-}
+} as const

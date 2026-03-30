@@ -2,17 +2,28 @@ import { useEffect, useState } from 'react'
 import { listTripParticipants as _listTripParticipants } from './backend'
 import { colors, fonts, borders } from './theme'
 
-export default function ParticipantList ({
+interface Participant {
+  id: string
+  name: string
+  role: 'coordinator' | 'participant'
+}
+
+interface ParticipantListProps {
+  tripId: string
+  listTripParticipants?: (tripId: string) => Promise<{ documents: Array<{ $id: string; ParticipantUserName: string; role: 'coordinator' | 'participant' }> }>
+}
+
+export default function ParticipantList({
   tripId,
   listTripParticipants = _listTripParticipants
-}) {
-  const [participants, setParticipants] = useState([])
+}: ParticipantListProps) {
+  const [participants, setParticipants] = useState<Participant[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!tripId) return
-    async function load () {
+    async function load() {
       try {
         const { documents } = await listTripParticipants(tripId)
         setParticipants(
@@ -23,7 +34,7 @@ export default function ParticipantList ({
           }))
         )
       } catch (err) {
-        setError(err)
+        setError(err instanceof Error ? err : new Error(String(err)))
       } finally {
         setLoading(false)
       }
@@ -79,4 +90,4 @@ const styles = {
     color: colors.textSecondary,
     textTransform: 'capitalize'
   }
-}
+} as const

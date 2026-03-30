@@ -1,4 +1,17 @@
-const PROPOSALS = [
+interface Proposal {
+  title?: string
+  description: string
+  resortName: string
+  country: string
+  altitudeRange: string
+  nearestAirport: string
+  transferTime: string
+  accommodationName: string
+  accommodationUrl: string
+  approximateCost: string
+}
+
+const PROPOSALS: Proposal[] = [
   {
     resortName: 'Verbier',
     country: 'Switzerland',
@@ -331,6 +344,6 @@ const PROPOSALS = [
   }
 ]
 
-export function randomProposal () {
+export function randomProposal(): Proposal {
   return PROPOSALS[Math.floor(Math.random() * PROPOSALS.length)]
 }

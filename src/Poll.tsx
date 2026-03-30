@@ -8,11 +8,50 @@ import {
   upsertVote as _upsertVote,
   getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
+import type { Models } from 'appwrite'
 import PollVoting from './PollVoting'
 import PollResults from './PollResults'
 import { colors, fonts, borders } from './theme'
 
-export default function Poll ({
+interface Proposal {
+  $id: string
+  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
+  resortName?: string
+}
+
+interface PollDoc {
+  $id: string
+  tripId: string
+  state: 'OPEN' | 'CLOSED'
+  proposalIds: string[]
+}
+
+interface Vote {
+  $id: string
+  VoterUserId: string
+  proposalIds: string[]
+  tokenCounts: number[]
+}
+
+interface PollProps {
+  user: Models.User
+  tripId: string
+  listPolls?: (tripId: string, userId: string) => Promise<{ documents: PollDoc[] }>
+  listProposals?: (tripId: string, userId: string) => Promise<{ documents: Proposal[] }>
+  listVotes?: (pollId: string, tripId: string, userId: string) => Promise<{ documents: Vote[] }>
+  createPoll?: (tripId: string, userId: string, userName: string) => Promise<PollDoc>
+  closePoll?: (pollId: string, userId: string) => Promise<PollDoc>
+  upsertVote?: (
+    pollId: string,
+    tripId: string,
+    userId: string,
+    proposalIds: string[],
+    tokenCounts: number[]
+  ) => Promise<Vote>
+  getCoordinatorParticipant?: (tripId: string) => Promise<{ documents: Array<{ ParticipantUserId: string }> }>
+}
+
+export default function Poll({
   user,
   tripId,
   listPolls = _listPolls,
@@ -22,12 +61,12 @@ export default function Poll ({
   closePoll = _closePoll,
   upsertVote = _upsertVote,
   getCoordinatorParticipant = _getCoordinatorParticipant
-}) {
+}: PollProps) {
   const [loading, setLoading] = useState(true)
-  const [activePoll, setActivePoll] = useState(null)
-  const [pastPolls, setPastPolls] = useState([])
-  const [proposals, setProposals] = useState([])
-  const [votes, setVotes] = useState([])
+  const [activePoll, setActivePoll] = useState<PollDoc | null>(null)
+  const [pastPolls, setPastPolls] = useState<PollDoc[]>([])
+  const [proposals, setProposals] = useState<Proposal[]>([])
+  const [votes, setVotes] = useState<Vote[]>([])
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [pollsLoading, setPollsLoading] = useState(false)
   const [pollsError, setPollsError] = useState('')
@@ -86,45 +125,47 @@ export default function Poll ({
         }
       })
       .catch((err) => {
-        if (mountedRef.current) setPollsError(err.message)
+        if (mountedRef.current) setPollsError(err instanceof Error ? err.message : String(err))
       })
       .finally(() => {
         if (mountedRef.current) setPollsLoading(false)
       })
   }, [tripId, user.$id])
 
-  const handleVoteSaved = useCallback((vote) => {
-    setVotes((v) => {
-      const exists = v.find((x) => x.$id === vote.$id)
+  const handleVoteSaved = useCallback((vote: unknown) => {
+    const v = vote as Vote
+    setVotes((prev) => {
+      const exists = prev.find((x) => x.$id === v.$id)
       return exists
-        ? v.map((x) => (x.$id === vote.$id ? vote : x))
-        : [...v, vote]
+        ? prev.map((x) => (x.$id === v.$id ? v : x))
+        : [...prev, v]
     })
   }, [])
 
-  async function handleCreatePoll () {
+  async function handleCreatePoll() {
     setCreatingPoll(true)
     setCreateError('')
     try {
-      const poll = await createPoll(tripId, user.$id, user.name)
+      const poll = await createPoll(tripId, user.$id, user.name || '')
       setActivePoll(poll)
       setVotes([])
-    } catch (err) {
-      setCreateError(err.message)
+    } catch (err: unknown) {
+      setCreateError(err instanceof Error ? err.message : String(err))
     } finally {
       setCreatingPoll(false)
     }
   }
 
-  async function handleClosePoll () {
+  async function handleClosePoll() {
+    if (!activePoll) return
     setClosingPoll(true)
     setCloseError('')
     try {
       const closed = await closePoll(activePoll.$id, user.$id)
       setActivePoll(null)
       setPastPolls((p) => [closed, ...p])
-    } catch (err) {
-      setCloseError(err.message)
+    } catch (err: unknown) {
+      setCloseError(err instanceof Error ? err.message : String(err))
     } finally {
       setClosingPoll(false)
     }
@@ -220,12 +261,24 @@ export default function Poll ({
   )
 }
 
-function PastPoll ({ poll, proposals, tripId, userId, listVotes }) {
+function PastPoll({
+  poll,
+  proposals,
+  tripId,
+  userId,
+  listVotes
+}: {
+  poll: PollDoc
+  proposals: Proposal[]
+  tripId: string
+  userId: string
+  listVotes: (pollId: string, tripId: string, userId: string) => Promise<{ documents: Vote[] }>
+}) {
   const [expanded, setExpanded] = useState(false)
-  const [votes, setVotes] = useState([])
+  const [votes, setVotes] = useState<Vote[]>([])
   const [loading, setLoading] = useState(false)
 
-  async function handleToggle () {
+  async function handleToggle() {
     if (!expanded && votes.length === 0) {
       setLoading(true)
       try {
@@ -375,7 +428,7 @@ const styles = {
     color: colors.textSecondary,
     margin: '0 0 16px'
   }
-}
+} as const
 
 const pastStyles = {
   container: {
@@ -399,4 +452,4 @@ const pastStyles = {
     fontSize: '13px',
     margin: '10px 0 0'
   }
-}
+} as const

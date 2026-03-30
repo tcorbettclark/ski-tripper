@@ -1,6 +1,18 @@
 import { fieldStyles } from './theme'
 
-export default function Field ({
+interface FieldProps {
+  label: string
+  name?: string
+  value: string
+  onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  type?: string
+  required?: boolean
+  placeholder?: string
+  variant?: 'default' | 'auth'
+  minLength?: number
+}
+
+export default function Field({
   label,
   name,
   value,
@@ -8,8 +20,9 @@ export default function Field ({
   type = 'text',
   required,
   placeholder,
-  variant = 'default'
-}) {
+  variant = 'default',
+  minLength
+}: FieldProps) {
   const styles = fieldStyles[variant] || fieldStyles.default
 
   return (
@@ -22,6 +35,7 @@ export default function Field ({
         onChange={onChange}
         required={required}
         placeholder={placeholder}
+        minLength={minLength}
         style={styles.input}
       />
     </div>

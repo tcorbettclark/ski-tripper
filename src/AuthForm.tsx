@@ -1,10 +1,20 @@
 import { useState } from 'react'
-import { ID } from 'appwrite'
+import { ID, Models } from 'appwrite'
 import { account as _account } from './backend'
 import Field from './Field'
 import { authStyles, formStyles } from './theme'
 
-export default function AuthForm ({
+interface AuthFormProps {
+  mode?: 'login' | 'signup'
+  onSuccess: (user: Models.User) => void
+  onSwitchMode: () => void
+  accountCreate?: (id: string, email: string, password: string, name: string) => Promise<Models.User>
+  createEmailPasswordSession?: (email: string, password: string) => Promise<Models.Session>
+  accountGet?: () => Promise<Models.User>
+  generateId?: () => string
+}
+
+export default function AuthForm({
   mode = 'login',
   onSuccess,
   onSwitchMode,
@@ -12,7 +22,7 @@ export default function AuthForm ({
   createEmailPasswordSession = (email, password) => _account.createEmailPasswordSession(email, password),
   accountGet = () => _account.get(),
   generateId = () => ID.unique()
-}) {
+}: AuthFormProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,7 +31,7 @@ export default function AuthForm ({
 
   const isSignup = mode === 'signup'
 
-  async function handleSubmit (e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
@@ -32,8 +42,8 @@ export default function AuthForm ({
       await createEmailPasswordSession(email, password)
       const user = await accountGet()
       onSuccess(user)
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)
     }
@@ -107,4 +117,4 @@ const bannerStyles = {
   marginBottom: '20px',
   maxWidth: '420px',
   width: '100%'
-}
+} as const

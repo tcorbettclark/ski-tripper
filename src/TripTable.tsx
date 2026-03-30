@@ -1,12 +1,24 @@
 import TripRow from './TripRow'
 import { colors, fonts, borders } from './theme'
 
-export default function TripTable ({
+interface Trip {
+  $id: string
+  description?: string
+}
+
+interface TripTableProps {
+  trips: Trip[]
+  onSelectTrip: (tripId: string) => void
+  emptyMessage?: string
+  getCoordinatorParticipant?: (tripId: string) => Promise<{ documents: Array<{ ParticipantUserName: string }> }>
+}
+
+export default function TripTable({
   trips,
   onSelectTrip,
   emptyMessage = 'No trips yet. Add one above.',
   getCoordinatorParticipant
-}) {
+}: TripTableProps) {
   if (trips.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
   }
@@ -60,4 +72,4 @@ const styles = {
     letterSpacing: '0.1em',
     textTransform: 'uppercase'
   }
-}
+} as const

@@ -1,13 +1,34 @@
 import { useState, useEffect } from 'react'
 import { colors, fonts, borders } from './theme'
 
-export default function ProposalViewer ({
+interface Proposal {
+  $id: string
+  resortName?: string
+  country?: string
+  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
+  altitudeRange?: string
+  nearestAirport?: string
+  transferTime?: string
+  approximateCost?: string
+  accommodationName?: string
+  accommodationUrl?: string
+  description?: string
+  ProposerUserName?: string
+}
+
+interface ProposalViewerProps {
+  proposals: Proposal[]
+  initialIndex: number
+  onClose: () => void
+}
+
+export default function ProposalViewer({
   proposals,
   initialIndex,
   onClose
-}) {
+}: ProposalViewerProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
-  const [touchStartX, setTouchStartX] = useState(null)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
 
   const proposal = proposals[currentIndex]
   const isFirst = currentIndex === 0
@@ -15,7 +36,7 @@ export default function ProposalViewer ({
   const isDraft = proposal.state === 'DRAFT'
 
   useEffect(() => {
-    function handleKeyDown (e) {
+    function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'ArrowLeft') setCurrentIndex((i) => Math.max(0, i - 1))
       else if (e.key === 'ArrowRight') {
         setCurrentIndex((i) => Math.min(proposals.length - 1, i + 1))
@@ -25,11 +46,11 @@ export default function ProposalViewer ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [proposals.length, onClose])
 
-  function handleTouchStart (e) {
+  function handleTouchStart(e: React.TouchEvent) {
     setTouchStartX(e.touches[0].clientX)
   }
 
-  function handleTouchEnd (e) {
+  function handleTouchEnd(e: React.TouchEvent) {
     if (touchStartX === null) return
     const delta = e.changedTouches[0].clientX - touchStartX
     if (delta > 50) setCurrentIndex((i) => Math.max(0, i - 1))
@@ -155,7 +176,7 @@ export default function ProposalViewer ({
   )
 }
 
-function Field ({ label, value }) {
+function Field({ label, value }: { label: string; value?: string }) {
   return (
     <div>
       <div style={styles.fieldLabel}>{label}</div>
@@ -306,4 +327,4 @@ const styles = {
     background: 'rgba(59,189,232,0.12)',
     border: '1px solid rgba(59,189,232,0.25)'
   }
-}
+} as const

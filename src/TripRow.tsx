@@ -4,12 +4,21 @@ import {
 } from './backend'
 import { colors, fonts } from './theme'
 
-export default function TripRow ({
+interface TripRowProps {
+  trip: {
+    $id: string
+    description?: string
+  }
+  onSelectTrip: (tripId: string) => void
+  getCoordinatorParticipant?: (tripId: string) => Promise<{ documents: Array<{ ParticipantUserName: string }> }>
+}
+
+export default function TripRow({
   trip,
   onSelectTrip,
   getCoordinatorParticipant = _getCoordinatorParticipant
-}) {
-  const [coordinator, setCoordinator] = useState(null)
+}: TripRowProps) {
+  const [coordinator, setCoordinator] = useState<{ name: string } | null>(null)
   const [hovered, setHovered] = useState(false)
   const mountedRef = useRef(true)
 
@@ -35,8 +44,8 @@ export default function TripRow ({
       onMouseLeave={() => setHovered(false)}
     >
       <td style={{ ...styles.td, color: colors.textSecondary }}>{trip.description || '—'}</td>
-      <td style={{ ...styles.td, color: colors.textSecondary }} title={coordinator?.email || undefined}>
-        {coordinator?.name || coordinator?.email || '—'}
+      <td style={{ ...styles.td, color: colors.textSecondary }}>
+        {coordinator?.name || '—'}
       </td>
     </tr>
   )
@@ -58,4 +67,4 @@ const styles = {
     fontSize: '14px',
     lineHeight: '1.5'
   }
-}
+} as const

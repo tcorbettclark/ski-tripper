@@ -1,21 +1,31 @@
 import { useState } from 'react'
 import { getTripByCode as _getTripByCode, joinTrip as _joinTrip, account as _account } from './backend'
+import type { Models } from 'appwrite'
 import Field from './Field'
 import { colors, borders, formStyles } from './theme'
 
-export default function JoinTripForm ({
+interface JoinTripFormProps {
+  user: Models.User
+  onJoined: (trip: unknown) => void
+  onDismiss: () => void
+  getTripByCode?: (code: string) => Promise<{ documents: unknown[] }>
+  joinTrip?: (userId: string, userName: string, tripId: string) => Promise<unknown>
+  accountGet?: () => Promise<Models.User>
+}
+
+export default function JoinTripForm({
   user,
   onJoined,
   onDismiss,
   getTripByCode = _getTripByCode,
   joinTrip = _joinTrip,
   accountGet = _account.get.bind(_account)
-}) {
+}: JoinTripFormProps) {
   const [code, setCode] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  async function handleSubmit (e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSaving(true)
@@ -24,12 +34,12 @@ export default function JoinTripForm ({
       if (res.documents.length === 0) throw new Error('No trip found with that code.')
       const trip = res.documents[0]
       const userAccount = await accountGet()
-      await joinTrip(user.$id, userAccount.name, trip.$id)
+      await joinTrip(user.$id, userAccount.name, (trip as { $id: string }).$id)
       onJoined(trip)
       setCode('')
       onDismiss()
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
     }
@@ -74,4 +84,4 @@ const styles = {
     alignItems: 'center',
     gap: '12px'
   }
-}
+} as const

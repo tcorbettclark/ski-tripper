@@ -1,20 +1,37 @@
 import { useState } from 'react'
 import { createTrip as _createTrip, account as _account } from './backend'
+import type { Models } from 'appwrite'
 import Field from './Field'
 import { colors, borders, formStyles } from './theme'
 
-const EMPTY_FORM = { description: '' }
+interface CreateTripFormProps {
+  user: Models.User
+  onCreated: (trip: unknown) => void
+  onDismiss: () => void
+  createTrip?: (
+    userId: string,
+    userName: string,
+    data: { description: string }
+  ) => Promise<unknown>
+  accountGet?: () => Promise<Models.User>
+}
 
-export default function CreateTripForm ({ user, onCreated, onDismiss, createTrip = _createTrip, accountGet = _account.get.bind(_account) }) {
-  const [form, setForm] = useState(EMPTY_FORM)
+export default function CreateTripForm({
+  user,
+  onCreated,
+  onDismiss,
+  createTrip = _createTrip,
+  accountGet = _account.get.bind(_account)
+}: CreateTripFormProps) {
+  const [form, setForm] = useState({ description: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  function handleChange (e) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  async function handleSubmit (e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSaving(true)
@@ -22,10 +39,10 @@ export default function CreateTripForm ({ user, onCreated, onDismiss, createTrip
       const userAccount = await accountGet()
       const trip = await createTrip(user.$id, userAccount.name, form)
       onCreated(trip)
-      setForm(EMPTY_FORM)
+      setForm({ description: '' })
       onDismiss()
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
     }
@@ -70,4 +87,4 @@ const styles = {
     alignItems: 'center',
     gap: '12px'
   }
-}
+} as const

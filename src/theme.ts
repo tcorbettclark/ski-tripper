@@ -102,7 +102,7 @@ export const authStyles = {
   },
   form: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column' as const,
     gap: '20px'
   },
   switchText: {
@@ -110,7 +110,7 @@ export const authStyles = {
     fontFamily: fonts.body,
     fontSize: '13px',
     color: colors.textSecondary,
-    textAlign: 'center'
+    textAlign: 'center' as const
   },
   switchLink: {
     background: 'none',
@@ -128,7 +128,7 @@ export const fieldStyles = {
   default: {
     field: {
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'column' as const,
       gap: '7px'
     },
     label: {
@@ -137,7 +137,7 @@ export const fieldStyles = {
       fontWeight: '500',
       color: colors.textSecondary,
       letterSpacing: '0.08em',
-      textTransform: 'uppercase'
+      textTransform: 'uppercase' as const
     },
     input: {
       padding: '10px 14px',
@@ -147,15 +147,15 @@ export const fieldStyles = {
       color: colors.textPrimary,
       fontFamily: fonts.body,
       fontSize: '14px',
-      outline: 'none'
+      outline: 'none' as const
     }
   },
   auth: {
     field: {
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'column' as const,
       gap: '8px',
-      textAlign: 'left'
+      textAlign: 'left' as const
     },
     label: {
       fontFamily: fonts.body,
@@ -163,7 +163,7 @@ export const fieldStyles = {
       fontWeight: '500',
       color: colors.textSecondary,
       letterSpacing: '0.08em',
-      textTransform: 'uppercase'
+      textTransform: 'uppercase' as const
     },
     input: {
       padding: '12px 16px',
@@ -173,7 +173,7 @@ export const fieldStyles = {
       color: colors.textPrimary,
       fontFamily: fonts.body,
       fontSize: '15px',
-      outline: 'none'
+      outline: 'none' as const
     }
   }
 }

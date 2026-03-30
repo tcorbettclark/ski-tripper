@@ -5,7 +5,7 @@ import Proposals from './Proposals'
 const user = { $id: 'user-1', name: 'Alice' }
 
 const sampleProposals = [
-  { $id: 'p-1', userId: 'user-1', state: 'DRAFT', resortName: "Val d'Isère", country: 'France', altitudeRange: '1850m - 3456m', nearestAirport: 'GVA', transferTime: '2h', accommodationName: 'Chalet', accommodationUrl: '', approximateCost: '£1200', description: 'Nice resort' }
+  { $id: 'p-1', ProposerUserId: 'user-1', state: 'DRAFT', resortName: "Val d'Isère", country: 'France', altitudeRange: '1850m - 3456m', nearestAirport: 'GVA', transferTime: '2h', accommodationName: 'Chalet', accommodationUrl: '', approximateCost: '£1200', description: 'Nice resort' }
 ]
 
 function renderProposals (props = {}) {
@@ -99,7 +99,7 @@ describe('Proposals', () => {
         tripId: 'trip-1',
         listProposals: mock(() => Promise.resolve({ documents: [submittedProposal] })),
         getCoordinatorParticipant: mock(() =>
-          Promise.resolve({ documents: [{ $id: 'part-1', userId: 'user-1' }] })
+          Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'user-1' }] })
         )
       })
     })
@@ -115,7 +115,7 @@ describe('Proposals', () => {
         tripId: 'trip-1',
         listProposals: mock(() => Promise.resolve({ documents: [submittedProposal] })),
         getCoordinatorParticipant: mock(() =>
-          Promise.resolve({ documents: [{ $id: 'part-1', userId: 'other-user' }] })
+          Promise.resolve({ documents: [{ $id: 'part-1', ParticipantUserId: 'other-user' }] })
         )
       })
     })

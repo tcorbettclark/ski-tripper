@@ -1,9 +1,29 @@
 import { colors, fonts } from './theme'
 
-export default function PollResults ({ poll, proposals, votes }) {
+interface Vote {
+  proposalIds: string[]
+  tokenCounts: number[]
+}
+
+interface Proposal {
+  $id: string
+  resortName?: string
+}
+
+interface Poll {
+  proposalIds: string[]
+}
+
+interface PollResultsProps {
+  poll: Poll
+  proposals: Proposal[]
+  votes: Vote[]
+}
+
+export default function PollResults({ poll, proposals, votes }: PollResultsProps) {
   const proposalMap = Object.fromEntries(proposals.map((p) => [p.$id, p]))
 
-  const totals = {}
+  const totals: Record<string, number> = {}
   poll.proposalIds.forEach((id) => {
     totals[id] = 0
   })
@@ -77,4 +97,4 @@ const styles = {
     minWidth: '24px',
     textAlign: 'right'
   }
-}
+} as const

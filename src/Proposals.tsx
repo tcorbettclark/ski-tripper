@@ -8,12 +8,52 @@ import {
   rejectProposal as _rejectProposal,
   getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
-import CreateProposalForm from './CreateProposalForm'
+import type { Models } from 'appwrite'
 import { randomProposal } from './randomProposal'
+import CreateProposalForm from './CreateProposalForm'
 import ProposalsTable from './ProposalsTable'
 import { colors, fonts, borders } from './theme'
 
-export default function Proposals ({
+interface Proposal {
+  $id: string
+  tripId?: string
+  resortName?: string
+  country?: string
+  ProposerUserId: string
+  ProposerUserName?: string
+  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
+}
+
+interface ProposalsProps {
+  user: Models.User
+  tripId: string
+  onRefresh?: () => void
+  listProposals?: (tripId: string, userId: string) => Promise<{ documents: Proposal[] }>
+  createProposal?: (
+    tripId: string,
+    userId: string,
+    userName: string,
+    data: {
+      title?: string
+      description: string
+      resortName?: string
+      country?: string
+      altitudeRange?: string
+      nearestAirport?: string
+      transferTime?: string
+      accommodationName?: string
+      accommodationUrl?: string
+      approximateCost?: string
+    }
+  ) => Promise<unknown>
+  updateProposal?: (proposalId: string, userId: string, data: Partial<Proposal>) => Promise<unknown>
+  deleteProposal?: (proposalId: string, userId: string) => Promise<void>
+  submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  getCoordinatorParticipant?: (tripId: string) => Promise<{ documents: Array<{ ParticipantUserId: string }> }>
+}
+
+export default function Proposals({
   user,
   tripId,
   onRefresh,
@@ -24,8 +64,8 @@ export default function Proposals ({
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
   getCoordinatorParticipant = _getCoordinatorParticipant
-}) {
-  const [proposals, setProposals] = useState([])
+}: ProposalsProps) {
+  const [proposals, setProposals] = useState<Proposal[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [randomizing, setRandomizing] = useState(false)
@@ -58,41 +98,50 @@ export default function Proposals ({
         setProposals(proposalsResult.documents)
         setIsCoordinator(
           coordResult.documents.length > 0 &&
-            coordResult.documents[0].userId === user.$id
+            coordResult.documents[0].ParticipantUserId === user.$id
         )
       })
-      .catch((err) => { if (mountedRef.current) setProposalsError(err.message) })
+      .catch((err) => { if (mountedRef.current) setProposalsError(err instanceof Error ? err.message : String(err)) })
       .finally(() => { if (mountedRef.current) setProposalsLoading(false) })
   }, [tripId, user.$id])
 
-  const handleCreated = useCallback((proposal) => {
-    setProposals((p) => [proposal, ...p])
+  const handleCreated = useCallback((proposal: unknown) => {
+    setProposals((p) => [proposal as Proposal, ...p])
   }, [])
 
-  const handleUpdated = useCallback((updated) => {
-    setProposals((p) => p.map((prop) => (prop.$id === updated.$id ? updated : prop)))
+  const handleUpdated = useCallback((updated: unknown) => {
+    const u = updated as Proposal
+    setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
   }, [])
 
-  const handleDeleted = useCallback((id) => {
+  const handleDeleted = useCallback((id: string) => {
     setProposals((p) => p.filter((prop) => prop.$id !== id))
   }, [])
 
-  const handleRejected = useCallback((updated) => {
-    setProposals((p) => p.map((prop) => (prop.$id === updated.$id ? updated : prop)))
+  const handleRejected = useCallback((updated: unknown) => {
+    const u = updated as Proposal
+    setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
   }, [])
 
-  async function handleRandomProposal () {
+  async function handleRandomProposal() {
     setRandomizing(true)
     try {
-      const proposal = await createProposal(tripId, user.$id, user.name, randomProposal())
+      const data = randomProposal()
+      const proposal = await createProposal(
+        tripId,
+        user.$id,
+        user.name || '',
+        data
+      )
       handleCreated(proposal)
     } finally {
       setRandomizing(false)
     }
   }
 
-  const handleSubmitted = useCallback((updated) => {
-    setProposals((p) => p.map((prop) => (prop.$id === updated.$id ? updated : prop)))
+  const handleSubmitted = useCallback((updated: unknown) => {
+    const u = updated as Proposal
+    setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
   }, [])
 
   if (loading) return <p style={styles.message}>Loading…</p>
@@ -218,4 +267,4 @@ const styles = {
     cursor: 'pointer',
     letterSpacing: '0.02em'
   }
-}
+} as const

@@ -8,12 +8,36 @@ import {
   leaveTrip as _leaveTrip,
   getCoordinatorParticipant as _getCoordinatorParticipant
 } from './backend'
+import type { Models } from 'appwrite'
 import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'
 import { colors, fonts, borders } from './theme'
 
-export default function Trips ({
+interface Trip {
+  $id: string
+  description?: string
+}
+
+interface TripsProps {
+  user: Models.User
+  trips: Trip[]
+  onSelectTrip: (tripId: string) => void
+  onJoinedTrip?: () => void
+  createTrip?: (
+    userId: string,
+    userName: string,
+    data: { description: string }
+  ) => Promise<unknown>
+  getTripByCode?: (code: string) => Promise<{ documents: Trip[] }>
+  joinTrip?: (userId: string, userName: string, tripId: string) => Promise<unknown>
+  updateTrip?: (tripId: string, data: { description: string }, userId: string) => Promise<unknown>
+  deleteTrip?: (tripId: string, userId: string) => Promise<void>
+  leaveTrip?: (userId: string, tripId: string) => Promise<void>
+  getCoordinatorParticipant?: (tripId: string) => Promise<{ documents: Array<{ ParticipantUserName: string }> }>
+}
+
+export default function Trips({
   user,
   trips,
   onSelectTrip,
@@ -25,15 +49,15 @@ export default function Trips ({
   deleteTrip = _deleteTrip,
   leaveTrip = _leaveTrip,
   getCoordinatorParticipant = _getCoordinatorParticipant
-}) {
+}: TripsProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showJoinForm, setShowJoinForm] = useState(false)
 
-  const handleCreated = useCallback((trip) => {
+  const handleCreated = useCallback(() => {
     onJoinedTrip?.()
   }, [onJoinedTrip])
 
-  const handleJoined = useCallback((trip) => {
+  const handleJoined = useCallback(() => {
     onJoinedTrip?.()
   }, [onJoinedTrip])
 
@@ -131,4 +155,4 @@ const styles = {
     cursor: 'pointer',
     letterSpacing: '0.02em'
   }
-}
+} as const

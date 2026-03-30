@@ -1,11 +1,11 @@
-/* global localStorage */
+import type { Window } from 'happy-dom'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import { afterEach, expect } from 'bun:test'
 
-// Register DOM globals BEFORE loading any library that checks for document at import time
+declare const window: Window & typeof globalThis
+
 GlobalRegistrator.register()
 
-// Dynamically import RTL *after* DOM is registered so screen initialises correctly
 const matchers = await import('@testing-library/jest-dom/matchers')
 const { cleanup } = await import('@testing-library/react')
 

@@ -8,7 +8,31 @@ import {
 } from './backend'
 import { colors, fonts, borders } from './theme'
 
-export default function ProposalsRow ({
+interface Proposal {
+  $id: string
+  resortName?: string
+  country?: string
+  ProposerUserId: string
+  ProposerUserName?: string
+  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
+}
+
+interface ProposalsRowProps {
+  proposal: Proposal
+  userId: string
+  isCoordinator?: boolean
+  onUpdated: (proposal: unknown) => void
+  onDeleted: (proposalId: string) => void
+  onSubmitted: (proposal: unknown) => void
+  onRejected?: (proposal: unknown) => void
+  onView: () => void
+  updateProposal?: (proposalId: string, userId: string, data: Partial<Proposal>) => Promise<unknown>
+  deleteProposal?: (proposalId: string, userId: string) => Promise<void>
+  submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
+}
+
+export default function ProposalsRow({
   proposal,
   userId,
   isCoordinator = false,
@@ -21,7 +45,7 @@ export default function ProposalsRow ({
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal
-}) {
+}: ProposalsRowProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -34,28 +58,28 @@ export default function ProposalsRow ({
   const canAct = isOwner && isDraft
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
 
-  async function handleSubmit () {
+  async function handleSubmit() {
     setSubmitError('')
     setSubmitting(true)
     try {
       const result = await submitProposal(proposal.$id, userId)
       setSubmitting(false)
       onSubmitted(result)
-    } catch (err) {
-      setSubmitError(err.message)
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
       setSubmitting(false)
     }
   }
 
-  async function handleReject () {
+  async function handleReject() {
     setRejectError('')
     setRejecting(true)
     try {
       const result = await rejectProposal(proposal.$id, userId)
       setRejecting(false)
       onRejected(result)
-    } catch (err) {
-      setRejectError(err.message)
+    } catch (err: unknown) {
+      setRejectError(err instanceof Error ? err.message : String(err))
       setRejecting(false)
     }
   }
@@ -249,4 +273,4 @@ const styles = {
     margin: '4px 0 0',
     whiteSpace: 'normal'
   }
-}
+} as const

@@ -1,6 +1,16 @@
 import { colors, fonts, borders } from './theme'
 
-export default function Header ({
+interface HeaderProps {
+  view: string
+  tripName: string
+  tripDetailTab: string
+  onViewAllTrips: () => void
+  onTripDetailTabChange: (tab: string) => void
+  userName: string
+  onLogout: () => void
+}
+
+export default function Header({
   view,
   tripName,
   tripDetailTab,
@@ -8,7 +18,7 @@ export default function Header ({
   onTripDetailTabChange,
   userName,
   onLogout
-}) {
+}: HeaderProps) {
   if (view === 'tripList') {
     return (
       <header style={headerStyles.bar}>
@@ -150,4 +160,4 @@ const headerStyles = {
     cursor: 'pointer',
     letterSpacing: '0.02em'
   }
-}
+} as const

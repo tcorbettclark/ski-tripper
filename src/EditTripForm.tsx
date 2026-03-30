@@ -3,7 +3,22 @@ import { updateTrip as _updateTrip, deleteTrip as _deleteTrip } from './backend'
 import Field from './Field'
 import { colors, borders, formStyles } from './theme'
 
-export default function EditTripForm ({
+interface Trip {
+  $id: string
+  description?: string
+}
+
+interface EditTripFormProps {
+  trip: Trip
+  userId: string
+  onUpdated: (trip: unknown) => void
+  onDeleted: () => void
+  onCancel: () => void
+  updateTrip?: (tripId: string, data: { description: string }, userId: string) => Promise<unknown>
+  deleteTrip?: (tripId: string, userId: string) => Promise<void>
+}
+
+export default function EditTripForm({
   trip,
   userId,
   onUpdated,
@@ -11,38 +26,38 @@ export default function EditTripForm ({
   onCancel,
   updateTrip = _updateTrip,
   deleteTrip = _deleteTrip
-}) {
+}: EditTripFormProps) {
   const [form, setForm] = useState({
     description: trip.description || ''
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  function handleChange (e) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
-  async function handleSubmit (e) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setSaving(true)
     try {
       const updated = await updateTrip(trip.$id, form, userId)
       onUpdated(updated)
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
       setSaving(false)
     }
   }
 
-  async function handleDelete () {
+  async function handleDelete() {
     if (!window.confirm('Delete this trip?')) return
     setSaving(true)
     try {
       await deleteTrip(trip.$id, userId)
       onDeleted()
-    } catch (err) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err))
       setSaving(false)
     }
   }
@@ -123,4 +138,4 @@ const styles = {
     cursor: 'pointer',
     marginLeft: 'auto'
   }
-}
+} as const

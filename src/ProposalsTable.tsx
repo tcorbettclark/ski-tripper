@@ -9,7 +9,34 @@ import {
 } from './backend'
 import { colors, fonts, borders } from './theme'
 
-export default function ProposalsTable ({
+interface Proposal {
+  $id: string
+  tripId?: string
+  resortName?: string
+  country?: string
+  ProposerUserId: string
+  ProposerUserName?: string
+  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
+  title?: string
+  description?: string
+}
+
+interface ProposalsTableProps {
+  proposals: Proposal[]
+  userId: string
+  isCoordinator?: boolean
+  onUpdated: (proposal: unknown) => void
+  onDeleted: (proposalId: string) => void
+  onSubmitted: (proposal: unknown) => void
+  onRejected?: (proposal: unknown) => void
+  emptyMessage?: string
+  updateProposal?: (proposalId: string, userId: string, data: Partial<Proposal>) => Promise<unknown>
+  deleteProposal?: (proposalId: string, userId: string) => Promise<void>
+  submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
+}
+
+export default function ProposalsTable({
   proposals,
   userId,
   isCoordinator = false,
@@ -22,8 +49,8 @@ export default function ProposalsTable ({
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal
-}) {
-  const [viewingIndex, setViewingIndex] = useState(null)
+}: ProposalsTableProps) {
+  const [viewingIndex, setViewingIndex] = useState<number | null>(null)
 
   if (proposals.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
@@ -99,4 +126,4 @@ const styles = {
     letterSpacing: '0.1em',
     textTransform: 'uppercase'
   }
-}
+} as const
