@@ -1,6 +1,6 @@
 # thoughts/tickets/refactor-2.md
 
-status: planned
+status: reviewed
 
 ## Feature: Change from Javascript to TypeScript
 
