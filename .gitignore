@@ -6,4 +6,3 @@ dist
 .env.*.local
 .superpowers/
 .worktrees/
-.husky/

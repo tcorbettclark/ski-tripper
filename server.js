@@ -1,5 +1,5 @@
 /* global Bun */
-import { join } from 'path'
+import { join } from 'node:path'
 
 const port = 5173
 const dist = join(import.meta.dir, 'dist')
@@ -14,9 +14,9 @@ Bun.serve({
       return new Response(file)
     }
     return new Response(indexHtml, {
-      headers: { 'Content-Type': 'text/html' }
+      headers: { 'Content-Type': 'text/html' },
     })
-  }
+  },
 })
 
 console.log(`Dev server running at http://localhost:${port}`)

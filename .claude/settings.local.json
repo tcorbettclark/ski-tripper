@@ -14,7 +14,8 @@
       "Bash(ls:*)",
       "Bash(grep -r \"mock.module\\\\|mockModule\\\\|jest.mock\" /Users/tcorbettclark/Projects/ski-tripper/.worktrees/proposals/ --include=*.js --include=*.jsx --include=*.ts)",
       "Read(//Users/tcorbettclark/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.6/**)",
-      "Bash(bash scripts/start-server.sh --project-dir /Users/tcorbettclark/Projects/ski-tripper)"
+      "Bash(bash scripts/start-server.sh --project-dir /Users/tcorbettclark/Projects/ski-tripper)",
+      "Bash(biome lint:*)"
     ]
   },
   "hooks": {
