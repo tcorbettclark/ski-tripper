@@ -1,11 +1,11 @@
+import type { Models } from 'appwrite'
 import { useState } from 'react'
 import {
-  createProposal as _createProposal,
   account as _account,
+  createProposal as _createProposal,
 } from './backend'
-import type { Models } from 'appwrite'
 import Field from './Field'
-import { colors, fonts, borders, formStyles, fieldStyles } from './theme'
+import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 
 interface CreateProposalFormProps {
   tripId: string

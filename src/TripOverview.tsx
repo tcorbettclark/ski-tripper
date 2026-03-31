@@ -1,15 +1,15 @@
-import { useEffect, useState, useRef } from 'react'
-import {
-  listTripParticipants as _listTripParticipants,
-  getCoordinatorParticipant as _getCoordinatorParticipant,
-  updateTrip as _updateTrip,
-  deleteTrip as _deleteTrip,
-  leaveTrip as _leaveTrip,
-} from './backend'
 import type { Models } from 'appwrite'
+import { useEffect, useRef, useState } from 'react'
+import {
+  deleteTrip as _deleteTrip,
+  getCoordinatorParticipant as _getCoordinatorParticipant,
+  leaveTrip as _leaveTrip,
+  listTripParticipants as _listTripParticipants,
+  updateTrip as _updateTrip,
+} from './backend'
 import EditTripForm from './EditTripForm'
 import ParticipantList from './ParticipantList'
-import { colors, fonts, borders } from './theme'
+import { borders, colors, fonts } from './theme'
 
 interface Trip {
   $id: string

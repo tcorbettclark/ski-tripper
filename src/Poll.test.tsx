@@ -1,5 +1,5 @@
-import { render, screen, waitFor, act } from '@testing-library/react'
-import { describe, it, expect, mock } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import Poll from './Poll'
 
 const user = { $id: 'user-1', name: 'Alice' }

@@ -1,6 +1,6 @@
-import type { Window } from 'happy-dom'
-import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import { afterEach, expect } from 'bun:test'
+import { GlobalRegistrator } from '@happy-dom/global-registrator'
+import type { Window } from 'happy-dom'
 
 declare const window: Window & typeof globalThis
 

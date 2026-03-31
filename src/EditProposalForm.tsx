@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import {
-  updateProposal as _updateProposal,
   deleteProposal as _deleteProposal,
+  updateProposal as _updateProposal,
 } from './backend'
 import Field from './Field'
-import { colors, fonts, borders, formStyles, fieldStyles } from './theme'
+import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 
 interface Proposal {
   $id: string

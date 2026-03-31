@@ -1,22 +1,22 @@
-import { useEffect, useState, useCallback } from 'react'
+import type { Models } from 'appwrite'
+import { useCallback, useEffect, useState } from 'react'
+import AuthForm from './AuthForm'
 import {
   account as _account,
-  listTrips as _listTrips,
+  deleteTrip as _deleteTrip,
+  getCoordinatorParticipant as _getCoordinatorParticipant,
+  leaveTrip as _leaveTrip,
   listParticipatedTrips as _listParticipatedTrips,
   listTripParticipants as _listTripParticipants,
+  listTrips as _listTrips,
   updateTrip as _updateTrip,
-  deleteTrip as _deleteTrip,
-  leaveTrip as _leaveTrip,
-  getCoordinatorParticipant as _getCoordinatorParticipant,
 } from './backend'
-import type { Models } from 'appwrite'
-import AuthForm from './AuthForm'
-import Header from './Header'
-import Trips from './Trips'
-import Proposals from './Proposals'
-import Poll from './Poll'
-import TripOverview from './TripOverview'
 import ErrorBoundary from './ErrorBoundary'
+import Header from './Header'
+import Poll from './Poll'
+import Proposals from './Proposals'
+import TripOverview from './TripOverview'
+import Trips from './Trips'
 import { colors, fonts } from './theme'
 
 interface ListTripsResult {

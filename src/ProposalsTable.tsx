@@ -1,13 +1,13 @@
 import { useState } from 'react'
+import {
+  deleteProposal as _deleteProposal,
+  rejectProposal as _rejectProposal,
+  submitProposal as _submitProposal,
+  updateProposal as _updateProposal,
+} from './backend'
 import ProposalsRow from './ProposalsRow'
 import ProposalViewer from './ProposalViewer'
-import {
-  updateProposal as _updateProposal,
-  deleteProposal as _deleteProposal,
-  submitProposal as _submitProposal,
-  rejectProposal as _rejectProposal,
-} from './backend'
-import { colors, fonts, borders } from './theme'
+import { borders, colors, fonts } from './theme'
 
 interface Proposal {
   $id: string

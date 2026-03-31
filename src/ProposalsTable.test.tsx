@@ -1,6 +1,6 @@
-import { render, screen, act, within } from '@testing-library/react'
+import { describe, expect, it, mock } from 'bun:test'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect, mock } from 'bun:test'
 import ProposalsTable from './ProposalsTable'
 
 const sampleProposal = {

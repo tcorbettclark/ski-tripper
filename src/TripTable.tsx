@@ -1,5 +1,5 @@
 import TripRow from './TripRow'
-import { colors, fonts, borders } from './theme'
+import { borders, colors, fonts } from './theme'
 
 interface Trip {
   $id: string

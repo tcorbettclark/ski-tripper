@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'bun:test'
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { describe, expect, it } from 'bun:test'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Trips from './Trips'
 

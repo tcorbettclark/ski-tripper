@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { updateTrip as _updateTrip, deleteTrip as _deleteTrip } from './backend'
+import { deleteTrip as _deleteTrip, updateTrip as _updateTrip } from './backend'
 import Field from './Field'
-import { colors, borders, formStyles } from './theme'
+import { borders, colors, formStyles } from './theme'
 
 interface Trip {
   $id: string

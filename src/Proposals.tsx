@@ -1,18 +1,18 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
-import {
-  listProposals as _listProposals,
-  createProposal as _createProposal,
-  updateProposal as _updateProposal,
-  deleteProposal as _deleteProposal,
-  submitProposal as _submitProposal,
-  rejectProposal as _rejectProposal,
-  getCoordinatorParticipant as _getCoordinatorParticipant,
-} from './backend'
 import type { Models } from 'appwrite'
-import { randomProposal } from './randomProposal'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  createProposal as _createProposal,
+  deleteProposal as _deleteProposal,
+  getCoordinatorParticipant as _getCoordinatorParticipant,
+  listProposals as _listProposals,
+  rejectProposal as _rejectProposal,
+  submitProposal as _submitProposal,
+  updateProposal as _updateProposal,
+} from './backend'
 import CreateProposalForm from './CreateProposalForm'
 import ProposalsTable from './ProposalsTable'
-import { colors, fonts, borders } from './theme'
+import { randomProposal } from './randomProposal'
+import { borders, colors, fonts } from './theme'
 
 interface Proposal {
   $id: string

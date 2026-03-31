@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { createTrip as _createTrip, account as _account } from './backend'
 import type { Models } from 'appwrite'
+import { useState } from 'react'
+import { account as _account, createTrip as _createTrip } from './backend'
 import Field from './Field'
-import { colors, borders, formStyles } from './theme'
+import { borders, colors, formStyles } from './theme'
 
 interface CreateTripFormProps {
   user: Models.User

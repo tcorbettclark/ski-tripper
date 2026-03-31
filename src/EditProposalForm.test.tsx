@@ -1,5 +1,5 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, mock } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import EditProposalForm from './EditProposalForm'
 
 const sampleProposal = {

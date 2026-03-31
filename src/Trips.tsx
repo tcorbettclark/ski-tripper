@@ -1,15 +1,15 @@
-import { useState, useCallback } from 'react'
+import type { Models } from 'appwrite'
+import { useCallback, useState } from 'react'
 import {
   createTrip as _createTrip,
+  getCoordinatorParticipant as _getCoordinatorParticipant,
   getTripByCode as _getTripByCode,
   joinTrip as _joinTrip,
-  getCoordinatorParticipant as _getCoordinatorParticipant,
 } from './backend'
-import type { Models } from 'appwrite'
 import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'
-import { colors, fonts, borders } from './theme'
+import { borders, colors, fonts } from './theme'
 
 interface Trip {
   $id: string

@@ -1,5 +1,5 @@
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
-import { describe, it, expect, mock } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import Proposals from './Proposals'
 
 const user = { $id: 'user-1', name: 'Alice' }

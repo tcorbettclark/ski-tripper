@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { listTripParticipants as _listTripParticipants } from './backend'
-import { colors, fonts, borders } from './theme'
+import { borders, colors, fonts } from './theme'
 
 interface Participant {
   id: string

@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, spyOn } from 'bun:test'
+import { describe, expect, it, mock, spyOn } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import EditTripForm from './EditTripForm'

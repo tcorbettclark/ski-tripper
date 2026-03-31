@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { colors, fonts, borders } from './theme'
+import { useEffect, useState } from 'react'
+import { borders, colors, fonts } from './theme'
 
 interface Proposal {
   $id: string

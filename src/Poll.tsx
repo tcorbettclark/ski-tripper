@@ -1,17 +1,17 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import type { Models } from 'appwrite'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  closePoll as _closePoll,
+  createPoll as _createPoll,
+  getCoordinatorParticipant as _getCoordinatorParticipant,
   listPolls as _listPolls,
   listProposals as _listProposals,
   listVotes as _listVotes,
-  createPoll as _createPoll,
-  closePoll as _closePoll,
   upsertVote as _upsertVote,
-  getCoordinatorParticipant as _getCoordinatorParticipant,
 } from './backend'
-import type { Models } from 'appwrite'
-import PollVoting from './PollVoting'
 import PollResults from './PollResults'
-import { colors, fonts, borders } from './theme'
+import PollVoting from './PollVoting'
+import { borders, colors, fonts } from './theme'
 
 interface Proposal {
   $id: string

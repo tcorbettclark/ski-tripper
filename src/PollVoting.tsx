@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { upsertVote as _upsertVote } from './backend'
-import { colors, fonts, borders } from './theme'
+import { borders, colors, fonts } from './theme'
 
 interface Vote {
   proposalIds: string[]

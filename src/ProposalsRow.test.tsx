@@ -1,6 +1,6 @@
-import { render, screen, waitFor, act } from '@testing-library/react'
+import { describe, expect, it, mock } from 'bun:test'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, it, expect, mock } from 'bun:test'
 import ProposalsRow from './ProposalsRow'
 
 const sampleProposal = {

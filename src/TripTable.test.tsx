@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'bun:test'
-import { render, screen, act } from '@testing-library/react'
+import { describe, expect, it } from 'bun:test'
+import { act, render, screen } from '@testing-library/react'
 import TripTable from './TripTable'
 
 const sampleTrips = [

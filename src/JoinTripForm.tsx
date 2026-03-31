@@ -1,12 +1,12 @@
+import type { Models } from 'appwrite'
 import { useState } from 'react'
 import {
+  account as _account,
   getTripByCode as _getTripByCode,
   joinTrip as _joinTrip,
-  account as _account,
 } from './backend'
-import type { Models } from 'appwrite'
 import Field from './Field'
-import { colors, borders, formStyles } from './theme'
+import { borders, colors, formStyles } from './theme'
 
 interface JoinTripFormProps {
   user: Models.User

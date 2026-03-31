@@ -1,5 +1,5 @@
+import { describe, expect, it } from 'bun:test'
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'bun:test'
 import PollResults from './PollResults'
 
 const poll = { $id: 'poll-1', proposalIds: ['p-1', 'p-2', 'p-3'] }

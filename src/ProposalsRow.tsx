@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import EditProposalForm from './EditProposalForm'
 import {
-  updateProposal as _updateProposal,
   deleteProposal as _deleteProposal,
-  submitProposal as _submitProposal,
   rejectProposal as _rejectProposal,
+  submitProposal as _submitProposal,
+  updateProposal as _updateProposal,
 } from './backend'
-import { colors, fonts, borders } from './theme'
+import EditProposalForm from './EditProposalForm'
+import { borders, colors, fonts } from './theme'
 
 interface Proposal {
   $id: string

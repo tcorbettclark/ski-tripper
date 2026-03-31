@@ -1,5 +1,5 @@
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
-import { describe, it, expect, mock } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import CreateProposalForm from './CreateProposalForm'
 
 function renderForm(props = {}) {

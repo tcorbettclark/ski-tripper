@@ -1,4 +1,4 @@
-import { colors, fonts, borders } from './theme'
+import { borders, colors, fonts } from './theme'
 
 interface HeaderProps {
   view: string

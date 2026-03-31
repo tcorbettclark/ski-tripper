@@ -1,28 +1,28 @@
-import { describe, it, expect, mock } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
+import type { Databases } from 'appwrite'
 import {
-  listTrips,
+  closePoll,
+  createPoll,
+  createProposal,
+  createTrip,
+  deleteProposal,
+  deleteTrip,
+  getProposal,
   getTrip,
   getTripByCode,
-  createTrip,
-  updateTrip,
-  deleteTrip,
   joinTrip,
-  listParticipatedTrips,
   leaveTrip,
-  createProposal,
-  listProposals,
-  getProposal,
-  updateProposal,
-  deleteProposal,
-  submitProposal,
-  rejectProposal,
-  createPoll,
-  closePoll,
+  listParticipatedTrips,
   listPolls,
-  upsertVote,
+  listProposals,
+  listTrips,
   listVotes,
+  rejectProposal,
+  submitProposal,
+  updateProposal,
+  updateTrip,
+  upsertVote,
 } from './backend'
-import type { Databases } from 'appwrite'
 
 interface MockDb {
   listDocuments: ReturnType<typeof mock>

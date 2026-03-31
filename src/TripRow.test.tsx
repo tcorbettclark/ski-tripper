@@ -1,5 +1,5 @@
-import { describe, it, expect, mock } from 'bun:test'
-import { render, screen, act } from '@testing-library/react'
+import { describe, expect, it, mock } from 'bun:test'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import TripRow from './TripRow'
 
