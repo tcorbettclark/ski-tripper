@@ -1,3 +1,4 @@
+import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
 import TripRow from './TripRow'
 import { borders, colors, fonts } from './theme'
 
@@ -19,7 +20,7 @@ export default function TripTable({
   trips,
   onSelectTrip,
   emptyMessage = 'No trips yet. Add one above.',
-  getCoordinatorParticipant,
+  getCoordinatorParticipant = _getCoordinatorParticipant,
 }: TripTableProps) {
   if (trips.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>

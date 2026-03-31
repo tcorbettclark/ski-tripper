@@ -26,6 +26,11 @@ function renderApp(props = {}) {
       deleteSession={() => Promise.resolve()}
       listTrips={() => Promise.resolve({ documents: [] })}
       listParticipatedTrips={() => Promise.resolve({ documents: [] })}
+      listTripParticipants={() => Promise.resolve({ documents: [] })}
+      updateTrip={() => Promise.resolve(updatedTrip)}
+      deleteTrip={() => Promise.resolve()}
+      leaveTrip={() => Promise.resolve()}
+      getCoordinatorParticipant={() => Promise.resolve({ documents: [] })}
       {...props}
     />
   )
@@ -38,7 +43,10 @@ function renderAppWithTrip(props = {}) {
       deleteSession={() => Promise.resolve()}
       listTrips={() => Promise.resolve({ documents: [sampleTrip] })}
       listParticipatedTrips={() => Promise.resolve({ documents: [] })}
+      listTripParticipants={() => Promise.resolve({ documents: [] })}
       updateTrip={() => Promise.resolve(updatedTrip)}
+      deleteTrip={() => Promise.resolve()}
+      leaveTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() => Promise.resolve({ documents: [] })}
       {...props}
     />
@@ -187,7 +195,10 @@ describe('App', () => {
         deleteSession={() => Promise.resolve()}
         listTrips={() => Promise.resolve({ documents: [sampleTrip] })}
         listParticipatedTrips={listParticipatedTrips}
+        listTripParticipants={() => Promise.resolve({ documents: [] })}
         updateTrip={() => Promise.resolve(updatedTrip)}
+        deleteTrip={() => Promise.resolve()}
+        leaveTrip={() => Promise.resolve()}
         getCoordinatorParticipant={getCoordinatorParticipant}
       />
     )
