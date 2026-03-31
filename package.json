@@ -8,6 +8,7 @@
     "preview": "bun server.js",
     "test": "bun test --max-concurrency 1",
     "test:watch": "bun test --watch --max-concurrency 1",
+    "typecheck": "bun tsc --noEmit",
     "lint": "biome lint --write",
     "format": "biome format --write",
     "check": "biome check --write",
