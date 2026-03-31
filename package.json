@@ -8,8 +8,10 @@
     "preview": "bun server.js",
     "test": "bun test --max-concurrency 1",
     "test:watch": "bun test --watch --max-concurrency 1",
-    "lint": "biome lint --write .",
-    "format": "biome format --write ."
+    "lint": "biome lint --write",
+    "format": "biome format --write",
+    "check": "biome check --write",
+    "ci": "biome ci"
   },
   "dependencies": {
     "appwrite": "^23.0.0",
