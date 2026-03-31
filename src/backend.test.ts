@@ -36,21 +36,22 @@ function makeDb(overrides: Partial<MockDb> = {}): MockDb {
   return {
     listDocuments: mock(() => Promise.resolve({ documents: [] })),
     createDocument: mock(() =>
-      Promise.resolve({ $id: 'new-id', name: 'New Trip' })
+      Promise.resolve({ $id: 'new-id', description: 'New Trip' })
     ),
     updateDocument: mock(() =>
-      Promise.resolve({ $id: '1', name: 'Updated Trip' })
+      Promise.resolve({ $id: '1', description: 'Updated Trip' })
     ),
     deleteDocument: mock(() => Promise.resolve()),
     getDocument: mock(() =>
-      Promise.resolve({ $id: 'trip-1', name: 'Ski Alps' })
+      Promise.resolve({ $id: 'trip-1', description: 'Ski Alps' })
     ),
     ...overrides,
   }
 }
 
 function asDb(db: MockDb): Databases {
-  return db as unknown as Databases
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return db as any as Databases
 }
 
 describe('listTrips', () => {
@@ -65,12 +66,14 @@ describe('listTrips', () => {
         })
       )
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'trip-1', name: 'Trip 1' }] })
+        Promise.resolve({
+          documents: [{ $id: 'trip-1', description: 'Trip 1' }],
+        })
       )
     const db = makeDb({ listDocuments })
     const result = await listTrips('user-1', asDb(db))
     expect(result.documents).toHaveLength(1)
-    expect(result.documents[0].name).toBe('Trip 1')
+    expect(result.documents[0].description).toBe('Trip 1')
     expect(result.coordinatorUserIds).toEqual({ 'trip-1': 'user-1' })
   })
 
@@ -104,7 +107,7 @@ describe('getTrip', () => {
     const db = makeDb()
     const result = await getTrip('trip-1', asDb(db))
     expect(result.$id).toBe('trip-1')
-    expect(result.name).toBe('Ski Alps')
+    expect(result.description).toBe('Ski Alps')
   })
 
   it('propagates errors', async () => {
@@ -146,26 +149,21 @@ describe('getTripByCode', () => {
 describe('createTrip', () => {
   it('checks for code uniqueness before creating', async () => {
     const db = makeDb()
-    await createTrip(
-      'user-1',
-      'Alice',
-      { name: 'New Trip', description: '' },
-      asDb(db)
-    )
+    await createTrip('user-1', 'Alice', { description: 'New Trip' }, asDb(db))
     expect(db.listDocuments).toHaveBeenCalledTimes(1)
     expect(db.createDocument).toHaveBeenCalledTimes(2)
   })
 
   it('includes a three-word code in the created document', async () => {
     const db = makeDb()
-    await createTrip('user-1', 'Alice', { name: 'New Trip' }, asDb(db))
+    await createTrip('user-1', 'Alice', { description: 'New Trip' }, asDb(db))
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.code).toMatch(/^\w+-\w+-\w+$/)
   })
 
   it('generates a lowercase code', async () => {
     const db = makeDb()
-    await createTrip('user-1', 'Alice', { name: 'New Trip' }, asDb(db))
+    await createTrip('user-1', 'Alice', { description: 'New Trip' }, asDb(db))
     const [, , , data] = db.createDocument.mock.calls[0]
     expect(data.code).toBe(data.code.toLowerCase())
   })
@@ -178,7 +176,7 @@ describe('createTrip', () => {
       )
       .mockImplementationOnce(() => Promise.resolve({ documents: [] }))
     const db = makeDb({ listDocuments })
-    await createTrip('user-1', 'Alice', { name: 'New Trip' }, asDb(db))
+    await createTrip('user-1', 'Alice', { description: 'New Trip' }, asDb(db))
     expect(db.listDocuments).toHaveBeenCalledTimes(2)
     expect(db.createDocument).toHaveBeenCalledTimes(2)
   })
@@ -188,7 +186,7 @@ describe('createTrip', () => {
       listDocuments: mock(() => Promise.resolve({ documents: [{ $id: 'x' }] })),
     })
     await expect(
-      createTrip('user-1', 'Alice', { name: 'New Trip' }, asDb(db))
+      createTrip('user-1', 'Alice', { description: 'New Trip' }, asDb(db))
     ).rejects.toThrow(
       'Could not generate a unique trip code after 100 attempts.'
     )
@@ -201,7 +199,7 @@ describe('createTrip', () => {
     const result = await createTrip(
       'user-1',
       'Alice',
-      { name: 'New Trip', description: '' },
+      { description: 'New Trip' },
       asDb(db)
     )
     expect(result.$id).toBe('new-id')
@@ -209,7 +207,7 @@ describe('createTrip', () => {
 
   it('creates the initial participant with role coordinator', async () => {
     const db = makeDb()
-    await createTrip('user-1', 'Alice', { name: 'New Trip' }, asDb(db))
+    await createTrip('user-1', 'Alice', { description: 'New Trip' }, asDb(db))
     const participantData = db.createDocument.mock.calls[1][3]
     expect(participantData.role).toBe('coordinator')
     expect(participantData.ParticipantUserId).toBe('user-1')
@@ -221,7 +219,7 @@ describe('createTrip', () => {
       createDocument: mock(() => Promise.reject(new Error('Create failed'))),
     })
     await expect(
-      createTrip('user-1', 'Alice', { name: 'Trip' }, asDb(db))
+      createTrip('user-1', 'Alice', { description: 'Trip' }, asDb(db))
     ).rejects.toThrow('Create failed')
   })
 })
@@ -237,12 +235,12 @@ describe('updateTrip', () => {
     })
     const result = await updateTrip(
       'trip-1',
-      { name: 'Updated Trip' },
+      { description: 'Updated Trip' },
       'user-1',
       asDb(db)
     )
     expect(db.updateDocument).toHaveBeenCalledTimes(1)
-    expect(result.name).toBe('Updated Trip')
+    expect(result.description).toBe('Updated Trip')
   })
 
   it('throws when the caller is not the coordinator', async () => {
@@ -362,7 +360,9 @@ describe('listParticipatedTrips', () => {
         })
       )
       .mockImplementationOnce(() =>
-        Promise.resolve({ documents: [{ $id: 'trip-1', name: 'Ski Alps' }] })
+        Promise.resolve({
+          documents: [{ $id: 'trip-1', description: 'Ski Alps' }],
+        })
       )
     const db = makeDb({ listDocuments })
     const result = await listParticipatedTrips('user-1', asDb(db))
@@ -395,7 +395,7 @@ describe('createProposal', () => {
       'trip-1',
       'user-1',
       'Alice',
-      { name: 'Alps Trip' },
+      { description: 'Alps Trip' },
       asDb(db)
     )
     expect(db.createDocument).toHaveBeenCalledTimes(1)
@@ -404,7 +404,7 @@ describe('createProposal', () => {
     expect(data.ProposerUserId).toBe('user-1')
     expect(data.ProposerUserName).toBe('Alice')
     expect(data.state).toBe('DRAFT')
-    expect(data.name).toBe('Alps Trip')
+    expect(data.description).toBe('Alps Trip')
     expect(result.$id).toBe('new-id')
   })
 
@@ -536,7 +536,7 @@ describe('updateProposal', () => {
     const result = await updateProposal(
       'prop-1',
       'user-1',
-      { name: 'Updated' },
+      { description: 'Updated' },
       asDb(db)
     )
     expect(db.updateDocument).toHaveBeenCalledTimes(1)
@@ -557,7 +557,7 @@ describe('updateProposal', () => {
       'prop-1',
       'user-1',
       {
-        name: 'Updated',
+        description: 'Updated',
         state: 'SUBMITTED',
         tripId: 'other-trip',
         ProposerUserId: 'other-user',
@@ -566,7 +566,7 @@ describe('updateProposal', () => {
     )
     expect(db.updateDocument).toHaveBeenCalledTimes(1)
     const [, , , data] = db.updateDocument.mock.calls[0]
-    expect(data.name).toBe('Updated')
+    expect(data.description).toBe('Updated')
     expect(data.state).toBeUndefined()
     expect(data.tripId).toBeUndefined()
     expect(data.ProposerUserId).toBeUndefined()

@@ -1,3 +1,4 @@
+import type { Models } from 'appwrite'
 import {
   Account,
   Client,
@@ -69,6 +70,27 @@ interface VoteDocument {
   $createdAt: string
 }
 
+type AppwriteDocument = Models.Document
+
+function cast<T>(doc: Models.Document): T {
+  return doc as unknown as T
+}
+
+function castList<T>(docs: Models.Document[]): T[] {
+  return docs as unknown as T[]
+}
+
+async function castDocumentList<T>(
+  result: Promise<{ documents: Models.Document[] }>
+): Promise<{ documents: T[] }> {
+  const { documents } = await result
+  return { documents: castList<T>(documents) }
+}
+
+async function castSingle<T>(result: Promise<Models.Document>): Promise<T> {
+  return cast<T>(await result)
+}
+
 function randomThreeWords(): string {
   const ints = new Uint32Array(3)
   crypto.getRandomValues(ints)
@@ -90,26 +112,30 @@ const POLLS_COLLECTION_ID = process.env
 const VOTES_COLLECTION_ID = process.env
   .PUBLIC_APPWRITE_VOTES_COLLECTION_ID as string
 
-export function getCoordinatorParticipant(
+export async function getCoordinatorParticipant(
   tripId: string,
   db: Databases = databases
 ): Promise<{ documents: ParticipantDocument[] }> {
-  return db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
-    Query.equal('tripId', tripId),
-    Query.equal('role', 'coordinator'),
-    Query.limit(1),
-  ]) as unknown as Promise<{ documents: ParticipantDocument[] }>
+  return castDocumentList<ParticipantDocument>(
+    db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
+      Query.equal('tripId', tripId),
+      Query.equal('role', 'coordinator'),
+      Query.limit(1),
+    ])
+  )
 }
 
-export function listTripParticipants(
+export async function listTripParticipants(
   tripId: string,
   db: Databases = databases
 ): Promise<{ documents: ParticipantDocument[] }> {
-  return db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
-    Query.equal('tripId', tripId),
-    Query.orderDesc('$createdAt'),
-    Query.limit(100),
-  ]) as unknown as Promise<{ documents: ParticipantDocument[] }>
+  return castDocumentList<ParticipantDocument>(
+    db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
+      Query.equal('tripId', tripId),
+      Query.orderDesc('$createdAt'),
+      Query.limit(100),
+    ])
+  )
 }
 
 export async function listTrips(
@@ -119,16 +145,15 @@ export async function listTrips(
   documents: TripDocument[]
   coordinatorUserIds: Record<string, string>
 }> {
-  const { documents: coordinatorParticipants } = (await db.listDocuments(
-    DATABASE_ID,
-    PARTICIPANTS_COLLECTION_ID,
-    [
-      Query.equal('ParticipantUserId', ParticipantUserId),
-      Query.equal('role', 'coordinator'),
-      Query.orderDesc('$createdAt'),
-      Query.limit(50),
-    ]
-  )) as unknown as { documents: ParticipantDocument[] }
+  const { documents: coordinatorParticipants } =
+    await castDocumentList<ParticipantDocument>(
+      db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
+        Query.equal('ParticipantUserId', ParticipantUserId),
+        Query.equal('role', 'coordinator'),
+        Query.orderDesc('$createdAt'),
+        Query.limit(50),
+      ])
+    )
 
   if (coordinatorParticipants.length === 0) {
     return { documents: [], coordinatorUserIds: {} }
@@ -137,45 +162,47 @@ export async function listTrips(
   const coordinatorUserIds = Object.fromEntries(
     coordinatorParticipants.map((p) => [p.tripId, p.ParticipantUserId])
   )
-  const { documents: trips } = (await db.listDocuments(
-    DATABASE_ID,
-    TRIPS_COLLECTION_ID,
-    [Query.equal('$id', tripIds)]
-  )) as unknown as { documents: TripDocument[] }
+  const { documents: trips } = await castDocumentList<TripDocument>(
+    db.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
+      Query.equal('$id', tripIds),
+    ])
+  )
   const tripMap = Object.fromEntries(trips.map((t) => [t.$id, t]))
   const orderedTrips = tripIds.map((id) => tripMap[id]).filter(Boolean)
   return { documents: orderedTrips, coordinatorUserIds }
 }
 
-export function getTrip(
+export async function getTrip(
   tripId: string,
   db: Databases = databases
 ): Promise<TripDocument> {
-  return db.getDocument(
-    DATABASE_ID,
-    TRIPS_COLLECTION_ID,
-    tripId
-  ) as unknown as Promise<TripDocument>
+  return castSingle<TripDocument>(
+    db.getDocument(DATABASE_ID, TRIPS_COLLECTION_ID, tripId)
+  )
 }
 
-export function getTripByCode(
+export async function getTripByCode(
   code: string,
   db: Databases = databases
 ): Promise<{ documents: TripDocument[] }> {
-  return db.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
-    Query.equal('code', code),
-    Query.limit(1),
-  ]) as unknown as Promise<{ documents: TripDocument[] }>
+  return castDocumentList<TripDocument>(
+    db.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
+      Query.equal('code', code),
+      Query.limit(1),
+    ])
+  )
 }
 
 async function findUniqueCode(db: Databases = databases): Promise<string> {
   for (let attempt = 0; attempt < 100; attempt++) {
     const code = randomThreeWords()
-    const existing = (await db.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
-      Query.equal('code', code),
-      Query.limit(1),
-    ])) as unknown as { documents: TripDocument[] }
-    if (existing.documents.length === 0) return code
+    const { documents } = await castDocumentList<TripDocument>(
+      db.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
+        Query.equal('code', code),
+        Query.limit(1),
+      ])
+    )
+    if (documents.length === 0) return code
   }
   throw new Error('Could not generate a unique trip code after 100 attempts.')
 }
@@ -187,16 +214,21 @@ export async function createTrip(
   db: Databases = databases
 ): Promise<TripDocument> {
   const code = await findUniqueCode(db)
-  const trip = (await db.createDocument(
-    DATABASE_ID,
-    TRIPS_COLLECTION_ID,
-    ID.unique(),
-    { code, ...data } as Record<string, unknown>,
-    [
-      Permission.read(Role.users()),
-      Permission.write(Role.user(ParticipantUserId)),
-    ]
-  )) as unknown as TripDocument
+  const trip = await castSingle<TripDocument>(
+    db.createDocument(
+      DATABASE_ID,
+      TRIPS_COLLECTION_ID,
+      ID.unique(),
+      {
+        code,
+        ...data,
+      } as Record<string, unknown>,
+      [
+        Permission.read(Role.users()),
+        Permission.write(Role.user(ParticipantUserId)),
+      ]
+    )
+  )
   await db.createDocument(
     DATABASE_ID,
     PARTICIPANTS_COLLECTION_ID,
@@ -228,12 +260,14 @@ export async function updateTrip(
   ) {
     throw new Error('Only the coordinator can edit this trip.')
   }
-  return db.updateDocument(
-    DATABASE_ID,
-    TRIPS_COLLECTION_ID,
-    tripId,
-    data as Record<string, unknown>
-  ) as unknown as Promise<TripDocument>
+  return castSingle<TripDocument>(
+    db.updateDocument(
+      DATABASE_ID,
+      TRIPS_COLLECTION_ID,
+      tripId,
+      data as Record<string, unknown>
+    )
+  )
 }
 
 export async function deleteTrip(
@@ -251,11 +285,12 @@ export async function deleteTrip(
   ) {
     throw new Error('Only the coordinator can delete this trip.')
   }
-  const { documents } = (await db.listDocuments(
-    DATABASE_ID,
-    PARTICIPANTS_COLLECTION_ID,
-    [Query.equal('tripId', tripId), Query.limit(100)]
-  )) as unknown as { documents: ParticipantDocument[] }
+  const { documents } = await castDocumentList<ParticipantDocument>(
+    db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
+      Query.equal('tripId', tripId),
+      Query.limit(100),
+    ])
+  )
   await Promise.allSettled(
     documents.map((p) =>
       db.deleteDocument(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, p.$id)
@@ -268,22 +303,20 @@ export async function listParticipatedTrips(
   ParticipantUserId: string,
   db: Databases = databases
 ): Promise<{ documents: TripDocument[] }> {
-  const { documents } = (await db.listDocuments(
-    DATABASE_ID,
-    PARTICIPANTS_COLLECTION_ID,
-    [
+  const { documents } = await castDocumentList<ParticipantDocument>(
+    db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
       Query.equal('ParticipantUserId', ParticipantUserId),
       Query.orderDesc('$createdAt'),
       Query.limit(50),
-    ]
-  )) as unknown as { documents: ParticipantDocument[] }
+    ])
+  )
   if (documents.length === 0) return { documents: [] }
   const tripIds = documents.map((p) => p.tripId)
-  const { documents: trips } = (await db.listDocuments(
-    DATABASE_ID,
-    TRIPS_COLLECTION_ID,
-    [Query.equal('$id', tripIds)]
-  )) as unknown as { documents: TripDocument[] }
+  const { documents: trips } = await castDocumentList<TripDocument>(
+    db.listDocuments(DATABASE_ID, TRIPS_COLLECTION_ID, [
+      Query.equal('$id', tripIds),
+    ])
+  )
   return { documents: trips }
 }
 
@@ -298,32 +331,32 @@ export async function joinTrip(
   } catch {
     throw new Error('Trip not found.')
   }
-  const { documents } = (await db.listDocuments(
-    DATABASE_ID,
-    PARTICIPANTS_COLLECTION_ID,
-    [
+  const { documents } = await castDocumentList<ParticipantDocument>(
+    db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
       Query.equal('ParticipantUserId', ParticipantUserId),
       Query.equal('tripId', tripId),
       Query.limit(1),
-    ]
-  )) as unknown as { documents: ParticipantDocument[] }
+    ])
+  )
   if (documents.length > 0)
     throw new Error('You have already joined this trip.')
-  return db.createDocument(
-    DATABASE_ID,
-    PARTICIPANTS_COLLECTION_ID,
-    ID.unique(),
-    {
-      ParticipantUserId,
-      ParticipantUserName,
-      tripId,
-      role: 'participant',
-    } as Record<string, unknown>,
-    [
-      Permission.read(Role.user(ParticipantUserId)),
-      Permission.write(Role.user(ParticipantUserId)),
-    ]
-  ) as unknown as Promise<ParticipantDocument>
+  return castSingle<ParticipantDocument>(
+    db.createDocument(
+      DATABASE_ID,
+      PARTICIPANTS_COLLECTION_ID,
+      ID.unique(),
+      {
+        ParticipantUserId,
+        ParticipantUserName,
+        tripId,
+        role: 'participant',
+      } as Record<string, unknown>,
+      [
+        Permission.read(Role.user(ParticipantUserId)),
+        Permission.write(Role.user(ParticipantUserId)),
+      ]
+    )
+  )
 }
 
 export async function leaveTrip(
@@ -331,15 +364,13 @@ export async function leaveTrip(
   tripId: string,
   db: Databases = databases
 ): Promise<void> {
-  const { documents } = (await db.listDocuments(
-    DATABASE_ID,
-    PARTICIPANTS_COLLECTION_ID,
-    [
+  const { documents } = await castDocumentList<ParticipantDocument>(
+    db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
       Query.equal('ParticipantUserId', ParticipantUserId),
       Query.equal('tripId', tripId),
       Query.limit(1),
-    ]
-  )) as unknown as { documents: ParticipantDocument[] }
+    ])
+  )
   if (documents.length === 0) throw new Error('Participation record not found.')
   await db.deleteDocument(
     DATABASE_ID,
@@ -353,15 +384,13 @@ async function _verifyParticipant(
   ParticipantUserId: string,
   db: Databases
 ): Promise<void> {
-  const { documents } = (await db.listDocuments(
-    DATABASE_ID,
-    PARTICIPANTS_COLLECTION_ID,
-    [
+  const { documents } = await castDocumentList<ParticipantDocument>(
+    db.listDocuments(DATABASE_ID, PARTICIPANTS_COLLECTION_ID, [
       Query.equal('tripId', tripId),
       Query.equal('ParticipantUserId', ParticipantUserId),
       Query.limit(1),
-    ]
-  )) as unknown as { documents: ParticipantDocument[] }
+    ])
+  )
   if (documents.length === 0)
     throw new Error('You must be a participant to access proposals.')
 }
@@ -385,19 +414,24 @@ export async function createProposal(
   db: Databases = databases
 ): Promise<ProposalDocument> {
   await _verifyParticipant(tripId, ProposerUserId, db)
-  return db.createDocument(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    ID.unique(),
-    {
-      tripId,
-      ProposerUserId,
-      ProposerUserName,
-      state: 'DRAFT',
-      ...data,
-    } as Record<string, unknown>,
-    [Permission.read(Role.users()), Permission.write(Role.user(ProposerUserId))]
-  ) as unknown as Promise<ProposalDocument>
+  return castSingle<ProposalDocument>(
+    db.createDocument(
+      DATABASE_ID,
+      PROPOSALS_COLLECTION_ID,
+      ID.unique(),
+      {
+        tripId,
+        ProposerUserId,
+        ProposerUserName,
+        state: 'DRAFT',
+        ...data,
+      } as Record<string, unknown>,
+      [
+        Permission.read(Role.users()),
+        Permission.write(Role.user(ProposerUserId)),
+      ]
+    )
+  )
 }
 
 export async function listProposals(
@@ -406,11 +440,13 @@ export async function listProposals(
   db: Databases = databases
 ): Promise<{ documents: ProposalDocument[] }> {
   await _verifyParticipant(tripId, ParticipantUserId, db)
-  return db.listDocuments(DATABASE_ID, PROPOSALS_COLLECTION_ID, [
-    Query.equal('tripId', tripId),
-    Query.orderDesc('$createdAt'),
-    Query.limit(50),
-  ]) as unknown as Promise<{ documents: ProposalDocument[] }>
+  return castDocumentList<ProposalDocument>(
+    db.listDocuments(DATABASE_ID, PROPOSALS_COLLECTION_ID, [
+      Query.equal('tripId', tripId),
+      Query.orderDesc('$createdAt'),
+      Query.limit(50),
+    ])
+  )
 }
 
 export async function getProposal(
@@ -418,11 +454,9 @@ export async function getProposal(
   ParticipantUserId: string,
   db: Databases = databases
 ): Promise<ProposalDocument> {
-  const proposal = (await db.getDocument(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    proposalId
-  )) as unknown as ProposalDocument
+  const proposal = await castSingle<ProposalDocument>(
+    db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  )
   await _verifyParticipant(proposal.tripId, ParticipantUserId, db)
   return proposal
 }
@@ -433,11 +467,9 @@ export async function updateProposal(
   data: Partial<ProposalDocument>,
   db: Databases = databases
 ): Promise<ProposalDocument> {
-  const proposal = (await db.getDocument(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    proposalId
-  )) as unknown as ProposalDocument
+  const proposal = await castSingle<ProposalDocument>(
+    db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  )
   if (proposal.ProposerUserId !== ProposerUserId)
     throw new Error('Only the creator can edit this proposal.')
   if (proposal.state !== 'DRAFT')
@@ -448,12 +480,14 @@ export async function updateProposal(
     ProposerUserId: _ProposerUserId,
     ...safeData
   } = data
-  return db.updateDocument(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    proposalId,
-    safeData as Record<string, unknown>
-  ) as unknown as Promise<ProposalDocument>
+  return castSingle<ProposalDocument>(
+    db.updateDocument(
+      DATABASE_ID,
+      PROPOSALS_COLLECTION_ID,
+      proposalId,
+      safeData as Record<string, unknown>
+    )
+  )
 }
 
 export async function deleteProposal(
@@ -461,11 +495,9 @@ export async function deleteProposal(
   ProposerUserId: string,
   db: Databases = databases
 ): Promise<void> {
-  const proposal = (await db.getDocument(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    proposalId
-  )) as unknown as ProposalDocument
+  const proposal = await castSingle<ProposalDocument>(
+    db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  )
   if (proposal.ProposerUserId !== ProposerUserId)
     throw new Error('Only the creator can delete this proposal.')
   if (proposal.state !== 'DRAFT')
@@ -478,18 +510,18 @@ export async function submitProposal(
   ProposerUserId: string,
   db: Databases = databases
 ): Promise<ProposalDocument> {
-  const proposal = (await db.getDocument(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    proposalId
-  )) as unknown as ProposalDocument
+  const proposal = await castSingle<ProposalDocument>(
+    db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  )
   if (proposal.ProposerUserId !== ProposerUserId)
     throw new Error('Only the creator can submit this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be submitted.')
-  return db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, {
-    state: 'SUBMITTED',
-  } as Record<string, unknown>) as unknown as Promise<ProposalDocument>
+  return castSingle<ProposalDocument>(
+    db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, {
+      state: 'SUBMITTED',
+    } as Record<string, unknown>)
+  )
 }
 
 export async function rejectProposal(
@@ -497,11 +529,9 @@ export async function rejectProposal(
   PollCreatorUserId: string,
   db: Databases = databases
 ): Promise<ProposalDocument> {
-  const proposal = (await db.getDocument(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    proposalId
-  )) as unknown as ProposalDocument
+  const proposal = await castSingle<ProposalDocument>(
+    db.getDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId)
+  )
   if (proposal.state !== 'SUBMITTED') {
     throw new Error('Only submitted proposals can be rejected.')
   }
@@ -512,9 +542,11 @@ export async function rejectProposal(
   ) {
     throw new Error('Only the coordinator can reject this proposal.')
   }
-  return db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, {
-    state: 'REJECTED',
-  } as Record<string, unknown>) as unknown as Promise<ProposalDocument>
+  return castSingle<ProposalDocument>(
+    db.updateDocument(DATABASE_ID, PROPOSALS_COLLECTION_ID, proposalId, {
+      state: 'REJECTED',
+    } as Record<string, unknown>)
+  )
 }
 
 export async function createPoll(
@@ -530,47 +562,45 @@ export async function createPoll(
   ) {
     throw new Error('Only the coordinator can create a poll.')
   }
-  const { documents: openPolls } = (await db.listDocuments(
-    DATABASE_ID,
-    POLLS_COLLECTION_ID,
-    [
+  const { documents: openPolls } = await castDocumentList<PollDocument>(
+    db.listDocuments(DATABASE_ID, POLLS_COLLECTION_ID, [
       Query.equal('tripId', tripId),
       Query.equal('state', 'OPEN'),
       Query.limit(1),
-    ]
-  )) as unknown as { documents: PollDocument[] }
+    ])
+  )
   if (openPolls.length > 0) {
     throw new Error('A poll is already open for this trip.')
   }
-  const { documents: proposals } = (await db.listDocuments(
-    DATABASE_ID,
-    PROPOSALS_COLLECTION_ID,
-    [
+  const { documents: proposals } = await castDocumentList<ProposalDocument>(
+    db.listDocuments(DATABASE_ID, PROPOSALS_COLLECTION_ID, [
       Query.equal('tripId', tripId),
       Query.equal('state', 'SUBMITTED'),
       Query.limit(100),
-    ]
-  )) as unknown as { documents: ProposalDocument[] }
+    ])
+  )
   if (proposals.length === 0) {
     throw new Error('No submitted proposals to poll on.')
   }
   const proposalIds = proposals.map((p) => p.$id)
-  return db.createDocument(
-    DATABASE_ID,
-    POLLS_COLLECTION_ID,
-    ID.unique(),
-    {
-      tripId,
-      PollCreatorUserId,
-      PollCreatorUserName,
-      state: 'OPEN',
-      proposalIds,
-    } as Record<string, unknown>,
-    [
-      Permission.read(Role.users()),
-      Permission.write(Role.user(PollCreatorUserId)),
-    ]
-  ) as unknown as Promise<PollDocument>
+  return castSingle<PollDocument>(
+    db.createDocument(
+      DATABASE_ID,
+      POLLS_COLLECTION_ID,
+      ID.unique(),
+      {
+        tripId,
+        PollCreatorUserId,
+        PollCreatorUserName,
+        state: 'OPEN',
+        proposalIds,
+      } as Record<string, unknown>,
+      [
+        Permission.read(Role.users()),
+        Permission.write(Role.user(PollCreatorUserId)),
+      ]
+    )
+  )
 }
 
 export async function closePoll(
@@ -578,11 +608,9 @@ export async function closePoll(
   PollCreatorUserId: string,
   db: Databases = databases
 ): Promise<PollDocument> {
-  const poll = (await db.getDocument(
-    DATABASE_ID,
-    POLLS_COLLECTION_ID,
-    pollId
-  )) as unknown as PollDocument
+  const poll = await castSingle<PollDocument>(
+    db.getDocument(DATABASE_ID, POLLS_COLLECTION_ID, pollId)
+  )
   if (poll.state !== 'OPEN') throw new Error('Only open polls can be closed.')
   const { documents } = await getCoordinatorParticipant(poll.tripId, db)
   if (
@@ -591,9 +619,11 @@ export async function closePoll(
   ) {
     throw new Error('Only the coordinator can close a poll.')
   }
-  return db.updateDocument(DATABASE_ID, POLLS_COLLECTION_ID, pollId, {
-    state: 'CLOSED',
-  } as Record<string, unknown>) as unknown as Promise<PollDocument>
+  return castSingle<PollDocument>(
+    db.updateDocument(DATABASE_ID, POLLS_COLLECTION_ID, pollId, {
+      state: 'CLOSED',
+    } as Record<string, unknown>)
+  )
 }
 
 export async function listPolls(
@@ -602,11 +632,13 @@ export async function listPolls(
   db: Databases = databases
 ): Promise<{ documents: PollDocument[] }> {
   await _verifyParticipant(tripId, ParticipantUserId, db)
-  return db.listDocuments(DATABASE_ID, POLLS_COLLECTION_ID, [
-    Query.equal('tripId', tripId),
-    Query.orderDesc('$createdAt'),
-    Query.limit(50),
-  ]) as unknown as Promise<{ documents: PollDocument[] }>
+  return castDocumentList<PollDocument>(
+    db.listDocuments(DATABASE_ID, POLLS_COLLECTION_ID, [
+      Query.equal('tripId', tripId),
+      Query.orderDesc('$createdAt'),
+      Query.limit(50),
+    ])
+  )
 }
 
 export async function upsertVote(
@@ -618,11 +650,9 @@ export async function upsertVote(
   db: Databases = databases
 ): Promise<VoteDocument> {
   await _verifyParticipant(tripId, VoterUserId, db)
-  const poll = (await db.getDocument(
-    DATABASE_ID,
-    POLLS_COLLECTION_ID,
-    pollId
-  )) as unknown as PollDocument
+  const poll = await castSingle<PollDocument>(
+    db.getDocument(DATABASE_ID, POLLS_COLLECTION_ID, pollId)
+  )
   if (poll.state !== 'OPEN') {
     throw new Error('Voting is only allowed on open polls.')
   }
@@ -630,33 +660,33 @@ export async function upsertVote(
   if (total > poll.proposalIds.length) {
     throw new Error(`Total tokens cannot exceed ${poll.proposalIds.length}.`)
   }
-  const { documents } = (await db.listDocuments(
-    DATABASE_ID,
-    VOTES_COLLECTION_ID,
-    [
+  const { documents } = await castDocumentList<VoteDocument>(
+    db.listDocuments(DATABASE_ID, VOTES_COLLECTION_ID, [
       Query.equal('pollId', pollId),
       Query.equal('VoterUserId', VoterUserId),
       Query.limit(1),
-    ]
-  )) as unknown as { documents: VoteDocument[] }
+    ])
+  )
   if (documents.length > 0) {
-    return db.updateDocument(
+    return castSingle<VoteDocument>(
+      db.updateDocument(DATABASE_ID, VOTES_COLLECTION_ID, documents[0].$id, {
+        proposalIds,
+        tokenCounts,
+      } as Record<string, unknown>)
+    )
+  }
+  return castSingle<VoteDocument>(
+    db.createDocument(
       DATABASE_ID,
       VOTES_COLLECTION_ID,
-      documents[0].$id,
-      { proposalIds, tokenCounts } as Record<string, unknown>
-    ) as unknown as Promise<VoteDocument>
-  }
-  return db.createDocument(
-    DATABASE_ID,
-    VOTES_COLLECTION_ID,
-    ID.unique(),
-    { pollId, tripId, VoterUserId, proposalIds, tokenCounts } as Record<
-      string,
-      unknown
-    >,
-    [Permission.read(Role.users()), Permission.write(Role.user(VoterUserId))]
-  ) as unknown as Promise<VoteDocument>
+      ID.unique(),
+      { pollId, tripId, VoterUserId, proposalIds, tokenCounts } as Record<
+        string,
+        unknown
+      >,
+      [Permission.read(Role.users()), Permission.write(Role.user(VoterUserId))]
+    )
+  )
 }
 
 export async function listVotes(
@@ -666,8 +696,10 @@ export async function listVotes(
   db: Databases = databases
 ): Promise<{ documents: VoteDocument[] }> {
   await _verifyParticipant(tripId, ParticipantUserId, db)
-  return db.listDocuments(DATABASE_ID, VOTES_COLLECTION_ID, [
-    Query.equal('pollId', pollId),
-    Query.limit(200),
-  ]) as unknown as Promise<{ documents: VoteDocument[] }>
+  return castDocumentList<VoteDocument>(
+    db.listDocuments(DATABASE_ID, VOTES_COLLECTION_ID, [
+      Query.equal('pollId', pollId),
+      Query.limit(200),
+    ])
+  )
 }
