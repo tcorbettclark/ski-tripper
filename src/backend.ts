@@ -70,8 +70,6 @@ interface VoteDocument {
   $createdAt: string
 }
 
-type AppwriteDocument = Models.Document
-
 function cast<T>(doc: Models.Document): T {
   return doc as unknown as T
 }

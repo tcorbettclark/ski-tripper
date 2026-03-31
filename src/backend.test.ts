@@ -50,7 +50,7 @@ function makeDb(overrides: Partial<MockDb> = {}): MockDb {
 }
 
 function asDb(db: MockDb): Databases {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: MockDb can't structurally match Databases without unsafe cast
   return db as any as Databases
 }
 
