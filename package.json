@@ -12,7 +12,8 @@
     "lint": "biome lint --write",
     "format": "biome format --write",
     "check": "biome check --write",
-    "ci": "biome ci"
+    "ci": "biome ci",
+    "cors-finder": "bash scripts/find-cors-test.sh"
   },
   "dependencies": {
     "appwrite": "^24.0.0",
