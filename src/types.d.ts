@@ -16,8 +16,8 @@ export interface Trip {
 
 export interface Participant {
   $id: string
-  ParticipantUserId: string
-  ParticipantUserName: string
+  participantUserId: string
+  participantUserName: string
   tripId: string
   role: 'coordinator' | 'participant'
   $createdAt: string
@@ -26,8 +26,8 @@ export interface Participant {
 export interface Proposal {
   $id: string
   tripId: string
-  ProposerUserId: string
-  ProposerUserName: string
+  proposerUserId: string
+  proposerUserName: string
   state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
   title: string
   description: string
@@ -37,8 +37,8 @@ export interface Proposal {
 export interface Poll {
   $id: string
   tripId: string
-  PollCreatorUserId: string
-  PollCreatorUserName: string
+  pollCreatorUserId: string
+  pollCreatorUserName: string
   state: 'OPEN' | 'CLOSED'
   proposalIds: string[]
   $createdAt: string
@@ -48,7 +48,7 @@ export interface Vote {
   $id: string
   pollId: string
   tripId: string
-  VoterUserId: string
+  voterUserId: string
   proposalIds: string[]
   tokenCounts: number[]
   $createdAt: string
