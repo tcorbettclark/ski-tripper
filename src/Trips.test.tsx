@@ -22,14 +22,14 @@ function renderTrips(props = {}) {
       onSelectTrip={props.onSelectTrip || (() => {})}
       onJoinedTrip={props.onJoinedTrip || (() => {})}
       createTrip={() => Promise.resolve(defaultTrip)}
-      getTripByCode={() => Promise.resolve({ documents: [] })}
+      getTripByCode={() => Promise.resolve({ trips: [] })}
       joinTrip={() => Promise.resolve()}
       updateTrip={() => Promise.resolve(defaultTrip)}
       deleteTrip={() => Promise.resolve()}
       leaveTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() =>
         Promise.resolve({
-          documents: [
+          participants: [
             { ParticipantUserId: 'user-1', ParticipantUserName: 'Test User' },
           ],
         })

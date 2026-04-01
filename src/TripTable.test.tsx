@@ -17,7 +17,7 @@ async function renderTable(trips, props = {}) {
         onSelectTrip={noop}
         getCoordinatorParticipant={() =>
           Promise.resolve({
-            documents: [
+            participants: [
               { ParticipantUserId: 'user-1', ParticipantUserName: 'Test User' },
             ],
           })

@@ -19,7 +19,7 @@ describe('ParticipantList', () => {
         tripId="trip-1"
         listTripParticipants={() =>
           Promise.resolve({
-            documents: [
+            participants: [
               { $id: 'p1', ParticipantUserName: 'Alice', role: 'coordinator' },
               { $id: 'p2', ParticipantUserName: 'Bob', role: 'participant' },
             ],
@@ -42,7 +42,7 @@ describe('ParticipantList', () => {
     render(
       <ParticipantList
         tripId="trip-1"
-        listTripParticipants={() => Promise.resolve({ documents: [] })}
+        listTripParticipants={() => Promise.resolve({ participants: [] })}
       />
     )
     await waitFor(() =>

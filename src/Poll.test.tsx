@@ -23,13 +23,15 @@ function renderPoll(props = {}) {
   const defaults = {
     user,
     tripId: 'trip-1',
-    listPolls: mock(() => Promise.resolve({ documents: [] })),
-    listProposals: mock(() => Promise.resolve({ documents: sampleProposals })),
-    listVotes: mock(() => Promise.resolve({ documents: [] })),
+    listPolls: mock(() => Promise.resolve({ polls: [] })),
+    listProposals: mock(() => Promise.resolve({ proposals: sampleProposals })),
+    listVotes: mock(() => Promise.resolve({ votes: [] })),
     createPoll: mock(() => Promise.resolve(openPoll)),
     closePoll: mock(() => Promise.resolve(closedPoll)),
     upsertVote: mock(() => Promise.resolve({ $id: 'v-new' })),
-    getCoordinatorParticipant: mock(() => Promise.resolve({ documents: [] })),
+    getCoordinatorParticipant: mock(() =>
+      Promise.resolve({ participants: [] })
+    ),
   }
   return render(<Poll {...defaults} {...props} />)
 }
@@ -41,7 +43,7 @@ describe('Poll', () => {
         tripId: 'trip-1',
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            documents: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
+            participants: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
           })
         ),
       })
@@ -58,7 +60,7 @@ describe('Poll', () => {
       renderPoll({
         tripId: 'trip-1',
         getCoordinatorParticipant: mock(() =>
-          Promise.resolve({ documents: [] })
+          Promise.resolve({ participants: [] })
         ),
       })
     })
@@ -73,7 +75,7 @@ describe('Poll', () => {
     await act(async () => {
       renderPoll({
         tripId: 'trip-1',
-        listPolls: mock(() => Promise.resolve({ documents: [openPoll] })),
+        listPolls: mock(() => Promise.resolve({ polls: [openPoll] })),
       })
     })
     await waitFor(() => {
@@ -85,10 +87,10 @@ describe('Poll', () => {
     await act(async () => {
       renderPoll({
         tripId: 'trip-1',
-        listPolls: mock(() => Promise.resolve({ documents: [openPoll] })),
+        listPolls: mock(() => Promise.resolve({ polls: [openPoll] })),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            documents: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
+            participants: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
           })
         ),
       })
@@ -104,9 +106,9 @@ describe('Poll', () => {
     await act(async () => {
       renderPoll({
         tripId: 'trip-1',
-        listPolls: mock(() => Promise.resolve({ documents: [openPoll] })),
+        listPolls: mock(() => Promise.resolve({ polls: [openPoll] })),
         getCoordinatorParticipant: mock(() =>
-          Promise.resolve({ documents: [] })
+          Promise.resolve({ participants: [] })
         ),
       })
     })
@@ -121,7 +123,7 @@ describe('Poll', () => {
     await act(async () => {
       renderPoll({
         tripId: 'trip-1',
-        listPolls: mock(() => Promise.resolve({ documents: [closedPoll] })),
+        listPolls: mock(() => Promise.resolve({ polls: [closedPoll] })),
       })
     })
     await waitFor(() => {

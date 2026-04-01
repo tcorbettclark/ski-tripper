@@ -2,7 +2,7 @@
 type: debt
 priority: medium
 created: 2026-04-01T00:00:00Z
-status: researched
+status: implemented
 tags: [refactoring, naming, backend, frontend]
 keywords: [documents, TripRow, ProposalRow, PollRow, VoteRow, return types]
 patterns: [return type signatures, destructuring, property access]

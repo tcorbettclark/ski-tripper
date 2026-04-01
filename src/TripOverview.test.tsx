@@ -24,7 +24,7 @@ async function renderOverview(props = {}) {
       user={currentUser}
       getCoordinatorParticipant={() =>
         Promise.resolve({
-          documents: [
+          participants: [
             {
               ParticipantUserId: 'user-1',
               role: 'coordinator',
@@ -33,7 +33,7 @@ async function renderOverview(props = {}) {
           ],
         })
       }
-      listTripParticipants={() => Promise.resolve({ documents: [] })}
+      listTripParticipants={() => Promise.resolve({ participants: [] })}
       updateTrip={() => Promise.resolve(updatedTrip)}
       deleteTrip={() => Promise.resolve()}
       leaveTrip={() => Promise.resolve()}

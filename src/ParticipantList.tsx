@@ -11,7 +11,7 @@ interface Participant {
 interface ParticipantListProps {
   tripId: string
   listTripParticipants?: (tripId: string) => Promise<{
-    documents: Array<{
+    participants: Array<{
       $id: string
       ParticipantUserName: string
       role: 'coordinator' | 'participant'
@@ -31,9 +31,9 @@ export default function ParticipantList({
     if (!tripId) return
     async function load() {
       try {
-        const { documents } = await listTripParticipants(tripId)
+        const { participants: ps } = await listTripParticipants(tripId)
         setParticipants(
-          documents.map((p) => ({
+          ps.map((p) => ({
             id: p.$id,
             name: p.ParticipantUserName,
             role: p.role,

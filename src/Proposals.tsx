@@ -31,7 +31,7 @@ interface ProposalsProps {
   listProposals?: (
     tripId: string,
     userId: string
-  ) => Promise<{ documents: Proposal[] }>
+  ) => Promise<{ proposals: Proposal[] }>
   createProposal?: (
     tripId: string,
     userId: string,
@@ -59,7 +59,7 @@ interface ProposalsProps {
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ documents: Array<{ ParticipantUserId: string }> }>
+  ) => Promise<{ participants: Array<{ ParticipantUserId: string }> }>
 }
 
 export default function Proposals({
@@ -106,10 +106,10 @@ export default function Proposals({
     ])
       .then(([proposalsResult, coordResult]) => {
         if (!mountedRef.current) return
-        setProposals(proposalsResult.documents)
+        setProposals(proposalsResult.proposals)
         setIsCoordinator(
-          coordResult.documents.length > 0 &&
-            coordResult.documents[0].ParticipantUserId === user.$id
+          coordResult.participants.length > 0 &&
+            coordResult.participants[0].ParticipantUserId === user.$id
         )
       })
       .catch((err) => {

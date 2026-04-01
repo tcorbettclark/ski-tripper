@@ -65,8 +65,8 @@ describe('listTrips', () => {
       )
     const db = createMockDb({ listRows })
     const result = await listTrips('user-1', db)
-    expect(result.documents).toHaveLength(1)
-    expect(result.documents[0].description).toBe('Trip 1')
+    expect(result.trips).toHaveLength(1)
+    expect(result.trips[0].description).toBe('Trip 1')
     expect(result.coordinatorUserIds).toEqual({ 'trip-1': 'user-1' })
   })
 
@@ -75,7 +75,7 @@ describe('listTrips', () => {
       listRows: mock(() => Promise.resolve({ rows: [] })),
     })
     const result = await listTrips('user-1', db)
-    expect(result.documents).toHaveLength(0)
+    expect(result.trips).toHaveLength(0)
     expect(result.coordinatorUserIds).toEqual({})
   })
 
@@ -120,13 +120,13 @@ describe('getTripByCode', () => {
     })
     const result = await getTripByCode('abc-def-ghi', db)
     expect(db.listRows).toHaveBeenCalledTimes(1)
-    expect(result.documents[0].code).toBe('abc-def-ghi')
+    expect(result.trips[0].code).toBe('abc-def-ghi')
   })
 
   it('returns empty documents when code is not found', async () => {
     const db = createMockDb()
     const result = await getTripByCode('unknown-code', db)
-    expect(result.documents).toHaveLength(0)
+    expect(result.trips).toHaveLength(0)
   })
 
   it('propagates errors', async () => {
@@ -334,7 +334,7 @@ describe('listParticipatedTrips', () => {
   it('returns an empty documents array when the user has no participations', async () => {
     const db = createMockDb()
     const result = await listParticipatedTrips('user-1', db)
-    expect(result).toEqual({ documents: [] })
+    expect(result).toEqual({ trips: [] })
     expect(db.listRows).toHaveBeenCalledTimes(1)
   })
 
@@ -354,8 +354,8 @@ describe('listParticipatedTrips', () => {
     const db = createMockDb({ listRows })
     const result = await listParticipatedTrips('user-1', db)
     expect(db.listRows).toHaveBeenCalledTimes(2)
-    expect(result.documents).toHaveLength(1)
-    expect(result.documents[0].$id).toBe('trip-1')
+    expect(result.trips).toHaveLength(1)
+    expect(result.trips[0].$id).toBe('trip-1')
   })
 
   it('propagates errors from the first query', async () => {
@@ -439,8 +439,8 @@ describe('listProposals', () => {
       )
     const db = createMockDb({ listRows })
     const result = await listProposals('trip-1', 'user-1', db)
-    expect(result.documents).toHaveLength(1)
-    expect(result.documents[0].$id).toBe('prop-1')
+    expect(result.proposals).toHaveLength(1)
+    expect(result.proposals[0].$id).toBe('prop-1')
   })
 
   it('throws when user is not a participant', async () => {
@@ -950,8 +950,8 @@ describe('listPolls', () => {
       )
     const db = createMockDb({ listRows })
     const result = await listPolls('trip-1', 'user-1', db)
-    expect(result.documents).toHaveLength(1)
-    expect(result.documents[0].$id).toBe('poll-1')
+    expect(result.polls).toHaveLength(1)
+    expect(result.polls[0].$id).toBe('poll-1')
   })
 
   it('throws when user is not a participant', async () => {
@@ -1080,8 +1080,8 @@ describe('listVotes', () => {
       )
     const db = createMockDb({ listRows })
     const result = await listVotes('poll-1', 'trip-1', 'user-1', db)
-    expect(result.documents).toHaveLength(1)
-    expect(result.documents[0].$id).toBe('v-1')
+    expect(result.votes).toHaveLength(1)
+    expect(result.votes[0].$id).toBe('v-1')
   })
 
   it('throws when user is not a participant', async () => {

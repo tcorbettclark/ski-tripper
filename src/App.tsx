@@ -20,7 +20,7 @@ import Trips from './Trips'
 import { colors, fonts } from './theme'
 
 interface ListTripsResult {
-  documents: Array<{ $id: string; description?: string; code?: string }>
+  trips: Array<{ $id: string; description?: string; code?: string }>
   coordinatorUserIds: Record<string, string>
 }
 
@@ -29,10 +29,10 @@ interface AppProps {
   deleteSession?: () => Promise<unknown>
   listTrips?: (userId: string) => Promise<ListTripsResult>
   listParticipatedTrips?: (userId: string) => Promise<{
-    documents: Array<{ $id: string; description?: string; code?: string }>
+    trips: Array<{ $id: string; description?: string; code?: string }>
   }>
   listTripParticipants?: (tripId: string) => Promise<{
-    documents: Array<{
+    participants: Array<{
       $id: string
       ParticipantUserName: string
       role: 'coordinator' | 'participant'
@@ -46,7 +46,7 @@ interface AppProps {
   deleteTrip?: (tripId: string, userId: string) => Promise<void>
   leaveTrip?: (userId: string, tripId: string) => Promise<void>
   getCoordinatorParticipant?: (tripId: string) => Promise<{
-    documents: Array<{
+    participants: Array<{
       ParticipantUserId: string
       ParticipantUserName: string
     }>
@@ -98,11 +98,11 @@ export default function App({
     Promise.all([listTrips(user.$id), listParticipatedTrips(user.$id)])
       .then(([ownRes, participatedRes]) => {
         const coordinatedIds = new Set(
-          ownRes.documents.map((t: { $id: string }) => t.$id)
+          ownRes.trips.map((t: { $id: string }) => t.$id)
         )
         const allTrips = [
-          ...ownRes.documents,
-          ...participatedRes.documents.filter(
+          ...ownRes.trips,
+          ...participatedRes.trips.filter(
             (t: { $id: string }) => !coordinatedIds.has(t.$id)
           ),
         ]
@@ -124,11 +124,11 @@ export default function App({
     Promise.all([listTrips(user.$id), listParticipatedTrips(user.$id)])
       .then(([ownRes, participatedRes]) => {
         const coordinatedIds = new Set(
-          ownRes.documents.map((t: { $id: string }) => t.$id)
+          ownRes.trips.map((t: { $id: string }) => t.$id)
         )
         const allTrips = [
-          ...ownRes.documents,
-          ...participatedRes.documents.filter(
+          ...ownRes.trips,
+          ...participatedRes.trips.filter(
             (t: { $id: string }) => !coordinatedIds.has(t.$id)
           ),
         ]

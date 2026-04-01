@@ -24,13 +24,13 @@ function renderApp(props = {}) {
     <App
       accountGet={() => Promise.resolve(defaultUser)}
       deleteSession={() => Promise.resolve()}
-      listTrips={() => Promise.resolve({ documents: [] })}
-      listParticipatedTrips={() => Promise.resolve({ documents: [] })}
-      listTripParticipants={() => Promise.resolve({ documents: [] })}
+      listTrips={() => Promise.resolve({ trips: [] })}
+      listParticipatedTrips={() => Promise.resolve({ trips: [] })}
+      listTripParticipants={() => Promise.resolve({ participants: [] })}
       updateTrip={() => Promise.resolve(updatedTrip)}
       deleteTrip={() => Promise.resolve()}
       leaveTrip={() => Promise.resolve()}
-      getCoordinatorParticipant={() => Promise.resolve({ documents: [] })}
+      getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       {...props}
     />
   )
@@ -41,13 +41,13 @@ function renderAppWithTrip(props = {}) {
     <App
       accountGet={() => Promise.resolve(defaultUser)}
       deleteSession={() => Promise.resolve()}
-      listTrips={() => Promise.resolve({ documents: [sampleTrip] })}
-      listParticipatedTrips={() => Promise.resolve({ documents: [] })}
-      listTripParticipants={() => Promise.resolve({ documents: [] })}
+      listTrips={() => Promise.resolve({ trips: [sampleTrip] })}
+      listParticipatedTrips={() => Promise.resolve({ trips: [] })}
+      listTripParticipants={() => Promise.resolve({ participants: [] })}
       updateTrip={() => Promise.resolve(updatedTrip)}
       deleteTrip={() => Promise.resolve()}
       leaveTrip={() => Promise.resolve()}
-      getCoordinatorParticipant={() => Promise.resolve({ documents: [] })}
+      getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       {...props}
     />
   )
@@ -179,7 +179,7 @@ describe('App', () => {
     const ue = userEvent.setup()
     const getCoordinatorParticipant = () =>
       Promise.resolve({
-        documents: [
+        participants: [
           {
             ParticipantUserId: 'user-1',
             role: 'coordinator',
@@ -187,15 +187,15 @@ describe('App', () => {
           },
         ],
       })
-    const listParticipatedTrips = () => Promise.resolve({ documents: [] })
+    const listParticipatedTrips = () => Promise.resolve({ trips: [] })
 
     render(
       <App
         accountGet={() => Promise.resolve(defaultUser)}
         deleteSession={() => Promise.resolve()}
-        listTrips={() => Promise.resolve({ documents: [sampleTrip] })}
+        listTrips={() => Promise.resolve({ trips: [sampleTrip] })}
         listParticipatedTrips={listParticipatedTrips}
-        listTripParticipants={() => Promise.resolve({ documents: [] })}
+        listTripParticipants={() => Promise.resolve({ participants: [] })}
         updateTrip={() => Promise.resolve(updatedTrip)}
         deleteTrip={() => Promise.resolve()}
         leaveTrip={() => Promise.resolve()}

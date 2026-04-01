@@ -22,7 +22,7 @@ async function renderRow(trip, props = {}) {
             onSelectTrip={props.onSelectTrip || noop}
             getCoordinatorParticipant={() =>
               Promise.resolve({
-                documents: [
+                participants: [
                   {
                     ParticipantUserId: props.coordinatorUserId || 'user-1',
                     ParticipantUserName: 'Test User',

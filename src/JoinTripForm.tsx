@@ -12,7 +12,7 @@ interface JoinTripFormProps {
   user: Models.User
   onJoined: (trip: unknown) => void
   onDismiss: () => void
-  getTripByCode?: (code: string) => Promise<{ documents: unknown[] }>
+  getTripByCode?: (code: string) => Promise<{ trips: unknown[] }>
   joinTrip?: (
     userId: string,
     userName: string,
@@ -39,9 +39,9 @@ export default function JoinTripForm({
     setSaving(true)
     try {
       const res = await getTripByCode(code.trim().toLowerCase())
-      if (res.documents.length === 0)
+      if (res.trips.length === 0)
         throw new Error('No trip found with that code.')
-      const trip = res.documents[0]
+      const trip = res.trips[0]
       const userAccount = await accountGet()
       await joinTrip(user.$id, userAccount.name, (trip as { $id: string }).$id)
       onJoined(trip)

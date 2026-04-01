@@ -21,14 +21,14 @@ interface TripOverviewProps {
   trip: Trip
   user: Models.User
   listTripParticipants?: (tripId: string) => Promise<{
-    documents: Array<{
+    participants: Array<{
       $id: string
       ParticipantUserName: string
       role: 'coordinator' | 'participant'
     }>
   }>
   getCoordinatorParticipant?: (tripId: string) => Promise<{
-    documents: Array<{
+    participants: Array<{
       ParticipantUserId: string
       ParticipantUserName: string
     }>
@@ -76,12 +76,12 @@ export default function TripOverview({
   useEffect(() => {
     if (!trip) return
     getCoordinatorParticipant(trip.$id)
-      .then(({ documents }) => {
-        if (!mountedRef.current || documents.length === 0) return
-        const cid = documents[0].ParticipantUserId
+      .then(({ participants }) => {
+        if (!mountedRef.current || participants.length === 0) return
+        const cid = participants[0].ParticipantUserId
         if (mountedRef.current) {
           setIsCoordinator(cid === user.$id)
-          setCoordinator({ name: documents[0].ParticipantUserName })
+          setCoordinator({ name: participants[0].ParticipantUserName })
         }
       })
       .catch((err) => console.error('Failed to load coordinator:', err))

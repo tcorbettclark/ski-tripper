@@ -13,7 +13,7 @@ interface TripTableProps {
   emptyMessage?: string
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ documents: Array<{ ParticipantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ ParticipantUserName: string }> }>
 }
 
 export default function TripTable({

@@ -18,7 +18,7 @@ function renderForm(props = {}) {
       user={testUser}
       onJoined={noop}
       onDismiss={noop}
-      getTripByCode={() => Promise.resolve({ documents: [] })}
+      getTripByCode={() => Promise.resolve({ trips: [] })}
       joinTrip={() => Promise.resolve()}
       accountGet={() => Promise.resolve(testUser)}
       {...props}
@@ -42,7 +42,7 @@ describe('JoinTripForm', () => {
   })
 
   it('normalises the code to trimmed lowercase before looking it up', async () => {
-    const mockGet = mock(() => Promise.resolve({ documents: [otherTrip] }))
+    const mockGet = mock(() => Promise.resolve({ trips: [otherTrip] }))
     const user = userEvent.setup()
     renderForm({ getTripByCode: mockGet })
 
@@ -58,7 +58,7 @@ describe('JoinTripForm', () => {
     const user = userEvent.setup()
     const handleDismiss = mock(() => {})
     renderForm({
-      getTripByCode: () => Promise.resolve({ documents: [otherTrip] }),
+      getTripByCode: () => Promise.resolve({ trips: [otherTrip] }),
       onDismiss: handleDismiss,
     })
 
@@ -75,7 +75,7 @@ describe('JoinTripForm', () => {
     const handleJoined = mock(() => {})
     const user = userEvent.setup()
     renderForm({
-      getTripByCode: () => Promise.resolve({ documents: [ownTrip] }),
+      getTripByCode: () => Promise.resolve({ trips: [ownTrip] }),
       joinTrip: mockJoin,
       onJoined: handleJoined,
     })
@@ -106,7 +106,7 @@ describe('JoinTripForm', () => {
   it('shows an error when already joined', async () => {
     const user = userEvent.setup()
     renderForm({
-      getTripByCode: () => Promise.resolve({ documents: [otherTrip] }),
+      getTripByCode: () => Promise.resolve({ trips: [otherTrip] }),
       joinTrip: () =>
         Promise.reject(new Error('You have already joined this trip.')),
     })

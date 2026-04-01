@@ -100,8 +100,8 @@ Backend-first: Update backend types and implementations, verify tests pass, then
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `bun run lint` passes with no errors
-- [ ] `bun run typecheck` passes with no failures
+- [x] `bun run lint` passes with no errors
+- [x] `bun run typecheck` passes with no failures
 
 ---
 
@@ -126,7 +126,7 @@ Update all test assertions referencing `result.documents` or `{ documents: [] }`
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `bun run test src/backend.test.ts` passes with no failures
+- [x] `bun run test src/backend.test.ts` passes with no failures
 
 ---
 
@@ -181,8 +181,8 @@ Update all test assertions referencing `result.documents` or `{ documents: [] }`
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `bun run lint` passes with no errors
-- [ ] `bun run typecheck` passes with no failures
+- [x] `bun run lint` passes with no errors
+- [x] `bun run typecheck` passes with no failures
 
 ---
 
@@ -205,20 +205,20 @@ Update all mock returns and assertions in test files to use new property names:
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `bun run test` passes with no failures
+- [x] `bun run test` passes with no failures
 
 ---
 
 ## Overall Success Criteria
 
 ### Automated Verification:
-- [ ] `bun run lint` passes with no errors
-- [ ] `bun run typecheck` passes with no failures
-- [ ] `bun run test` passes with no failures
+- [x] `bun run lint` passes with no errors
+- [x] `bun run typecheck` passes with no failures
+- [x] `bun run test` passes with no failures
 
 ### Manual Verification:
-- [ ] Code is more readable with specific property names
-- [ ] No lingering `documents` references in the affected files
+- [x] Code is more readable with specific property names
+- [x] No lingering `documents` references in the affected files
 
 ---
 

@@ -36,19 +36,16 @@ interface Vote {
 interface PollProps {
   user: Models.User
   tripId: string
-  listPolls?: (
-    tripId: string,
-    userId: string
-  ) => Promise<{ documents: PollDoc[] }>
+  listPolls?: (tripId: string, userId: string) => Promise<{ polls: PollDoc[] }>
   listProposals?: (
     tripId: string,
     userId: string
-  ) => Promise<{ documents: Proposal[] }>
+  ) => Promise<{ proposals: Proposal[] }>
   listVotes?: (
     pollId: string,
     tripId: string,
     userId: string
-  ) => Promise<{ documents: Vote[] }>
+  ) => Promise<{ votes: Vote[] }>
   createPoll?: (
     tripId: string,
     userId: string,
@@ -64,7 +61,7 @@ interface PollProps {
   ) => Promise<Vote>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ documents: Array<{ ParticipantUserId: string }> }>
+  ) => Promise<{ participants: Array<{ ParticipantUserId: string }> }>
 }
 
 export default function Poll({
@@ -122,18 +119,17 @@ export default function Poll({
       .then(async ([coordResult, proposalsResult, pollsResult]) => {
         if (!mountedRef.current) return
         setIsCoordinator(
-          coordResult.documents.length > 0 &&
-            coordResult.documents[0].ParticipantUserId === user.$id
+          coordResult.participants.length > 0 &&
+            coordResult.participants[0].ParticipantUserId === user.$id
         )
-        setProposals(proposalsResult.documents)
-        const open =
-          pollsResult.documents.find((p) => p.state === 'OPEN') || null
-        const past = pollsResult.documents.filter((p) => p.state === 'CLOSED')
+        setProposals(proposalsResult.proposals)
+        const open = pollsResult.polls.find((p) => p.state === 'OPEN') || null
+        const past = pollsResult.polls.filter((p) => p.state === 'CLOSED')
         setActivePoll(open)
         setPastPolls(past)
         if (open) {
           const votesResult = await listVotes(open.$id, tripId, user.$id)
-          if (mountedRef.current) setVotes(votesResult.documents)
+          if (mountedRef.current) setVotes(votesResult.votes)
         }
       })
       .catch((err) => {
@@ -292,7 +288,7 @@ function PastPoll({
     pollId: string,
     tripId: string,
     userId: string
-  ) => Promise<{ documents: Vote[] }>
+  ) => Promise<{ votes: Vote[] }>
 }) {
   const [expanded, setExpanded] = useState(false)
   const [votes, setVotes] = useState<Vote[]>([])
@@ -303,7 +299,7 @@ function PastPoll({
       setLoading(true)
       try {
         const result = await listVotes(poll.$id, tripId, userId)
-        setVotes(result.documents)
+        setVotes(result.votes)
       } finally {
         setLoading(false)
       }

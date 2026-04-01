@@ -26,7 +26,7 @@ interface TripsProps {
     userName: string,
     data: { description: string }
   ) => Promise<unknown>
-  getTripByCode?: (code: string) => Promise<{ documents: Trip[] }>
+  getTripByCode?: (code: string) => Promise<{ trips: Trip[] }>
   joinTrip?: (
     userId: string,
     userName: string,
@@ -34,7 +34,7 @@ interface TripsProps {
   ) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ documents: Array<{ ParticipantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ ParticipantUserName: string }> }>
 }
 
 export default function Trips({

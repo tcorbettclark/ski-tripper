@@ -10,7 +10,7 @@ interface TripRowProps {
   onSelectTrip: (tripId: string) => void
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ documents: Array<{ ParticipantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ ParticipantUserName: string }> }>
 }
 
 export default function TripRow({
@@ -31,9 +31,9 @@ export default function TripRow({
 
   useEffect(() => {
     getCoordinatorParticipant(trip.$id)
-      .then(({ documents }) => {
-        if (!mountedRef.current || documents.length === 0) return
-        setCoordinator({ name: documents[0].ParticipantUserName })
+      .then(({ participants }) => {
+        if (!mountedRef.current || participants.length === 0) return
+        setCoordinator({ name: participants[0].ParticipantUserName })
       })
       .catch((err) => console.error('Failed to fetch coordinator:', err))
   }, [trip.$id, getCoordinatorParticipant])

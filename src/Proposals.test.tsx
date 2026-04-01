@@ -25,7 +25,7 @@ function renderProposals(props = {}) {
   const defaults = {
     user,
     tripId: 'trip-1',
-    listProposals: mock(() => Promise.resolve({ documents: sampleProposals })),
+    listProposals: mock(() => Promise.resolve({ proposals: sampleProposals })),
     createProposal: mock(() => Promise.resolve({ $id: 'p-new' })),
     updateProposal: mock(() => Promise.resolve({ $id: 'p-1' })),
     deleteProposal: mock(() => Promise.resolve()),
@@ -35,7 +35,9 @@ function renderProposals(props = {}) {
     rejectProposal: mock(() =>
       Promise.resolve({ $id: 'p-1', state: 'REJECTED' })
     ),
-    getCoordinatorParticipant: mock(() => Promise.resolve({ documents: [] })),
+    getCoordinatorParticipant: mock(() =>
+      Promise.resolve({ participants: [] })
+    ),
   }
   return render(<Proposals {...defaults} {...props} />)
 }
@@ -43,7 +45,7 @@ function renderProposals(props = {}) {
 describe('Proposals', () => {
   it('shows proposals when tripId is provided', async () => {
     const listProposals = mock(() =>
-      Promise.resolve({ documents: sampleProposals })
+      Promise.resolve({ proposals: sampleProposals })
     )
     await act(async () => {
       renderProposals({ tripId: 'trip-1', listProposals })
@@ -58,7 +60,7 @@ describe('Proposals', () => {
     await act(async () => {
       renderProposals({
         tripId: 'trip-1',
-        listProposals: mock(() => Promise.resolve({ documents: [] })),
+        listProposals: mock(() => Promise.resolve({ proposals: [] })),
       })
     })
     await waitFor(() => {
@@ -100,7 +102,7 @@ describe('Proposals', () => {
 
   it('fetches new proposals when tripId changes', async () => {
     const listProposals = mock(() =>
-      Promise.resolve({ documents: sampleProposals })
+      Promise.resolve({ proposals: sampleProposals })
     )
     await act(async () => {
       renderProposals({ tripId: 'trip-1', listProposals })
@@ -114,7 +116,7 @@ describe('Proposals', () => {
       { ...sampleProposals[0], $id: 'p-2', resortName: 'Whistler' },
     ]
     listProposals.mockImplementation(() =>
-      Promise.resolve({ documents: newProposals })
+      Promise.resolve({ proposals: newProposals })
     )
 
     const { rerender } = await act(async () => {
@@ -136,7 +138,7 @@ describe('Proposals', () => {
             Promise.resolve({ $id: 'p-1', state: 'REJECTED' })
           )}
           getCoordinatorParticipant={mock(() =>
-            Promise.resolve({ documents: [] })
+            Promise.resolve({ participants: [] })
           )}
         />
       )
@@ -152,11 +154,11 @@ describe('Proposals', () => {
       renderProposals({
         tripId: 'trip-1',
         listProposals: mock(() =>
-          Promise.resolve({ documents: [submittedProposal] })
+          Promise.resolve({ proposals: [submittedProposal] })
         ),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            documents: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
+            participants: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
           })
         ),
       })
@@ -174,11 +176,11 @@ describe('Proposals', () => {
       renderProposals({
         tripId: 'trip-1',
         listProposals: mock(() =>
-          Promise.resolve({ documents: [submittedProposal] })
+          Promise.resolve({ proposals: [submittedProposal] })
         ),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            documents: [{ $id: 'part-1', ParticipantUserId: 'other-user' }],
+            participants: [{ $id: 'part-1', ParticipantUserId: 'other-user' }],
           })
         ),
       })
