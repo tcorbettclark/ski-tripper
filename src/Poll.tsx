@@ -12,31 +12,12 @@ import {
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
 import { borders, colors, fonts } from './theme'
+import type { Poll as PollType, Proposal, Vote } from './types.d.ts'
 
-interface Proposal {
-  $id: string
-  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
-  resortName?: string
-}
-
-interface PollDoc {
-  $id: string
-  tripId: string
-  state: 'OPEN' | 'CLOSED'
-  proposalIds: string[]
-}
-
-interface Vote {
-  $id: string
-  VoterUserId: string
-  proposalIds: string[]
-  tokenCounts: number[]
-}
-
-interface PollProps {
+interface PollComponentProps {
   user: Models.User
   tripId: string
-  listPolls?: (tripId: string, userId: string) => Promise<{ polls: PollDoc[] }>
+  listPolls?: (tripId: string, userId: string) => Promise<{ polls: PollType[] }>
   listProposals?: (
     tripId: string,
     userId: string
@@ -50,8 +31,8 @@ interface PollProps {
     tripId: string,
     userId: string,
     userName: string
-  ) => Promise<PollDoc>
-  closePoll?: (pollId: string, userId: string) => Promise<PollDoc>
+  ) => Promise<PollType>
+  closePoll?: (pollId: string, userId: string) => Promise<PollType>
   upsertVote?: (
     pollId: string,
     tripId: string,
@@ -61,7 +42,7 @@ interface PollProps {
   ) => Promise<Vote>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ ParticipantUserId: string }> }>
+  ) => Promise<{ participants: Array<{ participantUserId: string }> }>
 }
 
 export default function Poll({
@@ -74,10 +55,10 @@ export default function Poll({
   closePoll = _closePoll,
   upsertVote = _upsertVote,
   getCoordinatorParticipant = _getCoordinatorParticipant,
-}: PollProps) {
+}: PollComponentProps) {
   const [loading, setLoading] = useState(true)
-  const [activePoll, setActivePoll] = useState<PollDoc | null>(null)
-  const [pastPolls, setPastPolls] = useState<PollDoc[]>([])
+  const [activePoll, setActivePoll] = useState<PollType | null>(null)
+  const [pastPolls, setPastPolls] = useState<PollType[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [votes, setVotes] = useState<Vote[]>([])
   const [isCoordinator, setIsCoordinator] = useState(false)
@@ -120,7 +101,7 @@ export default function Poll({
         if (!mountedRef.current) return
         setIsCoordinator(
           coordResult.participants.length > 0 &&
-            coordResult.participants[0].ParticipantUserId === user.$id
+            coordResult.participants[0].participantUserId === user.$id
         )
         setProposals(proposalsResult.proposals)
         const open = pollsResult.polls.find((p) => p.state === 'OPEN') || null
@@ -186,7 +167,7 @@ export default function Poll({
   }
 
   const hasSubmittedProposals = proposals.some((p) => p.state === 'SUBMITTED')
-  const myVote = votes.find((v) => v.VoterUserId === user.$id) || null
+  const myVote = votes.find((v) => v.voterUserId === user.$id) || null
 
   if (loading) return <p style={styles.message}>Loading…</p>
 
@@ -280,7 +261,7 @@ function PastPoll({
   userId,
   listVotes,
 }: {
-  poll: PollDoc
+  poll: PollType
   proposals: Proposal[]
   tripId: string
   userId: string

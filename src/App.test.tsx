@@ -181,9 +181,9 @@ describe('App', () => {
       Promise.resolve({
         participants: [
           {
-            ParticipantUserId: 'user-1',
+            participantUserId: 'user-1',
             role: 'coordinator',
-            ParticipantUserName: 'Test User',
+            participantUserName: 'Test User',
           },
         ],
       })

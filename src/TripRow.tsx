@@ -1,16 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
 import { colors, fonts } from './theme'
+import type { Trip } from './types.d.ts'
 
 interface TripRowProps {
-  trip: {
-    $id: string
-    description?: string
-  }
+  trip: Trip
   onSelectTrip: (tripId: string) => void
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ ParticipantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ participantUserName: string }> }>
 }
 
 export default function TripRow({
@@ -33,7 +31,7 @@ export default function TripRow({
     getCoordinatorParticipant(trip.$id)
       .then(({ participants }) => {
         if (!mountedRef.current || participants.length === 0) return
-        setCoordinator({ name: participants[0].ParticipantUserName })
+        setCoordinator({ name: participants[0].participantUserName })
       })
       .catch((err) => console.error('Failed to fetch coordinator:', err))
   }, [trip.$id, getCoordinatorParticipant])

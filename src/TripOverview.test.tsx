@@ -26,9 +26,9 @@ async function renderOverview(props = {}) {
         Promise.resolve({
           participants: [
             {
-              ParticipantUserId: 'user-1',
+              participantUserId: 'user-1',
               role: 'coordinator',
-              ParticipantUserName: 'Alice',
+              participantUserName: 'Alice',
             },
           ],
         })

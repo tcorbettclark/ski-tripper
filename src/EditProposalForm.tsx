@@ -5,19 +5,7 @@ import {
 } from './backend'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
-
-interface Proposal {
-  $id: string
-  resortName?: string
-  country?: string
-  altitudeRange?: string
-  nearestAirport?: string
-  transferTime?: string
-  accommodationName?: string
-  accommodationUrl?: string
-  approximateCost?: string
-  description?: string
-}
+import type { Proposal } from './types.d.ts'
 
 interface EditProposalFormProps {
   proposal: Proposal

@@ -5,9 +5,9 @@ import ProposalViewer from './ProposalViewer'
 
 const p1 = {
   $id: 'p-1',
-  ProposerUserId: 'user-1',
-  ProposerUserName: 'Alice',
-  state: 'SUBMITTED',
+  proposerUserId: 'user-1',
+  proposerUserName: 'Alice',
+  state: 'SUBMITTED' as const,
   resortName: "Val d'Isère",
   country: 'France',
   altitudeRange: '1850m - 3456m',
@@ -21,9 +21,9 @@ const p1 = {
 
 const p2 = {
   $id: 'p-2',
-  ProposerUserId: 'user-2',
-  ProposerUserName: 'Bob',
-  state: 'DRAFT',
+  proposerUserId: 'user-2',
+  proposerUserName: 'Bob',
+  state: 'DRAFT' as const,
   resortName: 'Chamonix',
   country: 'France',
   altitudeRange: '1035m - 3842m',
@@ -37,9 +37,9 @@ const p2 = {
 
 const p3 = {
   $id: 'p-3',
-  ProposerUserId: 'user-3',
-  ProposerUserName: 'Carol',
-  state: 'DRAFT',
+  proposerUserId: 'user-3',
+  proposerUserName: 'Carol',
+  state: 'DRAFT' as const,
   resortName: 'Verbier',
   country: 'Switzerland',
   altitudeRange: '1500m - 3300m',

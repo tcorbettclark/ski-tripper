@@ -7,15 +7,7 @@ import {
 } from './backend'
 import EditProposalForm from './EditProposalForm'
 import { borders, colors, fonts } from './theme'
-
-interface Proposal {
-  $id: string
-  resortName?: string
-  country?: string
-  ProposerUserId: string
-  ProposerUserName?: string
-  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
-}
+import type { Proposal } from './types.d.ts'
 
 interface ProposalsRowProps {
   proposal: Proposal
@@ -56,7 +48,7 @@ export default function ProposalsRow({
   const [rejecting, setRejecting] = useState(false)
   const [rejectError, setRejectError] = useState('')
 
-  const isOwner = userId === proposal.ProposerUserId
+  const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'
   const isRejected = proposal.state === 'REJECTED'
   const canAct = isOwner && isDraft
@@ -119,7 +111,7 @@ export default function ProposalsRow({
         {proposal.country || '—'}
       </td>
       <td style={{ ...styles.td, color: colors.textSecondary }}>
-        {proposal.ProposerUserName || '—'}
+        {proposal.proposerUserName || '—'}
       </td>
       <td style={styles.td}>
         <span

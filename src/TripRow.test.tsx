@@ -24,8 +24,8 @@ async function renderRow(trip, props = {}) {
               Promise.resolve({
                 participants: [
                   {
-                    ParticipantUserId: props.coordinatorUserId || 'user-1',
-                    ParticipantUserName: 'Test User',
+                    participantUserId: props.coordinatorUserId || 'user-1',
+                    participantUserName: 'Test User',
                   },
                 ],
               })

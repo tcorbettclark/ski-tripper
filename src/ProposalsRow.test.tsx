@@ -5,9 +5,9 @@ import ProposalsRow from './ProposalsRow'
 
 const sampleProposal = {
   $id: 'p-1',
-  ProposerUserId: 'user-1',
-  ProposerUserName: 'Alice',
-  state: 'DRAFT',
+  proposerUserId: 'user-1',
+  proposerUserName: 'Alice',
+  state: 'DRAFT' as const,
   resortName: "Val d'Isère",
   country: 'France',
   altitudeRange: '1850m - 3456m',

@@ -8,18 +8,7 @@ import {
 import ProposalsRow from './ProposalsRow'
 import ProposalViewer from './ProposalViewer'
 import { borders, colors, fonts } from './theme'
-
-interface Proposal {
-  $id: string
-  tripId?: string
-  resortName?: string
-  country?: string
-  ProposerUserId: string
-  ProposerUserName?: string
-  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
-  title?: string
-  description?: string
-}
+import type { Proposal } from './types.d.ts'
 
 interface ProposalsTableProps {
   proposals: Proposal[]

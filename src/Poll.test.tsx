@@ -43,7 +43,7 @@ describe('Poll', () => {
         tripId: 'trip-1',
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            participants: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
+            participants: [{ $id: 'part-1', participantUserId: 'user-1' }],
           })
         ),
       })
@@ -90,7 +90,7 @@ describe('Poll', () => {
         listPolls: mock(() => Promise.resolve({ polls: [openPoll] })),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            participants: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
+            participants: [{ $id: 'part-1', participantUserId: 'user-1' }],
           })
         ),
       })

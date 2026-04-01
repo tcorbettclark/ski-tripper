@@ -25,7 +25,7 @@ function toRow<T>(row: Models.Row): T {
 }
 
 function toRows<T>(rows: Models.Row[]): T[] {
-  return rows as T[]
+  return rows.map((row) => toRow<T>(row))
 }
 
 async function fetchRows<T>(
@@ -94,7 +94,7 @@ export async function listTripParticipants(
 }
 
 export async function listTrips(
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<{
   trips: Trip[]
@@ -105,7 +105,7 @@ export async function listTrips(
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('participantUserId', ParticipantUserId),
+        Query.equal('participantUserId', participantUserId),
         Query.equal('role', 'coordinator'),
         Query.orderDesc('$createdAt'),
         Query.limit(50),
@@ -118,7 +118,7 @@ export async function listTrips(
   }
   const tripIds = coordinatorParticipants.map((p) => p.tripId)
   const coordinatorUserIds = Object.fromEntries(
-    coordinatorParticipants.map((p) => [p.tripId, p.ParticipantUserId])
+    coordinatorParticipants.map((p) => [p.tripId, p.participantUserId])
   )
   const trips = await fetchRows<Trip>(
     db.listRows({
@@ -175,8 +175,8 @@ async function findUniqueCode(db: TablesDB = tablesDb): Promise<string> {
 }
 
 export async function createTrip(
-  ParticipantUserId: string,
-  ParticipantUserName: string,
+  participantUserId: string,
+  participantUserName: string,
   data: Partial<Trip>,
   db: TablesDB = tablesDb
 ): Promise<Trip> {
@@ -192,7 +192,7 @@ export async function createTrip(
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
-        Permission.write(Role.user(ParticipantUserId)),
+        Permission.write(Role.user(participantUserId)),
       ],
     })
   )
@@ -201,14 +201,14 @@ export async function createTrip(
     tableId: PARTICIPANTS_TABLE_ID,
     rowId: ID.unique(),
     data: {
-      ParticipantUserId,
-      ParticipantUserName,
+      participantUserId,
+      participantUserName,
       tripId: trip.$id,
       role: 'coordinator',
     } as Record<string, unknown>,
     permissions: [
-      Permission.read(Role.user(ParticipantUserId)),
-      Permission.write(Role.user(ParticipantUserId)),
+      Permission.read(Role.user(participantUserId)),
+      Permission.write(Role.user(participantUserId)),
     ],
   })
   return trip
@@ -217,13 +217,13 @@ export async function createTrip(
 export async function updateTrip(
   tripId: string,
   data: Partial<Trip>,
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Trip> {
   const { participants } = await getCoordinatorParticipant(tripId, db)
   if (
     participants.length === 0 ||
-    participants[0].ParticipantUserId !== ParticipantUserId
+    participants[0].participantUserId !== participantUserId
   ) {
     throw new Error('Only the coordinator can edit this trip.')
   }
@@ -239,7 +239,7 @@ export async function updateTrip(
 
 export async function deleteTrip(
   tripId: string,
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<void> {
   const { participants: coordinatorDocs } = await getCoordinatorParticipant(
@@ -248,7 +248,7 @@ export async function deleteTrip(
   )
   if (
     coordinatorDocs.length === 0 ||
-    coordinatorDocs[0].ParticipantUserId !== ParticipantUserId
+    coordinatorDocs[0].participantUserId !== participantUserId
   ) {
     throw new Error('Only the coordinator can delete this trip.')
   }
@@ -276,7 +276,7 @@ export async function deleteTrip(
 }
 
 export async function listParticipatedTrips(
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<{ trips: Trip[] }> {
   const participants = await fetchRows<Participant>(
@@ -284,7 +284,7 @@ export async function listParticipatedTrips(
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('participantUserId', ParticipantUserId),
+        Query.equal('participantUserId', participantUserId),
         Query.orderDesc('$createdAt'),
         Query.limit(50),
       ],
@@ -303,8 +303,8 @@ export async function listParticipatedTrips(
 }
 
 export async function joinTrip(
-  ParticipantUserId: string,
-  ParticipantUserName: string,
+  participantUserId: string,
+  participantUserName: string,
   tripId: string,
   db: TablesDB = tablesDb
 ): Promise<Participant> {
@@ -322,7 +322,7 @@ export async function joinTrip(
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('participantUserId', ParticipantUserId),
+        Query.equal('participantUserId', participantUserId),
         Query.equal('tripId', tripId),
         Query.limit(1),
       ],
@@ -336,21 +336,21 @@ export async function joinTrip(
       tableId: PARTICIPANTS_TABLE_ID,
       rowId: ID.unique(),
       data: {
-        ParticipantUserId,
-        ParticipantUserName,
+        participantUserId,
+        participantUserName,
         tripId,
         role: 'participant',
       } as Record<string, unknown>,
       permissions: [
-        Permission.read(Role.user(ParticipantUserId)),
-        Permission.write(Role.user(ParticipantUserId)),
+        Permission.read(Role.user(participantUserId)),
+        Permission.write(Role.user(participantUserId)),
       ],
     })
   )
 }
 
 export async function leaveTrip(
-  ParticipantUserId: string,
+  participantUserId: string,
   tripId: string,
   db: TablesDB = tablesDb
 ): Promise<void> {
@@ -359,7 +359,7 @@ export async function leaveTrip(
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('participantUserId', ParticipantUserId),
+        Query.equal('participantUserId', participantUserId),
         Query.equal('tripId', tripId),
         Query.limit(1),
       ],
@@ -376,7 +376,7 @@ export async function leaveTrip(
 
 async function _verifyParticipant(
   tripId: string,
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB
 ): Promise<void> {
   const participants = await fetchRows<Participant>(
@@ -385,7 +385,7 @@ async function _verifyParticipant(
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
         Query.equal('tripId', tripId),
-        Query.equal('participantUserId', ParticipantUserId),
+        Query.equal('participantUserId', participantUserId),
         Query.limit(1),
       ],
     })
@@ -396,8 +396,8 @@ async function _verifyParticipant(
 
 export async function createProposal(
   tripId: string,
-  ProposerUserId: string,
-  ProposerUserName: string,
+  proposerUserId: string,
+  proposerUserName: string,
   data: {
     title?: string
     description: string
@@ -412,7 +412,7 @@ export async function createProposal(
   },
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
-  await _verifyParticipant(tripId, ProposerUserId, db)
+  await _verifyParticipant(tripId, proposerUserId, db)
   return fetchRow<Proposal>(
     db.createRow({
       databaseId: DATABASE_ID,
@@ -420,14 +420,14 @@ export async function createProposal(
       rowId: ID.unique(),
       data: {
         tripId,
-        ProposerUserId,
-        ProposerUserName,
+        proposerUserId,
+        proposerUserName,
         state: 'DRAFT',
         ...data,
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
-        Permission.write(Role.user(ProposerUserId)),
+        Permission.write(Role.user(proposerUserId)),
       ],
     })
   )
@@ -435,10 +435,10 @@ export async function createProposal(
 
 export async function listProposals(
   tripId: string,
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<{ proposals: Proposal[] }> {
-  await _verifyParticipant(tripId, ParticipantUserId, db)
+  await _verifyParticipant(tripId, participantUserId, db)
   const proposals = await fetchRows<Proposal>(
     db.listRows({
       databaseId: DATABASE_ID,
@@ -455,7 +455,7 @@ export async function listProposals(
 
 export async function getProposal(
   proposalId: string,
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
   const proposal = await fetchRow<Proposal>(
@@ -465,13 +465,13 @@ export async function getProposal(
       rowId: proposalId,
     })
   )
-  await _verifyParticipant(proposal.tripId, ParticipantUserId, db)
+  await _verifyParticipant(proposal.tripId, participantUserId, db)
   return proposal
 }
 
 export async function updateProposal(
   proposalId: string,
-  ProposerUserId: string,
+  proposerUserId: string,
   data: Partial<Proposal>,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
@@ -482,16 +482,17 @@ export async function updateProposal(
       rowId: proposalId,
     })
   )
-  if (proposal.ProposerUserId !== ProposerUserId)
+  if (proposal.proposerUserId !== proposerUserId)
     throw new Error('Only the creator can edit this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be edited.')
+  const dataRecord = data as Record<string, unknown>
   const {
     state: _state,
     tripId: _tripId,
-    ProposerUserId: _ProposerUserId,
+    proposerUserId: _proposerUserId,
     ...safeData
-  } = data
+  } = dataRecord
   return fetchRow<Proposal>(
     db.updateRow({
       databaseId: DATABASE_ID,
@@ -504,7 +505,7 @@ export async function updateProposal(
 
 export async function deleteProposal(
   proposalId: string,
-  ProposerUserId: string,
+  proposerUserId: string,
   db: TablesDB = tablesDb
 ): Promise<void> {
   const proposal = await fetchRow<Proposal>(
@@ -514,7 +515,7 @@ export async function deleteProposal(
       rowId: proposalId,
     })
   )
-  if (proposal.ProposerUserId !== ProposerUserId)
+  if (proposal.proposerUserId !== proposerUserId)
     throw new Error('Only the creator can delete this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be deleted.')
@@ -527,7 +528,7 @@ export async function deleteProposal(
 
 export async function submitProposal(
   proposalId: string,
-  ProposerUserId: string,
+  proposerUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
   const proposal = await fetchRow<Proposal>(
@@ -537,7 +538,7 @@ export async function submitProposal(
       rowId: proposalId,
     })
   )
-  if (proposal.ProposerUserId !== ProposerUserId)
+  if (proposal.proposerUserId !== proposerUserId)
     throw new Error('Only the creator can submit this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be submitted.')
@@ -553,7 +554,7 @@ export async function submitProposal(
 
 export async function rejectProposal(
   proposalId: string,
-  PollCreatorUserId: string,
+  pollCreatorUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
   const proposal = await fetchRow<Proposal>(
@@ -569,7 +570,7 @@ export async function rejectProposal(
   const { participants } = await getCoordinatorParticipant(proposal.tripId, db)
   if (
     participants.length === 0 ||
-    participants[0].ParticipantUserId !== PollCreatorUserId
+    participants[0].participantUserId !== pollCreatorUserId
   ) {
     throw new Error('Only the coordinator can reject this proposal.')
   }
@@ -585,8 +586,8 @@ export async function rejectProposal(
 
 export async function createPoll(
   tripId: string,
-  PollCreatorUserId: string,
-  PollCreatorUserName: string,
+  pollCreatorUserId: string,
+  pollCreatorUserName: string,
   db: TablesDB = tablesDb
 ): Promise<Poll> {
   const { participants: coordDocs } = await getCoordinatorParticipant(
@@ -595,7 +596,7 @@ export async function createPoll(
   )
   if (
     coordDocs.length === 0 ||
-    coordDocs[0].ParticipantUserId !== PollCreatorUserId
+    coordDocs[0].participantUserId !== pollCreatorUserId
   ) {
     throw new Error('Only the coordinator can create a poll.')
   }
@@ -635,14 +636,14 @@ export async function createPoll(
       rowId: ID.unique(),
       data: {
         tripId,
-        PollCreatorUserId,
-        PollCreatorUserName,
+        pollCreatorUserId,
+        pollCreatorUserName,
         state: 'OPEN',
         proposalIds,
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
-        Permission.write(Role.user(PollCreatorUserId)),
+        Permission.write(Role.user(pollCreatorUserId)),
       ],
     })
   )
@@ -650,7 +651,7 @@ export async function createPoll(
 
 export async function closePoll(
   pollId: string,
-  PollCreatorUserId: string,
+  pollCreatorUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Poll> {
   const poll = await fetchRow<Poll>(
@@ -664,7 +665,7 @@ export async function closePoll(
   const { participants } = await getCoordinatorParticipant(poll.tripId, db)
   if (
     participants.length === 0 ||
-    participants[0].ParticipantUserId !== PollCreatorUserId
+    participants[0].participantUserId !== pollCreatorUserId
   ) {
     throw new Error('Only the coordinator can close a poll.')
   }
@@ -680,10 +681,10 @@ export async function closePoll(
 
 export async function listPolls(
   tripId: string,
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<{ polls: Poll[] }> {
-  await _verifyParticipant(tripId, ParticipantUserId, db)
+  await _verifyParticipant(tripId, participantUserId, db)
   const polls = await fetchRows<Poll>(
     db.listRows({
       databaseId: DATABASE_ID,
@@ -701,12 +702,12 @@ export async function listPolls(
 export async function upsertVote(
   pollId: string,
   tripId: string,
-  VoterUserId: string,
+  voterUserId: string,
   proposalIds: string[],
   tokenCounts: number[],
   db: TablesDB = tablesDb
 ): Promise<Vote> {
-  await _verifyParticipant(tripId, VoterUserId, db)
+  await _verifyParticipant(tripId, voterUserId, db)
   const poll = await fetchRow<Poll>(
     db.getRow({
       databaseId: DATABASE_ID,
@@ -727,7 +728,7 @@ export async function upsertVote(
       tableId: VOTES_TABLE_ID,
       queries: [
         Query.equal('pollId', pollId),
-        Query.equal('voterUserId', VoterUserId),
+        Query.equal('voterUserId', voterUserId),
         Query.limit(1),
       ],
     })
@@ -747,13 +748,16 @@ export async function upsertVote(
       databaseId: DATABASE_ID,
       tableId: VOTES_TABLE_ID,
       rowId: ID.unique(),
-      data: { pollId, tripId, VoterUserId, proposalIds, tokenCounts } as Record<
-        string,
-        unknown
-      >,
+      data: {
+        pollId,
+        tripId,
+        voterUserId,
+        proposalIds,
+        tokenCounts,
+      } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
-        Permission.write(Role.user(VoterUserId)),
+        Permission.write(Role.user(voterUserId)),
       ],
     })
   )
@@ -762,10 +766,10 @@ export async function upsertVote(
 export async function listVotes(
   pollId: string,
   tripId: string,
-  ParticipantUserId: string,
+  participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<{ votes: Vote[] }> {
-  await _verifyParticipant(tripId, ParticipantUserId, db)
+  await _verifyParticipant(tripId, participantUserId, db)
   const votes = await fetchRows<Vote>(
     db.listRows({
       databaseId: DATABASE_ID,

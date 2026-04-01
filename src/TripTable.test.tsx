@@ -18,7 +18,7 @@ async function renderTable(trips, props = {}) {
         getCoordinatorParticipant={() =>
           Promise.resolve({
             participants: [
-              { ParticipantUserId: 'user-1', ParticipantUserName: 'Test User' },
+              { participantUserId: 'user-1', participantUserName: 'Test User' },
             ],
           })
         }

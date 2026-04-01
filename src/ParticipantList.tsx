@@ -13,7 +13,7 @@ interface ParticipantListProps {
   listTripParticipants?: (tripId: string) => Promise<{
     participants: Array<{
       $id: string
-      ParticipantUserName: string
+      participantUserName: string
       role: 'coordinator' | 'participant'
     }>
   }>
@@ -35,7 +35,7 @@ export default function ParticipantList({
         setParticipants(
           ps.map((p) => ({
             id: p.$id,
-            name: p.ParticipantUserName,
+            name: p.participantUserName,
             role: p.role,
           }))
         )

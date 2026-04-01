@@ -2,11 +2,7 @@ import { useState } from 'react'
 import { deleteTrip as _deleteTrip, updateTrip as _updateTrip } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
-
-interface Trip {
-  $id: string
-  description?: string
-}
+import type { Trip } from './types.d.ts'
 
 interface EditTripFormProps {
   trip: Trip

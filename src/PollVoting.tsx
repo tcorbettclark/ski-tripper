@@ -1,22 +1,7 @@
 import { useState } from 'react'
 import { upsertVote as _upsertVote } from './backend'
 import { borders, colors, fonts } from './theme'
-
-interface Vote {
-  proposalIds: string[]
-  tokenCounts: number[]
-}
-
-interface Proposal {
-  $id: string
-  resortName?: string
-}
-
-interface Poll {
-  $id: string
-  tripId: string
-  proposalIds: string[]
-}
+import type { Poll, Proposal, Vote } from './types.d.ts'
 
 interface PollVotingProps {
   poll: Poll

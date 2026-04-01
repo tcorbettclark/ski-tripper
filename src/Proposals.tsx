@@ -13,16 +13,7 @@ import CreateProposalForm from './CreateProposalForm'
 import ProposalsTable from './ProposalsTable'
 import { randomProposal } from './randomProposal'
 import { borders, colors, fonts } from './theme'
-
-interface Proposal {
-  $id: string
-  tripId?: string
-  resortName?: string
-  country?: string
-  ProposerUserId: string
-  ProposerUserName?: string
-  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
-}
+import type { Proposal } from './types.d.ts'
 
 interface ProposalsProps {
   user: Models.User
@@ -59,7 +50,7 @@ interface ProposalsProps {
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ ParticipantUserId: string }> }>
+  ) => Promise<{ participants: Array<{ participantUserId: string }> }>
 }
 
 export default function Proposals({
@@ -109,7 +100,7 @@ export default function Proposals({
         setProposals(proposalsResult.proposals)
         setIsCoordinator(
           coordResult.participants.length > 0 &&
-            coordResult.participants[0].ParticipantUserId === user.$id
+            coordResult.participants[0].participantUserId === user.$id
         )
       })
       .catch((err) => {

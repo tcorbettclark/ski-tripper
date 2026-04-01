@@ -1,11 +1,7 @@
 import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
 import TripRow from './TripRow'
 import { borders, colors, fonts } from './theme'
-
-interface Trip {
-  $id: string
-  description?: string
-}
+import type { Trip } from './types.d.ts'
 
 interface TripTableProps {
   trips: Trip[]
@@ -13,7 +9,7 @@ interface TripTableProps {
   emptyMessage?: string
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ ParticipantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ participantUserName: string }> }>
 }
 
 export default function TripTable({

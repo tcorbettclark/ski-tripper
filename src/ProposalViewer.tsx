@@ -1,20 +1,6 @@
 import { useEffect, useState } from 'react'
 import { borders, colors, fonts } from './theme'
-
-interface Proposal {
-  $id: string
-  resortName?: string
-  country?: string
-  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
-  altitudeRange?: string
-  nearestAirport?: string
-  transferTime?: string
-  approximateCost?: string
-  accommodationName?: string
-  accommodationUrl?: string
-  description?: string
-  ProposerUserName?: string
-}
+import type { Proposal } from './types.d.ts'
 
 interface ProposalViewerProps {
   proposals: Proposal[]
@@ -152,7 +138,7 @@ export default function ProposalViewer({
           <div style={{ gridColumn: '1/-1' }}>
             <div style={styles.fieldLabel}>Proposed By</div>
             <div style={styles.fieldValue}>
-              {proposal.ProposerUserName || '—'}
+              {proposal.proposerUserName || '—'}
             </div>
           </div>
         </div>

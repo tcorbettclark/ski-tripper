@@ -55,7 +55,7 @@ describe('listTrips', () => {
     listRows
       .mockImplementationOnce(() =>
         Promise.resolve({
-          rows: [{ $id: 'p-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }],
+          rows: [{ $id: 'p-1', participantUserId: 'user-1', tripId: 'trip-1' }],
         })
       )
       .mockImplementationOnce(() =>
@@ -201,8 +201,8 @@ describe('createTrip', () => {
     await createTrip('user-1', 'Alice', { description: 'New Trip' }, db)
     const { data: participantData } = db.createRow.mock.calls[1][0]
     expect(participantData.role).toBe('coordinator')
-    expect(participantData.ParticipantUserId).toBe('user-1')
-    expect(participantData.ParticipantUserName).toBe('Alice')
+    expect(participantData.participantUserId).toBe('user-1')
+    expect(participantData.participantUserName).toBe('Alice')
   })
 
   it('propagates createRow errors', async () => {
@@ -220,7 +220,7 @@ describe('updateTrip', () => {
     const db = createMockDb({
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'p-1', ParticipantUserId: 'user-1' }],
+          rows: [{ $id: 'p-1', participantUserId: 'user-1' }],
         })
       ),
     })
@@ -238,7 +238,7 @@ describe('updateTrip', () => {
     const db = createMockDb({
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'p-1', ParticipantUserId: 'other-user' }],
+          rows: [{ $id: 'p-1', participantUserId: 'other-user' }],
         })
       ),
     })
@@ -260,7 +260,7 @@ describe('updateTrip', () => {
     const db = createMockDb({
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'p-1', ParticipantUserId: 'user-1' }],
+          rows: [{ $id: 'p-1', participantUserId: 'user-1' }],
         })
       ),
       updateRow: mock(() => Promise.reject(new Error('Update failed'))),
@@ -278,14 +278,14 @@ describe('joinTrip', () => {
     expect(db.createRow).toHaveBeenCalledTimes(1)
     const { data: participantData } = db.createRow.mock.calls[0][0]
     expect(participantData.role).toBe('participant')
-    expect(participantData.ParticipantUserName).toBe('Alice')
+    expect(participantData.participantUserName).toBe('Alice')
   })
 
   it('throws when the user has already joined the trip', async () => {
     const db = createMockDb({
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'p-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }],
+          rows: [{ $id: 'p-1', participantUserId: 'user-1', tripId: 'trip-1' }],
         })
       ),
     })
@@ -372,7 +372,7 @@ describe('createProposal', () => {
   it('creates a proposal document when user is a participant', async () => {
     const listRows = mock(() =>
       Promise.resolve({
-        rows: [{ $id: 'p-1', ParticipantUserId: 'user-1', tripId: 'trip-1' }],
+        rows: [{ $id: 'p-1', participantUserId: 'user-1', tripId: 'trip-1' }],
       })
     )
     const db = createMockDb({ listRows })
@@ -386,8 +386,8 @@ describe('createProposal', () => {
     expect(db.createRow).toHaveBeenCalledTimes(1)
     const [{ data }] = db.createRow.mock.calls[0]
     expect(data.tripId).toBe('trip-1')
-    expect(data.ProposerUserId).toBe('user-1')
-    expect(data.ProposerUserName).toBe('Alice')
+    expect(data.proposerUserId).toBe('user-1')
+    expect(data.proposerUserName).toBe('Alice')
     expect(data.state).toBe('DRAFT')
     expect(data.description).toBe('Alps Trip')
     expect(result.$id).toBe('new-id')
@@ -511,7 +511,7 @@ describe('updateProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'DRAFT',
         })
       ),
@@ -531,7 +531,7 @@ describe('updateProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'DRAFT',
         })
       ),
@@ -543,7 +543,7 @@ describe('updateProposal', () => {
         description: 'Updated',
         state: 'SUBMITTED',
         tripId: 'other-trip',
-        ProposerUserId: 'other-user',
+        proposerUserId: 'other-user',
       },
       db
     )
@@ -552,7 +552,7 @@ describe('updateProposal', () => {
     expect(data.description).toBe('Updated')
     expect(data.state).toBeUndefined()
     expect(data.tripId).toBeUndefined()
-    expect(data.ProposerUserId).toBeUndefined()
+    expect(data.proposerUserId).toBeUndefined()
   })
 
   it('throws when user is not the creator', async () => {
@@ -560,7 +560,7 @@ describe('updateProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'other-user',
+          proposerUserId: 'other-user',
           state: 'DRAFT',
         })
       ),
@@ -576,7 +576,7 @@ describe('updateProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'SUBMITTED',
         })
       ),
@@ -592,7 +592,7 @@ describe('updateProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'DRAFT',
         })
       ),
@@ -610,7 +610,7 @@ describe('deleteProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'DRAFT',
         })
       ),
@@ -626,7 +626,7 @@ describe('deleteProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'other-user',
+          proposerUserId: 'other-user',
           state: 'DRAFT',
         })
       ),
@@ -642,7 +642,7 @@ describe('deleteProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'SUBMITTED',
         })
       ),
@@ -658,7 +658,7 @@ describe('deleteProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'DRAFT',
         })
       ),
@@ -676,7 +676,7 @@ describe('submitProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'DRAFT',
         })
       ),
@@ -692,7 +692,7 @@ describe('submitProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'other-user',
+          proposerUserId: 'other-user',
           state: 'DRAFT',
         })
       ),
@@ -708,7 +708,7 @@ describe('submitProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'SUBMITTED',
         })
       ),
@@ -724,7 +724,7 @@ describe('submitProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'prop-1',
-          ProposerUserId: 'user-1',
+          proposerUserId: 'user-1',
           state: 'DRAFT',
         })
       ),
@@ -742,14 +742,14 @@ describe('rejectProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'p-1',
-          ProposerUserId: 'creator-1',
+          proposerUserId: 'creator-1',
           tripId: 'trip-1',
           state: 'SUBMITTED',
         })
       ),
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }],
+          rows: [{ $id: 'part-1', participantUserId: 'coord-1' }],
         })
       ),
     })
@@ -764,7 +764,7 @@ describe('rejectProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'p-1',
-          ProposerUserId: 'creator-1',
+          proposerUserId: 'creator-1',
           tripId: 'trip-1',
           state: 'DRAFT',
         })
@@ -781,14 +781,14 @@ describe('rejectProposal', () => {
       getRow: mock(() =>
         Promise.resolve({
           $id: 'p-1',
-          ProposerUserId: 'creator-1',
+          proposerUserId: 'creator-1',
           tripId: 'trip-1',
           state: 'SUBMITTED',
         })
       ),
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'part-1', ParticipantUserId: 'other-coord' }],
+          rows: [{ $id: 'part-1', participantUserId: 'other-coord' }],
         })
       ),
     })
@@ -813,7 +813,7 @@ describe('createPoll', () => {
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          rows: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }],
+          rows: [{ $id: 'part-1', participantUserId: 'coord-1' }],
         })
       )
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
@@ -827,14 +827,14 @@ describe('createPoll', () => {
     expect(data.state).toBe('OPEN')
     expect(data.proposalIds).toEqual(['prop-1', 'prop-2'])
     expect(data.tripId).toBe('trip-1')
-    expect(data.PollCreatorUserId).toBe('coord-1')
-    expect(data.PollCreatorUserName).toBe('Coordinator Name')
+    expect(data.pollCreatorUserId).toBe('coord-1')
+    expect(data.pollCreatorUserName).toBe('Coordinator Name')
   })
 
   it('throws when caller is not the coordinator', async () => {
     const listRows = mock(() =>
       Promise.resolve({
-        rows: [{ $id: 'part-1', ParticipantUserId: 'other-user' }],
+        rows: [{ $id: 'part-1', participantUserId: 'other-user' }],
       })
     )
     const db = createMockDb({ listRows })
@@ -848,7 +848,7 @@ describe('createPoll', () => {
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          rows: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }],
+          rows: [{ $id: 'part-1', participantUserId: 'coord-1' }],
         })
       )
       .mockImplementationOnce(() =>
@@ -865,7 +865,7 @@ describe('createPoll', () => {
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          rows: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }],
+          rows: [{ $id: 'part-1', participantUserId: 'coord-1' }],
         })
       )
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
@@ -886,7 +886,7 @@ describe('closePoll', () => {
       ),
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'part-1', ParticipantUserId: 'coord-1' }],
+          rows: [{ $id: 'part-1', participantUserId: 'coord-1' }],
         })
       ),
     })
@@ -915,7 +915,7 @@ describe('closePoll', () => {
       ),
       listRows: mock(() =>
         Promise.resolve({
-          rows: [{ $id: 'part-1', ParticipantUserId: 'other-coord' }],
+          rows: [{ $id: 'part-1', participantUserId: 'other-coord' }],
         })
       ),
     })
@@ -968,7 +968,7 @@ describe('upsertVote', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           rows: [
-            { $id: 'part-1', ParticipantUserId: 'user-1', tripId: 'trip-1' },
+            { $id: 'part-1', participantUserId: 'user-1', tripId: 'trip-1' },
           ],
         })
       )
@@ -987,7 +987,7 @@ describe('upsertVote', () => {
     expect(db.createRow).toHaveBeenCalledTimes(1)
     const [{ data }] = db.createRow.mock.calls[0]
     expect(data.pollId).toBe('poll-1')
-    expect(data.VoterUserId).toBe('user-1')
+    expect(data.voterUserId).toBe('user-1')
     expect(data.proposalIds).toEqual(['p-1'])
     expect(data.tokenCounts).toEqual([2])
   })
@@ -1071,7 +1071,7 @@ describe('listVotes', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({
           rows: [
-            { $id: 'part-1', ParticipantUserId: 'user-1', tripId: 'trip-1' },
+            { $id: 'part-1', participantUserId: 'user-1', tripId: 'trip-1' },
           ],
         })
       )
@@ -1096,7 +1096,7 @@ describe('deleteTrip', () => {
   it('throws when the caller is not the coordinator', async () => {
     const listRows = mock().mockImplementationOnce(() =>
       Promise.resolve({
-        rows: [{ $id: 'p-1', ParticipantUserId: 'other-user' }],
+        rows: [{ $id: 'p-1', participantUserId: 'other-user' }],
       })
     )
     const db = createMockDb({ listRows })
@@ -1109,7 +1109,7 @@ describe('deleteTrip', () => {
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          rows: [{ $id: 'p-1', ParticipantUserId: 'user-1' }],
+          rows: [{ $id: 'p-1', participantUserId: 'user-1' }],
         })
       )
       .mockImplementationOnce(() =>
@@ -1134,7 +1134,7 @@ describe('deleteTrip', () => {
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({
-          rows: [{ $id: 'p-1', ParticipantUserId: 'user-1' }],
+          rows: [{ $id: 'p-1', participantUserId: 'user-1' }],
         })
       )
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))

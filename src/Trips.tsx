@@ -10,11 +10,7 @@ import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'
 import { borders, colors, fonts } from './theme'
-
-interface Trip {
-  $id: string
-  description?: string
-}
+import type { Trip } from './types.d.ts'
 
 interface TripsProps {
   user: Models.User
@@ -34,7 +30,7 @@ interface TripsProps {
   ) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ ParticipantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ participantUserName: string }> }>
 }
 
 export default function Trips({

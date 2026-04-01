@@ -10,12 +10,7 @@ import {
 import EditTripForm from './EditTripForm'
 import ParticipantList from './ParticipantList'
 import { borders, colors, fonts } from './theme'
-
-interface Trip {
-  $id: string
-  code?: string
-  description?: string
-}
+import type { Trip } from './types.d.ts'
 
 interface TripOverviewProps {
   trip: Trip
@@ -23,14 +18,14 @@ interface TripOverviewProps {
   listTripParticipants?: (tripId: string) => Promise<{
     participants: Array<{
       $id: string
-      ParticipantUserName: string
+      participantUserName: string
       role: 'coordinator' | 'participant'
     }>
   }>
   getCoordinatorParticipant?: (tripId: string) => Promise<{
     participants: Array<{
-      ParticipantUserId: string
-      ParticipantUserName: string
+      participantUserId: string
+      participantUserName: string
     }>
   }>
   updateTrip?: (
@@ -78,10 +73,10 @@ export default function TripOverview({
     getCoordinatorParticipant(trip.$id)
       .then(({ participants }) => {
         if (!mountedRef.current || participants.length === 0) return
-        const cid = participants[0].ParticipantUserId
+        const cid = participants[0].participantUserId
         if (mountedRef.current) {
           setIsCoordinator(cid === user.$id)
-          setCoordinator({ name: participants[0].ParticipantUserName })
+          setCoordinator({ name: participants[0].participantUserName })
         }
       })
       .catch((err) => console.error('Failed to load coordinator:', err))

@@ -34,7 +34,7 @@ interface AppProps {
   listTripParticipants?: (tripId: string) => Promise<{
     participants: Array<{
       $id: string
-      ParticipantUserName: string
+      participantUserName: string
       role: 'coordinator' | 'participant'
     }>
   }>
@@ -47,8 +47,8 @@ interface AppProps {
   leaveTrip?: (userId: string, tripId: string) => Promise<void>
   getCoordinatorParticipant?: (tripId: string) => Promise<{
     participants: Array<{
-      ParticipantUserId: string
-      ParticipantUserName: string
+      participantUserId: string
+      participantUserName: string
     }>
   }>
 }

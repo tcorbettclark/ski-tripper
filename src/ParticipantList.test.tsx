@@ -20,8 +20,8 @@ describe('ParticipantList', () => {
         listTripParticipants={() =>
           Promise.resolve({
             participants: [
-              { $id: 'p1', ParticipantUserName: 'Alice', role: 'coordinator' },
-              { $id: 'p2', ParticipantUserName: 'Bob', role: 'participant' },
+              { $id: 'p1', participantUserName: 'Alice', role: 'coordinator' },
+              { $id: 'p2', participantUserName: 'Bob', role: 'participant' },
             ],
           })
         }

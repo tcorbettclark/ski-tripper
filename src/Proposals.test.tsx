@@ -7,8 +7,8 @@ const user = { $id: 'user-1', name: 'Alice' }
 const sampleProposals = [
   {
     $id: 'p-1',
-    ProposerUserId: 'user-1',
-    state: 'DRAFT',
+    proposerUserId: 'user-1',
+    state: 'DRAFT' as const,
     resortName: "Val d'Isère",
     country: 'France',
     altitudeRange: '1850m - 3456m',
@@ -158,7 +158,7 @@ describe('Proposals', () => {
         ),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            participants: [{ $id: 'part-1', ParticipantUserId: 'user-1' }],
+            participants: [{ $id: 'part-1', participantUserId: 'user-1' }],
           })
         ),
       })
@@ -180,7 +180,7 @@ describe('Proposals', () => {
         ),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            participants: [{ $id: 'part-1', ParticipantUserId: 'other-user' }],
+            participants: [{ $id: 'part-1', participantUserId: 'other-user' }],
           })
         ),
       })
