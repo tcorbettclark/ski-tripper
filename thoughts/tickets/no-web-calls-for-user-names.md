@@ -1,4 +1,4 @@
-# thoughts/tickets/refactor-1.md
+# thoughts/tickets/2026-03-28-no-web-calls-for-user-names.md
 
 status: reviewed
 

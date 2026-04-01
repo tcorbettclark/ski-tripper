@@ -1,4 +1,4 @@
-# thoughts/tickets/refactor-2.md
+# thoughts/tickets/2026-03-31-javascript-to-typescript.md
 
 status: reviewed
 
