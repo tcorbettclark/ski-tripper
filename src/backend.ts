@@ -30,9 +30,9 @@ function toRows<T>(rows: Models.Row[]): T[] {
 
 async function fetchRows<T>(
   result: Promise<{ rows: Models.Row[] }>
-): Promise<{ documents: T[] }> {
+): Promise<T[]> {
   const { rows } = await result
-  return { documents: toRows<T>(rows) }
+  return toRows<T>(rows)
 }
 
 async function fetchRow<T>(result: Promise<Models.Row>): Promise<T> {
@@ -61,7 +61,7 @@ export async function getCoordinatorParticipant(
   tripId: string,
   db: TablesDB = tablesDb
 ): Promise<{ participants: Participant[] }> {
-  const { documents: participants } = await fetchRows<Participant>(
+  const participants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
@@ -79,7 +79,7 @@ export async function listTripParticipants(
   tripId: string,
   db: TablesDB = tablesDb
 ): Promise<{ participants: Participant[] }> {
-  const { documents: participants } = await fetchRows<Participant>(
+  const participants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
@@ -100,12 +100,12 @@ export async function listTrips(
   trips: Trip[]
   coordinatorUserIds: Record<string, string>
 }> {
-  const { documents: coordinatorParticipants } = await fetchRows<Participant>(
+  const coordinatorParticipants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('ParticipantUserId', ParticipantUserId),
+        Query.equal('participantUserId', ParticipantUserId),
         Query.equal('role', 'coordinator'),
         Query.orderDesc('$createdAt'),
         Query.limit(50),
@@ -120,7 +120,7 @@ export async function listTrips(
   const coordinatorUserIds = Object.fromEntries(
     coordinatorParticipants.map((p) => [p.tripId, p.ParticipantUserId])
   )
-  const { documents: trips } = await fetchRows<Trip>(
+  const trips = await fetchRows<Trip>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: TRIPS_TABLE_ID,
@@ -149,7 +149,7 @@ export async function getTripByCode(
   code: string,
   db: TablesDB = tablesDb
 ): Promise<{ trips: Trip[] }> {
-  const { documents: trips } = await fetchRows<Trip>(
+  const trips = await fetchRows<Trip>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: TRIPS_TABLE_ID,
@@ -162,7 +162,7 @@ export async function getTripByCode(
 async function findUniqueCode(db: TablesDB = tablesDb): Promise<string> {
   for (let attempt = 0; attempt < 100; attempt++) {
     const code = randomThreeWords()
-    const { documents: trips } = await fetchRows<Trip>(
+    const trips = await fetchRows<Trip>(
       db.listRows({
         databaseId: DATABASE_ID,
         tableId: TRIPS_TABLE_ID,
@@ -252,7 +252,7 @@ export async function deleteTrip(
   ) {
     throw new Error('Only the coordinator can delete this trip.')
   }
-  const { documents: participants } = await fetchRows<Participant>(
+  const participants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
@@ -279,12 +279,12 @@ export async function listParticipatedTrips(
   ParticipantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<{ trips: Trip[] }> {
-  const { documents: participants } = await fetchRows<Participant>(
+  const participants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('ParticipantUserId', ParticipantUserId),
+        Query.equal('participantUserId', ParticipantUserId),
         Query.orderDesc('$createdAt'),
         Query.limit(50),
       ],
@@ -292,7 +292,7 @@ export async function listParticipatedTrips(
   )
   if (participants.length === 0) return { trips: [] }
   const tripIds = participants.map((p) => p.tripId)
-  const { documents: trips } = await fetchRows<Trip>(
+  const trips = await fetchRows<Trip>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: TRIPS_TABLE_ID,
@@ -317,12 +317,12 @@ export async function joinTrip(
   } catch {
     throw new Error('Trip not found.')
   }
-  const { documents: participants } = await fetchRows<Participant>(
+  const participants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('ParticipantUserId', ParticipantUserId),
+        Query.equal('participantUserId', ParticipantUserId),
         Query.equal('tripId', tripId),
         Query.limit(1),
       ],
@@ -354,12 +354,12 @@ export async function leaveTrip(
   tripId: string,
   db: TablesDB = tablesDb
 ): Promise<void> {
-  const { documents: participants } = await fetchRows<Participant>(
+  const participants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
-        Query.equal('ParticipantUserId', ParticipantUserId),
+        Query.equal('participantUserId', ParticipantUserId),
         Query.equal('tripId', tripId),
         Query.limit(1),
       ],
@@ -379,13 +379,13 @@ async function _verifyParticipant(
   ParticipantUserId: string,
   db: TablesDB
 ): Promise<void> {
-  const { documents: participants } = await fetchRows<Participant>(
+  const participants = await fetchRows<Participant>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PARTICIPANTS_TABLE_ID,
       queries: [
         Query.equal('tripId', tripId),
-        Query.equal('ParticipantUserId', ParticipantUserId),
+        Query.equal('participantUserId', ParticipantUserId),
         Query.limit(1),
       ],
     })
@@ -439,7 +439,7 @@ export async function listProposals(
   db: TablesDB = tablesDb
 ): Promise<{ proposals: Proposal[] }> {
   await _verifyParticipant(tripId, ParticipantUserId, db)
-  const { documents: proposals } = await fetchRows<Proposal>(
+  const proposals = await fetchRows<Proposal>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -599,7 +599,7 @@ export async function createPoll(
   ) {
     throw new Error('Only the coordinator can create a poll.')
   }
-  const { documents: openPolls } = await fetchRows<Poll>(
+  const openPolls = await fetchRows<Poll>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -613,7 +613,7 @@ export async function createPoll(
   if (openPolls.length > 0) {
     throw new Error('A poll is already open for this trip.')
   }
-  const { documents: proposals } = await fetchRows<Proposal>(
+  const proposals = await fetchRows<Proposal>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -684,7 +684,7 @@ export async function listPolls(
   db: TablesDB = tablesDb
 ): Promise<{ polls: Poll[] }> {
   await _verifyParticipant(tripId, ParticipantUserId, db)
-  const { documents: polls } = await fetchRows<Poll>(
+  const polls = await fetchRows<Poll>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -721,13 +721,13 @@ export async function upsertVote(
   if (total > poll.proposalIds.length) {
     throw new Error(`Total tokens cannot exceed ${poll.proposalIds.length}.`)
   }
-  const { documents: votes } = await fetchRows<Vote>(
+  const votes = await fetchRows<Vote>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: VOTES_TABLE_ID,
       queries: [
         Query.equal('pollId', pollId),
-        Query.equal('VoterUserId', VoterUserId),
+        Query.equal('voterUserId', VoterUserId),
         Query.limit(1),
       ],
     })
@@ -766,7 +766,7 @@ export async function listVotes(
   db: TablesDB = tablesDb
 ): Promise<{ votes: Vote[] }> {
   await _verifyParticipant(tripId, ParticipantUserId, db)
-  const { documents: votes } = await fetchRows<Vote>(
+  const votes = await fetchRows<Vote>(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: VOTES_TABLE_ID,
