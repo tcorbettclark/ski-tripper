@@ -11,18 +11,12 @@ Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
 | Lint | `bun run lint path.to/file.ts` |
 | Test | `bun run test path/to/file.test.ts` |
 
-## Commit Attribution
-
-AI commits MUST include:
-```
-Co-Authored-By: (agent name and attribution byline)
-```
-
 ## Code Style
 
 - TypeScript with strict mode
 - Styles as `const [name]Styles` objects at bottom of file
 - Shared styles in `src/theme.ts`
+- Use camelCase for names (NOT PascalCase)
 
 ## Components
 
