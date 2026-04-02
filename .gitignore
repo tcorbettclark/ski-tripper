@@ -1,6 +1,7 @@
 appwrite.config.json
 node_modules
 dist
+dist-test
 .env
 .env.local
 .env.*.local

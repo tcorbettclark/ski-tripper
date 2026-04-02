@@ -83,7 +83,7 @@ describe('listTrips', () => {
     const db = createMockDb({
       listRows: mock(() => Promise.reject(new Error('Network error'))),
     })
-    await expect(listTrips('user-1', db)).rejects.toThrow('Network error')
+    expect(listTrips('user-1', db)).rejects.toThrow('Network error')
   })
 })
 
@@ -107,7 +107,7 @@ describe('getTrip', () => {
     const db = createMockDb({
       getRow: mock(() => Promise.reject(new Error('Not found'))),
     })
-    await expect(getTrip('trip-1', db)).rejects.toThrow('Not found')
+    expect(getTrip('trip-1', db)).rejects.toThrow('Not found')
   })
 })
 
@@ -133,9 +133,7 @@ describe('getTripByCode', () => {
     const db = createMockDb({
       listRows: mock(() => Promise.reject(new Error('Network error'))),
     })
-    await expect(getTripByCode('abc-def-ghi', db)).rejects.toThrow(
-      'Network error'
-    )
+    expect(getTripByCode('abc-def-ghi', db)).rejects.toThrow('Network error')
   })
 })
 
@@ -176,7 +174,7 @@ describe('createTrip', () => {
     const db = createMockDb({
       listRows: mock(() => Promise.resolve({ rows: [{ $id: 'x' }] })),
     })
-    await expect(
+    expect(
       createTrip('user-1', 'Alice', { description: 'New Trip' }, db)
     ).rejects.toThrow(
       'Could not generate a unique trip code after 100 attempts.'
@@ -209,7 +207,7 @@ describe('createTrip', () => {
     const db = createMockDb({
       createRow: mock(() => Promise.reject(new Error('Create failed'))),
     })
-    await expect(
+    expect(
       createTrip('user-1', 'Alice', { description: 'Trip' }, db)
     ).rejects.toThrow('Create failed')
   })
@@ -242,7 +240,7 @@ describe('updateTrip', () => {
         })
       ),
     })
-    await expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow(
+    expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow(
       'Only the coordinator can edit this trip.'
     )
   })
@@ -251,7 +249,7 @@ describe('updateTrip', () => {
     const db = createMockDb({
       listRows: mock(() => Promise.resolve({ rows: [] })),
     })
-    await expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow(
+    expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow(
       'Only the coordinator can edit this trip.'
     )
   })
@@ -265,7 +263,7 @@ describe('updateTrip', () => {
       ),
       updateRow: mock(() => Promise.reject(new Error('Update failed'))),
     })
-    await expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow(
+    expect(updateTrip('trip-1', {}, 'user-1', db)).rejects.toThrow(
       'Update failed'
     )
   })
@@ -285,7 +283,7 @@ describe('joinTrip', () => {
     const db = createMockDb({
       getRow: mock(() => Promise.reject(new Error('Not found'))),
     })
-    await expect(joinTrip('user-1', 'Alice', 'trip-1', db)).rejects.toThrow(
+    expect(joinTrip('user-1', 'Alice', 'trip-1', db)).rejects.toThrow(
       'Trip not found.'
     )
     expect(db.createRow).not.toHaveBeenCalled()
@@ -299,7 +297,7 @@ describe('joinTrip', () => {
         })
       ),
     })
-    await expect(joinTrip('user-1', 'Alice', 'trip-1', db)).rejects.toThrow(
+    expect(joinTrip('user-1', 'Alice', 'trip-1', db)).rejects.toThrow(
       'You have already joined this trip.'
     )
     expect(db.createRow).not.toHaveBeenCalled()
@@ -323,7 +321,7 @@ describe('leaveTrip', () => {
 
   it('throws when no participation record is found', async () => {
     const db = createMockDb()
-    await expect(leaveTrip('user-1', 'trip-1', db)).rejects.toThrow(
+    expect(leaveTrip('user-1', 'trip-1', db)).rejects.toThrow(
       'Participation record not found.'
     )
     expect(db.deleteRow).not.toHaveBeenCalled()
@@ -339,7 +337,7 @@ describe('leaveTrip', () => {
         })
       ),
     })
-    await expect(leaveTrip('user-1', 'trip-1', db)).rejects.toThrow(
+    expect(leaveTrip('user-1', 'trip-1', db)).rejects.toThrow(
       'The coordinator cannot leave the trip.'
     )
     expect(db.deleteRow).not.toHaveBeenCalled()
@@ -350,9 +348,7 @@ describe('leaveTrip', () => {
       listRows: mock(() => Promise.resolve({ rows: [{ $id: 'p-1' }] })),
       deleteRow: mock(() => Promise.reject(new Error('Delete failed'))),
     })
-    await expect(leaveTrip('user-1', 'trip-1', db)).rejects.toThrow(
-      'Delete failed'
-    )
+    expect(leaveTrip('user-1', 'trip-1', db)).rejects.toThrow('Delete failed')
   })
 })
 
@@ -388,9 +384,7 @@ describe('listParticipatedTrips', () => {
     const db = createMockDb({
       listRows: mock(() => Promise.reject(new Error('Network error'))),
     })
-    await expect(listParticipatedTrips('user-1', db)).rejects.toThrow(
-      'Network error'
-    )
+    expect(listParticipatedTrips('user-1', db)).rejects.toThrow('Network error')
   })
 })
 
@@ -421,7 +415,7 @@ describe('createProposal', () => {
 
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
-    await expect(
+    expect(
       createProposal(
         'trip-1',
         'user-1',
@@ -439,7 +433,7 @@ describe('createProposal', () => {
       listRows,
       createRow: mock(() => Promise.reject(new Error('Create failed'))),
     })
-    await expect(
+    expect(
       createProposal(
         'trip-1',
         'user-1',
@@ -471,7 +465,7 @@ describe('listProposals', () => {
 
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
-    await expect(listProposals('trip-1', 'user-1', db)).rejects.toThrow(
+    expect(listProposals('trip-1', 'user-1', db)).rejects.toThrow(
       'You must be a participant to access this trip.'
     )
   })
@@ -480,7 +474,7 @@ describe('listProposals', () => {
     const db = createMockDb({
       listRows: mock(() => Promise.reject(new Error('Network error'))),
     })
-    await expect(listProposals('trip-1', 'user-1', db)).rejects.toThrow(
+    expect(listProposals('trip-1', 'user-1', db)).rejects.toThrow(
       'Network error'
     )
   })
@@ -516,7 +510,7 @@ describe('getProposal', () => {
       })
     )
     const db = createMockDb({ getRow })
-    await expect(getProposal('prop-1', 'user-1', db)).rejects.toThrow(
+    expect(getProposal('prop-1', 'user-1', db)).rejects.toThrow(
       'You must be a participant to access this trip.'
     )
   })
@@ -525,9 +519,7 @@ describe('getProposal', () => {
     const db = createMockDb({
       getRow: mock(() => Promise.reject(new Error('Not found'))),
     })
-    await expect(getProposal('prop-1', 'user-1', db)).rejects.toThrow(
-      'Not found'
-    )
+    expect(getProposal('prop-1', 'user-1', db)).rejects.toThrow('Not found')
   })
 })
 
@@ -591,7 +583,7 @@ describe('updateProposal', () => {
         })
       ),
     })
-    await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
+    expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
       'Only the creator can edit this proposal.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -607,7 +599,7 @@ describe('updateProposal', () => {
         })
       ),
     })
-    await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
+    expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
       'Only draft proposals can be edited.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -624,7 +616,7 @@ describe('updateProposal', () => {
       ),
       updateRow: mock(() => Promise.reject(new Error('Update failed'))),
     })
-    await expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
+    expect(updateProposal('prop-1', 'user-1', {}, db)).rejects.toThrow(
       'Update failed'
     )
   })
@@ -657,7 +649,7 @@ describe('deleteProposal', () => {
         })
       ),
     })
-    await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
+    expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
       'Only the creator can delete this proposal.'
     )
     expect(db.deleteRow).not.toHaveBeenCalled()
@@ -673,7 +665,7 @@ describe('deleteProposal', () => {
         })
       ),
     })
-    await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
+    expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
       'Only draft proposals can be deleted.'
     )
     expect(db.deleteRow).not.toHaveBeenCalled()
@@ -690,7 +682,7 @@ describe('deleteProposal', () => {
       ),
       deleteRow: mock(() => Promise.reject(new Error('Delete failed'))),
     })
-    await expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
+    expect(deleteProposal('prop-1', 'user-1', db)).rejects.toThrow(
       'Delete failed'
     )
   })
@@ -723,7 +715,7 @@ describe('submitProposal', () => {
         })
       ),
     })
-    await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
+    expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
       'Only the creator can submit this proposal.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -739,7 +731,7 @@ describe('submitProposal', () => {
         })
       ),
     })
-    await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
+    expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
       'Only draft proposals can be submitted.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -756,7 +748,7 @@ describe('submitProposal', () => {
       ),
       updateRow: mock(() => Promise.reject(new Error('Update failed'))),
     })
-    await expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
+    expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
       'Update failed'
     )
   })
@@ -796,7 +788,7 @@ describe('rejectProposal', () => {
         })
       ),
     })
-    await expect(rejectProposal('p-1', 'coord-1', db)).rejects.toThrow(
+    expect(rejectProposal('p-1', 'coord-1', db)).rejects.toThrow(
       'Only submitted proposals can be rejected.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -818,7 +810,7 @@ describe('rejectProposal', () => {
         })
       ),
     })
-    await expect(rejectProposal('p-1', 'user-1', db)).rejects.toThrow(
+    expect(rejectProposal('p-1', 'user-1', db)).rejects.toThrow(
       'Only the coordinator can reject this proposal.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -828,9 +820,7 @@ describe('rejectProposal', () => {
     const db = createMockDb({
       getRow: mock(() => Promise.reject(new Error('Not found'))),
     })
-    await expect(rejectProposal('p-1', 'coord-1', db)).rejects.toThrow(
-      'Not found'
-    )
+    expect(rejectProposal('p-1', 'coord-1', db)).rejects.toThrow('Not found')
   })
 })
 
@@ -864,9 +854,9 @@ describe('createPoll', () => {
       })
     )
     const db = createMockDb({ listRows })
-    await expect(
-      createPoll('trip-1', 'user-1', 'User Name', db)
-    ).rejects.toThrow('Only the coordinator can create a poll.')
+    expect(createPoll('trip-1', 'user-1', 'User Name', db)).rejects.toThrow(
+      'Only the coordinator can create a poll.'
+    )
     expect(db.createRow).not.toHaveBeenCalled()
   })
 
@@ -881,7 +871,7 @@ describe('createPoll', () => {
         Promise.resolve({ rows: [{ $id: 'poll-1', state: 'OPEN' }] })
       )
     const db = createMockDb({ listRows })
-    await expect(
+    expect(
       createPoll('trip-1', 'coord-1', 'Coordinator Name', db)
     ).rejects.toThrow('A poll is already open for this trip.')
     expect(db.createRow).not.toHaveBeenCalled()
@@ -897,7 +887,7 @@ describe('createPoll', () => {
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
     const db = createMockDb({ listRows })
-    await expect(
+    expect(
       createPoll('trip-1', 'coord-1', 'Coordinator Name', db)
     ).rejects.toThrow('No submitted proposals to poll on.')
     expect(db.createRow).not.toHaveBeenCalled()
@@ -928,7 +918,7 @@ describe('closePoll', () => {
         Promise.resolve({ $id: 'poll-1', tripId: 'trip-1', state: 'CLOSED' })
       ),
     })
-    await expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow(
+    expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow(
       'Only open polls can be closed.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -945,7 +935,7 @@ describe('closePoll', () => {
         })
       ),
     })
-    await expect(closePoll('poll-1', 'user-1', db)).rejects.toThrow(
+    expect(closePoll('poll-1', 'user-1', db)).rejects.toThrow(
       'Only the coordinator can close a poll.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -955,9 +945,7 @@ describe('closePoll', () => {
     const db = createMockDb({
       getRow: mock(() => Promise.reject(new Error('Not found'))),
     })
-    await expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow(
-      'Not found'
-    )
+    expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow('Not found')
   })
 })
 
@@ -982,7 +970,7 @@ describe('listPolls', () => {
 
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
-    await expect(listPolls('trip-1', 'user-1', db)).rejects.toThrow(
+    expect(listPolls('trip-1', 'user-1', db)).rejects.toThrow(
       'You must be a participant to access this trip.'
     )
   })
@@ -1059,7 +1047,7 @@ describe('upsertVote', () => {
         })
       ),
     })
-    await expect(
+    expect(
       upsertVote('poll-1', 'trip-1', 'user-1', [], [], db)
     ).rejects.toThrow('Voting is only allowed on open polls.')
   })
@@ -1078,7 +1066,7 @@ describe('upsertVote', () => {
         })
       ),
     })
-    await expect(
+    expect(
       upsertVote('poll-1', 'trip-1', 'user-1', ['p-1'], [3], db)
     ).rejects.toThrow('Total tokens cannot exceed 2.')
   })
@@ -1099,7 +1087,7 @@ describe('upsertVote', () => {
         })
       ),
     })
-    await expect(
+    expect(
       upsertVote('poll-1', 'trip-1', 'user-1', ['p-99'], [1], db)
     ).rejects.toThrow('Vote contains proposal IDs not in this poll.')
     expect(db.createRow).not.toHaveBeenCalled()
@@ -1122,7 +1110,7 @@ describe('upsertVote', () => {
         })
       ),
     })
-    await expect(
+    expect(
       upsertVote('poll-1', 'trip-1', 'user-1', ['p-1', 'p-2'], [1], db)
     ).rejects.toThrow('proposalIds and tokenCounts must have the same length.')
     expect(db.createRow).not.toHaveBeenCalled()
@@ -1131,7 +1119,7 @@ describe('upsertVote', () => {
 
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
-    await expect(
+    expect(
       upsertVote('poll-1', 'trip-1', 'user-1', [], [], db)
     ).rejects.toThrow('You must be a participant to access this trip.')
   })
@@ -1158,7 +1146,7 @@ describe('listVotes', () => {
 
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
-    await expect(listVotes('poll-1', 'trip-1', 'user-1', db)).rejects.toThrow(
+    expect(listVotes('poll-1', 'trip-1', 'user-1', db)).rejects.toThrow(
       'You must be a participant to access this trip.'
     )
   })
@@ -1182,7 +1170,7 @@ describe('deleteTrip', () => {
       })
     )
     const db = createMockDb({ listRows })
-    await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
       'Only the coordinator can delete this trip.'
     )
   })
@@ -1192,7 +1180,7 @@ describe('deleteTrip', () => {
       Promise.resolve({ rows: [] })
     )
     const db = createMockDb({ listRows })
-    await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
       'Only the coordinator can delete this trip.'
     )
   })
@@ -1224,9 +1212,7 @@ describe('deleteTrip', () => {
     const db = makeDeleteTripDb({
       deleteRow: mock(() => Promise.reject(new Error('Delete failed'))),
     })
-    await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
-      'Delete failed'
-    )
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow('Delete failed')
   })
 
   it('propagates errors from participant deletion', async () => {
@@ -1244,7 +1230,7 @@ describe('deleteTrip', () => {
         Promise.reject(new Error('Participant delete failed'))
       ),
     })
-    await expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
       'Participant delete failed'
     )
   })
