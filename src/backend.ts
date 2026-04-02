@@ -242,22 +242,66 @@ export async function deleteTrip(
   ) {
     throw new Error('Only the coordinator can delete this trip.')
   }
-  const participants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [Query.equal('tripId', tripId), Query.limit(100)],
-    })
-  )
-  await Promise.allSettled(
-    participants.map((p) =>
+  const [participants, proposals, votes, polls] = await Promise.all([
+    fetchRows<Participant>(
+      db.listRows({
+        databaseId: DATABASE_ID,
+        tableId: PARTICIPANTS_TABLE_ID,
+        queries: [Query.equal('tripId', tripId), Query.limit(100)],
+      })
+    ),
+    fetchRows<Proposal>(
+      db.listRows({
+        databaseId: DATABASE_ID,
+        tableId: PROPOSALS_TABLE_ID,
+        queries: [Query.equal('tripId', tripId), Query.limit(100)],
+      })
+    ),
+    fetchRows<Vote>(
+      db.listRows({
+        databaseId: DATABASE_ID,
+        tableId: VOTES_TABLE_ID,
+        queries: [Query.equal('tripId', tripId), Query.limit(200)],
+      })
+    ),
+    fetchRows<Poll>(
+      db.listRows({
+        databaseId: DATABASE_ID,
+        tableId: POLLS_TABLE_ID,
+        queries: [Query.equal('tripId', tripId), Query.limit(50)],
+      })
+    ),
+  ])
+  await Promise.all([
+    ...participants.map((p) =>
       db.deleteRow({
         databaseId: DATABASE_ID,
         tableId: PARTICIPANTS_TABLE_ID,
         rowId: p.$id,
       })
-    )
-  )
+    ),
+    ...proposals.map((p) =>
+      db.deleteRow({
+        databaseId: DATABASE_ID,
+        tableId: PROPOSALS_TABLE_ID,
+        rowId: p.$id,
+      })
+    ),
+    ...votes.map((v) =>
+      db.deleteRow({
+        databaseId: DATABASE_ID,
+        tableId: VOTES_TABLE_ID,
+        rowId: v.$id,
+      })
+    ),
+    ...polls.map((p) =>
+      db.deleteRow({
+        databaseId: DATABASE_ID,
+        tableId: POLLS_TABLE_ID,
+        rowId: p.$id,
+      })
+    ),
+  ])
   await db.deleteRow({
     databaseId: DATABASE_ID,
     tableId: TRIPS_TABLE_ID,
@@ -357,6 +401,8 @@ export async function leaveTrip(
   )
   if (participants.length === 0)
     throw new Error('Participation record not found.')
+  if (participants[0].role === 'coordinator')
+    throw new Error('The coordinator cannot leave the trip.')
   await db.deleteRow({
     databaseId: DATABASE_ID,
     tableId: PARTICIPANTS_TABLE_ID,
@@ -381,7 +427,7 @@ async function _verifyParticipant(
     })
   )
   if (participants.length === 0)
-    throw new Error('You must be a participant to access proposals.')
+    throw new Error('You must be a participant to access this trip.')
 }
 
 export async function createProposal(
@@ -707,6 +753,13 @@ export async function upsertVote(
   )
   if (poll.state !== 'OPEN') {
     throw new Error('Voting is only allowed on open polls.')
+  }
+  if (proposalIds.length !== tokenCounts.length) {
+    throw new Error('proposalIds and tokenCounts must have the same length.')
+  }
+  const invalidIds = proposalIds.filter((id) => !poll.proposalIds.includes(id))
+  if (invalidIds.length > 0) {
+    throw new Error('Vote contains proposal IDs not in this poll.')
   }
   const total = tokenCounts.reduce((a, b) => a + b, 0)
   if (total > poll.proposalIds.length) {
