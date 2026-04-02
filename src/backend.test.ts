@@ -32,7 +32,7 @@ interface MockDb {
   getRow: ReturnType<typeof mock>
 }
 
-function createMockDb(overrides: Partial<MockDb> = {}): TablesDB {
+function createMockDb(overrides: Partial<MockDb> = {}): MockDb & TablesDB {
   return {
     listRows: mock(() => Promise.resolve({ rows: [] })),
     createRow: mock(() =>
@@ -46,7 +46,7 @@ function createMockDb(overrides: Partial<MockDb> = {}): TablesDB {
       Promise.resolve({ $id: 'trip-1', description: 'Ski Alps' })
     ),
     ...overrides,
-  } as TablesDB
+  } as MockDb & TablesDB
 }
 
 describe('listTrips', () => {
