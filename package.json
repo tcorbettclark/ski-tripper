@@ -2,6 +2,21 @@
   "name": "ski-tripper",
   "version": "0.0.0",
   "type": "module",
+  "description": "Ski trip planning application",
+  "author": "Timothy Corbett-Clark",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tcorbettclark/ski-tripper"
+  },
+  "homepage": "https://ski-tripper.appwrite.network",
+  "keywords": [
+    "ski",
+    "trip",
+    "planning",
+    "vacation",
+    "scheduling"
+  ],
   "scripts": {
     "dev": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --watch & bun server.js",
     "build": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --minify && cp index.html dist/",
