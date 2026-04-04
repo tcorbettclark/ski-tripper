@@ -4,6 +4,9 @@ import { execSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { extname, join } from 'node:path'
 
+// Derive a unique port number for the current git worktree/branch combination.
+// This allows multiple dev servers to run simultaneously in different worktrees
+// or on different branches without port conflicts.
 function getPort() {
   try {
     const gitDir = execSync('git rev-parse --git-dir', {
@@ -13,9 +16,11 @@ function getPort() {
       encoding: 'utf-8',
     }).trim()
     const identifier = `${gitDir}:${branch}`
+    // Hash the identifier and derive a port between 7000-7999
     const hash = createHash('sha256').update(identifier).digest()
     return (hash.readUInt16BE(0) % 1000) + 7000
   } catch {
+    // Fall back to default port if not in a git repo
     return 5173
   }
 }
@@ -42,6 +47,10 @@ Bun.serve({
       return new Response(file, {
         headers: { 'Content-Type': contentType },
       })
+    }
+    const ext = extname(url.pathname)
+    if (ext && ext !== '.html') {
+      return new Response('Not Found', { status: 404 })
     }
     return new Response(indexHtml, {
       headers: { 'Content-Type': 'text/html' },
