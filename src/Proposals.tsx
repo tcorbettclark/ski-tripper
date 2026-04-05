@@ -10,7 +10,7 @@ import {
   updateProposal as _updateProposal,
 } from './backend'
 import CreateProposalForm from './CreateProposalForm'
-import ProposalsTable from './ProposalsTable'
+import ProposalsGrid from './ProposalsGrid'
 import { randomProposal } from './randomProposal'
 import { borders, colors, fonts } from './theme'
 import type { Proposal } from './types.d.ts'
@@ -196,7 +196,7 @@ export default function Proposals({
       )}
 
       {!proposalsLoading && !proposalsError && (
-        <ProposalsTable
+        <ProposalsGrid
           proposals={proposals}
           userId={user.$id}
           isCoordinator={isCoordinator}
