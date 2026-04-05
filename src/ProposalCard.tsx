@@ -97,13 +97,8 @@ export default function ProposalCard({
           onUpdated(updated)
           setIsEditing(false)
         }}
-        onDeleted={() => {
-          setIsEditing(false)
-          onDeleted(proposal.$id)
-        }}
         onCancel={() => setIsEditing(false)}
         updateProposal={updateProposal}
-        deleteProposal={deleteProposal}
       />
     )
   }

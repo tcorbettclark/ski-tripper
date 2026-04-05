@@ -22,12 +22,10 @@ function renderForm(props = {}) {
     proposal: sampleProposal,
     userId: 'user-1',
     onUpdated: mock(() => {}),
-    onDeleted: mock(() => {}),
     onCancel: mock(() => {}),
     updateProposal: mock(() =>
       Promise.resolve({ $id: 'p-1', resortName: 'Updated' })
     ),
-    deleteProposal: mock(() => Promise.resolve()),
   }
   return render(<EditProposalForm {...defaults} {...props} />)
 }
@@ -70,35 +68,6 @@ describe('EditProposalForm', () => {
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
-  it('shows confirm dialog and calls deleteProposal and onDeleted when confirmed', async () => {
-    global.confirm = mock(() => true)
-    const onDeleted = mock(() => {})
-    const deleteProposal = mock(() => Promise.resolve())
-    renderForm({ onDeleted, deleteProposal })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
-
-    await waitFor(() => {
-      expect(global.confirm).toHaveBeenCalledWith('Delete this proposal?')
-      expect(deleteProposal).toHaveBeenCalledWith('p-1', 'user-1')
-      expect(onDeleted).toHaveBeenCalledWith('p-1')
-    })
-  })
-
-  it('skips delete when confirm returns false', async () => {
-    global.confirm = mock(() => false)
-    const onDeleted = mock(() => {})
-    const deleteProposal = mock(() => Promise.resolve())
-    renderForm({ onDeleted, deleteProposal })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
-
-    await waitFor(() => {
-      expect(deleteProposal).toHaveBeenCalledTimes(0)
-      expect(onDeleted).toHaveBeenCalledTimes(0)
-    })
-  })
-
   it('shows error message when updateProposal rejects', async () => {
     const updateProposal = mock(() =>
       Promise.reject(new Error('Update failed'))
@@ -111,20 +80,6 @@ describe('EditProposalForm', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Update failed')).toBeTruthy()
-    })
-  })
-
-  it('shows error when deleteProposal rejects', async () => {
-    global.confirm = mock(() => true)
-    const deleteProposal = mock(() =>
-      Promise.reject(new Error('Delete failed'))
-    )
-    renderForm({ deleteProposal })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
-
-    await waitFor(() => {
-      expect(screen.getByText('Delete failed')).toBeTruthy()
     })
   })
 })

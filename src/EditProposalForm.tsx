@@ -1,8 +1,5 @@
 import { useState } from 'react'
-import {
-  deleteProposal as _deleteProposal,
-  updateProposal as _updateProposal,
-} from './backend'
+import { updateProposal as _updateProposal } from './backend'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 import type { Proposal } from './types.d.ts'
@@ -11,24 +8,20 @@ interface EditProposalFormProps {
   proposal: Proposal
   userId: string
   onUpdated: (proposal: unknown) => void
-  onDeleted: (proposalId: string) => void
   onCancel: () => void
   updateProposal?: (
     proposalId: string,
     userId: string,
     data: Partial<Proposal>
   ) => Promise<unknown>
-  deleteProposal?: (proposalId: string, userId: string) => Promise<void>
 }
 
 export default function EditProposalForm({
   proposal,
   userId,
   onUpdated,
-  onDeleted,
   onCancel,
   updateProposal = _updateProposal,
-  deleteProposal = _deleteProposal,
 }: EditProposalFormProps) {
   const [form, setForm] = useState({
     resortName: proposal.resortName || '',
@@ -57,18 +50,6 @@ export default function EditProposalForm({
     try {
       const updated = await updateProposal(proposal.$id, userId, form)
       onUpdated(updated)
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
-      setSaving(false)
-    }
-  }
-
-  async function handleDelete() {
-    if (!window.confirm('Delete this proposal?')) return
-    setSaving(true)
-    try {
-      await deleteProposal(proposal.$id, userId)
-      onDeleted(proposal.$id)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
       setSaving(false)
@@ -157,14 +138,6 @@ export default function EditProposalForm({
         <button type="button" onClick={onCancel} style={styles.cancelButton}>
           Cancel
         </button>
-        <button
-          type="button"
-          onClick={handleDelete}
-          disabled={saving}
-          style={styles.deleteButton}
-        >
-          Delete
-        </button>
       </div>
     </form>
   )
@@ -211,17 +184,5 @@ const styles = {
     fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer',
-  },
-  deleteButton: {
-    padding: '8px 20px',
-    borderRadius: '6px',
-    border: '1px solid rgba(255,107,107,0.25)',
-    background: 'transparent',
-    color: colors.error,
-    fontFamily: formStyles.cancelButton.fontFamily,
-    fontSize: '13px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    marginLeft: 'auto',
   },
 } as const

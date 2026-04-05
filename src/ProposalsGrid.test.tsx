@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ProposalsGrid from './ProposalsGrid'
 import type { Proposal } from './types.d.ts'
@@ -172,7 +172,9 @@ describe('ProposalsGrid', () => {
 
     const searchInput = screen.getByPlaceholderText('Search proposals…')
     await user.type(searchInput, 'nonexistent')
-    await new Promise((r) => setTimeout(r, 350))
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 350))
+    })
 
     expect(
       screen.getByText(
