@@ -131,6 +131,8 @@ export default function ProposalCard({
         </div>
 
         <div style={styles.grid}>
+          <Field label="Depart on" value={proposal.departureDate} />
+          <Field label="Return on" value={proposal.returnDate} />
           <Field label="Altitude Range" value={proposal.altitudeRange} />
           <Field label="Nearest Airport" value={proposal.nearestAirport} />
           <Field label="Transfer Time" value={proposal.transferTime} />
@@ -194,6 +196,8 @@ export default function ProposalCard({
         </div>
 
         <div style={styles.grid}>
+          <Field label="Depart on" value={proposal.departureDate} />
+          <Field label="Return on" value={proposal.returnDate} />
           <Field label="Altitude Range" value={proposal.altitudeRange} />
           <Field label="Nearest Airport" value={proposal.nearestAirport} />
           <Field label="Transfer Time" value={proposal.transferTime} />

@@ -27,6 +27,8 @@ interface CreateProposalFormProps {
       accommodationName: string
       accommodationUrl: string
       approximateCost: string
+      departureDate: string
+      returnDate: string
     }
   ) => Promise<unknown>
   accountGet?: () => Promise<Models.User>
@@ -42,6 +44,8 @@ const EMPTY_FORM = {
   accommodationUrl: '',
   approximateCost: '',
   description: '',
+  departureDate: '',
+  returnDate: '',
 }
 
 export default function CreateProposalForm({
@@ -79,6 +83,8 @@ export default function CreateProposalForm({
         accommodationName: form.accommodationName,
         accommodationUrl: form.accommodationUrl,
         approximateCost: form.approximateCost,
+        departureDate: form.departureDate,
+        returnDate: form.returnDate,
       })
       onCreated(proposal)
       setForm(EMPTY_FORM)
@@ -148,6 +154,22 @@ export default function CreateProposalForm({
         label="Approximate Cost"
         name="approximateCost"
         value={form.approximateCost}
+        onChange={handleChange}
+        required
+      />
+      <Field
+        label="Depart on"
+        name="departureDate"
+        type="date"
+        value={form.departureDate}
+        onChange={handleChange}
+        required
+      />
+      <Field
+        label="Return on"
+        name="returnDate"
+        type="date"
+        value={form.returnDate}
         onChange={handleChange}
         required
       />

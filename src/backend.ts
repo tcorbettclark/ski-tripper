@@ -445,6 +445,8 @@ export async function createProposal(
     accommodationName?: string
     accommodationUrl?: string
     approximateCost?: string
+    departureDate?: string
+    returnDate?: string
   },
   db: TablesDB = tablesDb
 ): Promise<Proposal> {

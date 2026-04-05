@@ -33,6 +33,8 @@ export default function EditProposalForm({
     accommodationUrl: proposal.accommodationUrl || '',
     approximateCost: proposal.approximateCost || '',
     description: proposal.description || '',
+    departureDate: proposal.departureDate || '',
+    returnDate: proposal.returnDate || '',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -114,6 +116,22 @@ export default function EditProposalForm({
         label="Approximate Cost"
         name="approximateCost"
         value={form.approximateCost}
+        onChange={handleChange}
+        required
+      />
+      <Field
+        label="Depart on"
+        name="departureDate"
+        type="date"
+        value={form.departureDate}
+        onChange={handleChange}
+        required
+      />
+      <Field
+        label="Return on"
+        name="returnDate"
+        type="date"
+        value={form.returnDate}
         onChange={handleChange}
         required
       />
