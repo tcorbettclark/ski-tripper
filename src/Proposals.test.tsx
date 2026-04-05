@@ -52,7 +52,7 @@ describe('Proposals', () => {
     })
     await waitFor(() => {
       expect(listProposals).toHaveBeenCalledWith('trip-1', 'user-1')
-      expect(screen.getByText("Val d'Isère")).toBeInTheDocument()
+      expect(screen.getByText(/Val d'Isère/)).toBeInTheDocument()
     })
   })
 

@@ -70,8 +70,8 @@ describe('ProposalsGrid', () => {
       />
     )
 
-    expect(screen.getByText('A Resort')).toBeDefined()
-    expect(screen.getByText('Z Resort')).toBeDefined()
+    expect(screen.getByText(/A Resort/)).toBeDefined()
+    expect(screen.getByText(/Z Resort/)).toBeDefined()
   })
 
   it('sorts proposals alphabetically by resort name', () => {
@@ -110,8 +110,8 @@ describe('ProposalsGrid', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'DRAFT' }))
-    expect(screen.getByText('Z Resort')).toBeDefined()
-    expect(screen.queryByText('A Resort')).toBeNull()
+    expect(screen.getByText(/Z Resort/)).toBeDefined()
+    expect(screen.queryByText(/A Resort/)).toBeNull()
   })
 
   it('filters by SUBMITTED status', async () => {
@@ -131,8 +131,8 @@ describe('ProposalsGrid', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'SUBMITTED' }))
-    expect(screen.getByText('A Resort')).toBeDefined()
-    expect(screen.queryByText('Z Resort')).toBeNull()
+    expect(screen.getByText(/A Resort/)).toBeDefined()
+    expect(screen.queryByText(/Z Resort/)).toBeNull()
   })
 
   it('shows empty message when no proposals', () => {
