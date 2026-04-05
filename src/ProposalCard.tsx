@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   deleteProposal as _deleteProposal,
   rejectProposal as _rejectProposal,
+  resubmitProposal as _resubmitProposal,
   submitProposal as _submitProposal,
   updateProposal as _updateProposal,
 } from './backend'
@@ -18,6 +19,7 @@ interface ProposalCardProps {
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
+  onResubmitted?: (proposal: unknown) => void
   updateProposal?: (
     proposalId: string,
     userId: string,
@@ -26,6 +28,7 @@ interface ProposalCardProps {
   deleteProposal?: (proposalId: string, userId: string) => Promise<void>
   submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  resubmitProposal?: (proposalId: string, userId: string) => Promise<unknown>
 }
 
 export default function ProposalCard({
@@ -37,10 +40,12 @@ export default function ProposalCard({
   onDeleted,
   onSubmitted,
   onRejected = () => {},
+  onResubmitted = () => {},
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
+  resubmitProposal = _resubmitProposal,
 }: ProposalCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -48,12 +53,15 @@ export default function ProposalCard({
   const [submitError, setSubmitError] = useState('')
   const [rejecting, setRejecting] = useState(false)
   const [rejectError, setRejectError] = useState('')
+  const [resubmitting, setResubmitting] = useState(false)
+  const [resubmitError, setResubmitError] = useState('')
 
   const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'
   const isRejected = proposal.state === 'REJECTED'
   const canAct = isOwner && isDraft
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
+  const canResubmit = isCoordinator && isRejected
 
   async function handleSubmit() {
     setSubmitError('')
@@ -78,6 +86,19 @@ export default function ProposalCard({
     } catch (err: unknown) {
       setRejectError(err instanceof Error ? err.message : String(err))
       setRejecting(false)
+    }
+  }
+
+  async function handleResubmit() {
+    setResubmitError('')
+    setResubmitting(true)
+    try {
+      const result = await resubmitProposal(proposal.$id, userId)
+      setResubmitting(false)
+      onResubmitted(result)
+    } catch (err: unknown) {
+      setResubmitError(err instanceof Error ? err.message : String(err))
+      setResubmitting(false)
     }
   }
 
@@ -198,50 +219,61 @@ export default function ProposalCard({
           </div>
         </div>
 
-        {!isRejected && (
-          <div style={styles.actions}>
-            {canAct && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  style={styles.editButton}
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  style={styles.submitButton}
-                >
-                  {submitting ? 'Submitting…' : 'Submit'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  style={styles.deleteButton}
-                >
-                  Delete
-                </button>
-                {submitError && <p style={styles.errorText}>{submitError}</p>}
-              </>
-            )}
-            {canReject && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleReject}
-                  disabled={rejecting}
-                  style={styles.rejectButton}
-                >
-                  {rejecting ? 'Rejecting…' : 'Reject'}
-                </button>
-                {rejectError && <p style={styles.errorText}>{rejectError}</p>}
-              </>
-            )}
-          </div>
-        )}
+        <div style={styles.actions}>
+          {canAct && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                style={styles.editButton}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting}
+                style={styles.submitButton}
+              >
+                {submitting ? 'Submitting…' : 'Submit'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                style={styles.deleteButton}
+              >
+                Delete
+              </button>
+              {submitError && <p style={styles.errorText}>{submitError}</p>}
+            </>
+          )}
+          {canReject && (
+            <>
+              <button
+                type="button"
+                onClick={handleReject}
+                disabled={rejecting}
+                style={styles.rejectButton}
+              >
+                {rejecting ? 'Rejecting…' : 'Reject'}
+              </button>
+              {rejectError && <p style={styles.errorText}>{rejectError}</p>}
+            </>
+          )}
+          {canResubmit && (
+            <>
+              <button
+                type="button"
+                onClick={handleResubmit}
+                disabled={resubmitting}
+                style={styles.resubmitButton}
+              >
+                {resubmitting ? 'Resubmitting…' : 'Move back to Submitted'}
+              </button>
+              {resubmitError && <p style={styles.errorText}>{resubmitError}</p>}
+            </>
+          )}
+        </div>
       </div>
 
       {showDeleteConfirm && (
@@ -409,6 +441,18 @@ const styles = {
     border: '1px solid rgba(255,107,107,0.3)',
     background: 'transparent',
     color: colors.error,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em',
+  },
+  resubmitButton: {
+    padding: '6px 16px',
+    borderRadius: '5px',
+    border: '1px solid rgba(59,189,232,0.3)',
+    background: 'transparent',
+    color: colors.accent,
     fontFamily: fonts.body,
     fontSize: '12px',
     fontWeight: '500',

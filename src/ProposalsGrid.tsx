@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   deleteProposal as _deleteProposal,
   rejectProposal as _rejectProposal,
+  resubmitProposal as _resubmitProposal,
   submitProposal as _submitProposal,
   updateProposal as _updateProposal,
 } from './backend'
@@ -19,6 +20,7 @@ interface ProposalsGridProps {
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
+  onResubmitted?: (proposal: unknown) => void
   emptyMessage?: string
   updateProposal?: (
     proposalId: string,
@@ -28,6 +30,7 @@ interface ProposalsGridProps {
   deleteProposal?: (proposalId: string, userId: string) => Promise<void>
   submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  resubmitProposal?: (proposalId: string, userId: string) => Promise<unknown>
 }
 
 export default function ProposalsGrid({
@@ -38,11 +41,13 @@ export default function ProposalsGrid({
   onDeleted,
   onSubmitted,
   onRejected = () => {},
+  onResubmitted = () => {},
   emptyMessage = 'No proposals yet. Create one above.',
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
+  resubmitProposal = _resubmitProposal,
 }: ProposalsGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -134,10 +139,12 @@ export default function ProposalsGrid({
               onDeleted={onDeleted}
               onSubmitted={onSubmitted}
               onRejected={onRejected}
+              onResubmitted={onResubmitted}
               updateProposal={updateProposal}
               deleteProposal={deleteProposal}
               submitProposal={submitProposal}
               rejectProposal={rejectProposal}
+              resubmitProposal={resubmitProposal}
             />
           ))}
         </div>

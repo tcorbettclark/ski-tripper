@@ -8,6 +8,7 @@ const mockUpdateProposal = mock(async () => ({}))
 const mockDeleteProposal = mock(async () => {})
 const mockSubmitProposal = mock(async () => ({}))
 const mockRejectProposal = mock(async () => ({}))
+const mockResubmitProposal = mock(async () => ({}))
 
 const baseProposal: Proposal = {
   $id: 'proposal-1',
@@ -130,5 +131,53 @@ describe('ProposalCard', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     expect(screen.getByText('Delete Proposal?')).toBeDefined()
+  })
+
+  it('shows resubmit button for coordinator + REJECTED', () => {
+    const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
+    render(
+      <ProposalCard
+        proposal={rejectedProposal}
+        userId="user-2"
+        isCoordinator={true}
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        onRejected={() => {}}
+        onResubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+        resubmitProposal={mockResubmitProposal}
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Move back to Submitted' })
+    ).toBeDefined()
+  })
+
+  it('does not show resubmit button for non-coordinator + REJECTED', () => {
+    const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
+    render(
+      <ProposalCard
+        proposal={rejectedProposal}
+        userId="user-2"
+        isCoordinator={false}
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+        resubmitProposal={mockResubmitProposal}
+      />
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Move back to Submitted' })
+    ).toBeNull()
   })
 })

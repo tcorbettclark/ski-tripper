@@ -620,6 +620,38 @@ export async function rejectProposal(
   )
 }
 
+export async function resubmitProposal(
+  proposalId: string,
+  pollCreatorUserId: string,
+  db: TablesDB = tablesDb
+): Promise<Proposal> {
+  const proposal = await fetchRow<Proposal>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: PROPOSALS_TABLE_ID,
+      rowId: proposalId,
+    })
+  )
+  if (proposal.state !== 'REJECTED') {
+    throw new Error('Only rejected proposals can be resubmitted.')
+  }
+  const { participants } = await getCoordinatorParticipant(proposal.tripId, db)
+  if (
+    participants.length === 0 ||
+    participants[0].participantUserId !== pollCreatorUserId
+  ) {
+    throw new Error('Only the coordinator can resubmit this proposal.')
+  }
+  return fetchRow<Proposal>(
+    db.updateRow({
+      databaseId: DATABASE_ID,
+      tableId: PROPOSALS_TABLE_ID,
+      rowId: proposalId,
+      data: { state: 'SUBMITTED' } as Record<string, unknown>,
+    })
+  )
+}
+
 export async function createPoll(
   tripId: string,
   pollCreatorUserId: string,
