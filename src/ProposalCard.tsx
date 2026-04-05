@@ -108,7 +108,11 @@ export default function ProposalCard({
       <div style={styles.card}>
         <div style={styles.header}>
           <div>
-            <h3 style={styles.resortName}>{proposal.resortName || '—'}</h3>
+            <h3 style={styles.resortName}>
+              {proposal.resortName || '—'}
+              {proposal.accommodationName &&
+                ` (at ${proposal.accommodationName})`}
+            </h3>
             <div style={styles.subHeader}>
               <span>{proposal.country || '—'}</span>
               <span style={getBadgeStyle(proposal.state)}>

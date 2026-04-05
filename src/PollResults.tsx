@@ -46,7 +46,11 @@ export default function PollResults({
         return (
           <div key={proposalId} style={styles.row}>
             <div style={styles.label} data-testid="proposal-label">
-              {proposal?.resortName || proposalId}
+              {proposal
+                ? proposal.accommodationName
+                  ? `${proposal.resortName} (at ${proposal.accommodationName})`
+                  : proposal.resortName
+                : proposalId}
             </div>
             <div style={styles.barTrack}>
               <div style={{ ...styles.bar, width: barWidth }} />

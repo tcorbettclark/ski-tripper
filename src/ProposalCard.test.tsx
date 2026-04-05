@@ -47,7 +47,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.getByText('Test Resort')).toBeDefined()
+    expect(screen.getByText(/Test Resort \(at Test Hotel\)/)).toBeDefined()
     expect(screen.getByText('Test Country')).toBeDefined()
     expect(screen.getByText('DRAFT')).toBeDefined()
     expect(screen.getByText('John Doe')).toBeDefined()
