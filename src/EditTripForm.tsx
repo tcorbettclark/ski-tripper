@@ -33,7 +33,11 @@ export default function EditTripForm({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleChange(
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
   }
 
