@@ -31,7 +31,7 @@
     "cors-finder": "bash scripts/find-cors-test.sh"
   },
   "dependencies": {
-    "appwrite": "^24.0.0",
+    "appwrite": "^24.1.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "threewords": "^0.0.1"
@@ -42,13 +42,13 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^25.5.0",
+    "@types/node": "^25.5.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "bun-types": "^1.3.11",
     "globals": "^17.4.0",
-    "lefthook": "^2.1.4",
-    "node-appwrite": "^23.0.0",
+    "lefthook": "^2.1.5",
+    "node-appwrite": "^23.1.0",
     "typescript": "^6.0.2"
   }
 }
