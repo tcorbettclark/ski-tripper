@@ -15,7 +15,7 @@
     "isolatedModules": true,
     "types": ["node", "react", "react-dom"]
   },
-  "include": ["src"],
+  "include": ["src", "scripts"],
   "exclude": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
