@@ -1,16 +1,29 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Models } from 'appwrite'
 import TripOverview from './TripOverview'
 
-const trip = { $id: 'trip-1', code: 'abc-123', description: 'Old description' }
+const trip = {
+  $id: 'trip-1',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
+  code: 'abc-123',
+  description: 'Old description',
+}
 const currentUser = {
   $id: 'user-1',
   name: 'Alice',
   email: 'alice@example.com',
-}
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
+  registration: '2024-01-01T00:00:00.000Z',
+  status: 'active',
+} as unknown as Models.User
 const updatedTrip = {
   $id: 'trip-1',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-02T00:00:00.000Z',
   code: 'abc-123',
   description: 'New description',
 }
@@ -43,26 +56,26 @@ async function renderOverview(props = {}) {
     />
   )
   await waitFor(() =>
-    expect(screen.queryByText('Loading participants…')).not.toBeInTheDocument()
+    expect(screen.queryByText('Loading participants…')).toBeNull()
   )
 }
 
 describe('TripOverview', () => {
   it('shows the trip description', async () => {
     await renderOverview()
-    expect(screen.getByText('Old description')).toBeInTheDocument()
+    expect(screen.getByText('Old description'))
   })
 
   it('shows the Edit button for the coordinator', async () => {
     await renderOverview()
-    expect(screen.getByRole('button', { name: /^edit$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^edit$/i }))
   })
 
   it('shows EditTripForm when Edit is clicked', async () => {
     const ue = userEvent.setup()
     await renderOverview()
     await ue.click(screen.getByRole('button', { name: /^edit$/i }))
-    expect(screen.getByRole('button', { name: /^save$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^save$/i }))
   })
 
   it('calls onUpdated with the updated trip after saving', async () => {
@@ -90,9 +103,7 @@ describe('TripOverview', () => {
     await ue.click(screen.getByRole('button', { name: /^save$/i }))
 
     await waitFor(() => {
-      expect(
-        screen.queryByRole('button', { name: /^save$/i })
-      ).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /^save$/i })).toBeNull()
     })
   })
 })

@@ -2,17 +2,24 @@ import { describe, expect, it, mock } from 'bun:test'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import TripRow from './TripRow'
+import type { Trip } from './types.d.ts'
 
-const sampleTrip = {
+interface RenderRowProps {
+  onSelectTrip?: () => void
+  coordinatorUserId?: string
+}
+
+const sampleTrip: Trip = {
   $id: 'trip-1',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
   code: 'ABC12',
-  name: 'Ski Alps',
   description: 'A great trip',
 }
 
 const noop = () => {}
 
-async function renderRow(trip, props = {}) {
+async function renderRow(trip: Trip, props: RenderRowProps = {}) {
   await act(async () => {
     render(
       <table>
@@ -40,12 +47,12 @@ async function renderRow(trip, props = {}) {
 describe('TripRow', () => {
   it('displays the trip description', async () => {
     await renderRow(sampleTrip)
-    expect(screen.getByText('A great trip')).toBeInTheDocument()
+    expect(screen.getByText('A great trip'))
   })
 
   it('shows the coordinator name', async () => {
     await renderRow(sampleTrip)
-    expect(screen.getByText(/Test User/)).toBeInTheDocument()
+    expect(screen.getByText(/Test User/))
   })
 
   it('shows a dash when description is empty', async () => {

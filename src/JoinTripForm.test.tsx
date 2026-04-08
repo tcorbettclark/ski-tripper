@@ -1,6 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Models } from 'appwrite'
 import JoinTripForm from './JoinTripForm'
 
 const noop = () => {}
@@ -8,7 +9,7 @@ const testUser = {
   $id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-}
+} as Models.User
 const ownTrip = { $id: 'trip-1', code: 'abc-def-ghi', name: 'My Trip' }
 const otherTrip = { $id: 'trip-2', code: 'xyz-uvw-rst', name: 'Other Trip' }
 
@@ -29,7 +30,7 @@ function renderForm(props = {}) {
 describe('JoinTripForm', () => {
   it('shows the trip code field', () => {
     renderForm()
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
+    expect(screen.getByRole('textbox'))
   })
 
   it('calls onDismiss when Cancel is clicked', async () => {
@@ -97,9 +98,7 @@ describe('JoinTripForm', () => {
     await user.click(screen.getByRole('button', { name: /join trip/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText('No trip found with that code.')
-      ).toBeInTheDocument()
+      expect(screen.getByText('No trip found with that code.'))
     })
   })
 
@@ -115,9 +114,7 @@ describe('JoinTripForm', () => {
     await user.click(screen.getByRole('button', { name: /join trip/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText('You have already joined this trip.')
-      ).toBeInTheDocument()
+      expect(screen.getByText('You have already joined this trip.'))
     })
   })
 })

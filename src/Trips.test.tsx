@@ -1,20 +1,39 @@
 import { describe, expect, it } from 'bun:test'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Models } from 'appwrite'
 import Trips from './Trips'
+import type { Trip } from './types'
+
+interface RenderTripsProps {
+  user?: Models.User
+  trips?: Trip[]
+  onSelectTrip?: (tripId: string) => void
+  onJoinedTrip?: () => void
+  createTrip?: () => Promise<{ $id: string; description: string; code: string }>
+  getTripByCode?: () => Promise<{ trips: Trip[] }>
+  joinTrip?: () => Promise<void>
+  getCoordinatorParticipant?: () => Promise<{
+    participants: Array<{
+      participantUserId: string
+      participantUserName: string
+    }>
+  }>
+}
 
 const testUser = {
   $id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-}
+} as Models.User
+
 const defaultTrip = {
   $id: 'new-trip',
   description: 'New Trip',
   code: 'aaa-bbb-ccc',
 }
 
-function renderTrips(props = {}) {
+function renderTrips(props: RenderTripsProps = {}) {
   return render(
     <Trips
       user={testUser}
@@ -24,9 +43,6 @@ function renderTrips(props = {}) {
       createTrip={() => Promise.resolve(defaultTrip)}
       getTripByCode={() => Promise.resolve({ trips: [] })}
       joinTrip={() => Promise.resolve()}
-      updateTrip={() => Promise.resolve(defaultTrip)}
-      deleteTrip={() => Promise.resolve()}
-      leaveTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() =>
         Promise.resolve({
           participants: [
@@ -44,13 +60,9 @@ describe('Trips', () => {
       renderTrips()
     })
     await waitFor(() => {
-      expect(screen.getByText('My Trips')).toBeInTheDocument()
-      expect(
-        screen.getByRole('button', { name: /\+ new trip/i })
-      ).toBeInTheDocument()
-      expect(
-        screen.getByRole('button', { name: /\+ join trip/i })
-      ).toBeInTheDocument()
+      expect(screen.getByText('My Trips'))
+      expect(screen.getByRole('button', { name: /\+ new trip/i }))
+      expect(screen.getByRole('button', { name: /\+ join trip/i }))
     })
   })
 
@@ -59,7 +71,7 @@ describe('Trips', () => {
       renderTrips({ trips: [] })
     })
     await waitFor(() => {
-      expect(screen.getByText(/no trips yet/i)).toBeInTheDocument()
+      expect(screen.getByText(/no trips yet/i))
     })
   })
 
@@ -67,14 +79,26 @@ describe('Trips', () => {
     await act(async () => {
       renderTrips({
         trips: [
-          { $id: 't-1', description: "Val d'Isere week", code: 'aaa-bbb-ccc' },
-          { $id: 't-2', description: 'Chamonix weekend', code: 'ddd-eee-fff' },
+          {
+            $id: 't-1',
+            description: "Val d'Isere week",
+            code: 'aaa-bbb-ccc',
+            $createdAt: '2024-01-01T00:00:00.000Z',
+            $updatedAt: '2024-01-01T00:00:00.000Z',
+          },
+          {
+            $id: 't-2',
+            description: 'Chamonix weekend',
+            code: 'ddd-eee-fff',
+            $createdAt: '2024-01-01T00:00:00.000Z',
+            $updatedAt: '2024-01-01T00:00:00.000Z',
+          },
         ],
       })
     })
     await waitFor(() => {
-      expect(screen.getByText("Val d'Isere week")).toBeInTheDocument()
-      expect(screen.getByText('Chamonix weekend')).toBeInTheDocument()
+      expect(screen.getByText("Val d'Isere week"))
+      expect(screen.getByText('Chamonix weekend'))
     })
   })
 
@@ -83,13 +107,21 @@ describe('Trips', () => {
     const handleSelectTrip = () => {}
     await act(async () => {
       renderTrips({
-        trips: [{ $id: 't-1', description: 'Test Trip', code: 'xxx-yyy-zzz' }],
+        trips: [
+          {
+            $id: 't-1',
+            description: 'Test Trip',
+            code: 'xxx-yyy-zzz',
+            $createdAt: '2024-01-01T00:00:00.000Z',
+            $updatedAt: '2024-01-01T00:00:00.000Z',
+          },
+        ],
         onSelectTrip: handleSelectTrip,
       })
     })
     await user.click(screen.getByText('Test Trip'))
     await waitFor(() => {
-      expect(screen.getByText('Test Trip')).toBeInTheDocument()
+      expect(screen.getByText('Test Trip'))
     })
   })
 })

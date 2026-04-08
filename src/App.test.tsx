@@ -1,20 +1,26 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Models } from 'appwrite'
 import App from './App'
+import type { Trip } from './types.d.ts'
 
-const defaultUser = {
+const defaultUser: Models.User = {
   $id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-}
-const sampleTrip = {
+} as Models.User
+const sampleTrip: Trip = {
   $id: 'trip-1',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
   code: 'abc-123',
   description: 'Alps adventure',
 }
-const updatedTrip = {
+const updatedTrip: Trip = {
   $id: 'trip-1',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
   code: 'abc-123',
   description: 'Dolomites adventure',
 }
@@ -24,7 +30,7 @@ function renderApp(props = {}) {
     <App
       accountGet={() => Promise.resolve(defaultUser)}
       deleteSession={() => Promise.resolve()}
-      listTrips={() => Promise.resolve({ trips: [] })}
+      listTrips={() => Promise.resolve({ trips: [], coordinatorUserIds: {} })}
       listParticipatedTrips={() => Promise.resolve({ trips: [] })}
       listTripParticipants={() => Promise.resolve({ participants: [] })}
       updateTrip={() => Promise.resolve(updatedTrip)}
@@ -41,7 +47,9 @@ function renderAppWithTrip(props = {}) {
     <App
       accountGet={() => Promise.resolve(defaultUser)}
       deleteSession={() => Promise.resolve()}
-      listTrips={() => Promise.resolve({ trips: [sampleTrip] })}
+      listTrips={() =>
+        Promise.resolve({ trips: [sampleTrip], coordinatorUserIds: {} })
+      }
       listParticipatedTrips={() => Promise.resolve({ trips: [] })}
       listTripParticipants={() => Promise.resolve({ participants: [] })}
       updateTrip={() => Promise.resolve(updatedTrip)}
@@ -59,25 +67,21 @@ describe('App', () => {
       accountGet: () => Promise.reject(new Error('Not authenticated')),
     })
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /sign in/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /sign in/i }))
     })
   })
 
   it('shows the trips interface when authenticated', async () => {
     renderApp()
     await waitFor(() => {
-      expect(screen.getByText('Test User')).toBeInTheDocument()
+      expect(screen.getByText('Test User'))
     })
   })
 
   it('shows the Sign Out button when authenticated', async () => {
     renderApp()
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /sign out/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /sign out/i }))
     })
   })
 
@@ -88,16 +92,12 @@ describe('App', () => {
     })
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /sign in/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /sign in/i }))
     })
     await user.click(screen.getByRole('button', { name: /sign up/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /create account/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /create account/i }))
     })
   })
 
@@ -115,9 +115,7 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('heading', { name: /sign in/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /sign in/i }))
     })
   })
 
@@ -131,7 +129,7 @@ describe('App', () => {
         }),
     })
     await waitFor(() => {
-      expect(screen.getByText('nameless@example.com')).toBeInTheDocument()
+      expect(screen.getByText('nameless@example.com'))
     })
   })
 
@@ -141,24 +139,20 @@ describe('App', () => {
     renderApp({ deleteSession: mockDelete })
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /sign out/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /sign out/i }))
     })
     await user.click(screen.getByRole('button', { name: /sign out/i }))
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledTimes(1)
-      expect(
-        screen.getByRole('heading', { name: /sign in/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: /sign in/i }))
     })
   })
 
   it('shows the trip description in the trip table', async () => {
     renderAppWithTrip()
     await waitFor(() => {
-      expect(screen.getByText('Alps adventure')).toBeInTheDocument()
+      expect(screen.getByText('Alps adventure'))
     })
   })
 
@@ -170,7 +164,7 @@ describe('App', () => {
     await ue.click(screen.getByText('Alps adventure'))
 
     await waitFor(() => {
-      expect(screen.getByText('Trip Details')).toBeInTheDocument()
+      expect(screen.getByText('Trip Details'))
       expect(screen.getAllByText('Alps adventure').length).toBeGreaterThan(0)
     })
   })
@@ -193,7 +187,12 @@ describe('App', () => {
       <App
         accountGet={() => Promise.resolve(defaultUser)}
         deleteSession={() => Promise.resolve()}
-        listTrips={() => Promise.resolve({ trips: [sampleTrip] })}
+        listTrips={() =>
+          Promise.resolve({
+            trips: [sampleTrip],
+            coordinatorUserIds: {},
+          })
+        }
         listParticipatedTrips={listParticipatedTrips}
         listTripParticipants={() => Promise.resolve({ participants: [] })}
         updateTrip={() => Promise.resolve(updatedTrip)}
@@ -225,6 +224,6 @@ describe('App', () => {
     // Navigating back to the list also shows the updated description in the table
     await ue.click(screen.getByRole('button', { name: /my trips/i }))
     await waitFor(() => screen.getByRole('heading', { name: /^my trips$/i }))
-    expect(screen.getByText('Dolomites adventure')).toBeInTheDocument()
+    expect(screen.getByText('Dolomites adventure'))
   })
 })

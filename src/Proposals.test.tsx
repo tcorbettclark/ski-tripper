@@ -1,14 +1,20 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { Models } from 'appwrite'
 import Proposals from './Proposals'
 
-const user = { $id: 'user-1', name: 'Alice' }
+const user = { $id: 'user-1', name: 'Alice' } as Models.User
 
 const sampleProposals = [
   {
     $id: 'p-1',
+    $createdAt: '2024-01-01T00:00:00.000Z',
+    $updatedAt: '2024-01-01T00:00:00.000Z',
     proposerUserId: 'user-1',
+    proposerUserName: 'Alice',
+    tripId: 'trip-1',
     state: 'DRAFT' as const,
+    title: "Val d'Isère Trip",
     resortName: "Val d'Isère",
     country: 'France',
     altitudeRange: '1850m - 3456m',
@@ -18,6 +24,8 @@ const sampleProposals = [
     accommodationUrl: '',
     approximateCost: '£1200',
     description: 'Nice resort',
+    departureDate: '2024-12-01',
+    returnDate: '2024-12-08',
   },
 ]
 
@@ -25,7 +33,9 @@ function renderProposals(props = {}) {
   const defaults = {
     user,
     tripId: 'trip-1',
-    listProposals: mock(() => Promise.resolve({ proposals: sampleProposals })),
+    listProposals: mock((_tripId: string, _userId: string) =>
+      Promise.resolve({ proposals: sampleProposals })
+    ),
     createProposal: mock(() => Promise.resolve({ $id: 'p-new' })),
     updateProposal: mock(() => Promise.resolve({ $id: 'p-1' })),
     deleteProposal: mock(() => Promise.resolve()),
@@ -52,7 +62,7 @@ describe('Proposals', () => {
     })
     await waitFor(() => {
       expect(listProposals).toHaveBeenCalledWith('trip-1', 'user-1')
-      expect(screen.getByText(/Val d'Isère/)).toBeInTheDocument()
+      expect(screen.getByText(/Val d'Isère/))
     })
   })
 
@@ -64,7 +74,7 @@ describe('Proposals', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/no proposals yet/i)).toBeInTheDocument()
+      expect(screen.getByText(/no proposals yet/i))
     })
   })
 
@@ -73,9 +83,7 @@ describe('Proposals', () => {
       renderProposals({ tripId: 'trip-1' })
     })
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /\+ new proposal/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /\+ new proposal/i }))
     })
   })
 
@@ -84,9 +92,7 @@ describe('Proposals', () => {
       renderProposals({ tripId: 'trip-1' })
     })
     await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: /\+ new proposal/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /\+ new proposal/i }))
     )
 
     await act(async () => {
@@ -94,9 +100,7 @@ describe('Proposals', () => {
     })
 
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /create proposal/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /create proposal/i }))
     })
   })
 
@@ -125,7 +129,7 @@ describe('Proposals', () => {
     await act(async () => {
       rerender(
         <Proposals
-          user={user}
+          user={user as Models.User}
           tripId="trip-2"
           listProposals={listProposals}
           createProposal={mock(() => Promise.resolve({ $id: 'p-new' }))}
@@ -164,9 +168,7 @@ describe('Proposals', () => {
       })
     })
     await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /^reject$/i })
-      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /^reject$/i }))
     })
   })
 
@@ -186,9 +188,7 @@ describe('Proposals', () => {
       })
     })
     await waitFor(() => {
-      expect(
-        screen.queryByRole('button', { name: /^reject$/i })
-      ).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /^reject$/i })).toBeNull()
     })
   })
 })

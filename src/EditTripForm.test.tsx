@@ -5,6 +5,9 @@ import EditTripForm from './EditTripForm'
 
 const sampleTrip = {
   $id: 'trip-1',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
+  code: 'aaa-bbb-ccc',
   name: 'Ski Alps',
   description: 'A great trip',
 }
@@ -33,7 +36,9 @@ function renderForm(props = {}) {
 describe('EditTripForm', () => {
   it('pre-fills the description field from the trip prop', () => {
     renderForm()
-    expect(screen.getByRole('textbox')).toHaveValue('A great trip')
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe(
+      'A great trip'
+    )
   })
 
   it('calls updateTrip and onUpdated when the form is saved', async () => {
@@ -100,7 +105,7 @@ describe('EditTripForm', () => {
     await user.click(screen.getByRole('button', { name: /^save$/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Save failed')).toBeInTheDocument()
+      expect(screen.getByText('Save failed'))
     })
   })
 })

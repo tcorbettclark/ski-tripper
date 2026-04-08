@@ -1,6 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Models } from 'appwrite'
 import CreateTripForm from './CreateTripForm'
 
 const noop = () => {}
@@ -8,7 +9,7 @@ const testUser = {
   $id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-}
+} as Models.User
 const defaultTrip = {
   $id: 'new-trip',
   description: 'New Trip',
@@ -22,7 +23,7 @@ function renderForm(props = {}) {
       onCreated={noop}
       onDismiss={noop}
       createTrip={() => Promise.resolve(defaultTrip)}
-      accountGet={() => Promise.resolve(testUser)}
+      accountGet={() => Promise.resolve(testUser) as Promise<Models.User>}
       {...props}
     />
   )
@@ -31,7 +32,7 @@ function renderForm(props = {}) {
 describe('CreateTripForm', () => {
   it('shows the description field', () => {
     renderForm()
-    expect(screen.getByRole('textbox')).toBeInTheDocument()
+    expect(screen.getByRole('textbox'))
   })
 
   it('calls createTrip and onCreated when a valid form is submitted', async () => {
@@ -90,7 +91,7 @@ describe('CreateTripForm', () => {
     await user.click(screen.getByRole('button', { name: /save trip/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('API error')).toBeInTheDocument()
+      expect(screen.getByText('API error'))
     })
   })
 })

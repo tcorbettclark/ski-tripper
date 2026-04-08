@@ -18,5 +18,5 @@ export function createStrictMockDb(): TablesDB {
     deleteRow: mock(() => {
       throw new Error('FORGOT TO MOCK: deleteRow()')
     }),
-  } as TablesDB
+  } as unknown as TablesDB
 }

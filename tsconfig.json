@@ -13,14 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["node", "react", "react-dom"]
+    "types": ["node", "react", "react-dom", "bun"]
   },
-  "include": ["src", "scripts"],
-  "exclude": [
-    "src/**/*.test.ts",
-    "src/**/*.test.tsx",
-    "src/test-setup.ts",
-    "src/test.d.ts",
-    "src/test-utils.ts"
-  ]
+  "include": ["src", "scripts"]
 }

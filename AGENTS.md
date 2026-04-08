@@ -36,7 +36,7 @@ Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
 - Bun test runner + React Testing Library + `@testing-library/user-event`
 - Test files: `ComponentName.test.tsx` alongside `ComponentName.tsx`
 - `import { describe, it, expect, mock } from 'bun:test'`
-- Use `@testing-library/jest-dom` matchers
+- Use built-in Bun test matchers (`toBeNull`, `toHaveAttribute`, etc.)
 - happy-dom globals in `src/test-setup.ts`
 
 ## DO NOT

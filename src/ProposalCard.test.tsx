@@ -21,8 +21,8 @@ const baseProposal: Proposal = {
   title: 'Test Proposal',
   description: 'A test proposal description',
   resortName: 'Test Resort',
-  startDate: '2024-01-01',
-  endDate: '2024-01-07',
+  departureDate: '2024-01-01',
+  returnDate: '2024-01-07',
   nearestAirport: 'TEST',
   transferTime: '1 hour',
   accommodationName: 'Test Hotel',
@@ -199,7 +199,7 @@ describe('ProposalCard', () => {
 
     const flagImg = screen.getByRole('img', { name: 'France' })
     expect(flagImg).toBeDefined()
-    expect(flagImg).toHaveAttribute('src', 'https://flagcdn.com/w20/fr.png')
+    expect(flagImg.getAttribute('src')).toBe('https://flagcdn.com/w20/fr.png')
   })
 
   it('does not display flag for unsupported countries', () => {
@@ -240,6 +240,6 @@ describe('ProposalCard', () => {
 
     const flagImg = screen.getByRole('img', { name: 'Japan' })
     expect(flagImg).toBeDefined()
-    expect(flagImg).toHaveAttribute('src', 'https://flagcdn.com/w20/jp.png')
+    expect(flagImg.getAttribute('src')).toBe('https://flagcdn.com/w20/jp.png')
   })
 })

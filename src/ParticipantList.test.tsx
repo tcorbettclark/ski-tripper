@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
+import type { ReactNode } from 'react'
 import ParticipantList from './ParticipantList'
 
 describe('ParticipantList', () => {
@@ -10,7 +11,7 @@ describe('ParticipantList', () => {
         listTripParticipants={() => new Promise(() => {})}
       />
     )
-    expect(screen.getByText('Loading participants…')).toBeInTheDocument()
+    expect(screen.getByText('Loading participants…'))
   })
 
   it('renders participant names and roles', async () => {
@@ -28,14 +29,12 @@ describe('ParticipantList', () => {
       />
     )
     await waitFor(() =>
-      expect(
-        screen.queryByText('Loading participants…')
-      ).not.toBeInTheDocument()
+      expect(screen.queryByText('Loading participants…')).toBeNull()
     )
-    expect(screen.getByText('Alice')).toBeInTheDocument()
-    expect(screen.getByText('coordinator')).toBeInTheDocument()
-    expect(screen.getByText('Bob')).toBeInTheDocument()
-    expect(screen.getByText('participant')).toBeInTheDocument()
+    expect(screen.getByText('Alice'))
+    expect(screen.getByText('coordinator'))
+    expect(screen.getByText('Bob'))
+    expect(screen.getByText('participant'))
   })
 
   it('renders an empty list when there are no participants', async () => {
@@ -46,20 +45,27 @@ describe('ParticipantList', () => {
       />
     )
     await waitFor(() =>
-      expect(
-        screen.queryByText('Loading participants…')
-      ).not.toBeInTheDocument()
+      expect(screen.queryByText('Loading participants…')).toBeNull()
     )
-    expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+    expect(screen.queryByRole('listitem')).toBeNull()
   })
 
   it('surfaces fetch errors so ErrorBoundary can catch them', async () => {
-    class ErrorBoundary extends (await import('react')).Component {
-      constructor(props) {
+    interface ErrorBoundaryProps {
+      children?: ReactNode
+    }
+    interface ErrorBoundaryState {
+      error: Error | null
+    }
+    class ErrorBoundary extends (await import('react')).Component<
+      ErrorBoundaryProps,
+      ErrorBoundaryState
+    > {
+      constructor(props: ErrorBoundaryProps) {
         super(props)
         this.state = { error: null }
       }
-      static getDerivedStateFromError(error) {
+      static getDerivedStateFromError(error: Error) {
         return { error }
       }
       render() {
@@ -82,9 +88,7 @@ describe('ParticipantList', () => {
           />
         </ErrorBoundary>
       )
-      await waitFor(() =>
-        expect(screen.getByText('caught: boom')).toBeInTheDocument()
-      )
+      await waitFor(() => expect(screen.getByText('caught: boom')))
     } finally {
       console.error = originalError
     }

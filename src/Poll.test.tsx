@@ -7,6 +7,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
+import type { Models } from 'appwrite'
 import Poll from './Poll'
 
 // Constants for test data
@@ -22,7 +23,10 @@ const TEST_IDS = {
   PARTICIPANT_1: 'part-1',
 } as const
 
-const MOCK_USER = { $id: TEST_IDS.USER, name: TEST_IDS.USER_NAME }
+const MOCK_USER = {
+  $id: TEST_IDS.USER,
+  name: TEST_IDS.USER_NAME,
+} as Models.User
 
 // Factory functions for creating mock data
 function createMockProposal(overrides: Record<string, unknown> = {}) {
@@ -104,7 +108,8 @@ function createNonCoordinatorMock() {
 }
 
 // Helper function for rendering with proper defaults
-function renderPoll(overrides: Record<string, unknown> = {}) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderPoll(overrides: any = {}) {
   const callbacks = createMockCallbacks(overrides)
   const result = render(
     <Poll
@@ -138,7 +143,7 @@ describe('Poll', () => {
       })
 
       // Should show loading state before data resolves
-      expect(screen.getByText(/Loading poll…/i)).toBeInTheDocument()
+      expect(screen.getByText(/Loading poll…/i))
 
       // Resolve to clear loading state
       await act(async () => {
@@ -146,7 +151,7 @@ describe('Poll', () => {
       })
 
       await waitFor(() => {
-        expect(screen.queryByText(/Loading poll…/i)).not.toBeInTheDocument()
+        expect(screen.queryByText(/Loading poll…/i)).toBeNull()
       })
     })
 
@@ -155,7 +160,7 @@ describe('Poll', () => {
         renderPoll()
       })
       await waitFor(() => {
-        expect(screen.queryByText(/Loading poll…/i)).not.toBeInTheDocument()
+        expect(screen.queryByText(/Loading poll…/i)).toBeNull()
       })
     })
   })
@@ -168,9 +173,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /create poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /create poll/i }))
       })
     })
 
@@ -183,7 +186,7 @@ describe('Poll', () => {
       await waitFor(() => {
         expect(
           screen.queryByRole('button', { name: /create poll/i })
-        ).not.toBeInTheDocument()
+        ).toBeNull()
       })
     })
 
@@ -201,7 +204,7 @@ describe('Poll', () => {
       await waitFor(() => {
         expect(
           screen.queryByRole('button', { name: /create poll/i })
-        ).not.toBeInTheDocument()
+        ).toBeNull()
       })
     })
 
@@ -215,7 +218,7 @@ describe('Poll', () => {
       await waitFor(() => {
         expect(
           screen.queryByRole('button', { name: /create poll/i })
-        ).not.toBeInTheDocument()
+        ).toBeNull()
       })
     })
 
@@ -228,9 +231,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /create poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /create poll/i }))
       })
 
       await act(async () => {
@@ -261,16 +262,17 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /create poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /create poll/i }))
       })
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
       })
 
-      expect(screen.getByRole('button', { name: /Creating/i })).toBeDisabled()
+      expect(
+        (screen.getByRole('button', { name: /Creating/i }) as HTMLButtonElement)
+          .disabled
+      ).toBe(true)
 
       await act(async () => {
         resolveCreate?.(createMockPoll())
@@ -288,16 +290,14 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /create poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /create poll/i }))
       })
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
       })
       await waitFor(() => {
-        expect(screen.getByText(/Failed to create poll/i)).toBeInTheDocument()
+        expect(screen.getByText(/Failed to create poll/i))
       })
     })
   })
@@ -310,7 +310,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Active Poll/i)).toBeInTheDocument()
+        expect(screen.getByText(/Active Poll/i))
       })
     })
 
@@ -341,7 +341,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Votes so far/i)).toBeInTheDocument()
+        expect(screen.getByText(/Votes so far/i))
       })
     })
   })
@@ -355,9 +355,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /close poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /close poll/i }))
       })
     })
 
@@ -369,9 +367,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.queryByRole('button', { name: /close poll/i })
-        ).not.toBeInTheDocument()
+        expect(screen.queryByRole('button', { name: /close poll/i })).toBeNull()
       })
     })
 
@@ -389,9 +385,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /close poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /close poll/i }))
       })
 
       await act(async () => {
@@ -415,16 +409,14 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /close poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /close poll/i }))
       })
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
       })
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i)).toBeInTheDocument()
+        expect(screen.getByText(/Past Polls/i))
       })
     })
 
@@ -445,16 +437,17 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /close poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /close poll/i }))
       })
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
       })
 
-      expect(screen.getByRole('button', { name: /Closing/i })).toBeDisabled()
+      expect(
+        (screen.getByRole('button', { name: /Closing/i }) as HTMLButtonElement)
+          .disabled
+      ).toBe(true)
 
       await act(async () => {
         resolveClose?.(
@@ -475,16 +468,14 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByRole('button', { name: /close poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /close poll/i }))
       })
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
       })
       await waitFor(() => {
-        expect(screen.getByText(/Failed to close poll/i)).toBeInTheDocument()
+        expect(screen.getByText(/Failed to close poll/i))
       })
     })
   })
@@ -503,7 +494,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i)).toBeInTheDocument()
+        expect(screen.getByText(/Past Polls/i))
       })
     })
 
@@ -521,11 +512,11 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i)).toBeInTheDocument()
-        expect(screen.getByText(/Poll · CLOSED/i)).toBeInTheDocument()
-        expect(screen.getByText(/29 Mar 2026/i)).toBeInTheDocument()
-        expect(screen.getByText(/04 Apr 2026/i)).toBeInTheDocument()
-        expect(screen.getByText(/1 vote/i)).toBeInTheDocument()
+        expect(screen.getByText(/Past Polls/i))
+        expect(screen.getByText(/Poll · CLOSED/i))
+        expect(screen.getByText(/29 Mar 2026/i))
+        expect(screen.getByText(/04 Apr 2026/i))
+        expect(screen.getByText(/1 vote/i))
       })
     })
 
@@ -572,7 +563,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i)).toBeInTheDocument()
+        expect(screen.getByText(/Past Polls/i))
         expect(screen.getAllByText(/Poll · CLOSED/i)).toHaveLength(2)
       })
     })
@@ -627,14 +618,14 @@ describe('Poll', () => {
           <Poll
             user={MOCK_USER}
             tripId="trip-2"
-            listPolls={listPolls}
-            listProposals={createMockCallbacks().listProposals}
-            listVotes={createMockCallbacks().listVotes}
-            createPoll={createMockCallbacks().createPoll}
-            closePoll={createMockCallbacks().closePoll}
-            upsertVote={createMockCallbacks().upsertVote}
+            listPolls={listPolls as any}
+            listProposals={createMockCallbacks().listProposals as any}
+            listVotes={createMockCallbacks().listVotes as any}
+            createPoll={createMockCallbacks().createPoll as any}
+            closePoll={createMockCallbacks().closePoll as any}
+            upsertVote={createMockCallbacks().upsertVote as any}
             getCoordinatorParticipant={
-              createMockCallbacks().getCoordinatorParticipant
+              createMockCallbacks().getCoordinatorParticipant as any
             }
           />
         )
@@ -654,7 +645,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Network error/i)).toBeInTheDocument()
+        expect(screen.getByText(/Network error/i))
       })
     })
 
@@ -667,9 +658,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(
-          screen.getByText(/Failed to load proposals/i)
-        ).toBeInTheDocument()
+        expect(screen.getByText(/Failed to load proposals/i))
       })
     })
   })
@@ -682,7 +671,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.queryByText(/Loading poll/i)).not.toBeInTheDocument()
+        expect(screen.queryByText(/Loading poll/i)).toBeNull()
       })
     })
 
@@ -701,7 +690,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i)).toBeInTheDocument()
+        expect(screen.getByText(/Past Polls/i))
         expect(screen.getAllByText(/Poll · CLOSED/i)).toHaveLength(2)
       })
     })
@@ -723,9 +712,7 @@ describe('Poll', () => {
       })
       await waitFor(() => {
         // Should show Create Poll button because there's at least one SUBMITTED proposal
-        expect(
-          screen.getByRole('button', { name: /create poll/i })
-        ).toBeInTheDocument()
+        expect(screen.getByRole('button', { name: /create poll/i }))
       })
     })
   })

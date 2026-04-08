@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { Models } from 'appwrite'
 import CreateProposalForm from './CreateProposalForm'
 
 function renderForm(props = {}) {
@@ -11,7 +12,8 @@ function renderForm(props = {}) {
     createProposal: mock(() =>
       Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })
     ),
-    accountGet: () => Promise.resolve({ $id: 'user-1', name: 'Alice' }),
+    accountGet: () =>
+      Promise.resolve({ $id: 'user-1', name: 'Alice' }) as Promise<Models.User>,
   }
   const utils = render(<CreateProposalForm {...defaults} {...props} />)
   return { ...utils, ...defaults, ...props }
@@ -37,9 +39,9 @@ describe('CreateProposalForm', () => {
     )
     const { container } = renderForm({ createProposal })
 
-    function fill(name, value) {
+    function fill(name: string, value: string) {
       const el = container.querySelector(`[name="${name}"]`)
-      fireEvent.change(el, { target: { name, value } })
+      fireEvent.change(el!, { target: { name, value } })
     }
 
     fill('resortName', "Val d'Isère")
@@ -52,14 +54,16 @@ describe('CreateProposalForm', () => {
     fill('approximateCost', '£1200pp')
     fill('description', 'Great resort for all levels.')
 
-    fireEvent.submit(container.querySelector('form'))
+    fireEvent.submit(container.querySelector('form')!)
 
     await waitFor(() => {
       expect(createProposal).toHaveBeenCalledTimes(1)
     })
 
+    const call = createProposal.mock.calls[0]
+    if (!call) return
     const [calledTripId, calledUserId, calledCreatorName, calledData] =
-      createProposal.mock.calls[0]
+      call as unknown as [string, string, string, Record<string, string>]
     expect(calledTripId).toBe('trip-1')
     expect(calledUserId).toBe('user-1')
     expect(calledCreatorName).toBe('Alice')
@@ -81,7 +85,7 @@ describe('CreateProposalForm', () => {
     const onDismiss = mock(() => {})
     const { container } = renderForm({ createProposal, onCreated, onDismiss })
 
-    fireEvent.submit(container.querySelector('form'))
+    fireEvent.submit(container.querySelector('form')!)
 
     await waitFor(() => {
       expect(onCreated).toHaveBeenCalledWith(result)
@@ -96,7 +100,7 @@ describe('CreateProposalForm', () => {
     const onDismiss = mock(() => {})
     const { container } = renderForm({ createProposal, onDismiss })
 
-    fireEvent.submit(container.querySelector('form'))
+    fireEvent.submit(container.querySelector('form')!)
 
     await waitFor(() => {
       expect(screen.getByText('Permission denied')).toBeTruthy()
@@ -122,14 +126,14 @@ describe('CreateProposalForm', () => {
     )
     const { container } = renderForm({ createProposal })
 
-    fireEvent.submit(container.querySelector('form'))
+    fireEvent.submit(container.querySelector('form')!)
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /saving/i })).toBeTruthy()
     })
 
     await act(async () => {
-      resolvePromise({ $id: 'p-1' })
+      resolvePromise?.({ $id: 'p-1' })
     })
   })
 })

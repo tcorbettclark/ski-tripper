@@ -13,12 +13,14 @@ function renderField(props = {}) {
 describe('Field', () => {
   it('renders the label text', () => {
     renderField({ label: 'Resort', name: 'resort' })
-    expect(screen.getByText('Resort')).toBeInTheDocument()
+    expect(screen.getByText('Resort'))
   })
 
   it('renders an input with the correct value', () => {
     renderField({ value: 'Ski Alps' })
-    expect(screen.getByRole('textbox')).toHaveValue('Ski Alps')
+    expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe(
+      'Ski Alps'
+    )
   })
 
   it('calls onChange when the input changes', () => {
@@ -32,6 +34,6 @@ describe('Field', () => {
 
   it('renders an input with the specified type', () => {
     renderField({ label: 'Email', name: 'email', type: 'email' })
-    expect(screen.getByRole('textbox').type).toBe('email')
+    expect((screen.getByRole('textbox') as HTMLInputElement).type).toBe('email')
   })
 })

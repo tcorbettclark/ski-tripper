@@ -4,8 +4,13 @@ import EditProposalForm from './EditProposalForm'
 
 const sampleProposal = {
   $id: 'p-1',
-  userId: 'user-1',
-  state: 'DRAFT',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
+  proposerUserId: 'user-1',
+  proposerUserName: 'Test User',
+  tripId: 'trip-1',
+  state: 'DRAFT' as const,
+  title: 'Test Proposal',
   resortName: "Val d'Isère",
   country: 'France',
   altitudeRange: '1850m - 3456m',
@@ -15,6 +20,8 @@ const sampleProposal = {
   accommodationUrl: 'https://example.com',
   approximateCost: '£1200pp',
   description: 'Great powder skiing',
+  departureDate: '2024-03-01',
+  returnDate: '2024-03-08',
 }
 
 function renderForm(props = {}) {
@@ -45,12 +52,13 @@ describe('EditProposalForm', () => {
     renderForm({ onUpdated, updateProposal })
 
     fireEvent.submit(
-      screen.getByRole('button', { name: /save/i }).closest('form')
+      screen.getByRole('button', { name: /save/i }).closest('form')!
     )
 
     await waitFor(() => {
       expect(updateProposal).toHaveBeenCalledTimes(1)
-      const [proposalId, userId, formData] = updateProposal.mock.calls[0]
+      const [proposalId, userId, formData] = updateProposal.mock
+        .calls[0] as unknown as [string, string, Record<string, string>]
       expect(proposalId).toBe('p-1')
       expect(userId).toBe('user-1')
       expect(formData.resortName).toBe("Val d'Isère")
@@ -75,7 +83,7 @@ describe('EditProposalForm', () => {
     renderForm({ updateProposal })
 
     fireEvent.submit(
-      screen.getByRole('button', { name: /save/i }).closest('form')
+      screen.getByRole('button', { name: /save/i }).closest('form')!
     )
 
     await waitFor(() => {
