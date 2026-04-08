@@ -5,6 +5,4 @@ dist-test
 .env
 .env.local
 .env.*.local
-.superpowers/
-.worktrees/
 .backups/
