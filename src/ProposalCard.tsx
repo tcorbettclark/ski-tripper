@@ -9,13 +9,14 @@ import {
 import { getCountryFlagUrl } from './countries'
 import EditProposalForm from './EditProposalForm'
 import { borders, colors, fonts } from './theme'
-import type { Proposal } from './types.d.ts'
+import type { Accommodation, Proposal } from './types.d.ts'
 
 interface ProposalCardProps {
   proposal: Proposal
   userId: string
   isCoordinator?: boolean
   previewMode?: boolean
+  accommodations?: Accommodation[]
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
@@ -30,13 +31,28 @@ interface ProposalCardProps {
   submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
   resubmitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
+  createAccommodation?: (
+    proposalId: string,
+    userId: string,
+    data: { name: string; url?: string; cost?: string; description?: string }
+  ) => Promise<unknown>
+  updateAccommodation?: (
+    accommodationId: string,
+    userId: string,
+    data: { name?: string; url?: string; cost?: string; description?: string }
+  ) => Promise<unknown>
+  deleteAccommodation?: (
+    accommodationId: string,
+    userId: string
+  ) => Promise<unknown>
 }
 
 export default function ProposalCard({
   proposal,
   userId,
   isCoordinator = false,
-  previewMode = false,
+  accommodations = [],
   onUpdated,
   onDeleted,
   onSubmitted,
@@ -47,6 +63,10 @@ export default function ProposalCard({
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
   resubmitProposal = _resubmitProposal,
+  listAccommodations,
+  createAccommodation,
+  updateAccommodation,
+  deleteAccommodation,
 }: ProposalCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -112,66 +132,6 @@ export default function ProposalCard({
     }
   }
 
-  if (previewMode) {
-    return (
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <div>
-            <h3 style={styles.resortName}>
-              {proposal.resortName || '—'}
-              {proposal.accommodationName &&
-                ` (at ${proposal.accommodationName})`}
-            </h3>
-            <div style={styles.subHeader}>
-              <span>
-                {proposal.country &&
-                  getCountryFlagUrl(proposal.country) !== undefined && (
-                    <img
-                      src={getCountryFlagUrl(proposal.country)}
-                      alt={proposal.country}
-                      style={styles.flag}
-                    />
-                  )}
-                {proposal.country || '—'}
-              </span>
-              <span style={getBadgeStyle(proposal.state)}>
-                {proposal.state}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.grid}>
-          <Field label="Depart on" value={proposal.departureDate} />
-          <Field label="Return on" value={proposal.returnDate} />
-          <Field label="Altitude Range" value={proposal.altitudeRange} />
-          <Field label="Nearest Airport" value={proposal.nearestAirport} />
-          <Field label="Transfer Time" value={proposal.transferTime} />
-          <Field label="Approx. Cost" value={proposal.approximateCost} />
-          <div style={{ gridColumn: '1/-1' }}>
-            <Field label="Accommodation" value={proposal.accommodationName} />
-            {proposal.accommodationUrl && (
-              <a
-                href={proposal.accommodationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                ↗ link
-              </a>
-            )}
-          </div>
-          <div style={{ gridColumn: '1/-1' }}>
-            <Field label="Description" value={proposal.description} />
-          </div>
-          <div style={{ gridColumn: '1/-1' }}>
-            <Field label="Proposed By" value={proposal.proposerUserName} />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   if (isEditing) {
     return (
       <EditProposalForm
@@ -183,6 +143,10 @@ export default function ProposalCard({
         }}
         onCancel={() => setIsEditing(false)}
         updateProposal={updateProposal}
+        listAccommodations={listAccommodations}
+        createAccommodation={createAccommodation}
+        updateAccommodation={updateAccommodation}
+        deleteAccommodation={deleteAccommodation}
       />
     )
   }
@@ -192,11 +156,7 @@ export default function ProposalCard({
       <div style={styles.card}>
         <div style={styles.header}>
           <div>
-            <h3 style={styles.resortName}>
-              {proposal.resortName || '—'}
-              {proposal.accommodationName &&
-                ` (at ${proposal.accommodationName})`}
-            </h3>
+            <h3 style={styles.resortName}>{proposal.resortName || '—'}</h3>
             <div style={styles.subHeader}>
               <span>
                 {proposal.country &&
@@ -222,20 +182,6 @@ export default function ProposalCard({
           <Field label="Altitude Range" value={proposal.altitudeRange} />
           <Field label="Nearest Airport" value={proposal.nearestAirport} />
           <Field label="Transfer Time" value={proposal.transferTime} />
-          <Field label="Approx. Cost" value={proposal.approximateCost} />
-          <div style={{ gridColumn: '1/-1' }}>
-            <Field label="Accommodation" value={proposal.accommodationName} />
-            {proposal.accommodationUrl && (
-              <a
-                href={proposal.accommodationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                ↗ link
-              </a>
-            )}
-          </div>
           <div style={{ gridColumn: '1/-1' }}>
             <Field label="Description" value={proposal.description} />
           </div>
@@ -243,6 +189,43 @@ export default function ProposalCard({
             <Field label="Proposed By" value={proposal.proposerUserName} />
           </div>
         </div>
+
+        {accommodations.length > 0 && (
+          <div style={styles.accommodationsSection}>
+            <h4 style={styles.accommodationsTitle}>Accommodations</h4>
+            <table style={styles.accommodationsTable}>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Cost</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accommodations.map((acc) => (
+                  <tr key={acc.$id}>
+                    <td>
+                      {acc.url ? (
+                        <a
+                          href={acc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={styles.accommodationLink}
+                        >
+                          {acc.name} ↗
+                        </a>
+                      ) : (
+                        acc.name
+                      )}
+                    </td>
+                    <td>{acc.cost}</td>
+                    <td>{acc.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div style={styles.actions}>
           {canAct && (
@@ -416,12 +399,29 @@ const styles = {
     color: colors.textData,
     lineHeight: '1.5',
   },
-  link: {
-    color: colors.accent,
+  accommodationsSection: {
+    marginBottom: '20px',
+    padding: '16px',
+    background: colors.bgInput,
+    borderRadius: '8px',
+  },
+  accommodationsTitle: {
+    fontFamily: fonts.body,
     fontSize: '12px',
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    marginBottom: '12px',
+  },
+  accommodationsTable: {
+    width: '100%',
+    borderCollapse: 'collapse' as const,
+    fontSize: '13px',
+  },
+  accommodationLink: {
+    color: colors.accent,
     textDecoration: 'none',
-    marginTop: '4px',
-    display: 'inline-block',
   },
   actions: {
     display: 'flex',

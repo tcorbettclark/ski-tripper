@@ -25,11 +25,8 @@ const baseProposal: Proposal = {
   returnDate: '2024-01-07',
   nearestAirport: 'TEST',
   transferTime: '1 hour',
-  accommodationName: 'Test Hotel',
-  accommodationUrl: 'https://example.com',
   altitudeRange: '1000-2000m',
   country: 'Test Country',
-  approximateCost: '$1000',
 }
 
 describe('ProposalCard', () => {
@@ -48,7 +45,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.getByText(/Test Resort \(at Test Hotel\)/)).toBeDefined()
+    expect(screen.getByText('Test Resort')).toBeDefined()
     expect(screen.getByText('Test Country')).toBeDefined()
     expect(screen.getByText('DRAFT')).toBeDefined()
     expect(screen.getByText('John Doe')).toBeDefined()

@@ -4,6 +4,7 @@ import {
   createProposal as _createProposal,
   deleteProposal as _deleteProposal,
   getCoordinatorParticipant as _getCoordinatorParticipant,
+  listAccommodations as _listAccommodations,
   listProposals as _listProposals,
   rejectProposal as _rejectProposal,
   resubmitProposal as _resubmitProposal,
@@ -14,7 +15,7 @@ import CreateProposalForm from './CreateProposalForm'
 import ProposalsGrid from './ProposalsGrid'
 import { randomProposal } from './randomProposal'
 import { borders, colors, fonts } from './theme'
-import type { Proposal } from './types.d.ts'
+import type { Accommodation, Proposal } from './types.d.ts'
 
 interface ProposalsProps {
   user: Models.User
@@ -36,11 +37,9 @@ interface ProposalsProps {
       altitudeRange?: string
       nearestAirport?: string
       transferTime?: string
-      accommodationName?: string
-      accommodationUrl?: string
-      approximateCost?: string
     }
   ) => Promise<unknown>
+  listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
   updateProposal?: (
     proposalId: string,
     userId: string,
@@ -61,6 +60,7 @@ export default function Proposals({
   onRefresh: _onRefresh,
   listProposals = _listProposals,
   createProposal = _createProposal,
+  listAccommodations = _listAccommodations,
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
@@ -69,6 +69,9 @@ export default function Proposals({
   getCoordinatorParticipant = _getCoordinatorParticipant,
 }: ProposalsProps) {
   const [proposals, setProposals] = useState<Proposal[]>([])
+  const [accommodations, setAccommodations] = useState<
+    Record<string, Accommodation[]>
+  >({})
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [randomizing, setRandomizing] = useState(false)
@@ -99,12 +102,34 @@ export default function Proposals({
       getCoordinatorParticipant(tripId),
     ])
       .then(([proposalsResult, coordResult]) => {
-        if (!mountedRef.current) return
+        if (!mountedRef.current) return null
         setProposals(proposalsResult.proposals)
         setIsCoordinator(
           coordResult.participants.length > 0 &&
             coordResult.participants[0].participantUserId === user.$id
         )
+        return proposalsResult.proposals
+      })
+      .then((loadedProposals) => {
+        if (!mountedRef.current || !loadedProposals) return
+        const accommodationPromises = loadedProposals.map((p) =>
+          listAccommodations(p.$id).catch(() => [])
+        )
+        return Promise.all(accommodationPromises).then(
+          (accommodationResults) => ({
+            loadedProposals,
+            accommodationResults,
+          })
+        )
+      })
+      .then((result) => {
+        if (!mountedRef.current || !result) return
+        const { loadedProposals, accommodationResults } = result
+        const accMap: Record<string, Accommodation[]> = {}
+        accommodationResults.forEach((accs, i) => {
+          accMap[loadedProposals[i].$id] = accs
+        })
+        setAccommodations(accMap)
       })
       .catch((err) => {
         if (mountedRef.current)
@@ -113,7 +138,13 @@ export default function Proposals({
       .finally(() => {
         if (mountedRef.current) setProposalsLoading(false)
       })
-  }, [tripId, user.$id, listProposals, getCoordinatorParticipant])
+  }, [
+    tripId,
+    user.$id,
+    listProposals,
+    listAccommodations,
+    getCoordinatorParticipant,
+  ])
 
   const handleCreated = useCallback((proposal: unknown) => {
     setProposals((p) => [proposal as Proposal, ...p])
@@ -208,6 +239,7 @@ export default function Proposals({
           proposals={proposals}
           userId={user.$id}
           isCoordinator={isCoordinator}
+          accommodations={accommodations}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
           onSubmitted={handleSubmitted}

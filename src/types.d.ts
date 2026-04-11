@@ -31,11 +31,19 @@ export interface Proposal {
   returnDate: string
   nearestAirport: string
   transferTime: string
-  accommodationName: string
-  accommodationUrl: string
   altitudeRange: string
   country: string
-  approximateCost: string
+}
+
+export interface Accommodation {
+  $id: string
+  $createdAt: string
+  $updatedAt: string
+  proposalId: string
+  name: string
+  url: string
+  cost: string
+  description: string
 }
 
 export interface Poll {

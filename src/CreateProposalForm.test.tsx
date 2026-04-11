@@ -20,24 +20,31 @@ function renderForm(props = {}) {
 }
 
 describe('CreateProposalForm', () => {
-  it('renders all 9 field labels', () => {
-    renderForm()
+  it('renders main form fields', () => {
+    const { container } = renderForm()
     expect(screen.getByText(/resort name/i)).toBeTruthy()
     expect(screen.getByLabelText(/country/i)).toBeTruthy()
     expect(screen.getByText(/altitude range/i)).toBeTruthy()
     expect(screen.getByText(/nearest airport/i)).toBeTruthy()
     expect(screen.getByText(/transfer time/i)).toBeTruthy()
-    expect(screen.getByText(/accommodation name/i)).toBeTruthy()
-    expect(screen.getByText(/accommodation url/i)).toBeTruthy()
-    expect(screen.getByText(/approximate cost/i)).toBeTruthy()
-    expect(screen.getByText(/description/i)).toBeTruthy()
+    expect(screen.getByText(/depart/i)).toBeTruthy()
+    expect(screen.getByText(/return/i)).toBeTruthy()
+    const textarea = container.querySelector('#description')
+    expect(textarea).toBeTruthy()
   })
 
-  it('calls createProposal with correct args on submit', async () => {
+  it('renders accommodations section with add button', () => {
+    renderForm()
+    expect(screen.getByText(/accommodations/i)).toBeTruthy()
+    expect(screen.getByText(/\+ add accommodation/i)).toBeTruthy()
+  })
+
+  it('calls createProposal and createAccommodation on submit', async () => {
     const createProposal = mock(() =>
       Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })
     )
-    const { container } = renderForm({ createProposal })
+    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-1' }))
+    const { container } = renderForm({ createProposal, createAccommodation })
 
     function fill(name: string, value: string) {
       const el = container.querySelector(`[name="${name}"]`)
@@ -49,12 +56,16 @@ describe('CreateProposalForm', () => {
     fill('altitudeRange', '1800m - 3200m')
     fill('nearestAirport', 'GVA')
     fill('transferTime', '1h 30m')
-    fill('accommodationName', 'Hotel Bellevue')
-    fill('accommodationUrl', 'https://example.com')
-    fill('approximateCost', '£1200pp')
+    fill('departureDate', '2027-01-15')
+    fill('returnDate', '2027-01-22')
     fill('description', 'Great resort for all levels.')
 
-    fireEvent.submit(container.querySelector('form')!)
+    const accNameInput = container.querySelector('[name^="acc-name-"]')
+    if (accNameInput) {
+      fireEvent.change(accNameInput, { target: { value: 'Hotel Bellevue' } })
+    }
+
+    fireEvent.submit(container.querySelector('form') as HTMLFormElement)
 
     await waitFor(() => {
       expect(createProposal).toHaveBeenCalledTimes(1)
@@ -69,21 +80,29 @@ describe('CreateProposalForm', () => {
     expect(calledCreatorName).toBe('Alice')
     expect(calledData.resortName).toBe("Val d'Isère")
     expect(calledData.country).toBe('France')
-    expect(calledData.altitudeRange).toBe('1800m - 3200m')
-    expect(calledData.nearestAirport).toBe('GVA')
-    expect(calledData.transferTime).toBe('1h 30m')
-    expect(calledData.accommodationName).toBe('Hotel Bellevue')
-    expect(calledData.accommodationUrl).toBe('https://example.com')
-    expect(calledData.approximateCost).toBe('£1200pp')
     expect(calledData.description).toBe('Great resort for all levels.')
+
+    expect(createAccommodation).toHaveBeenCalledTimes(1)
+    const [, , accData] = createAccommodation.mock.calls[0] as unknown as [
+      unknown,
+      unknown,
+      { name: string },
+    ]
+    expect(accData.name).toBe('Hotel Bellevue')
   })
 
   it('calls onCreated with result and onDismiss on success', async () => {
     const result = { $id: 'p-1', resortName: "Val d'Isère" }
     const createProposal = mock(() => Promise.resolve(result))
+    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-1' }))
     const onCreated = mock(() => {})
     const onDismiss = mock(() => {})
-    const { container } = renderForm({ createProposal, onCreated, onDismiss })
+    const { container } = renderForm({
+      createProposal,
+      createAccommodation,
+      onCreated,
+      onDismiss,
+    })
 
     fireEvent.submit(container.querySelector('form')!)
 

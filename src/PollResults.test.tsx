@@ -290,9 +290,9 @@ describe('PollResults', () => {
       <PollResults poll={pollAlpha} proposals={proposalsAlpha} votes={votes} />
     )
     const labels = screen.getAllByTestId('proposal-label')
-    expect(labels[0].textContent).toMatch(/^Chamonix \(at Hotel A\)$/)
-    expect(labels[1].textContent).toMatch(/^Verbier \(at Hotel B\)$/)
-    expect(labels[2].textContent).toMatch(/^Zermatt \(at Hotel C\)$/)
+    expect(labels[0].textContent).toMatch(/^Chamonix$/)
+    expect(labels[1].textContent).toMatch(/^Verbier$/)
+    expect(labels[2].textContent).toMatch(/^Zermatt$/)
   })
 
   it('ignores token allocations for proposalIds not in the poll', () => {

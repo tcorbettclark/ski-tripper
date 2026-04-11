@@ -8,7 +8,14 @@ import {
   Role,
   TablesDB,
 } from 'appwrite'
-import type { Participant, Poll, Proposal, Trip, Vote } from './types.d'
+import type {
+  Accommodation,
+  Participant,
+  Poll,
+  Proposal,
+  Trip,
+  Vote,
+} from './types.d'
 import { randomThreeWords } from './utils'
 
 const client = new Client()
@@ -44,6 +51,8 @@ const PARTICIPANTS_TABLE_ID = process.env
   .PUBLIC_APPWRITE_PARTICIPANTS_TABLE_ID as string
 const PROPOSALS_TABLE_ID = process.env
   .PUBLIC_APPWRITE_PROPOSALS_TABLE_ID as string
+const ACCOMMODATIONS_TABLE_ID = process.env
+  .PUBLIC_APPWRITE_ACCOMMODATIONS_TABLE_ID as string
 const POLLS_TABLE_ID = process.env.PUBLIC_APPWRITE_POLLS_TABLE_ID as string
 const VOTES_TABLE_ID = process.env.PUBLIC_APPWRITE_VOTES_TABLE_ID as string
 
@@ -442,9 +451,6 @@ export async function createProposal(
     altitudeRange?: string
     nearestAirport?: string
     transferTime?: string
-    accommodationName?: string
-    accommodationUrl?: string
-    approximateCost?: string
     departureDate?: string
     returnDate?: string
   },
@@ -557,6 +563,22 @@ export async function deleteProposal(
     throw new Error('Only the creator can delete this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be deleted.')
+  const accommodations = await fetchRows<Accommodation>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      queries: [Query.equal('proposalId', proposalId), Query.limit(5)],
+    })
+  )
+  await Promise.all([
+    ...accommodations.map((a) =>
+      db.deleteRow({
+        databaseId: DATABASE_ID,
+        tableId: ACCOMMODATIONS_TABLE_ID,
+        rowId: a.$id,
+      })
+    ),
+  ])
   await db.deleteRow({
     databaseId: DATABASE_ID,
     tableId: PROPOSALS_TABLE_ID,
@@ -580,6 +602,17 @@ export async function submitProposal(
     throw new Error('Only the creator can submit this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be submitted.')
+  const accommodations = await fetchRows<Accommodation>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      queries: [Query.equal('proposalId', proposalId), Query.limit(5)],
+    })
+  )
+  if (accommodations.length === 0)
+    throw new Error(
+      'At least one accommodation is required to submit a proposal.'
+    )
   return fetchRow<Proposal>(
     db.updateRow({
       databaseId: DATABASE_ID,
@@ -863,4 +896,132 @@ export async function listVotes(
     })
   )
   return { votes }
+}
+
+export async function createAccommodation(
+  proposalId: string,
+  proposerUserId: string,
+  data: {
+    name: string
+    url?: string
+    cost?: string
+    description?: string
+  },
+  db: TablesDB = tablesDb
+): Promise<Accommodation> {
+  const proposal = await fetchRow<Proposal>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: PROPOSALS_TABLE_ID,
+      rowId: proposalId,
+    })
+  )
+  if (proposal.proposerUserId !== proposerUserId)
+    throw new Error('Only the creator can add accommodations.')
+  if (proposal.state !== 'DRAFT')
+    throw new Error('Accommodations can only be added to draft proposals.')
+  const accommodations = await listAccommodations(proposalId, db)
+  if (accommodations.length >= 5)
+    throw new Error('Maximum of 5 accommodations allowed per proposal.')
+  return fetchRow<Accommodation>(
+    db.createRow({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      rowId: ID.unique(),
+      data: {
+        proposalId,
+        ...data,
+      } as Record<string, unknown>,
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.write(Role.user(proposerUserId)),
+      ],
+    })
+  )
+}
+
+export async function listAccommodations(
+  proposalId: string,
+  db: TablesDB = tablesDb
+): Promise<Accommodation[]> {
+  return fetchRows<Accommodation>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      queries: [
+        Query.equal('proposalId', proposalId),
+        Query.orderDesc('$createdAt'),
+        Query.limit(5),
+      ],
+    })
+  )
+}
+
+export async function updateAccommodation(
+  accommodationId: string,
+  proposerUserId: string,
+  data: {
+    name?: string
+    url?: string
+    cost?: string
+    description?: string
+  },
+  db: TablesDB = tablesDb
+): Promise<Accommodation> {
+  const accommodation = await fetchRow<Accommodation>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      rowId: accommodationId,
+    })
+  )
+  const proposal = await fetchRow<Proposal>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: PROPOSALS_TABLE_ID,
+      rowId: accommodation.proposalId,
+    })
+  )
+  if (proposal.proposerUserId !== proposerUserId)
+    throw new Error('Only the creator can edit accommodations.')
+  if (proposal.state !== 'DRAFT')
+    throw new Error('Accommodations can only be edited on draft proposals.')
+  return fetchRow<Accommodation>(
+    db.updateRow({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      rowId: accommodationId,
+      data: data as Record<string, unknown>,
+    })
+  )
+}
+
+export async function deleteAccommodation(
+  accommodationId: string,
+  proposerUserId: string,
+  db: TablesDB = tablesDb
+): Promise<void> {
+  const accommodation = await fetchRow<Accommodation>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      rowId: accommodationId,
+    })
+  )
+  const proposal = await fetchRow<Proposal>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: PROPOSALS_TABLE_ID,
+      rowId: accommodation.proposalId,
+    })
+  )
+  if (proposal.proposerUserId !== proposerUserId)
+    throw new Error('Only the creator can delete accommodations.')
+  if (proposal.state !== 'DRAFT')
+    throw new Error('Accommodations can only be deleted from draft proposals.')
+  await db.deleteRow({
+    databaseId: DATABASE_ID,
+    tableId: ACCOMMODATIONS_TABLE_ID,
+    rowId: accommodationId,
+  })
 }

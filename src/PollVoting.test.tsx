@@ -333,9 +333,9 @@ describe('PollVoting', () => {
     ]
     renderPollVoting({ poll: pollOutOfOrder, proposals: proposalsOutOfOrder })
     const resortNames = screen.getAllByText(/Chamonix|Verbier|Zermatt/)
-    expect(resortNames[0].textContent).toBe('Chamonix (at Hotel A)')
-    expect(resortNames[1].textContent).toBe('Verbier (at Hotel B)')
-    expect(resortNames[2].textContent).toBe('Zermatt (at Hotel C)')
+    expect(resortNames[0].textContent).toBe('Chamonix')
+    expect(resortNames[1].textContent).toBe('Verbier')
+    expect(resortNames[2].textContent).toBe('Zermatt')
   })
 
   it('Save button disabled after incrementing then decrementing back to saved value', async () => {

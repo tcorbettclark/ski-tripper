@@ -2,9 +2,11 @@ import { describe, expect, it, mock } from 'bun:test'
 import type { TablesDB } from 'appwrite'
 import {
   closePoll,
+  createAccommodation,
   createPoll,
   createProposal,
   createTrip,
+  deleteAccommodation,
   deleteProposal,
   deleteTrip,
   getProposal,
@@ -12,6 +14,7 @@ import {
   getTripByCode,
   joinTrip,
   leaveTrip,
+  listAccommodations,
   listParticipatedTrips,
   listPolls,
   listProposals,
@@ -19,6 +22,7 @@ import {
   listVotes,
   rejectProposal,
   submitProposal,
+  updateAccommodation,
   updateProposal,
   updateTrip,
   upsertVote,
@@ -698,6 +702,7 @@ describe('submitProposal', () => {
           state: 'DRAFT',
         })
       ),
+      listRows: mock(() => Promise.resolve({ rows: [{ $id: 'acc-1' }] })),
     })
     await submitProposal('prop-1', 'user-1', db)
     expect(db.updateRow).toHaveBeenCalledTimes(1)
@@ -737,6 +742,23 @@ describe('submitProposal', () => {
     expect(db.updateRow).not.toHaveBeenCalled()
   })
 
+  it('throws when there are no accommodations', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'prop-1',
+          proposerUserId: 'user-1',
+          state: 'DRAFT',
+        })
+      ),
+      listRows: mock(() => Promise.resolve({ rows: [] })),
+    })
+    expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
+      'At least one accommodation is required to submit a proposal.'
+    )
+    expect(db.updateRow).not.toHaveBeenCalled()
+  })
+
   it('propagates errors', async () => {
     const db = createMockDb({
       getRow: mock(() =>
@@ -746,6 +768,7 @@ describe('submitProposal', () => {
           state: 'DRAFT',
         })
       ),
+      listRows: mock(() => Promise.resolve({ rows: [{ $id: 'acc-1' }] })),
       updateRow: mock(() => Promise.reject(new Error('Update failed'))),
     })
     expect(submitProposal('prop-1', 'user-1', db)).rejects.toThrow(
@@ -1235,5 +1258,290 @@ describe('deleteTrip', () => {
     expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
       'Participant delete failed'
     )
+  })
+})
+
+describe('createAccommodation', () => {
+  it('creates an accommodation when user is the proposal creator', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'user-1',
+            state: 'DRAFT',
+          })
+        )
+        .mockImplementationOnce(() => Promise.resolve({ rows: [] })),
+      listRows: mock(() => Promise.resolve({ rows: [] })),
+      createRow: mock(() =>
+        Promise.resolve({ $id: 'acc-1', name: 'Hotel Nevai' })
+      ),
+    })
+    const result = await createAccommodation(
+      'prop-1',
+      'user-1',
+      { name: 'Hotel Nevai' },
+      db
+    )
+    expect(result.name).toBe('Hotel Nevai')
+    expect(db.createRow).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when user is not the proposal creator', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'prop-1',
+          proposerUserId: 'other-user',
+          state: 'DRAFT',
+        })
+      ),
+    })
+    expect(
+      createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, db)
+    ).rejects.toThrow('Only the creator can add accommodations.')
+  })
+
+  it('throws when proposal is not in DRAFT state', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'prop-1',
+          proposerUserId: 'user-1',
+          state: 'SUBMITTED',
+        })
+      ),
+    })
+    expect(
+      createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, db)
+    ).rejects.toThrow('Accommodations can only be added to draft proposals.')
+  })
+
+  it('throws when maximum accommodations (5) is reached', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'user-1',
+            state: 'DRAFT',
+          })
+        )
+        .mockImplementationOnce(() => Promise.resolve({ rows: [] })),
+      listRows: mock(() =>
+        Promise.resolve({
+          rows: [
+            { $id: 'acc-1' },
+            { $id: 'acc-2' },
+            { $id: 'acc-3' },
+            { $id: 'acc-4' },
+            { $id: 'acc-5' },
+          ],
+        })
+      ),
+    })
+    expect(
+      createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, db)
+    ).rejects.toThrow('Maximum of 5 accommodations allowed per proposal.')
+  })
+})
+
+describe('listAccommodations', () => {
+  it('returns accommodations for a proposal', async () => {
+    const db = createMockDb({
+      listRows: mock(() =>
+        Promise.resolve({
+          rows: [
+            { $id: 'acc-1', name: 'Hotel Nevai' },
+            { $id: 'acc-2', name: 'Hotel Verbier' },
+          ],
+        })
+      ),
+    })
+    const result = await listAccommodations('prop-1', db)
+    expect(result).toHaveLength(2)
+    expect(result[0].name).toBe('Hotel Nevai')
+  })
+
+  it('queries with proposalId filter', async () => {
+    const listRows = mock(() => Promise.resolve({ rows: [] }))
+    const db = createMockDb({ listRows })
+    await listAccommodations('prop-1', db)
+    expect(listRows).toHaveBeenCalledTimes(1)
+    const [{ queries }] = listRows.mock.calls[0] as unknown as [
+      { queries: string[] },
+    ]
+    const proposalIdQuery = queries.find((q: string) =>
+      q.includes('proposalId')
+    )
+    expect(proposalIdQuery).toBeDefined()
+    expect(proposalIdQuery).toContain('prop-1')
+  })
+})
+
+describe('updateAccommodation', () => {
+  it('updates an accommodation when user is the proposal creator', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'acc-1',
+            proposalId: 'prop-1',
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'user-1',
+            state: 'DRAFT',
+          })
+        ),
+      updateRow: mock(() =>
+        Promise.resolve({ $id: 'acc-1', name: 'Updated Hotel' })
+      ),
+    })
+    await updateAccommodation('acc-1', 'user-1', { name: 'Updated Hotel' }, db)
+    expect(db.updateRow).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when user is not the proposal creator', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'acc-1',
+            proposalId: 'prop-1',
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'other-user',
+            state: 'DRAFT',
+          })
+        ),
+    })
+    expect(
+      updateAccommodation('acc-1', 'user-1', { name: 'Updated' }, db)
+    ).rejects.toThrow('Only the creator can edit accommodations.')
+  })
+
+  it('throws when proposal is not in DRAFT state', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'acc-1',
+            proposalId: 'prop-1',
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'user-1',
+            state: 'SUBMITTED',
+          })
+        ),
+    })
+    expect(
+      updateAccommodation('acc-1', 'user-1', { name: 'Updated' }, db)
+    ).rejects.toThrow('Accommodations can only be edited on draft proposals.')
+  })
+})
+
+describe('deleteAccommodation', () => {
+  it('deletes an accommodation when user is the proposal creator', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'acc-1',
+            proposalId: 'prop-1',
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'user-1',
+            state: 'DRAFT',
+          })
+        ),
+    })
+    await deleteAccommodation('acc-1', 'user-1', db)
+    expect(db.deleteRow).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when user is not the proposal creator', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'acc-1',
+            proposalId: 'prop-1',
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'other-user',
+            state: 'DRAFT',
+          })
+        ),
+    })
+    expect(deleteAccommodation('acc-1', 'user-1', db)).rejects.toThrow(
+      'Only the creator can delete accommodations.'
+    )
+  })
+
+  it('throws when proposal is not in DRAFT state', async () => {
+    const db = createMockDb({
+      getRow: mock()
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'acc-1',
+            proposalId: 'prop-1',
+          })
+        )
+        .mockImplementationOnce(() =>
+          Promise.resolve({
+            $id: 'prop-1',
+            proposerUserId: 'user-1',
+            state: 'SUBMITTED',
+          })
+        ),
+    })
+    expect(deleteAccommodation('acc-1', 'user-1', db)).rejects.toThrow(
+      'Accommodations can only be deleted from draft proposals.'
+    )
+  })
+})
+
+describe('deleteProposal with cascade delete', () => {
+  it('deletes accommodations before deleting proposal', async () => {
+    const deleteRow = mock(() => Promise.resolve())
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'prop-1',
+          proposerUserId: 'user-1',
+          state: 'DRAFT',
+        })
+      ),
+      listRows: mock(() =>
+        Promise.resolve({
+          rows: [{ $id: 'acc-1' }, { $id: 'acc-2' }],
+        })
+      ),
+      deleteRow,
+    })
+    await deleteProposal('prop-1', 'user-1', db)
+    expect(deleteRow).toHaveBeenCalledTimes(3)
+    const deletedIds = (
+      deleteRow.mock.calls as unknown as [{ rowId: string }][]
+    ).map(([args]) => args.rowId)
+    expect(deletedIds).toContain('acc-1')
+    expect(deletedIds).toContain('acc-2')
+    expect(deletedIds).toContain('prop-1')
   })
 })

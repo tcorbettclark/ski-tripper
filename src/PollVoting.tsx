@@ -99,11 +99,7 @@ export default function PollVoting({
         {sortedProposalIds.map((proposalId) => {
           const count = allocations[proposalId]
           const proposal = proposalMap[proposalId]
-          const name = proposal
-            ? proposal.accommodationName
-              ? `${proposal.resortName} (at ${proposal.accommodationName})`
-              : proposal.resortName
-            : proposalId
+          const name = proposal?.resortName || proposalId
           return (
             <ProposalRow
               key={proposalId}

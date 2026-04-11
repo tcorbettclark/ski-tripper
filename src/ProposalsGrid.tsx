@@ -8,7 +8,7 @@ import {
 } from './backend'
 import ProposalCard from './ProposalCard'
 import { borders, colors, fonts } from './theme'
-import type { Proposal } from './types.d.ts'
+import type { Accommodation, Proposal } from './types.d.ts'
 
 type StatusFilter = 'all' | 'DRAFT' | 'SUBMITTED' | 'REJECTED'
 
@@ -16,6 +16,7 @@ interface ProposalsGridProps {
   proposals: Proposal[]
   userId: string
   isCoordinator?: boolean
+  accommodations?: Record<string, Accommodation[]>
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
@@ -37,6 +38,7 @@ export default function ProposalsGrid({
   proposals,
   userId,
   isCoordinator = false,
+  accommodations = {},
   onUpdated,
   onDeleted,
   onSubmitted,
@@ -77,8 +79,7 @@ export default function ProposalsGrid({
           p.country?.toLowerCase().includes(query) ||
           p.description?.toLowerCase().includes(query) ||
           p.proposerUserName?.toLowerCase().includes(query) ||
-          p.nearestAirport?.toLowerCase().includes(query) ||
-          p.accommodationName?.toLowerCase().includes(query)
+          p.nearestAirport?.toLowerCase().includes(query)
       )
     }
 
@@ -135,6 +136,7 @@ export default function ProposalsGrid({
               proposal={proposal}
               userId={userId}
               isCoordinator={isCoordinator}
+              accommodations={accommodations[proposal.$id] || []}
               onUpdated={onUpdated}
               onDeleted={onDeleted}
               onSubmitted={onSubmitted}

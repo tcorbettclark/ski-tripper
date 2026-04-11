@@ -25,11 +25,8 @@ const proposals: Proposal[] = [
     returnDate: '2024-01-07',
     nearestAirport: 'ZAI',
     transferTime: '1 hour',
-    accommodationName: 'Z Hotel',
-    accommodationUrl: '',
     altitudeRange: '1000m',
     country: 'Z Country',
-    approximateCost: '$500',
   },
   {
     $id: 'proposal-2',
@@ -46,11 +43,8 @@ const proposals: Proposal[] = [
     returnDate: '2024-02-07',
     nearestAirport: 'AIA',
     transferTime: '2 hours',
-    accommodationName: 'A Hotel',
-    accommodationUrl: '',
     altitudeRange: '2000m',
     country: 'A Country',
-    approximateCost: '$1000',
   },
 ]
 
