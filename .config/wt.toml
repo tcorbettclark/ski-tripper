@@ -44,7 +44,7 @@
 #
 [pre-start]
 deps = "bun install"
-copy = "wt step copy-from-main"
+copy = "wt step --yes copy-from-main"
 
 # Post-Start: Runs in BACKGROUND after worktree creation (parallel)
 # Use for: dev servers, file watchers, background builds
