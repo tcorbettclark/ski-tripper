@@ -44,7 +44,7 @@
 #
 [pre-start]
 deps = "bun install"
-env = "cp {{ primary_worktree_path }}/.env ."
+copy = "wt step copy-from-main"
 
 # Post-Start: Runs in BACKGROUND after worktree creation (parallel)
 # Use for: dev servers, file watchers, background builds
@@ -89,15 +89,17 @@ env = "cp {{ primary_worktree_path }}/.env ."
 # Command templates that support the same variables as hooks.
 # Project-config aliases require command approval on first run.
 #
-# [aliases]
-# deploy = "make deploy BRANCH={{ branch }}"
-# url = "echo http://localhost:{{ branch | hash_port }}"
+[aliases]
+merge-and-continue = "wt merge --no-commit --no-remove && copy-to-main"
+sync-all-from-main = "wt step for-each -- 'git rebase main && wt step copy-from-main'"
+copy-to-main = "wt step copy-ignored --from {{ branch }} --to {{ default_branch }}"
+copy-from-main = "wt step copy-ignored --from {{ default_branch }} --to {{ branch }}"
 
 # ============================================================================
 # Dev Server URL (shown in `wt list`)
 # ============================================================================
-# [list]
-# url = "http://localhost:{{ branch | hash_port }}"
+[list]
+url = "http://localhost:{{ branch | hash_port }}"
 
 # ============================================================================
 # CI Platform Override
