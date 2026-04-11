@@ -14,7 +14,7 @@ copy-to-main = "wt step copy-ignored --from {{ branch }} --to {{ default_branch 
 copy-from-main = "wt step copy-ignored --from {{ default_branch }} --to {{ branch }}"
 
 # Start up the developement server on a unique port (also shown in `wt list`).
-dev-server = "bun run dev --port {{ branch | hash_port }}"
+dev-server = "bun run dev --port={{ branch | hash_port }}"
 
 [list]
 url = "http://localhost:{{ branch | hash_port }}"
