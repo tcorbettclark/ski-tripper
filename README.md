@@ -8,8 +8,8 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 
 | Task | Command |
 |------|---------|
-| Start a new worktree | `wt switch --create alice` with `.env` and packages installed |
-| End a worktree | `wt remove alice`, cleaning everything up |
+| Start a new worktree  with `.env` and packages installed | `wt switch --create alice` |
+| End a worktree and clean everything up | `wt remove alice` |
 | Display list of worktrees and their status | `wt list` |
 | Start the dev server on a port unique to the worktree | `wt step dev-server` |
 | Sync a worktree back to main | `wt step merge-and-continue` |
