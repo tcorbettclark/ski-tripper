@@ -76,8 +76,8 @@ export default function EditProposalForm({
     nearestAirport: proposal.nearestAirport || '',
     transferTime: proposal.transferTime || '',
     description: proposal.description || '',
-    departureDate: proposal.departureDate || '',
-    returnDate: proposal.returnDate || '',
+    startDate: proposal.startDate || '',
+    endDate: proposal.endDate || '',
   })
   const [accommodations, setAccommodations] = useState<
     Record<string, AccommodationInput>
@@ -237,18 +237,18 @@ export default function EditProposalForm({
         placeholder="e.g. 1h 30m"
       />
       <Field
-        label="Depart on"
-        name="departureDate"
+        label="Start Date"
+        name="startDate"
         type="date"
-        value={form.departureDate}
+        value={form.startDate}
         onChange={handleChange}
         required
       />
       <Field
-        label="Return on"
-        name="returnDate"
+        label="End Date"
+        name="endDate"
         type="date"
-        value={form.returnDate}
+        value={form.endDate}
         onChange={handleChange}
         required
       />

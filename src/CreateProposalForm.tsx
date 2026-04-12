@@ -34,8 +34,8 @@ interface CreateProposalFormProps {
       altitudeRange: string
       nearestAirport: string
       transferTime: string
-      departureDate: string
-      returnDate: string
+      startDate: string
+      endDate: string
     }
   ) => Promise<unknown>
   createAccommodation?: (
@@ -53,8 +53,8 @@ const EMPTY_FORM = {
   nearestAirport: '',
   transferTime: '',
   description: '',
-  departureDate: '',
-  returnDate: '',
+  startDate: '',
+  endDate: '',
 }
 
 function createEmptyAccommodation(): AccommodationInput {
@@ -136,8 +136,8 @@ export default function CreateProposalForm({
         altitudeRange: form.altitudeRange,
         nearestAirport: form.nearestAirport,
         transferTime: form.transferTime,
-        departureDate: form.departureDate,
-        returnDate: form.returnDate,
+        startDate: form.startDate,
+        endDate: form.endDate,
       })
       const typedProposal = proposal as { $id: string }
       for (const acc of Object.values(accommodations)) {
@@ -203,18 +203,18 @@ export default function CreateProposalForm({
         placeholder="e.g. 1h 30m"
       />
       <Field
-        label="Depart on"
-        name="departureDate"
+        label="Start Date"
+        name="startDate"
         type="date"
-        value={form.departureDate}
+        value={form.startDate}
         onChange={handleChange}
         required
       />
       <Field
-        label="Return on"
-        name="returnDate"
+        label="End Date"
+        name="endDate"
         type="date"
-        value={form.returnDate}
+        value={form.endDate}
         onChange={handleChange}
         required
       />

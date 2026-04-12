@@ -24,8 +24,8 @@ const sampleProposals = [
     accommodationUrl: '',
     approximateCost: '£1200',
     description: 'Nice resort',
-    departureDate: '2024-12-01',
-    returnDate: '2024-12-08',
+    startDate: '2024-12-01',
+    endDate: '2024-12-08',
   },
 ]
 

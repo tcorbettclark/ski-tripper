@@ -451,8 +451,8 @@ export async function createProposal(
     altitudeRange?: string
     nearestAirport?: string
     transferTime?: string
-    departureDate?: string
-    returnDate?: string
+    startDate?: string
+    endDate?: string
   },
   db: TablesDB = tablesDb
 ): Promise<Proposal> {

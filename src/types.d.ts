@@ -27,8 +27,8 @@ export interface Proposal {
   title: string
   description: string
   resortName: string
-  departureDate: string
-  returnDate: string
+  startDate: string
+  endDate: string
   nearestAirport: string
   transferTime: string
   altitudeRange: string
