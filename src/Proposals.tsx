@@ -1,6 +1,7 @@
 import type { Models } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  createAccommodation as _createAccommodation,
   createProposal as _createProposal,
   deleteProposal as _deleteProposal,
   getCoordinatorParticipant as _getCoordinatorParticipant,
@@ -40,6 +41,11 @@ interface ProposalsProps {
     }
   ) => Promise<unknown>
   listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
+  createAccommodation?: (
+    proposalId: string,
+    proposerUserId: string,
+    data: { name: string; url?: string; cost?: string; description?: string }
+  ) => Promise<unknown>
   updateProposal?: (
     proposalId: string,
     userId: string,
@@ -61,6 +67,7 @@ export default function Proposals({
   listProposals = _listProposals,
   createProposal = _createProposal,
   listAccommodations = _listAccommodations,
+  createAccommodation = _createAccommodation,
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
@@ -172,14 +179,23 @@ export default function Proposals({
   async function handleRandomProposal() {
     setRandomizing(true)
     try {
-      const data = randomProposal()
+      const { accommodation, ...data } = randomProposal()
       const proposal = await createProposal(
         tripId,
         user.$id,
         user.name || '',
         data
       )
+      const typedProposal = proposal as { $id: string }
+      await createAccommodation(typedProposal.$id, user.$id, {
+        name: accommodation.name,
+        url: accommodation.url,
+        cost: accommodation.cost,
+        description: accommodation.description,
+      })
       handleCreated(proposal)
+      const accs = await listAccommodations(typedProposal.$id)
+      setAccommodations((prev) => ({ ...prev, [typedProposal.$id]: accs }))
     } finally {
       setRandomizing(false)
     }

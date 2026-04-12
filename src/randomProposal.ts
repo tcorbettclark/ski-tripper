@@ -281,11 +281,90 @@ const PROPOSALS: Proposal[] = [
   },
 ]
 
+interface AccommodationData {
+  name: string
+  url?: string
+  cost?: string
+  description?: string
+}
+
+const ACCOMMODATIONS: AccommodationData[] = [
+  {
+    name: 'Hotel Nevai',
+    url: 'https://hotelnevai.com',
+    cost: '€220/night',
+    description:
+      'Modern boutique hotel in the heart of Verbier with ski-in access, spa, and panoramic mountain views.',
+  },
+  {
+    name: 'Chalet Hotel Adria',
+    url: 'https://chalet-hotel-adria.com',
+    cost: '€180/night',
+    description:
+      'Traditional alpine chalet with log fire, hearty breakfast, and walking distance to the lifts.',
+  },
+  {
+    name: 'RocksResort',
+    url: 'https://rocksresort.com',
+    cost: '€260/night',
+    description:
+      'Contemporary apartment-style hotel with wellness area, restaurant, and direct piste access.',
+  },
+  {
+    name: 'Hotel Bessoni',
+    url: 'https://hotelbessoni.com',
+    cost: '€150/night',
+    description:
+      'Family-run hotel with cosy rooms, excellent local cuisine, and a short shuttle to the slopes.',
+  },
+  {
+    name: 'Auberge de la Montagne',
+    cost: '€110/night',
+    description:
+      'Charming mountain inn offering rustic rooms, home-cooked meals, and a warm après-ski atmosphere.',
+  },
+  {
+    name: 'Alpine Lodge & Spa',
+    url: 'https://alpinelodge.com',
+    cost: '€300/night',
+    description:
+      'Luxury lodge with indoor pool, gourmet restaurant, and ski concierge service.',
+  },
+  {
+    name: 'Refuge du Ski',
+    cost: '€90/night',
+    description:
+      'Budget-friendly hostel-style accommodation with shared kitchen, drying room, and friendly vibe.',
+  },
+  {
+    name: 'Grand Hotel des Neiges',
+    url: 'https://grandhotelneiges.com',
+    cost: '€240/night',
+    description:
+      'Grand dame of the resort with ballroom, Michelin-star restaurant, and ski valet.',
+  },
+  {
+    name: 'Chalet Mont Blanc',
+    cost: '€175/night',
+    description:
+      'Self-catered chalet for up to 10 guests. Hot tub, log burner, and stunning valley views.',
+  },
+  {
+    name: 'Hotel Crystal',
+    url: 'https://hotelcrystal.com',
+    cost: '€195/night',
+    description:
+      'Stylish mid-range hotel with sauna, boot-warming room, and complementary airport shuttle.',
+  },
+]
+
 export function randomProposal(): Proposal & {
   startDate: string
   endDate: string
-} {
+} & { accommodation: AccommodationData } {
   const proposal = PROPOSALS[Math.floor(Math.random() * PROPOSALS.length)]
+  const accommodation =
+    ACCOMMODATIONS[Math.floor(Math.random() * ACCOMMODATIONS.length)]
 
   const departureStart = new Date('2026-12-01')
   const departureEnd = new Date('2027-04-15')
@@ -303,5 +382,6 @@ export function randomProposal(): Proposal & {
     ...proposal,
     startDate: departDate.toISOString().split('T')[0],
     endDate: endDate.toISOString().split('T')[0],
+    accommodation,
   }
 }
