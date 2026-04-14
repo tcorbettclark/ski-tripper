@@ -15,7 +15,13 @@
     "trip",
     "planning",
     "vacation",
-    "scheduling"
+    "scheduling",
+    "winter",
+    "snow",
+    "resort",
+    "mountain",
+    "travel",
+    "booking"
   ],
   "scripts": {
     "dev": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --watch & bun server.js",
