@@ -1,5 +1,7 @@
-[pre-start]
+[[pre-start]]
 deps = "bun install"
+
+[[pre-start]]
 copy = "wt step copy-from-main --yes"
 
 [aliases]
