@@ -102,6 +102,7 @@ export default function App({
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
   const [showTripInfo, setShowTripInfo] = useState(false)
+  const [tripInfoTripId, setTripInfoTripId] = useState<string | null>(null)
   const autoSelectedRef = useRef(false)
 
   const loadTrips = useCallback(
@@ -185,9 +186,17 @@ export default function App({
     setSelectedTripId(null)
     setTripDetailTab('proposals')
     setShowTripInfo(false)
+    setTripInfoTripId(null)
+  }
+
+  function handleShowTripInfo(tripId: string) {
+    setTripInfoTripId(tripId)
+    setShowTripInfo(true)
   }
 
   const selectedTrip = trips.find((t) => t.$id === selectedTripId) || null
+  const tripInfoTrip =
+    trips.find((t) => t.$id === (tripInfoTripId || selectedTripId)) || null
 
   if (checking) return null
 
@@ -215,7 +224,7 @@ export default function App({
         tripDetailTab={tripDetailTab}
         onViewAllTrips={handleViewAllTrips}
         onTripDetailTabChange={(tab) => setTripDetailTab(tab as TripDetailTab)}
-        onShowTripInfo={() => setShowTripInfo(true)}
+        onShowTripInfo={() => handleShowTripInfo(selectedTripId!)}
         userName={user.name || user.email}
         onLogout={handleLogout}
       />
@@ -228,6 +237,7 @@ export default function App({
             onSelectTrip={handleSelectTrip}
             onJoinedTrip={handleJoinedTrip}
             getCoordinatorParticipant={getCoordinatorParticipant}
+            onShowTripInfo={handleShowTripInfo}
           />
         </ErrorBoundary>
       )}
@@ -249,32 +259,38 @@ export default function App({
               <Poll user={user} tripId={selectedTripId} />
             </ErrorBoundary>
           )}
-          <TripInfo
-            trip={selectedTrip}
-            user={user}
-            open={showTripInfo}
-            onClose={() => setShowTripInfo(false)}
-            listTripParticipants={listTripParticipants}
-            updateTrip={updateTrip}
-            deleteTrip={deleteTrip}
-            leaveTrip={leaveTrip}
-            getCoordinatorParticipant={getCoordinatorParticipant}
-            onLeft={() => {
-              setTrips((ts) => ts.filter((t) => t.$id !== selectedTripId))
-              handleViewAllTrips()
-            }}
-            onDeleted={() => {
-              setTrips((ts) => ts.filter((t) => t.$id !== selectedTripId))
-              handleViewAllTrips()
-            }}
-            onUpdated={(updated) => {
-              const u = updated as { $id: string }
-              setTrips((ts) =>
-                ts.map((t) => (t.$id === u.$id ? (u as typeof t) : t))
-              )
-            }}
-          />
         </>
+      )}
+
+      {showTripInfo && tripInfoTrip && (
+        <TripInfo
+          trip={tripInfoTrip}
+          user={user}
+          open={showTripInfo}
+          onClose={() => {
+            setShowTripInfo(false)
+            setTripInfoTripId(null)
+          }}
+          listTripParticipants={listTripParticipants}
+          updateTrip={updateTrip}
+          deleteTrip={deleteTrip}
+          leaveTrip={leaveTrip}
+          getCoordinatorParticipant={getCoordinatorParticipant}
+          onLeft={() => {
+            setTrips((ts) => ts.filter((t) => t.$id !== tripInfoTrip.$id))
+            handleViewAllTrips()
+          }}
+          onDeleted={() => {
+            setTrips((ts) => ts.filter((t) => t.$id !== tripInfoTrip.$id))
+            handleViewAllTrips()
+          }}
+          onUpdated={(updated) => {
+            const u = updated as { $id: string }
+            setTrips((ts) =>
+              ts.map((t) => (t.$id === u.$id ? (u as typeof t) : t))
+            )
+          }}
+        />
       )}
     </div>
   )

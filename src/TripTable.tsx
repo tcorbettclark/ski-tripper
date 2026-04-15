@@ -6,6 +6,7 @@ import type { Trip } from './types.d.ts'
 interface TripTableProps {
   trips: Trip[]
   onSelectTrip: (tripId: string) => void
+  onShowTripInfo: (tripId: string) => void
   emptyMessage?: string
   getCoordinatorParticipant?: (
     tripId: string
@@ -15,6 +16,7 @@ interface TripTableProps {
 export default function TripTable({
   trips,
   onSelectTrip,
+  onShowTripInfo,
   emptyMessage = 'No trips yet. Add one above.',
   getCoordinatorParticipant = _getCoordinatorParticipant,
 }: TripTableProps) {
@@ -28,6 +30,7 @@ export default function TripTable({
         <tr>
           <th style={styles.th}>Description</th>
           <th style={styles.th}>Co-ordinator</th>
+          <th style={{ ...styles.th, textAlign: 'right' }} />
         </tr>
       </thead>
       <tbody>
@@ -36,6 +39,7 @@ export default function TripTable({
             key={trip.$id}
             trip={trip}
             onSelectTrip={onSelectTrip}
+            onShowTripInfo={onShowTripInfo}
             getCoordinatorParticipant={getCoordinatorParticipant}
           />
         ))}

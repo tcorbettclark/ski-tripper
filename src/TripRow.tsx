@@ -6,6 +6,7 @@ import type { Trip } from './types.d.ts'
 interface TripRowProps {
   trip: Trip
   onSelectTrip: (tripId: string) => void
+  onShowTripInfo: (tripId: string) => void
   getCoordinatorParticipant?: (
     tripId: string
   ) => Promise<{ participants: Array<{ participantUserName: string }> }>
@@ -14,6 +15,7 @@ interface TripRowProps {
 export default function TripRow({
   trip,
   onSelectTrip,
+  onShowTripInfo,
   getCoordinatorParticipant = _getCoordinatorParticipant,
 }: TripRowProps) {
   const [coordinator, setCoordinator] = useState<{ name: string } | null>(null)
@@ -49,6 +51,19 @@ export default function TripRow({
       <td style={{ ...styles.td, color: colors.textSecondary }}>
         {coordinator?.name || '—'}
       </td>
+      <td style={styles.actionsCell}>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onShowTripInfo(trip.$id)
+          }}
+          style={styles.infoButton}
+          aria-label="Trip info"
+        >
+          ⚙
+        </button>
+      </td>
     </tr>
   )
 }
@@ -68,5 +83,25 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: '14px',
     lineHeight: '1.5',
+  },
+  actionsCell: {
+    padding: '14px 16px',
+    textAlign: 'right',
+    verticalAlign: 'middle',
+  },
+  infoButton: {
+    background: 'none',
+    border: '1px solid rgba(100,190,230,0.2)',
+    borderRadius: '50%',
+    width: '28px',
+    height: '28px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: colors.textSecondary,
+    fontSize: '14px',
+    cursor: 'pointer',
+    padding: 0,
+    lineHeight: 1,
   },
 } as const
