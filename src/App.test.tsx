@@ -258,7 +258,7 @@ describe('App', () => {
     await ue.click(screen.getByRole('button', { name: /trip info/i }))
 
     await waitFor(() => screen.getByText('Trip Info'))
-    await ue.click(screen.getByRole('button', { name: /^edit$/i }))
+    await ue.click(screen.getByRole('button', { name: 'Edit description' }))
 
     await waitFor(() => screen.getByRole('button', { name: /^save$/i }))
     await ue.click(screen.getByRole('button', { name: /^save$/i }))
