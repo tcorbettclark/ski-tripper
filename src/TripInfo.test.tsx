@@ -48,7 +48,17 @@ async function renderInfo(props: Record<string, unknown> = {}) {
             ],
           })
         }
-        listTripParticipants={() => Promise.resolve({ participants: [] })}
+        listTripParticipants={() =>
+          Promise.resolve({
+            participants: [
+              {
+                $id: 'p1',
+                participantUserName: 'Alice',
+                role: 'coordinator' as const,
+              },
+            ],
+          })
+        }
         updateTrip={() => Promise.resolve(updatedTrip)}
         deleteTrip={() => Promise.resolve()}
         leaveTrip={() => Promise.resolve()}
@@ -57,10 +67,10 @@ async function renderInfo(props: Record<string, unknown> = {}) {
         {...props}
       />
     )
+    await waitFor(() =>
+      expect(screen.queryByText('Loading participants…')).toBeNull()
+    )
   })
-  await waitFor(() =>
-    expect(screen.queryByText('Loading participants…')).toBeNull()
-  )
 }
 describe('TripInfo', () => {
   it('shows the trip description', async () => {
@@ -73,17 +83,21 @@ describe('TripInfo', () => {
     expect(screen.getByText('abc-123'))
   })
 
-  it('does not render when open is false', () => {
-    render(
-      <TripInfo
-        trip={trip}
-        user={currentUser}
-        open={false}
-        onClose={noop}
-        getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
-        listTripParticipants={() => Promise.resolve({ participants: [] })}
-      />
-    )
+  it('does not render when open is false', async () => {
+    await act(async () => {
+      render(
+        <TripInfo
+          trip={trip}
+          user={currentUser}
+          open={false}
+          onClose={noop}
+          getCoordinatorParticipant={() =>
+            Promise.resolve({ participants: [] })
+          }
+          listTripParticipants={() => Promise.resolve({ participants: [] })}
+        />
+      )
+    })
     expect(screen.queryByText('Trip Info')).toBeNull()
   })
 

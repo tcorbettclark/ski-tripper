@@ -8,7 +8,6 @@ import {
   updateTrip as _updateTrip,
 } from './backend'
 import EditTripForm from './EditTripForm'
-import ParticipantList from './ParticipantList'
 import { borders, colors, fonts } from './theme'
 import type { Trip } from './types.d.ts'
 
@@ -65,6 +64,13 @@ export default function TripInfo({
   const [codeCopyError, setCodeCopyError] = useState('')
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState('')
+  const [participants, setParticipants] = useState<
+    Array<{
+      $id: string
+      participantUserName: string
+      role: 'coordinator' | 'participant'
+    }>
+  >([])
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -94,6 +100,16 @@ export default function TripInfo({
       setLeaveError('')
     }
   }, [open])
+
+  useEffect(() => {
+    if (!trip) return
+    listTripParticipants(trip.$id)
+      .then(({ participants }) => {
+        if (!mountedRef.current) return
+        setParticipants(participants)
+      })
+      .catch(() => {})
+  }, [trip, listTripParticipants])
 
   function handleCopyCode() {
     if (!trip.code) return
@@ -245,21 +261,18 @@ export default function TripInfo({
               </span>
             </div>
           )}
-          <span style={styles.sectionLabel}>PARTICIPANTS</span>
-          <ParticipantList
-            tripId={trip.$id}
-            heading="COORDINATORS"
-            showRole={false}
-            filterRole="coordinator"
-            listTripParticipants={listTripParticipants}
-          />
-          <ParticipantList
-            tripId={trip.$id}
-            heading="PARTICIPANTS"
-            showRole={false}
-            filterRole="participant"
-            listTripParticipants={listTripParticipants}
-          />
+          <div style={styles.participantSection}>
+            <span style={styles.detailLabel}>Participants</span>
+            <div style={styles.participantList}>
+              {participants.map((p) => (
+                <div key={p.$id} style={styles.participantRow}>
+                  <span style={styles.detailValue}>
+                    {p.participantUserName}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
           {isCoordinator && (
             <div style={styles.bottomActions}>
               <button
@@ -426,6 +439,22 @@ const styles = {
     color: colors.textSecondary,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.08em',
+    alignSelf: 'flex-start',
+  },
+  participantSection: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '16px',
+  },
+  participantList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  participantRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '16px',
   },
   mono: {
     fontFamily: fonts.mono,
