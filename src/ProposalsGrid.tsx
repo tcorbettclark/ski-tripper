@@ -10,7 +10,7 @@ import ProposalCard from './ProposalCard'
 import { borders, colors, fonts } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
 
-type StatusFilter = 'all' | 'DRAFT' | 'SUBMITTED' | 'REJECTED'
+type StatusFilter = 'DRAFT' | 'SUBMITTED' | 'REJECTED'
 
 interface ProposalsGridProps {
   proposals: Proposal[]
@@ -53,7 +53,7 @@ export default function ProposalsGrid({
 }: ProposalsGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('DRAFT')
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -83,9 +83,7 @@ export default function ProposalsGrid({
       )
     }
 
-    if (statusFilter !== 'all') {
-      result = result.filter((p) => p.state === statusFilter)
-    }
+    result = result.filter((p) => p.state === statusFilter)
 
     return result
   }, [proposals, debouncedQuery, statusFilter])
@@ -105,7 +103,7 @@ export default function ProposalsGrid({
           style={styles.searchInput}
         />
         <div style={styles.filterGroup}>
-          {(['all', 'DRAFT', 'SUBMITTED', 'REJECTED'] as StatusFilter[]).map(
+          {(['DRAFT', 'SUBMITTED', 'REJECTED'] as StatusFilter[]).map(
             (status) => (
               <button
                 key={status}
@@ -117,7 +115,7 @@ export default function ProposalsGrid({
                     : styles.filterButtonInactive
                 }
               >
-                {status === 'all' ? 'All' : status}
+                {status}
               </button>
             )
           )}

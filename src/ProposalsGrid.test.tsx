@@ -49,7 +49,7 @@ const proposals: Proposal[] = [
 ]
 
 describe('ProposalsGrid', () => {
-  it('renders all proposals', () => {
+  it('renders proposals filtered by default status', () => {
     render(
       <ProposalsGrid
         proposals={proposals}
@@ -64,14 +64,18 @@ describe('ProposalsGrid', () => {
       />
     )
 
-    expect(screen.getByText(/A Resort/)).toBeDefined()
     expect(screen.getByText(/Z Resort/)).toBeDefined()
+    expect(screen.queryByText(/A Resort/)).toBeNull()
   })
 
   it('sorts proposals alphabetically by resort name', () => {
+    const allDrafts: Proposal[] = proposals.map((p) => ({
+      ...p,
+      state: 'DRAFT' as const,
+    }))
     render(
       <ProposalsGrid
-        proposals={proposals}
+        proposals={allDrafts}
         userId="user-1"
         onUpdated={() => {}}
         onDeleted={() => {}}
@@ -85,6 +89,8 @@ describe('ProposalsGrid', () => {
 
     const headings = screen.getAllByRole('heading')
     expect(headings.length).toBe(2)
+    expect(headings[0].textContent).toContain('A Resort')
+    expect(headings[1].textContent).toContain('Z Resort')
   })
 
   it('filters by DRAFT status', async () => {
