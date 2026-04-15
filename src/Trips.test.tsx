@@ -9,6 +9,7 @@ interface RenderTripsProps {
   user?: Models.User
   trips?: Trip[]
   onSelectTrip?: (tripId: string) => void
+  onShowTripInfo?: (tripId: string) => void
   onJoinedTrip?: () => void
   createTrip?: () => Promise<{ $id: string; description: string; code: string }>
   getTripByCode?: () => Promise<{ trips: Trip[] }>
@@ -39,6 +40,7 @@ function renderTrips(props: RenderTripsProps = {}) {
       user={testUser}
       trips={props.trips || []}
       onSelectTrip={props.onSelectTrip || (() => {})}
+      onShowTripInfo={props.onShowTripInfo || (() => {})}
       onJoinedTrip={props.onJoinedTrip || (() => {})}
       createTrip={() => Promise.resolve(defaultTrip)}
       getTripByCode={() => Promise.resolve({ trips: [] })}
