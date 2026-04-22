@@ -6,3 +6,4 @@ dist-test
 .env.local
 .env.*.local
 .backups/
+.DS_Store
