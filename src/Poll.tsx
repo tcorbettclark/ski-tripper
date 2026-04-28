@@ -10,6 +10,7 @@ import {
   listVotes as _listVotes,
   upsertVote as _upsertVote,
 } from './backend'
+import PastPoll from './PastPoll'
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
 import { borders, colors, fonts } from './theme'
@@ -19,6 +20,7 @@ import type {
   Proposal,
   Vote,
 } from './types.d.ts'
+import { formatDate, getDaysRemaining } from './utils'
 
 interface PollComponentProps {
   user: Models.User
@@ -199,21 +201,6 @@ export default function Poll({
   const hasSubmittedProposals = proposals.some((p) => p.state === 'SUBMITTED')
   const myVote = votes.find((v) => v.voterUserId === user.$id) || null
 
-  function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
-
-  function getDaysRemaining(endDate: string) {
-    const end = new Date(endDate).getTime()
-    const now = Date.now()
-    const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
-    return days > 0 ? days : 0
-  }
-
   if (loading) return <p style={styles.message}>Loading…</p>
 
   return (
@@ -317,58 +304,6 @@ export default function Poll({
             </div>
           )}
         </>
-      )}
-    </div>
-  )
-}
-
-function PastPoll({
-  poll,
-  proposals,
-  tripId,
-  userId,
-  listVotes,
-}: {
-  poll: PollType
-  proposals: Proposal[]
-  tripId: string
-  userId: string
-  listVotes: (
-    pollId: string,
-    tripId: string,
-    userId: string
-  ) => Promise<{ votes: Vote[] }>
-}) {
-  const [votes, setVotes] = useState<Vote[]>([])
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    setLoading(true)
-    listVotes(poll.$id, tripId, userId)
-      .then((result) => setVotes(result.votes))
-      .finally(() => setLoading(false))
-  }, [poll.$id, tripId, userId, listVotes])
-
-  function formatDate(iso: string) {
-    return new Date(iso).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    })
-  }
-
-  return (
-    <div style={pastStyles.container}>
-      <div style={pastStyles.header}>
-        <span style={pastStyles.status}>Poll · CLOSED</span>
-        <span style={pastStyles.dates}>
-          {formatDate(poll.startDate)} – {formatDate(poll.endDate)}
-        </span>
-      </div>
-      {loading ? (
-        <p style={pastStyles.loading}>Loading…</p>
-      ) : (
-        <PollResults poll={poll} proposals={proposals} votes={votes} />
       )}
     </div>
   )
@@ -525,48 +460,5 @@ const styles = {
     fontWeight: '600',
     color: colors.textSecondary,
     margin: '0 0 16px',
-  },
-} as const
-
-const pastStyles = {
-  container: {
-    marginBottom: '16px',
-    border: borders.subtle,
-    borderRadius: '8px',
-    padding: '14px',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    marginBottom: '12px',
-  },
-  status: {
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase',
-  },
-  dates: {
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    color: colors.textSecondary,
-  },
-  toggle: {
-    background: 'none',
-    border: 'none',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    cursor: 'pointer',
-    padding: 0,
-  },
-  loading: {
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    margin: '10px 0 0',
   },
 } as const
