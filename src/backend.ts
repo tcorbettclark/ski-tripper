@@ -26,22 +26,27 @@ export const account = new Account(client)
 export const tablesDb = new TablesDB(client)
 export default client
 
-function toRow<T>(row: Models.Row): T {
-  return row as T
+function toRow<T extends { $id: string }>(row: Models.Row): T {
+  if (!row || typeof (row as { $id?: unknown }).$id !== 'string') {
+    throw new Error('Failed to fetch row: expected $id')
+  }
+  return row as unknown as T
 }
 
-function toRows<T>(rows: Models.Row[]): T[] {
+function toRows<T extends { $id: string }>(rows: Models.Row[]): T[] {
   return rows.map((row) => toRow<T>(row))
 }
 
-async function fetchRows<T>(
+async function fetchRows<T extends { $id: string }>(
   result: Promise<{ rows: Models.Row[] }>
 ): Promise<T[]> {
   const { rows } = await result
   return toRows<T>(rows)
 }
 
-async function fetchRow<T>(result: Promise<Models.Row>): Promise<T> {
+async function fetchRow<T extends { $id: string }>(
+  result: Promise<Models.Row>
+): Promise<T> {
   return toRow<T>(await result)
 }
 
