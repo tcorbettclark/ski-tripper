@@ -199,7 +199,7 @@ export default function ProposalCard({
               <div key={acc.$id}>
                 {i > 0 && <hr style={styles.accommodationDivider} />}
                 <div style={styles.grid}>
-                  <Field
+                  <DetailField
                     label="Name"
                     value={acc.url ? undefined : acc.name || '—'}
                   >
@@ -213,7 +213,7 @@ export default function ProposalCard({
                         {acc.name || '—'} ↗
                       </a>
                     )}
-                  </Field>
+                  </DetailField>
                   <DetailField label="Cost" value={acc.cost} />
                   <div style={{ gridColumn: '1/-1' }}>
                     <DetailField label="Description" value={acc.description} />
