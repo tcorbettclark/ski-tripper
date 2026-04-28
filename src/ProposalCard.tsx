@@ -124,12 +124,8 @@ export default function ProposalCard({
   }
 
   async function handleDelete() {
-    try {
-      await deleteProposal(proposal.$id, userId)
-      onDeleted(proposal.$id)
-    } catch (_err) {
-      // Errors propagate to ErrorBoundary
-    }
+    await deleteProposal(proposal.$id, userId)
+    onDeleted(proposal.$id)
   }
 
   if (isEditing) {
