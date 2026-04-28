@@ -281,7 +281,26 @@ export async function deleteTrip(
       })
     ),
   ])
+  const accommodations = await fetchRows<Accommodation>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: ACCOMMODATIONS_TABLE_ID,
+      queries: [
+        Query.equal(
+          'proposalId',
+          proposals.map((p) => p.$id)
+        ),
+      ],
+    })
+  )
   await Promise.all([
+    ...accommodations.map((a) =>
+      db.deleteRow({
+        databaseId: DATABASE_ID,
+        tableId: ACCOMMODATIONS_TABLE_ID,
+        rowId: a.$id,
+      })
+    ),
     ...participants.map((p) =>
       db.deleteRow({
         databaseId: DATABASE_ID,

@@ -1179,7 +1179,7 @@ describe('listVotes', () => {
 
 describe('deleteTrip', () => {
   function makeDeleteTripDb(overrides: Partial<MockDb> = {}) {
-    // listRows call order: 1=coordinator check, 2=participants, 3=proposals, 4=votes, 5=polls
+    // listRows call order: 1=coordinator check, 2=participants, 3=proposals, 4=votes, 5=polls, 6=accommodations
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'p-1', participantUserId: 'user-1' }] })
@@ -1210,7 +1210,7 @@ describe('deleteTrip', () => {
     )
   })
 
-  it('deletes participants, proposals, votes, polls, and the trip', async () => {
+  it('deletes accommodations, participants, proposals, votes, polls, and the trip', async () => {
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'p-1', participantUserId: 'user-1' }] })
@@ -1227,6 +1227,7 @@ describe('deleteTrip', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'poll-1' }] })
       )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
     const db = createMockDb({ listRows })
     await deleteTrip('trip-1', 'user-1', db)
     // 2 participants + 1 proposal + 1 vote + 1 poll + 1 trip = 6
