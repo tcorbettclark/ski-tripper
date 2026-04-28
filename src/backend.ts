@@ -256,31 +256,36 @@ export async function deleteTrip(
       db.listRows({
         databaseId: DATABASE_ID,
         tableId: PARTICIPANTS_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(100)],
+        queries: [Query.equal('tripId', tripId), Query.limit(5000)],
       })
     ),
     fetchRows<Proposal>(
       db.listRows({
         databaseId: DATABASE_ID,
         tableId: PROPOSALS_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(100)],
+        queries: [Query.equal('tripId', tripId), Query.limit(1000)],
       })
     ),
     fetchRows<Vote>(
       db.listRows({
         databaseId: DATABASE_ID,
         tableId: VOTES_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(200)],
+        queries: [Query.equal('tripId', tripId), Query.limit(5000)],
       })
     ),
     fetchRows<Poll>(
       db.listRows({
         databaseId: DATABASE_ID,
         tableId: POLLS_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(50)],
+        queries: [Query.equal('tripId', tripId), Query.limit(100)],
       })
     ),
   ])
+  if (participants.length >= 5000)
+    throw new Error('Too many participants to delete.')
+  if (proposals.length >= 1000) throw new Error('Too many proposals to delete.')
+  if (votes.length >= 5000) throw new Error('Too many votes to delete.')
+  if (polls.length >= 100) throw new Error('Too many polls to delete.')
   const accommodations = await fetchRows<Accommodation>(
     db.listRows({
       databaseId: DATABASE_ID,
