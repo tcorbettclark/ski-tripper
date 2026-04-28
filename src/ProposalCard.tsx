@@ -173,16 +173,22 @@ export default function ProposalCard({
         </div>
 
         <div style={styles.grid}>
-          <Field label="Start Date" value={proposal.startDate} />
-          <Field label="End Date" value={proposal.endDate} />
-          <Field label="Altitude Range" value={proposal.altitudeRange} />
-          <Field label="Nearest Airport" value={proposal.nearestAirport} />
-          <Field label="Transfer Time" value={proposal.transferTime} />
+          <DetailField label="Start Date" value={proposal.startDate} />
+          <DetailField label="End Date" value={proposal.endDate} />
+          <DetailField label="Altitude Range" value={proposal.altitudeRange} />
+          <DetailField
+            label="Nearest Airport"
+            value={proposal.nearestAirport}
+          />
+          <DetailField label="Transfer Time" value={proposal.transferTime} />
           <div style={{ gridColumn: '1/-1' }}>
-            <Field label="Description" value={proposal.description} />
+            <DetailField label="Description" value={proposal.description} />
           </div>
           <div style={{ gridColumn: '1/-1' }}>
-            <Field label="Proposed By" value={proposal.proposerUserName} />
+            <DetailField
+              label="Proposed By"
+              value={proposal.proposerUserName}
+            />
           </div>
         </div>
 
@@ -208,9 +214,9 @@ export default function ProposalCard({
                       </a>
                     )}
                   </Field>
-                  <Field label="Cost" value={acc.cost} />
+                  <DetailField label="Cost" value={acc.cost} />
                   <div style={{ gridColumn: '1/-1' }}>
-                    <Field label="Description" value={acc.description} />
+                    <DetailField label="Description" value={acc.description} />
                   </div>
                 </div>
               </div>
@@ -323,7 +329,7 @@ export default function ProposalCard({
   )
 }
 
-function Field({
+function DetailField({
   label,
   value,
   children,
