@@ -76,6 +76,8 @@ export default function ProposalCard({
   const [rejectError, setRejectError] = useState('')
   const [resubmitting, setResubmitting] = useState(false)
   const [resubmitError, setResubmitError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'
@@ -124,11 +126,20 @@ export default function ProposalCard({
   }
 
   async function handleDelete() {
+    // React ErrorBoundary doesn't catch errors thrown from event handlers,
+    // so a thrown error here would surface as an unhandled promise rejection
+    // and the user would have no idea whether the delete succeeded. Mirror
+    // the handleSubmit / handleReject / handleResubmit pattern: surface the
+    // error in a local state slot and render it next to the action.
+    setDeleteError('')
+    setDeleting(true)
     try {
       await deleteProposal(proposal.$id, userId)
+      // The card unmounts on onDeleted; no need to clear `deleting` here.
       onDeleted(proposal.$id)
-    } catch (_err) {
-      // Errors propagate to ErrorBoundary
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : String(err))
+      setDeleting(false)
     }
   }
 
@@ -308,6 +319,7 @@ export default function ProposalCard({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
                 style={styles.cancelButton}
               >
                 Cancel
@@ -315,11 +327,13 @@ export default function ProposalCard({
               <button
                 type="button"
                 onClick={handleDelete}
+                disabled={deleting}
                 style={styles.confirmDeleteButton}
               >
-                Delete
+                {deleting ? 'Deleting…' : 'Delete'}
               </button>
             </div>
+            {deleteError && <p style={styles.errorText}>{deleteError}</p>}
           </div>
         </div>
       )}

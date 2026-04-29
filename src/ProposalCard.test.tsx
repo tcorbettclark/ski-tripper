@@ -130,6 +130,41 @@ describe('ProposalCard', () => {
     expect(screen.getByText('Delete Proposal?')).toBeDefined()
   })
 
+  // Regression for issue #40: handleDelete used to swallow errors silently,
+  // so a failed deleteProposal call left the user with no feedback. Mirror
+  // the handleSubmit/handleReject pattern: surface the error in-place.
+  it('surfaces deleteProposal failures next to the confirm dialog', async () => {
+    const user = userEvent.setup()
+    const failingDelete = mock(async () => {
+      throw new Error('network is down')
+    })
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={failingDelete}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    // Two "Delete" buttons exist after the dialog opens (the original on
+    // the card, plus the confirm button). The dialog version is inside the
+    // confirm UI, which also contains the cancel button.
+    const confirmButton = screen
+      .getAllByRole('button', { name: 'Delete' })
+      .at(-1) as HTMLButtonElement
+    await user.click(confirmButton)
+
+    expect(failingDelete).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('network is down')).toBeDefined()
+  })
+
   it('shows resubmit button for coordinator + REJECTED', () => {
     const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
     render(
