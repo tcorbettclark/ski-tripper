@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import PollResults from './PollResults'
 import { borders, colors, fonts } from './theme'
 import type { Poll, Proposal, Vote } from './types.d.ts'
@@ -25,12 +25,25 @@ export default function PastPoll({
 }: PastPollProps) {
   const [votes, setVotes] = useState<Vote[]>([])
   const [loading, setLoading] = useState(false)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   useEffect(() => {
     setLoading(true)
     listVotes(poll.$id, tripId, userId)
-      .then((result) => setVotes(result.votes))
-      .finally(() => setLoading(false))
+      .then(async (result) => {
+        if (!mountedRef.current) return
+        setVotes(result.votes)
+      })
+      .finally(() => {
+        if (mountedRef.current) setLoading(false)
+      })
   }, [poll.$id, tripId, userId, listVotes])
 
   return (
