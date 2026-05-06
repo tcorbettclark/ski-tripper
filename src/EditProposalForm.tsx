@@ -10,6 +10,7 @@ import { COUNTRIES } from './countries'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
+import { isValidUrl } from './utils'
 
 interface AccommodationInput {
   id: string
@@ -164,6 +165,12 @@ export default function EditProposalForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    for (const acc of Object.values(accommodations)) {
+      if (acc.url && !isValidUrl(acc.url)) {
+        setError('Invalid URL: only http and https schemes are allowed.')
+        return
+      }
+    }
     setSaving(true)
     try {
       await updateProposal(proposal.$id, userId, form)

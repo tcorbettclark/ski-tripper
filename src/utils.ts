@@ -1,5 +1,13 @@
+import { sanitizeUrl } from '@braintree/sanitize-url'
 import adjectives from 'threewords/data/adjectives.json'
 import nouns from 'threewords/data/nouns.json'
+
+export { sanitizeUrl }
+
+export function isValidUrl(url: string | undefined): boolean {
+  if (!url) return true
+  return sanitizeUrl(url) !== 'about:blank'
+}
 
 export function randomThreeWords(): string {
   const ints = new Uint32Array(3)

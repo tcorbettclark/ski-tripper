@@ -1,4 +1,3 @@
-import { sanitizeUrl } from '@braintree/sanitize-url'
 import type { Models } from 'appwrite'
 import {
   Account,
@@ -17,7 +16,7 @@ import type {
   Trip,
   Vote,
 } from './types.d'
-import { randomThreeWords } from './utils'
+import { isValidUrl, randomThreeWords } from './utils'
 
 const client = new Client()
   .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
@@ -930,7 +929,7 @@ export async function listVotes(
 
 function validateUrl(url: string | undefined): string | undefined {
   if (!url) return undefined
-  if (sanitizeUrl(url) === 'about:blank') {
+  if (!isValidUrl(url)) {
     throw new Error('Invalid URL: only http and https schemes are allowed.')
   }
   return url

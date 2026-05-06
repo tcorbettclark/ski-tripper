@@ -8,6 +8,7 @@ import {
 import { COUNTRIES } from './countries'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
+import { isValidUrl } from './utils'
 
 interface AccommodationInput {
   tempId: string
@@ -125,6 +126,12 @@ export default function CreateProposalForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    for (const acc of Object.values(accommodations)) {
+      if (acc.url && !isValidUrl(acc.url)) {
+        setError('Invalid URL: only http and https schemes are allowed.')
+        return
+      }
+    }
     setSaving(true)
     try {
       const userAccount = await accountGet()
