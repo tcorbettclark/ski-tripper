@@ -286,11 +286,11 @@ export async function deleteTrip(
       })
     ),
   ])
-  if (participants.length >= 5000)
+  if (participants.length > 5000)
     throw new Error('Too many participants to delete.')
-  if (proposals.length >= 1000) throw new Error('Too many proposals to delete.')
-  if (votes.length >= 5000) throw new Error('Too many votes to delete.')
-  if (polls.length >= 100) throw new Error('Too many polls to delete.')
+  if (proposals.length > 1000) throw new Error('Too many proposals to delete.')
+  if (votes.length > 5000) throw new Error('Too many votes to delete.')
+  if (polls.length > 100) throw new Error('Too many polls to delete.')
   const accommodations = await fetchRows<Accommodation>(
     db.listRows({
       databaseId: DATABASE_ID,
