@@ -88,6 +88,14 @@ export default function ProposalsGrid({
     return result
   }, [proposals, debouncedQuery, statusFilter])
 
+  const tabCounts = useMemo(() => {
+    return {
+      DRAFT: proposals.filter((p) => p.state === 'DRAFT').length,
+      SUBMITTED: proposals.filter((p) => p.state === 'SUBMITTED').length,
+      REJECTED: proposals.filter((p) => p.state === 'REJECTED').length,
+    }
+  }, [proposals])
+
   if (proposals.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
   }
@@ -102,24 +110,23 @@ export default function ProposalsGrid({
           onChange={(e) => setSearchQuery(e.target.value)}
           style={styles.searchInput}
         />
-        <div style={styles.filterGroup}>
-          {(['DRAFT', 'SUBMITTED', 'REJECTED'] as StatusFilter[]).map(
-            (status) => (
-              <button
-                key={status}
-                type="button"
-                onClick={() => setStatusFilter(status)}
-                style={
-                  statusFilter === status
-                    ? styles.filterButtonActive
-                    : styles.filterButtonInactive
-                }
-              >
-                {status}
-              </button>
-            )
-          )}
-        </div>
+      </div>
+
+      <div style={styles.tabs}>
+        {(['DRAFT', 'SUBMITTED', 'REJECTED'] as StatusFilter[]).map(
+          (status) => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => setStatusFilter(status)}
+              style={
+                statusFilter === status ? styles.tabActive : styles.tabInactive
+              }
+            >
+              {status} ({tabCounts[status]})
+            </button>
+          )
+        )}
       </div>
 
       {filteredProposals.length === 0 ? (
@@ -127,7 +134,7 @@ export default function ProposalsGrid({
           No proposals match your search. Try different criteria.
         </p>
       ) : (
-        <div style={styles.grid}>
+        <div style={styles.fullWidthList}>
           {filteredProposals.map((proposal) => (
             <ProposalCard
               key={proposal.$id}
@@ -173,37 +180,41 @@ const styles = {
     fontSize: '14px',
     outline: 'none',
   },
-  filterGroup: {
+  tabs: {
     display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap' as const,
+    gap: '4px',
+    marginBottom: '24px',
+    borderBottom: borders.subtle,
+    paddingBottom: '0',
   },
-  filterButtonActive: {
-    padding: '6px 16px',
-    borderRadius: '6px',
+  tabActive: {
+    padding: '10px 20px',
+    borderRadius: '8px 8px 0 0',
     border: 'none',
-    background: 'rgba(59,189,232,0.12)',
+    borderBottom: `2px solid ${colors.accent}`,
+    background: 'rgba(59,189,232,0.08)',
     color: colors.accent,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer',
   },
-  filterButtonInactive: {
-    padding: '6px 16px',
-    borderRadius: '6px',
+  tabInactive: {
+    padding: '10px 20px',
+    borderRadius: '8px 8px 0 0',
     border: 'none',
+    borderBottom: `2px solid transparent`,
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: '13px',
     fontWeight: '500',
     cursor: 'pointer',
   },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-    gap: '20px 24px',
+  fullWidthList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
   },
   empty: {
     color: colors.textSecondary,

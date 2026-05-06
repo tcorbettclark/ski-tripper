@@ -168,7 +168,7 @@ describe('Proposals', () => {
         ),
       })
     })
-    await user.click(screen.getByRole('button', { name: 'SUBMITTED' }))
+    await user.click(screen.getByRole('button', { name: /^SUBMITTED/ }))
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /^reject$/i }))
     })

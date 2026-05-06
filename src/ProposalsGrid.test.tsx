@@ -109,7 +109,7 @@ describe('ProposalsGrid', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: 'DRAFT' }))
+    await user.click(screen.getByRole('button', { name: /^DRAFT/ }))
     expect(screen.getByText(/Z Resort/)).toBeDefined()
     expect(screen.queryByText(/A Resort/)).toBeNull()
   })
@@ -130,7 +130,7 @@ describe('ProposalsGrid', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: 'SUBMITTED' }))
+    await user.click(screen.getByRole('button', { name: /^SUBMITTED/ }))
     expect(screen.getByText(/A Resort/)).toBeDefined()
     expect(screen.queryByText(/Z Resort/)).toBeNull()
   })
