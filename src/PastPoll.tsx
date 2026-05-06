@@ -24,7 +24,7 @@ export default function PastPoll({
   listVotes,
 }: PastPollProps) {
   const [votes, setVotes] = useState<Vote[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -35,7 +35,6 @@ export default function PastPoll({
   }, [])
 
   useEffect(() => {
-    setLoading(true)
     listVotes(poll.$id, tripId, userId)
       .then(async (result) => {
         if (!mountedRef.current) return
