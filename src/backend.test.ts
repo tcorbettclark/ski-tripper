@@ -1178,16 +1178,6 @@ describe('listVotes', () => {
 })
 
 describe('deleteTrip', () => {
-  function makeDeleteTripDb(overrides: Partial<MockDb> = {}) {
-    // listRows call order: 1=coordinator check, 2=participants, 3=proposals, 4=votes, 5=polls, 6=accommodations
-    const listRows = mock()
-      .mockImplementationOnce(() =>
-        Promise.resolve({ rows: [{ $id: 'p-1', participantUserId: 'user-1' }] })
-      )
-      .mockImplementation(() => Promise.resolve({ rows: [] }))
-    return createMockDb({ listRows, ...overrides })
-  }
-
   it('throws when the caller is not the coordinator', async () => {
     const listRows = mock().mockImplementationOnce(() =>
       Promise.resolve({
@@ -1210,7 +1200,7 @@ describe('deleteTrip', () => {
     )
   })
 
-  it('deletes accommodations, participants, proposals, votes, polls, and the trip', async () => {
+  it('deletes the trip first, then accommodations, participants, proposals, votes, and polls', async () => {
     const listRows = mock()
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'p-1', participantUserId: 'user-1' }] })
@@ -1230,12 +1220,18 @@ describe('deleteTrip', () => {
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
     const db = createMockDb({ listRows })
     await deleteTrip('trip-1', 'user-1', db)
-    // 2 participants + 1 proposal + 1 vote + 1 poll + 1 trip = 6
+    // 1 trip + 2 participants + 1 proposal + 1 vote + 1 poll = 6
     expect(db.deleteRow).toHaveBeenCalledTimes(6)
+    const firstCall = (db.deleteRow as ReturnType<typeof mock>).mock.calls[0]
+    expect(firstCall[0].rowId).toBe('trip-1')
   })
 
   it('propagates errors from trip deletion', async () => {
-    const db = makeDeleteTripDb({
+    const listRows = mock().mockImplementationOnce(() =>
+      Promise.resolve({ rows: [{ $id: 'p-1', participantUserId: 'user-1' }] })
+    )
+    const db = createMockDb({
+      listRows,
       deleteRow: mock(() => Promise.reject(new Error('Delete failed'))),
     })
     expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow('Delete failed')
@@ -1250,12 +1246,13 @@ describe('deleteTrip', () => {
         Promise.resolve({ rows: [{ $id: 'p-1' }, { $id: 'p-2' }] })
       )
       .mockImplementation(() => Promise.resolve({ rows: [] }))
-    const db = createMockDb({
-      listRows,
-      deleteRow: mock(() =>
-        Promise.reject(new Error('Participant delete failed'))
-      ),
+    let callCount = 0
+    const deleteRow = mock(() => {
+      callCount++
+      if (callCount === 1) return Promise.resolve()
+      return Promise.reject(new Error('Participant delete failed'))
     })
+    const db = createMockDb({ listRows, deleteRow })
     expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
       'Participant delete failed'
     )

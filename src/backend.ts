@@ -256,6 +256,11 @@ export async function deleteTrip(
   ) {
     throw new Error('Only the coordinator can delete this trip.')
   }
+  await db.deleteRow({
+    databaseId: DATABASE_ID,
+    tableId: TRIPS_TABLE_ID,
+    rowId: tripId,
+  })
   const [participants, proposals, votes, polls] = await Promise.all([
     fetchRows<Participant>(
       db.listRows({
@@ -286,11 +291,6 @@ export async function deleteTrip(
       })
     ),
   ])
-  if (participants.length > 5000)
-    throw new Error('Too many participants to delete.')
-  if (proposals.length > 1000) throw new Error('Too many proposals to delete.')
-  if (votes.length > 5000) throw new Error('Too many votes to delete.')
-  if (polls.length > 100) throw new Error('Too many polls to delete.')
   const accommodations = await fetchRows<Accommodation>(
     db.listRows({
       databaseId: DATABASE_ID,
@@ -340,11 +340,6 @@ export async function deleteTrip(
       })
     ),
   ])
-  await db.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: TRIPS_TABLE_ID,
-    rowId: tripId,
-  })
 }
 
 export async function listParticipatedTrips(
