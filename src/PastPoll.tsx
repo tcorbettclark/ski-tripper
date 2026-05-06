@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import PollResults from './PollResults'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, formStyles } from './theme'
 import type { Poll, Proposal, Vote } from './types.d.ts'
 import { formatDate } from './utils'
 
@@ -25,6 +25,7 @@ export default function PastPoll({
 }: PastPollProps) {
   const [votes, setVotes] = useState<Vote[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -35,10 +36,16 @@ export default function PastPoll({
   }, [])
 
   useEffect(() => {
+    setLoading(true)
+    setError('')
     listVotes(poll.$id, tripId, userId)
       .then(async (result) => {
         if (!mountedRef.current) return
         setVotes(result.votes)
+      })
+      .catch((err) => {
+        if (!mountedRef.current) return
+        setError(err instanceof Error ? err.message : String(err))
       })
       .finally(() => {
         if (mountedRef.current) setLoading(false)
@@ -53,11 +60,12 @@ export default function PastPoll({
           {formatDate(poll.startDate)} – {formatDate(poll.endDate)}
         </span>
       </div>
+      {error && <p style={formStyles.error}>{error}</p>}
       {loading ? (
         <p style={styles.loading}>Loading…</p>
-      ) : (
+      ) : !error ? (
         <PollResults poll={poll} proposals={proposals} votes={votes} />
-      )}
+      ) : null}
     </div>
   )
 }
