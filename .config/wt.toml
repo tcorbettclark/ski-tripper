@@ -9,7 +9,7 @@ copy = "wt step copy-from-main --yes"
 merge-and-continue = "wt merge --no-commit --no-remove && wt step copy-to-main --yes"
 
 # Can be used from anywhere, but typically from main to sync work out to all worktrees.
-sync-all-from-main = "wt step for-each -- 'git rebase main && wt step copy-from-main --yes'"
+sync-all-from-main = "wt step for-each -- sh -c 'git rebase main && wt step copy-from-main --yes'"
 
 # Use from within a worktree to copy e.g. .env files to/from main.
 copy-to-main = "wt step copy-ignored --from {{ branch }} --to {{ default_branch }}"
