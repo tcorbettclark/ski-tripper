@@ -1,3 +1,4 @@
+import { sanitizeUrl } from '@braintree/sanitize-url'
 import type { Models } from 'appwrite'
 import {
   Account,
@@ -927,6 +928,14 @@ export async function listVotes(
   return { votes }
 }
 
+function validateUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined
+  if (sanitizeUrl(url) === 'about:blank') {
+    throw new Error('Invalid URL: only http and https schemes are allowed.')
+  }
+  return url
+}
+
 export async function createAccommodation(
   proposalId: string,
   proposerUserId: string,
@@ -960,6 +969,7 @@ export async function createAccommodation(
       data: {
         proposalId,
         ...data,
+        url: validateUrl(data.url),
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
@@ -1020,7 +1030,10 @@ export async function updateAccommodation(
       databaseId: DATABASE_ID,
       tableId: ACCOMMODATIONS_TABLE_ID,
       rowId: accommodationId,
-      data: data as Record<string, unknown>,
+      data: {
+        ...data,
+        ...(data.url !== undefined && { url: validateUrl(data.url) }),
+      } as Record<string, unknown>,
     })
   )
 }

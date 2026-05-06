@@ -1,3 +1,4 @@
+import { sanitizeUrl } from '@braintree/sanitize-url'
 import { useState } from 'react'
 import {
   deleteProposal as _deleteProposal,
@@ -204,9 +205,9 @@ export default function ProposalCard({
                     label="Name"
                     value={acc.url ? undefined : acc.name || '—'}
                   >
-                    {acc.url && (
+                    {acc.url && sanitizeUrl(acc.url) !== 'about:blank' && (
                       <a
-                        href={acc.url}
+                        href={sanitizeUrl(acc.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={styles.accommodationLink}
