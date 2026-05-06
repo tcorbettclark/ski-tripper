@@ -239,4 +239,110 @@ describe('ProposalCard', () => {
     expect(flagImg).toBeDefined()
     expect(flagImg.getAttribute('src')).toBe('https://flagcdn.com/w20/jp.png')
   })
+
+  it('shows error when submitProposal rejects', async () => {
+    const failingSubmit = mock(() => Promise.reject(new Error('Submit failed')))
+    const onSubmitted = mock()
+    const user = userEvent.setup()
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={onSubmitted}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={failingSubmit}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    await screen.findByText('Submit failed')
+    expect(onSubmitted).not.toHaveBeenCalled()
+  })
+
+  it('shows error when rejectProposal rejects', async () => {
+    const failingReject = mock(() => Promise.reject(new Error('Reject failed')))
+    const onRejected = mock()
+    const submittedProposal = { ...baseProposal, state: 'SUBMITTED' as const }
+    const user = userEvent.setup()
+    render(
+      <ProposalCard
+        proposal={submittedProposal}
+        userId="user-2"
+        isCoordinator={true}
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        onRejected={onRejected}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={failingReject}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Reject' }))
+    await screen.findByText('Reject failed')
+    expect(onRejected).not.toHaveBeenCalled()
+  })
+
+  it('shows error when resubmitProposal rejects', async () => {
+    const failingResubmit = mock(() =>
+      Promise.reject(new Error('Resubmit failed'))
+    )
+    const onResubmitted = mock()
+    const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
+    const user = userEvent.setup()
+    render(
+      <ProposalCard
+        proposal={rejectedProposal}
+        userId="user-2"
+        isCoordinator={true}
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        onRejected={() => {}}
+        onResubmitted={onResubmitted}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+        resubmitProposal={failingResubmit}
+      />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: 'Move back to Submitted' })
+    )
+    await screen.findByText('Resubmit failed')
+    expect(onResubmitted).not.toHaveBeenCalled()
+  })
+
+  it('shows error when deleteProposal rejects', async () => {
+    const failingDelete = mock(() => Promise.reject(new Error('Delete failed')))
+    const onDeleted = mock()
+    const user = userEvent.setup()
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={onDeleted}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={failingDelete}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    await user.click(screen.getAllByRole('button', { name: 'Delete' })[0])
+    const confirmButtons = screen.getAllByRole('button', { name: 'Delete' })
+    await user.click(confirmButtons[confirmButtons.length - 1])
+    await screen.findByText('Delete failed')
+    expect(onDeleted).not.toHaveBeenCalled()
+  })
 })

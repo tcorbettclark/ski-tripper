@@ -9,7 +9,7 @@ import {
 import { getCountryFlagUrl } from './countries'
 import DetailField from './DetailField'
 import EditProposalForm from './EditProposalForm'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
 import { isValidUrl, sanitizeUrl } from './utils'
 
@@ -76,6 +76,10 @@ export default function ProposalCard({
   const [rejecting, setRejecting] = useState(false)
   const [resubmitting, setResubmitting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [rejectError, setRejectError] = useState<string | null>(null)
+  const [resubmitError, setResubmitError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'
@@ -86,9 +90,12 @@ export default function ProposalCard({
 
   async function handleSubmit() {
     setSubmitting(true)
+    setSubmitError(null)
     try {
       const result = await submitProposal(proposal.$id, userId)
       onSubmitted(result)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
     } finally {
       setSubmitting(false)
     }
@@ -96,9 +103,12 @@ export default function ProposalCard({
 
   async function handleReject() {
     setRejecting(true)
+    setRejectError(null)
     try {
       const result = await rejectProposal(proposal.$id, userId)
       onRejected(result)
+    } catch (err) {
+      setRejectError(err instanceof Error ? err.message : String(err))
     } finally {
       setRejecting(false)
     }
@@ -106,9 +116,12 @@ export default function ProposalCard({
 
   async function handleResubmit() {
     setResubmitting(true)
+    setResubmitError(null)
     try {
       const result = await resubmitProposal(proposal.$id, userId)
       onResubmitted(result)
+    } catch (err) {
+      setResubmitError(err instanceof Error ? err.message : String(err))
     } finally {
       setResubmitting(false)
     }
@@ -116,9 +129,12 @@ export default function ProposalCard({
 
   async function handleDelete() {
     setDeleting(true)
+    setDeleteError(null)
     try {
       await deleteProposal(proposal.$id, userId)
       onDeleted(proposal.$id)
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : String(err))
     } finally {
       setDeleting(false)
     }
@@ -238,6 +254,7 @@ export default function ProposalCard({
               >
                 {submitting ? 'Submitting…' : 'Submit'}
               </button>
+              {submitError && <p style={formStyles.error}>{submitError}</p>}
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
@@ -257,6 +274,7 @@ export default function ProposalCard({
               {rejecting ? 'Rejecting…' : 'Reject'}
             </button>
           )}
+          {rejectError && <p style={formStyles.error}>{rejectError}</p>}
           {canResubmit && (
             <button
               type="button"
@@ -267,6 +285,7 @@ export default function ProposalCard({
               {resubmitting ? 'Resubmitting…' : 'Move back to Submitted'}
             </button>
           )}
+          {resubmitError && <p style={formStyles.error}>{resubmitError}</p>}
         </div>
       </div>
 
@@ -312,6 +331,7 @@ export default function ProposalCard({
                 {deleting ? 'Deleting…' : 'Delete'}
               </button>
             </div>
+            {deleteError && <p style={formStyles.error}>{deleteError}</p>}
           </div>
         </div>
       )}

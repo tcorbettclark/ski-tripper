@@ -13,7 +13,7 @@ import {
 import PastPoll from './PastPoll'
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, formStyles } from './theme'
 import type {
   Accommodation,
   Poll as PollType,
@@ -79,8 +79,10 @@ export default function Poll({
   const [pollsLoading, setPollsLoading] = useState(false)
   const [pollsError, setPollsError] = useState('')
   const [creatingPoll, setCreatingPoll] = useState(false)
+  const [createPollError, setCreatePollError] = useState<string | null>(null)
   const [pollDuration, setPollDuration] = useState(7)
   const [closingPoll, setClosingPoll] = useState(false)
+  const [closePollError, setClosePollError] = useState<string | null>(null)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -162,6 +164,7 @@ export default function Poll({
 
   async function handleCreatePoll() {
     setCreatingPoll(true)
+    setCreatePollError(null)
     try {
       const poll = await createPoll(
         tripId,
@@ -171,6 +174,8 @@ export default function Poll({
       )
       setActivePoll(poll)
       setVotes([])
+    } catch (err) {
+      setCreatePollError(err instanceof Error ? err.message : String(err))
     } finally {
       setCreatingPoll(false)
     }
@@ -179,10 +184,13 @@ export default function Poll({
   async function handleClosePoll() {
     if (!activePoll) return
     setClosingPoll(true)
+    setClosePollError(null)
     try {
       const closed = await closePoll(activePoll.$id, user.$id)
       setActivePoll(null)
       setPastPolls((p) => [closed, ...p])
+    } catch (err) {
+      setClosePollError(err instanceof Error ? err.message : String(err))
     } finally {
       setClosingPoll(false)
     }
@@ -228,6 +236,9 @@ export default function Poll({
                   </button>
                 )}
               </div>
+              {closePollError && (
+                <p style={formStyles.error}>{closePollError}</p>
+              )}
               <PollVoting
                 poll={activePoll}
                 proposals={proposals}
@@ -271,6 +282,9 @@ export default function Poll({
                   {creatingPoll ? 'Creating…' : 'Create Poll'}
                 </button>
               </div>
+              {createPollError && (
+                <p style={formStyles.error}>{createPollError}</p>
+              )}
             </div>
           ) : null}
 

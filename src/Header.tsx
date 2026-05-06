@@ -1,4 +1,4 @@
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, formStyles } from './theme'
 
 interface HeaderProps {
   view: string
@@ -9,6 +9,7 @@ interface HeaderProps {
   onShowTripInfo: () => void
   userName: string
   onLogout: () => void
+  logoutError?: string | null
 }
 
 export default function Header({
@@ -20,6 +21,7 @@ export default function Header({
   onShowTripInfo,
   userName,
   onLogout,
+  logoutError,
 }: HeaderProps) {
   if (view === 'tripList') {
     return (
@@ -27,6 +29,7 @@ export default function Header({
         <span style={headerStyles.wordmark}>⛷ Ski Tripper</span>
         <div style={headerStyles.userGroup}>
           <span style={headerStyles.name}>{userName}</span>
+          {logoutError && <p style={formStyles.error}>{logoutError}</p>}
           <button type="button" onClick={onLogout} style={headerStyles.button}>
             Sign Out
           </button>
@@ -79,6 +82,7 @@ export default function Header({
       </nav>
       <div style={headerStyles.userGroup}>
         <span style={headerStyles.name}>{userName}</span>
+        {logoutError && <p style={formStyles.error}>{logoutError}</p>}
         <button type="button" onClick={onLogout} style={headerStyles.button}>
           Sign Out
         </button>

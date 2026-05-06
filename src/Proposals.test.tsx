@@ -193,4 +193,21 @@ describe('Proposals', () => {
       expect(screen.queryByRole('button', { name: /^reject$/i })).toBeNull()
     })
   })
+
+  it('shows error when random proposal creation fails', async () => {
+    const ue = userEvent.setup()
+    await act(async () => {
+      renderProposals({
+        tripId: 'trip-1',
+        createProposal: mock(() =>
+          Promise.reject(new Error('Random proposal failed'))
+        ),
+      })
+    })
+    await waitFor(() => expect(screen.getByRole('button', { name: /random/i })))
+    await ue.click(screen.getByRole('button', { name: /random/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Random proposal failed'))
+    })
+  })
 })

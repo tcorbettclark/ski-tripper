@@ -334,4 +334,17 @@ describe('PollVoting', () => {
         .disabled
     ).toBe(true)
   })
+
+  it('shows error when upsertVote rejects', async () => {
+    const user = userEvent.setup()
+    const failingUpsert = mock(() => Promise.reject(new Error('Save failed')))
+    const onVoteSaved = mock()
+    renderPollVoting({ upsertVote: failingUpsert, onVoteSaved })
+    await user.click(
+      screen.getByRole('button', { name: /add vote to Chamonix/i })
+    )
+    await user.click(screen.getByRole('button', { name: /save vote/i }))
+    await screen.findByText('Save failed')
+    expect(onVoteSaved).not.toHaveBeenCalled()
+  })
 })

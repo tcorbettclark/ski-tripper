@@ -14,7 +14,7 @@ Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
 ## Code Style
 
 - TypeScript with strict mode
-- Error handling: let errors propagate to ErrorBoundary by default. Only catch in handlers that need to show a specific, actionable user-facing message (e.g., auth errors, "No trip found"). Always use `try/finally` to reset loading states — never reset only in `catch`. Never swallow errors silently (`.catch(() => {})`).
+- Error handling: React ErrorBoundary only catches synchronous render-phase errors, so async event handlers **must** catch errors and show an inline actionable message. Use `try/catch/finally` — reset loading states in `finally`, set error state in `catch`. Display errors using `formStyles.error` from `src/theme.ts`. Never swallow errors silently (`.catch(() => {})`).
 - Styles as `const [name]Styles` objects at bottom of file
 - Shared styles in `src/theme.ts`
 - Use camelCase for names (NOT PascalCase)
@@ -24,7 +24,7 @@ Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
 - One component per file, filename matches component name, default export only
 - Functional components with hooks only
 - No Context API, Redux, Zustand — data flows via callback props (`onCreated`, etc.)
-- Let errors propagate — catch at ErrorBoundary
+- Async event handlers must catch errors and display inline messages — ErrorBoundary cannot catch async errors
 
 ## Appwrite
 

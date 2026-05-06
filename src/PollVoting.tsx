@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Poll, Proposal, Vote } from './types.d.ts'
 
 interface PollVotingProps {
@@ -49,6 +49,7 @@ export default function PollVoting({
     return init
   })
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   const maxTokens = sortedProposalIds.length
   const totalUsed = Object.values(allocations).reduce((a, b) => a + b, 0)
@@ -76,6 +77,7 @@ export default function PollVoting({
 
   async function handleSave() {
     setSaving(true)
+    setSaveError(null)
     const nonZeroIds = sortedProposalIds.filter((id) => allocations[id] > 0)
     try {
       const result = await upsertVote(
@@ -86,6 +88,8 @@ export default function PollVoting({
         nonZeroIds.map((id) => allocations[id])
       )
       onVoteSaved(result)
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
     }
@@ -129,6 +133,7 @@ export default function PollVoting({
           {saving ? 'Saving…' : 'Save Vote'}
         </button>
       </div>
+      {saveError && <p style={formStyles.error}>{saveError}</p>}
     </div>
   )
 }

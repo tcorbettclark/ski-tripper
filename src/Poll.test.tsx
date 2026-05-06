@@ -670,5 +670,52 @@ describe('Poll', () => {
         expect(screen.getByRole('button', { name: /create poll/i }))
       })
     })
+
+    it('shows error when createPoll rejects', async () => {
+      const createPoll = mock(() =>
+        Promise.reject(new Error('Create poll failed'))
+      )
+      await act(async () => {
+        renderPoll({
+          createPoll,
+          getCoordinatorParticipant: createCoordinatorMock(),
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /create poll/i }))
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText('Create poll failed'))
+      })
+    })
+
+    it('shows error when closePoll rejects', async () => {
+      const closePoll = mock(() =>
+        Promise.reject(new Error('Close poll failed'))
+      )
+      await act(async () => {
+        renderPoll({
+          listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
+          getCoordinatorParticipant: createCoordinatorMock(),
+          closePoll,
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      await waitFor(() => {
+        expect(screen.getByText('Close poll failed'))
+      })
+    })
   })
 })

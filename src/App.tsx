@@ -103,6 +103,7 @@ export default function App({
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
   const [showTripInfo, setShowTripInfo] = useState(false)
   const [tripInfoTripId, setTripInfoTripId] = useState<string | null>(null)
+  const [logoutError, setLogoutError] = useState<string | null>(null)
   const autoSelectedRef = useRef(false)
 
   const loadTrips = useCallback(
@@ -159,10 +160,12 @@ export default function App({
   }, [trips, user, view, listPolls])
 
   async function handleLogout() {
+    setLogoutError(null)
     try {
       await deleteSession()
-    } finally {
       setUser(null)
+    } catch (err) {
+      setLogoutError(err instanceof Error ? err.message : String(err))
     }
   }
 
@@ -224,6 +227,7 @@ export default function App({
         onShowTripInfo={() => handleShowTripInfo(selectedTripId!)}
         userName={user.name || user.email}
         onLogout={handleLogout}
+        logoutError={logoutError}
       />
 
       {view === 'tripList' && (

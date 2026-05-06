@@ -176,4 +176,42 @@ describe('TripInfo', () => {
     await ue.click(screen.getByRole('button', { name: 'Close' }))
     expect(handleClose).toHaveBeenCalledTimes(1)
   })
+
+  it('shows error when deleteTrip rejects', async () => {
+    const originalConfirm = window.confirm
+    window.confirm = mock(() => true)
+    const failingDelete = mock(() => Promise.reject(new Error('Delete failed')))
+    const onDeleted = mock()
+    const ue = userEvent.setup()
+    try {
+      await renderInfo({ deleteTrip: failingDelete, onDeleted })
+      await ue.click(screen.getByRole('button', { name: /delete trip/i }))
+      await screen.findByText('Delete failed')
+      expect(onDeleted).not.toHaveBeenCalled()
+    } finally {
+      window.confirm = originalConfirm
+    }
+  })
+
+  it('shows error when leaveTrip rejects', async () => {
+    const failingLeave = mock(() => Promise.reject(new Error('Leave failed')))
+    const onLeft = mock()
+    const ue = userEvent.setup()
+    await renderInfo({
+      leaveTrip: failingLeave,
+      onLeft,
+      getCoordinatorParticipant: () =>
+        Promise.resolve({
+          participants: [
+            {
+              participantUserId: 'other-user',
+              participantUserName: 'Bob',
+            },
+          ],
+        }),
+    })
+    await ue.click(screen.getByRole('button', { name: /leave trip/i }))
+    await screen.findByText('Leave failed')
+    expect(onLeft).not.toHaveBeenCalled()
+  })
 })

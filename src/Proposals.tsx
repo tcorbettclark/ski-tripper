@@ -15,7 +15,7 @@ import {
 import CreateProposalForm from './CreateProposalForm'
 import ProposalsGrid from './ProposalsGrid'
 import { randomProposal } from './randomProposal'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
 
 interface ProposalsProps {
@@ -82,6 +82,7 @@ export default function Proposals({
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [randomizing, setRandomizing] = useState(false)
+  const [randomError, setRandomError] = useState<string | null>(null)
   const [proposalsLoading, setProposalsLoading] = useState(false)
   const [proposalsError, setProposalsError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
@@ -178,6 +179,7 @@ export default function Proposals({
 
   async function handleRandomProposal() {
     setRandomizing(true)
+    setRandomError(null)
     try {
       const { accommodation, ...data } = randomProposal()
       const proposal = await createProposal(
@@ -196,6 +198,8 @@ export default function Proposals({
       handleCreated(proposal)
       const accs = await listAccommodations(typedProposal.$id)
       setAccommodations((prev) => ({ ...prev, [typedProposal.$id]: accs }))
+    } catch (err) {
+      setRandomError(err instanceof Error ? err.message : String(err))
     } finally {
       setRandomizing(false)
     }
@@ -213,23 +217,26 @@ export default function Proposals({
       <div style={styles.toolbar}>
         <h2 style={styles.heading}>Proposals</h2>
         {tripId && (
-          <div style={styles.buttons}>
-            <button
-              type="button"
-              onClick={() => setShowCreateForm((v) => !v)}
-              style={styles.actionButton}
-            >
-              {showCreateForm ? 'Cancel' : '+ New Proposal'}
-            </button>
-            <button
-              type="button"
-              onClick={handleRandomProposal}
-              disabled={randomizing}
-              style={styles.randomButton}
-            >
-              {randomizing ? 'Adding…' : '🎲 Random'}
-            </button>
-          </div>
+          <>
+            <div style={styles.buttons}>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm((v) => !v)}
+                style={styles.actionButton}
+              >
+                {showCreateForm ? 'Cancel' : '+ New Proposal'}
+              </button>
+              <button
+                type="button"
+                onClick={handleRandomProposal}
+                disabled={randomizing}
+                style={styles.randomButton}
+              >
+                {randomizing ? 'Adding…' : '🎲 Random'}
+              </button>
+            </div>
+            {randomError && <p style={formStyles.error}>{randomError}</p>}
+          </>
         )}
       </div>
 

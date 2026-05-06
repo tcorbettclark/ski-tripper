@@ -8,7 +8,7 @@ import {
   updateTrip as _updateTrip,
 } from './backend'
 import EditTripForm from './EditTripForm'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, formStyles } from './theme'
 import type { Trip } from './types.d.ts'
 
 interface TripInfoProps {
@@ -59,9 +59,11 @@ export default function TripInfo({
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
+  const [leaveError, setLeaveError] = useState<string | null>(null)
   const [codeCopied, setCodeCopied] = useState(false)
   const [codeCopyError, setCodeCopyError] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [participants, setParticipants] = useState<
     Array<{
       $id: string
@@ -128,9 +130,12 @@ export default function TripInfo({
 
   async function handleLeave() {
     setLeaving(true)
+    setLeaveError(null)
     try {
       await leaveTrip(user.$id, trip.$id)
       onLeft?.()
+    } catch (err) {
+      setLeaveError(err instanceof Error ? err.message : String(err))
     } finally {
       setLeaving(false)
     }
@@ -139,9 +144,12 @@ export default function TripInfo({
   async function handleDelete() {
     if (!window.confirm('Delete this trip?')) return
     setDeleting(true)
+    setDeleteError(null)
     try {
       await deleteTrip(trip.$id, user.$id)
       onDeleted?.()
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : String(err))
     } finally {
       setDeleting(false)
     }
@@ -276,6 +284,7 @@ export default function TripInfo({
               >
                 {deleting ? 'Deleting…' : 'Delete Trip'}
               </button>
+              {deleteError && <p style={formStyles.error}>{deleteError}</p>}
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
@@ -295,6 +304,7 @@ export default function TripInfo({
               >
                 {leaving ? 'Leaving…' : 'Leave Trip'}
               </button>
+              {leaveError && <p style={formStyles.error}>{leaveError}</p>}
             </div>
           )}
         </div>

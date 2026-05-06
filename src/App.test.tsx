@@ -312,4 +312,16 @@ describe('App', () => {
       expect(screen.getByRole('heading', { name: /^my trips$/i }))
     })
   })
+
+  it('shows error when logout fails', async () => {
+    const user = userEvent.setup()
+    renderApp({
+      deleteSession: () => Promise.reject(new Error('Logout failed')),
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /sign out/i }))
+    })
+    await user.click(screen.getByRole('button', { name: /sign out/i }))
+    await screen.findByText('Logout failed')
+  })
 })
