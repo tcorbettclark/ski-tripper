@@ -1217,13 +1217,25 @@ describe('deleteTrip', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'poll-1' }] })
       )
-      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({ rows: [{ $id: 'acc-1' }, { $id: 'acc-2' }] })
+      )
     const db = createMockDb({ listRows })
     await deleteTrip('trip-1', 'user-1', db)
-    // 1 trip + 2 participants + 1 proposal + 1 vote + 1 poll = 6
-    expect(db.deleteRow).toHaveBeenCalledTimes(6)
-    const firstCall = (db.deleteRow as ReturnType<typeof mock>).mock.calls[0]
-    expect(firstCall[0].rowId).toBe('trip-1')
+    expect(db.deleteRow).toHaveBeenCalledTimes(8)
+    const deleteCalls = (
+      db.deleteRow as ReturnType<typeof mock>
+    ).mock.calls.map((call) => (call[0] as { rowId: string }).rowId)
+    expect(deleteCalls).toContain('trip-1')
+    expect(deleteCalls).toContain('acc-1')
+    expect(deleteCalls).toContain('acc-2')
+    const listCalls = (listRows as ReturnType<typeof mock>).mock.calls
+    expect(listCalls).toHaveLength(6)
+    const accCall = listCalls[5]
+    const accommodationQuery = accCall[0].queries[0].toString()
+    expect(accommodationQuery).toContain('"method":"equal"')
+    expect(accommodationQuery).toContain('"attribute":"proposalId"')
+    expect(accommodationQuery).toContain('"values":["prop-1"]')
   })
 
   it('propagates errors from trip deletion', async () => {
