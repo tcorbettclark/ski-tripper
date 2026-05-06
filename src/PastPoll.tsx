@@ -89,15 +89,6 @@ const styles = {
     fontSize: '13px',
     color: colors.textSecondary,
   },
-  toggle: {
-    background: 'none',
-    border: 'none',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    cursor: 'pointer',
-    padding: 0,
-  },
   loading: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
