@@ -7,6 +7,7 @@ import {
   updateProposal as _updateProposal,
 } from './backend'
 import { getCountryFlagUrl } from './countries'
+import DetailField from './DetailField'
 import EditProposalForm from './EditProposalForm'
 import { borders, colors, fonts } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
@@ -329,23 +330,6 @@ export default function ProposalCard({
   )
 }
 
-function DetailField({
-  label,
-  value,
-  children,
-}: {
-  label: string
-  value?: string
-  children?: React.ReactNode
-}) {
-  return (
-    <div>
-      <div style={styles.fieldLabel}>{label}</div>
-      <div style={styles.fieldValue}>{children ?? (value || '—')}</div>
-    </div>
-  )
-}
-
 function getBadgeStyle(state: Proposal['state']) {
   if (state === 'DRAFT') return styles.badgeDraft
   if (state === 'REJECTED') return styles.badgeRejected
@@ -389,20 +373,6 @@ const styles = {
     gridTemplateColumns: '1fr 1fr',
     gap: '16px 24px',
     marginBottom: '20px',
-  },
-  fieldLabel: {
-    fontFamily: fonts.body,
-    fontSize: '10px',
-    color: colors.textSecondary,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-    marginBottom: '4px',
-  },
-  fieldValue: {
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    color: colors.textData,
-    lineHeight: '1.5',
   },
   accommodationsSection: {
     marginBottom: '20px',
