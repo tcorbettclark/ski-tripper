@@ -1303,6 +1303,115 @@ describe('deleteTrip', () => {
       'Participant delete failed'
     )
   })
+
+  it('throws when there are too many participants', async () => {
+    const manyParticipants = Array.from({ length: 5000 }, (_, i) => ({
+      $id: `p-${i}`,
+    }))
+    const listRows = mock<
+      (args: Record<string, unknown>) => Promise<{ rows: { $id: string }[] }>
+    >(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'coord-1', participantUserId: 'user-1' }],
+        })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: manyParticipants }))
+    const db = createMockDb({ listRows })
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+      'Too many participants to delete.'
+    )
+  })
+
+  it('throws when there are too many proposals', async () => {
+    const manyProposals = Array.from({ length: 1000 }, (_, i) => ({
+      $id: `prop-${i}`,
+    }))
+    const listRows = mock<
+      (args: Record<string, unknown>) => Promise<{ rows: { $id: string }[] }>
+    >(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'coord-1', participantUserId: 'user-1' }],
+        })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: manyProposals }))
+    const db = createMockDb({ listRows })
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+      'Too many proposals to delete.'
+    )
+  })
+
+  it('throws when there are too many votes', async () => {
+    const manyVotes = Array.from({ length: 5000 }, (_, i) => ({
+      $id: `v-${i}`,
+    }))
+    const listRows = mock<
+      (args: Record<string, unknown>) => Promise<{ rows: { $id: string }[] }>
+    >(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'coord-1', participantUserId: 'user-1' }],
+        })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: manyVotes }))
+    const db = createMockDb({ listRows })
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+      'Too many votes to delete.'
+    )
+  })
+
+  it('throws when there are too many polls', async () => {
+    const manyPolls = Array.from({ length: 100 }, (_, i) => ({
+      $id: `poll-${i}`,
+    }))
+    const listRows = mock<
+      (args: Record<string, unknown>) => Promise<{ rows: { $id: string }[] }>
+    >(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'coord-1', participantUserId: 'user-1' }],
+        })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: manyPolls }))
+    const db = createMockDb({ listRows })
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+      'Too many polls to delete.'
+    )
+  })
+
+  it('throws when there are too many accommodations', async () => {
+    const manyAccommodations = Array.from({ length: 5000 }, (_, i) => ({
+      $id: `acc-${i}`,
+    }))
+    const listRows = mock<
+      (args: Record<string, unknown>) => Promise<{ rows: { $id: string }[] }>
+    >(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'coord-1', participantUserId: 'user-1' }],
+        })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({ rows: [{ $id: 'prop-1' }] })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({ rows: manyAccommodations })
+      )
+    const db = createMockDb({ listRows })
+    expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
+      'Too many accommodations to delete.'
+    )
+  })
 })
 
 describe('createAccommodation', () => {
