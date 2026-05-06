@@ -79,10 +79,8 @@ export default function Poll({
   const [pollsLoading, setPollsLoading] = useState(false)
   const [pollsError, setPollsError] = useState('')
   const [creatingPoll, setCreatingPoll] = useState(false)
-  const [createError, setCreateError] = useState('')
   const [pollDuration, setPollDuration] = useState(7)
   const [closingPoll, setClosingPoll] = useState(false)
-  const [closeError, setCloseError] = useState('')
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -105,8 +103,6 @@ export default function Poll({
     setLoading(false)
     setPollsLoading(true)
     setPollsError('')
-    setCreateError('')
-    setCloseError('')
     Promise.all([
       getCoordinatorParticipant(tripId),
       listProposals(tripId, user.$id),
@@ -166,7 +162,6 @@ export default function Poll({
 
   async function handleCreatePoll() {
     setCreatingPoll(true)
-    setCreateError('')
     try {
       const poll = await createPoll(
         tripId,
@@ -176,8 +171,6 @@ export default function Poll({
       )
       setActivePoll(poll)
       setVotes([])
-    } catch (err: unknown) {
-      setCreateError(err instanceof Error ? err.message : String(err))
     } finally {
       setCreatingPoll(false)
     }
@@ -186,13 +179,10 @@ export default function Poll({
   async function handleClosePoll() {
     if (!activePoll) return
     setClosingPoll(true)
-    setCloseError('')
     try {
       const closed = await closePoll(activePoll.$id, user.$id)
       setActivePoll(null)
       setPastPolls((p) => [closed, ...p])
-    } catch (err: unknown) {
-      setCloseError(err instanceof Error ? err.message : String(err))
     } finally {
       setClosingPoll(false)
     }
@@ -228,17 +218,14 @@ export default function Poll({
                   </p>
                 </div>
                 {isCoordinator && (
-                  <div>
-                    <button
-                      type="button"
-                      onClick={handleClosePoll}
-                      disabled={closingPoll}
-                      style={styles.closePollButton}
-                    >
-                      {closingPoll ? 'Closing…' : 'Close Poll'}
-                    </button>
-                    {closeError && <p style={styles.errorText}>{closeError}</p>}
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleClosePoll}
+                    disabled={closingPoll}
+                    style={styles.closePollButton}
+                  >
+                    {closingPoll ? 'Closing…' : 'Close Poll'}
+                  </button>
                 )}
               </div>
               <PollVoting
@@ -284,7 +271,6 @@ export default function Poll({
                   {creatingPoll ? 'Creating…' : 'Create Poll'}
                 </button>
               </div>
-              {createError && <p style={styles.errorText}>{createError}</p>}
             </div>
           ) : null}
 
@@ -442,12 +428,6 @@ const styles = {
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
-  },
-  errorText: {
-    color: colors.error,
-    fontFamily: fonts.body,
-    fontSize: '12px',
-    margin: '6px 0 0',
   },
   pastSection: {
     marginTop: '32px',

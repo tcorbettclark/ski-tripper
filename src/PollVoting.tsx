@@ -49,7 +49,6 @@ export default function PollVoting({
     return init
   })
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState('')
 
   const maxTokens = sortedProposalIds.length
   const totalUsed = Object.values(allocations).reduce((a, b) => a + b, 0)
@@ -77,7 +76,6 @@ export default function PollVoting({
 
   async function handleSave() {
     setSaving(true)
-    setSaveError('')
     const nonZeroIds = sortedProposalIds.filter((id) => allocations[id] > 0)
     try {
       const result = await upsertVote(
@@ -88,8 +86,6 @@ export default function PollVoting({
         nonZeroIds.map((id) => allocations[id])
       )
       onVoteSaved(result)
-    } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : String(err))
     } finally {
       setSaving(false)
     }
@@ -133,7 +129,6 @@ export default function PollVoting({
           {saving ? 'Saving…' : 'Save Vote'}
         </button>
       </div>
-      {saveError && <p style={styles.errorText}>{saveError}</p>}
     </div>
   )
 }
@@ -373,12 +368,6 @@ const styles = {
   saveButtonDisabled: {
     opacity: 0.4,
     cursor: 'default',
-  },
-  errorText: {
-    color: colors.error,
-    fontFamily: fonts.body,
-    fontSize: '12px',
-    margin: '8px 0 0',
   },
 } as const
 

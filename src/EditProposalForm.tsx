@@ -194,6 +194,7 @@ export default function EditProposalForm({
       onUpdated(proposal)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
+    } finally {
       setSaving(false)
     }
   }

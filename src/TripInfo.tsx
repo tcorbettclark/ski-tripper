@@ -59,11 +59,9 @@ export default function TripInfo({
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [leaving, setLeaving] = useState(false)
-  const [leaveError, setLeaveError] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
   const [codeCopyError, setCodeCopyError] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState('')
   const [participants, setParticipants] = useState<
     Array<{
       $id: string
@@ -97,7 +95,6 @@ export default function TripInfo({
   useEffect(() => {
     if (!open) {
       setIsEditing(false)
-      setLeaveError('')
     }
   }, [open])
 
@@ -130,13 +127,11 @@ export default function TripInfo({
   }
 
   async function handleLeave() {
-    setLeaveError('')
     setLeaving(true)
     try {
       await leaveTrip(user.$id, trip.$id)
       onLeft?.()
-    } catch (err: unknown) {
-      setLeaveError(err instanceof Error ? err.message : String(err))
+    } finally {
       setLeaving(false)
     }
   }
@@ -144,12 +139,10 @@ export default function TripInfo({
   async function handleDelete() {
     if (!window.confirm('Delete this trip?')) return
     setDeleting(true)
-    setDeleteError('')
     try {
       await deleteTrip(trip.$id, user.$id)
       onDeleted?.()
-    } catch (err: unknown) {
-      setDeleteError(err instanceof Error ? err.message : String(err))
+    } finally {
       setDeleting(false)
     }
   }
@@ -304,8 +297,6 @@ export default function TripInfo({
               </button>
             </div>
           )}
-          {leaveError && <p style={styles.leaveError}>{leaveError}</p>}
-          {deleteError && <p style={styles.leaveError}>{deleteError}</p>}
         </div>
       </div>
     </div>
@@ -406,12 +397,6 @@ const styles = {
     fontWeight: '500',
     cursor: 'pointer',
     letterSpacing: '0.03em',
-  },
-  leaveError: {
-    color: colors.error,
-    fontFamily: fonts.body,
-    fontSize: '12px',
-    margin: '8px 0 0',
   },
   detailRow: {
     display: 'flex',

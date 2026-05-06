@@ -46,6 +46,7 @@ export default function EditTripForm({
       onUpdated(updated)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
+    } finally {
       setSaving(false)
     }
   }

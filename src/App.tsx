@@ -107,8 +107,8 @@ export default function App({
 
   const loadTrips = useCallback(
     (userId: string) => {
-      Promise.all([listTrips(userId), listParticipatedTrips(userId)])
-        .then(([ownRes, participatedRes]) => {
+      Promise.all([listTrips(userId), listParticipatedTrips(userId)]).then(
+        ([ownRes, participatedRes]) => {
           const coordinatedIds = new Set(
             ownRes.trips.map((t: { $id: string }) => t.$id)
           )
@@ -119,8 +119,8 @@ export default function App({
             ),
           ]
           setTrips(allTrips)
-        })
-        .catch(() => {})
+        }
+      )
     },
     [listTrips, listParticipatedTrips]
   )
@@ -149,21 +149,21 @@ export default function App({
       autoSelectedRef.current = true
       const trip = trips[0]
       setSelectedTripId(trip.$id)
-      listPolls(trip.$id, user.$id)
-        .then(({ polls }) => {
-          const hasActivePoll = polls.some((p) => p.state === 'OPEN')
-          setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
-        })
-        .catch(() => {
-          setTripDetailTab('proposals')
-        })
+      setTripDetailTab('proposals')
+      listPolls(trip.$id, user.$id).then(({ polls }) => {
+        const hasActivePoll = polls.some((p) => p.state === 'OPEN')
+        setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
+      })
       setView('tripDetail')
     }
   }, [trips, user, view, listPolls])
 
   async function handleLogout() {
-    await deleteSession()
-    setUser(null)
+    try {
+      await deleteSession()
+    } finally {
+      setUser(null)
+    }
   }
 
   function handleSelectTrip(tripId: string) {
@@ -171,14 +171,11 @@ export default function App({
     setSelectedTripId(tripId)
     setView('tripDetail')
     setShowTripInfo(false)
-    listPolls(tripId, user.$id)
-      .then(({ polls }) => {
-        const hasActivePoll = polls.some((p) => p.state === 'OPEN')
-        setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
-      })
-      .catch(() => {
-        setTripDetailTab('proposals')
-      })
+    setTripDetailTab('proposals')
+    listPolls(tripId, user.$id).then(({ polls }) => {
+      const hasActivePoll = polls.some((p) => p.state === 'OPEN')
+      setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
+    })
   }
 
   function handleViewAllTrips() {

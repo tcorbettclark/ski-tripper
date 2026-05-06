@@ -14,6 +14,7 @@ Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
 ## Code Style
 
 - TypeScript with strict mode
+- Error handling: let errors propagate to ErrorBoundary by default. Only catch in handlers that need to show a specific, actionable user-facing message (e.g., auth errors, "No trip found"). Always use `try/finally` to reset loading states — never reset only in `catch`. Never swallow errors silently (`.catch(() => {})`).
 - Styles as `const [name]Styles` objects at bottom of file
 - Shared styles in `src/theme.ts`
 - Use camelCase for names (NOT PascalCase)

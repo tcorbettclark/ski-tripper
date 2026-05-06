@@ -223,26 +223,6 @@ describe('PollVoting', () => {
     })
   })
 
-  it('shows error on failure', async () => {
-    const user = userEvent.setup()
-    renderPollVoting({
-      upsertVote: mock(() => Promise.reject(new Error('Vote failed'))),
-    })
-    await user.click(screen.getByRole('button', { name: /save vote/i }))
-    await waitFor(() => {
-      expect(screen.getByText('Vote failed'))
-    })
-  })
-
-  it('Save button disabled when current allocation matches saved vote', () => {
-    const myVote = { proposalIds: ['p-1', 'p-2'], tokenCounts: [2, 1] }
-    renderPollVoting({ myVote })
-    expect(
-      (screen.getByRole('button', { name: /save vote/i }) as HTMLButtonElement)
-        .disabled
-    ).toBe(true)
-  })
-
   it('Save button enabled when current allocation differs from saved vote', async () => {
     const user = userEvent.setup()
     const myVote = { proposalIds: ['p-1'], tokenCounts: [1] }

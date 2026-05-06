@@ -239,40 +239,4 @@ describe('ProposalCard', () => {
     expect(flagImg).toBeDefined()
     expect(flagImg.getAttribute('src')).toBe('https://flagcdn.com/w20/jp.png')
   })
-
-  it('shows error message when delete fails', async () => {
-    const user = userEvent.setup()
-    const failingDelete = mock(async () => {
-      throw new Error('Network error')
-    })
-    const onDeleted = mock(() => {})
-
-    render(
-      <ProposalCard
-        proposal={baseProposal}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={onDeleted}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={failingDelete}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Delete' }))
-
-    const confirmDialog = screen.getByRole('dialog', {
-      name: 'Delete Proposal?',
-    })
-    const confirmButtons = confirmDialog.querySelectorAll('button')
-    const confirmDeleteButton = Array.from(confirmButtons).find(
-      (b) => b.textContent === 'Delete'
-    )!
-    await user.click(confirmDeleteButton)
-
-    expect(screen.getByText('Network error')).toBeDefined()
-    expect(onDeleted).not.toHaveBeenCalled()
-  })
 })

@@ -73,13 +73,9 @@ export default function ProposalCard({
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState('')
   const [rejecting, setRejecting] = useState(false)
-  const [rejectError, setRejectError] = useState('')
   const [resubmitting, setResubmitting] = useState(false)
-  const [resubmitError, setResubmitError] = useState('')
   const [deleting, setDeleting] = useState(false)
-  const [deleteError, setDeleteError] = useState('')
 
   const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'
@@ -89,53 +85,41 @@ export default function ProposalCard({
   const canResubmit = isCoordinator && isRejected
 
   async function handleSubmit() {
-    setSubmitError('')
     setSubmitting(true)
     try {
       const result = await submitProposal(proposal.$id, userId)
-      setSubmitting(false)
       onSubmitted(result)
-    } catch (err: unknown) {
-      setSubmitError(err instanceof Error ? err.message : String(err))
+    } finally {
       setSubmitting(false)
     }
   }
 
   async function handleReject() {
-    setRejectError('')
     setRejecting(true)
     try {
       const result = await rejectProposal(proposal.$id, userId)
-      setRejecting(false)
       onRejected(result)
-    } catch (err: unknown) {
-      setRejectError(err instanceof Error ? err.message : String(err))
+    } finally {
       setRejecting(false)
     }
   }
 
   async function handleResubmit() {
-    setResubmitError('')
     setResubmitting(true)
     try {
       const result = await resubmitProposal(proposal.$id, userId)
-      setResubmitting(false)
       onResubmitted(result)
-    } catch (err: unknown) {
-      setResubmitError(err instanceof Error ? err.message : String(err))
+    } finally {
       setResubmitting(false)
     }
   }
 
   async function handleDelete() {
-    setDeleteError('')
     setDeleting(true)
     try {
       await deleteProposal(proposal.$id, userId)
-      setDeleting(false)
       onDeleted(proposal.$id)
-    } catch (err: unknown) {
-      setDeleteError(err instanceof Error ? err.message : String(err))
+    } finally {
       setDeleting(false)
     }
   }
@@ -261,34 +245,27 @@ export default function ProposalCard({
               >
                 Delete
               </button>
-              {submitError && <p style={styles.errorText}>{submitError}</p>}
             </>
           )}
           {canReject && (
-            <>
-              <button
-                type="button"
-                onClick={handleReject}
-                disabled={rejecting}
-                style={styles.rejectButton}
-              >
-                {rejecting ? 'Rejecting…' : 'Reject'}
-              </button>
-              {rejectError && <p style={styles.errorText}>{rejectError}</p>}
-            </>
+            <button
+              type="button"
+              onClick={handleReject}
+              disabled={rejecting}
+              style={styles.rejectButton}
+            >
+              {rejecting ? 'Rejecting…' : 'Reject'}
+            </button>
           )}
           {canResubmit && (
-            <>
-              <button
-                type="button"
-                onClick={handleResubmit}
-                disabled={resubmitting}
-                style={styles.resubmitButton}
-              >
-                {resubmitting ? 'Resubmitting…' : 'Move back to Submitted'}
-              </button>
-              {resubmitError && <p style={styles.errorText}>{resubmitError}</p>}
-            </>
+            <button
+              type="button"
+              onClick={handleResubmit}
+              disabled={resubmitting}
+              style={styles.resubmitButton}
+            >
+              {resubmitting ? 'Resubmitting…' : 'Move back to Submitted'}
+            </button>
           )}
         </div>
       </div>
@@ -335,7 +312,6 @@ export default function ProposalCard({
                 {deleting ? 'Deleting…' : 'Delete'}
               </button>
             </div>
-            {deleteError && <p style={styles.errorText}>{deleteError}</p>}
           </div>
         </div>
       )}
@@ -475,13 +451,6 @@ const styles = {
     fontWeight: '500',
     cursor: 'pointer',
     letterSpacing: '0.03em',
-  },
-  errorText: {
-    color: colors.error,
-    fontFamily: fonts.body,
-    fontSize: '11px',
-    margin: '4px 0 0',
-    whiteSpace: 'normal' as const,
   },
   badgeDraft: {
     display: 'inline-block',
