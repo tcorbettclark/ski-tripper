@@ -78,6 +78,8 @@ export default function ProposalCard({
   const [rejectError, setRejectError] = useState('')
   const [resubmitting, setResubmitting] = useState(false)
   const [resubmitError, setResubmitError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'
@@ -126,8 +128,16 @@ export default function ProposalCard({
   }
 
   async function handleDelete() {
-    await deleteProposal(proposal.$id, userId)
-    onDeleted(proposal.$id)
+    setDeleteError('')
+    setDeleting(true)
+    try {
+      await deleteProposal(proposal.$id, userId)
+      setDeleting(false)
+      onDeleted(proposal.$id)
+    } catch (err: unknown) {
+      setDeleteError(err instanceof Error ? err.message : String(err))
+      setDeleting(false)
+    }
   }
 
   if (isEditing) {
@@ -319,11 +329,13 @@ export default function ProposalCard({
               <button
                 type="button"
                 onClick={handleDelete}
+                disabled={deleting}
                 style={styles.confirmDeleteButton}
               >
-                Delete
+                {deleting ? 'Deleting…' : 'Delete'}
               </button>
             </div>
+            {deleteError && <p style={styles.errorText}>{deleteError}</p>}
           </div>
         </div>
       )}
