@@ -928,7 +928,6 @@ export async function listVotes(
 }
 
 function validateUrl(url: string | undefined): string | undefined {
-  if (!url) return undefined
   if (!isValidUrl(url)) {
     throw new Error('Invalid URL: only http and https schemes are allowed.')
   }
