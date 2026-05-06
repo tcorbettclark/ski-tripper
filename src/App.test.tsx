@@ -147,8 +147,7 @@ describe('App', () => {
   it('auto-selects the single trip and goes to trip detail', async () => {
     renderAppWithTrip()
     await waitFor(() => {
-      expect(screen.getByText('Alps adventure'))
-      expect(screen.getByRole('button', { name: /trip info/i }))
+      expect(screen.getByRole('button', { name: /alps adventure/i }))
     })
   })
 
