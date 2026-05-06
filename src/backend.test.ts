@@ -1272,6 +1272,20 @@ describe('deleteTrip', () => {
     expect(accommodationQuery).toContain('"values":["prop-1"]')
   })
 
+  it('skips accommodations query when there are no proposals', async () => {
+    const listRows = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({ rows: [{ $id: 'p-1', participantUserId: 'user-1' }] })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [{ $id: 'p-1' }] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+    const db = createMockDb({ listRows })
+    await deleteTrip('trip-1', 'user-1', db)
+    expect(listRows).toHaveBeenCalledTimes(5)
+  })
+
   it('propagates errors from trip deletion', async () => {
     const listRows = mock().mockImplementationOnce(() =>
       Promise.resolve({ rows: [{ $id: 'p-1', participantUserId: 'user-1' }] })
