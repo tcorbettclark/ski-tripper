@@ -1,4 +1,5 @@
 import { sanitizeUrl } from '@braintree/sanitize-url'
+import humanizeDuration from 'humanize-duration'
 import adjectives from 'threewords/data/adjectives.json'
 import nouns from 'threewords/data/nouns.json'
 
@@ -26,9 +27,8 @@ export function formatDate(iso: string) {
   })
 }
 
-export function getDaysRemaining(endDate: string) {
-  const end = new Date(endDate).getTime()
-  const now = Date.now()
-  const days = Math.ceil((end - now) / (1000 * 60 * 60 * 24))
-  return days > 0 ? days : 0
+export function formatTimeRemaining(endDate: string) {
+  const ms = new Date(endDate).getTime() - Date.now()
+  if (ms <= 0) return '0 days left'
+  return `${humanizeDuration(ms, { largest: 1, round: true })} left`
 }

@@ -20,7 +20,7 @@ import type {
   Proposal,
   Vote,
 } from './types.d.ts'
-import { formatDate, getDaysRemaining } from './utils'
+import { formatDate, formatTimeRemaining } from './utils'
 
 interface PollComponentProps {
   user: Models.User
@@ -222,7 +222,7 @@ export default function Poll({
                   <p style={styles.pollDates}>
                     {formatDate(activePoll.startDate)} –{' '}
                     {formatDate(activePoll.endDate)} ·{' '}
-                    {getDaysRemaining(activePoll.endDate)} days left
+                    {formatTimeRemaining(activePoll.endDate)}
                   </p>
                 </div>
                 {isCoordinator && (

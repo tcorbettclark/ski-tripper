@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { formatDate, getDaysRemaining } from './utils'
+import { formatDate, formatTimeRemaining } from './utils'
 
 describe('formatDate', () => {
   it('formats an ISO date string', () => {
@@ -11,46 +11,57 @@ describe('formatDate', () => {
   })
 })
 
-describe('getDaysRemaining', () => {
-  it('returns days until a future date', () => {
+describe('formatTimeRemaining', () => {
+  it('returns humanized duration for a future date', () => {
     const now = new Date('2026-05-06T12:00:00Z').getTime()
     const realNow = Date.now
     Date.now = () => now
     try {
-      expect(getDaysRemaining('2026-05-09T00:00:00Z')).toBe(3)
+      expect(formatTimeRemaining('2026-05-09T12:00:00Z')).toBe('3 days left')
     } finally {
       Date.now = realNow
     }
   })
 
-  it('returns 0 for a past date', () => {
+  it('uses singular for 1 day', () => {
+    const now = new Date('2026-05-06T12:00:00Z').getTime()
+    const realNow = Date.now
+    Date.now = () => now
+    try {
+      expect(formatTimeRemaining('2026-05-07T12:00:00Z')).toBe('1 day left')
+    } finally {
+      Date.now = realNow
+    }
+  })
+
+  it('returns 0 days left for a past date', () => {
     const now = new Date('2026-05-10T12:00:00Z').getTime()
     const realNow = Date.now
     Date.now = () => now
     try {
-      expect(getDaysRemaining('2026-05-06T00:00:00Z')).toBe(0)
+      expect(formatTimeRemaining('2026-05-06T00:00:00Z')).toBe('0 days left')
     } finally {
       Date.now = realNow
     }
   })
 
-  it('returns 1 for same-day boundary', () => {
-    const now = new Date('2026-05-06T00:00:00Z').getTime()
-    const realNow = Date.now
-    Date.now = () => now
-    try {
-      expect(getDaysRemaining('2026-05-06T23:59:59Z')).toBe(1)
-    } finally {
-      Date.now = realNow
-    }
-  })
-
-  it('returns 0 when end date is exactly now', () => {
+  it('shows hours when less than a day remains', () => {
     const now = new Date('2026-05-06T12:00:00Z').getTime()
     const realNow = Date.now
     Date.now = () => now
     try {
-      expect(getDaysRemaining('2026-05-06T12:00:00Z')).toBe(0)
+      expect(formatTimeRemaining('2026-05-06T17:00:00Z')).toBe('5 hours left')
+    } finally {
+      Date.now = realNow
+    }
+  })
+
+  it('uses singular for 1 hour', () => {
+    const now = new Date('2026-05-06T12:00:00Z').getTime()
+    const realNow = Date.now
+    Date.now = () => now
+    try {
+      expect(formatTimeRemaining('2026-05-06T13:00:00Z')).toBe('1 hour left')
     } finally {
       Date.now = realNow
     }
