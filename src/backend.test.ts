@@ -53,6 +53,40 @@ function createMockDb(overrides: Partial<MockDb> = {}): MockDb & TablesDB {
   } as MockDb & TablesDB
 }
 
+describe('toRow runtime type guard', () => {
+  it('throws when getRow returns null', async () => {
+    const db = createMockDb({
+      getRow: mock(() => Promise.resolve(null as unknown as { $id: string })),
+    })
+    expect(getTrip('trip-1', db)).rejects.toThrow(
+      'Failed to fetch row: expected $id'
+    )
+  })
+
+  it('throws when getRow returns a row with a non-string $id', async () => {
+    const db = createMockDb({
+      getRow: mock(() => Promise.resolve({ $id: 123 })),
+    })
+    expect(getTrip('trip-1', db)).rejects.toThrow(
+      'Failed to fetch row: expected $id'
+    )
+  })
+
+  it('throws when listRows returns a row with a non-string $id', async () => {
+    const listRows = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'p-1', participantUserId: 'user-1', tripId: 'trip-1' }],
+        })
+      )
+      .mockImplementationOnce(() => Promise.resolve({ rows: [{ $id: 999 }] }))
+    const db = createMockDb({ listRows })
+    expect(listTrips('user-1', db)).rejects.toThrow(
+      'Failed to fetch row: expected $id'
+    )
+  })
+})
+
 describe('listTrips', () => {
   it('returns documents and coordinatorUserIds from participant query', async () => {
     const listRows = mock()
