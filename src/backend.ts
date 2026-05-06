@@ -300,9 +300,12 @@ export async function deleteTrip(
           'proposalId',
           proposals.map((p) => p.$id)
         ),
+        Query.limit(5000),
       ],
     })
   )
+  if (accommodations.length >= 5000)
+    throw new Error('Too many accommodations to delete.')
   await Promise.all([
     ...accommodations.map((a) =>
       db.deleteRow({
