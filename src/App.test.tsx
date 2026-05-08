@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import App from './App'
@@ -396,7 +396,9 @@ describe('App', () => {
 
   it('opens preferences modal from header gear icon', async () => {
     const ue = userEvent.setup()
-    renderApp()
+    await act(async () => {
+      renderApp()
+    })
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /preferences/i }))
