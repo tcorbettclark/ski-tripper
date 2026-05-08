@@ -33,6 +33,7 @@ export default function PreferencesModal({
   const [savedPreferences, setSavedPreferences] = useState<Preferences | null>(
     initial
   )
+  const [editing, setEditing] = useState(false)
 
   if (!open) return null
 
@@ -45,7 +46,13 @@ export default function PreferencesModal({
       style={styles.overlay}
       onClick={onClose}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose()
+        if (e.key === 'Escape') {
+          if (editing) {
+            setEditing(false)
+          } else {
+            onClose()
+          }
+        }
       }}
     >
       <div
@@ -110,19 +117,31 @@ export default function PreferencesModal({
                 {display.mostImportantAspect || '—'}
               </span>
             </div>
+            {!editing && (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                style={styles.editButton}
+              >
+                Edit
+              </button>
+            )}
           </div>
         )}
-        <PreferencesForm
-          userId={userId}
-          initial={savedPreferences ?? initial}
-          onSaved={(prefs) => {
-            setSavedPreferences(prefs)
-            onSaved(prefs)
-          }}
-          onCancel={onClose}
-          createPreferences={createPreferences}
-          updatePreferences={updatePreferences}
-        />
+        {editing && (
+          <PreferencesForm
+            userId={userId}
+            initial={savedPreferences ?? initial}
+            onSaved={(prefs) => {
+              setSavedPreferences(prefs)
+              setEditing(false)
+              onSaved(prefs)
+            }}
+            onCancel={() => setEditing(false)}
+            createPreferences={createPreferences}
+            updatePreferences={updatePreferences}
+          />
+        )}
       </div>
     </div>
   )
@@ -201,5 +220,18 @@ const styles = {
     fontSize: '14px',
     color: colors.textData,
     lineHeight: '1.4',
+  },
+  editButton: {
+    marginTop: '4px',
+    padding: '8px 20px',
+    borderRadius: '7px',
+    border: 'none',
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    alignSelf: 'flex-start',
   },
 } as const
