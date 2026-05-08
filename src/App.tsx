@@ -3,8 +3,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import AuthForm from './AuthForm'
 import {
   account as _account,
+  createPreferences as _createPreferences,
   deleteTrip as _deleteTrip,
   getCoordinatorParticipant as _getCoordinatorParticipant,
+  getPreferences as _getPreferences,
   leaveTrip as _leaveTrip,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
@@ -15,12 +17,14 @@ import {
 import ErrorBoundary from './ErrorBoundary'
 import Header from './Header'
 import Poll from './Poll'
+import PreferencesForm from './PreferencesForm'
+import PreferencesModal from './PreferencesModal'
 import Proposals from './Proposals'
 import TripInfo from './TripInfo'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
 
-import type { Trip } from './types.d.ts'
+import type { Preferences, Trip } from './types.d.ts'
 
 interface ListTripsResult {
   trips: Trip[]
@@ -60,6 +64,11 @@ interface AppProps {
       participantUserName: string
     }>
   }>
+  getPreferences?: (userId: string) => Promise<Preferences | null>
+  createPreferences?: (
+    userId: string,
+    data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
+  ) => Promise<Preferences>
 }
 
 const defaultAccountGet = _account.get.bind(_account)
@@ -78,6 +87,8 @@ const defaultLeaveTrip = _leaveTrip.bind(_leaveTrip)
 const defaultGetCoordinatorParticipant = _getCoordinatorParticipant.bind(
   _getCoordinatorParticipant
 )
+const defaultGetPreferences = _getPreferences.bind(_getPreferences)
+const defaultCreatePreferences = _createPreferences.bind(_createPreferences)
 
 type TripDetailTab = 'proposals' | 'poll'
 
@@ -92,6 +103,8 @@ export default function App({
   deleteTrip = defaultDeleteTrip,
   leaveTrip = defaultLeaveTrip,
   getCoordinatorParticipant = defaultGetCoordinatorParticipant,
+  getPreferences = defaultGetPreferences,
+  createPreferences = defaultCreatePreferences,
 }: AppProps) {
   const [user, setUser] = useState<Models.User | null>(null)
   const [checking, setChecking] = useState(true)
@@ -104,6 +117,9 @@ export default function App({
   const [showTripInfo, setShowTripInfo] = useState(false)
   const [tripInfoTripId, setTripInfoTripId] = useState<string | null>(null)
   const [logoutError, setLogoutError] = useState<string | null>(null)
+  const [preferences, setPreferences] = useState<Preferences | null>(null)
+  const [checkingPreferences, setCheckingPreferences] = useState(false)
+  const [showPreferencesModal, setShowPreferencesModal] = useState(false)
   const autoSelectedRef = useRef(false)
 
   const loadTrips = useCallback(
@@ -138,6 +154,20 @@ export default function App({
       .catch(() => setUser(null))
       .finally(() => setChecking(false))
   }, [accountGet])
+
+  useEffect(() => {
+    if (!user) {
+      setPreferences(null)
+      return
+    }
+    setCheckingPreferences(true)
+    getPreferences(user.$id)
+      .then((prefs) => {
+        setPreferences(prefs)
+      })
+      .catch(() => setPreferences(null))
+      .finally(() => setCheckingPreferences(false))
+  }, [user, getPreferences])
 
   useEffect(() => {
     if (!user) return
@@ -210,6 +240,64 @@ export default function App({
     )
   }
 
+  if (checkingPreferences) return null
+
+  if (!preferences) {
+    return (
+      <div
+        style={{
+          fontFamily: fonts.body,
+          background: colors.bgPrimary,
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+        }}
+      >
+        <div
+          style={{
+            background: colors.bgCard,
+            border: '1px solid rgba(100,190,230,0.12)',
+            borderRadius: '16px',
+            padding: '48px 44px',
+            width: '100%',
+            maxWidth: '520px',
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: fonts.display,
+              fontSize: '28px',
+              fontWeight: '600',
+              color: colors.textPrimary,
+              marginBottom: '8px',
+              marginTop: 0,
+            }}
+          >
+            Welcome! Set your preferences
+          </h2>
+          <p
+            style={{
+              fontFamily: fonts.body,
+              fontSize: '14px',
+              color: colors.textSecondary,
+              marginBottom: '32px',
+            }}
+          >
+            Tell us about your ideal ski trip so we can personalise your
+            experience.
+          </p>
+          <PreferencesForm
+            userId={user.$id}
+            onSaved={(prefs) => setPreferences(prefs)}
+            createPreferences={createPreferences}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       style={{
@@ -228,6 +316,7 @@ export default function App({
         userName={user.name || user.email}
         onLogout={handleLogout}
         logoutError={logoutError}
+        onOpenPreferences={() => setShowPreferencesModal(true)}
       />
 
       {view === 'tripList' && (
@@ -293,6 +382,15 @@ export default function App({
           }}
         />
       )}
+
+      <PreferencesModal
+        userId={user.$id}
+        initial={preferences}
+        open={showPreferencesModal}
+        onClose={() => setShowPreferencesModal(false)}
+        onSaved={(prefs) => setPreferences(prefs)}
+        createPreferences={createPreferences}
+      />
     </div>
   )
 }

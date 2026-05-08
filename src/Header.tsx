@@ -10,6 +10,7 @@ interface HeaderProps {
   userName: string
   onLogout: () => void
   logoutError?: string | null
+  onOpenPreferences?: () => void
 }
 
 export default function Header({
@@ -22,6 +23,7 @@ export default function Header({
   userName,
   onLogout,
   logoutError,
+  onOpenPreferences,
 }: HeaderProps) {
   if (view === 'tripList') {
     return (
@@ -29,6 +31,16 @@ export default function Header({
         <span style={headerStyles.wordmark}>⛷ Ski Tripper</span>
         <div style={headerStyles.userGroup}>
           <span style={headerStyles.name}>{userName}</span>
+          {onOpenPreferences && (
+            <button
+              type="button"
+              onClick={onOpenPreferences}
+              style={headerStyles.iconButton}
+              aria-label="Preferences"
+            >
+              ⚙
+            </button>
+          )}
           {logoutError && <p style={formStyles.error}>{logoutError}</p>}
           <button type="button" onClick={onLogout} style={headerStyles.button}>
             Sign Out
@@ -82,6 +94,16 @@ export default function Header({
       </nav>
       <div style={headerStyles.userGroup}>
         <span style={headerStyles.name}>{userName}</span>
+        {onOpenPreferences && (
+          <button
+            type="button"
+            onClick={onOpenPreferences}
+            style={headerStyles.iconButton}
+            aria-label="Preferences"
+          >
+            ⚙
+          </button>
+        )}
         {logoutError && <p style={formStyles.error}>{logoutError}</p>}
         <button type="button" onClick={onLogout} style={headerStyles.button}>
           Sign Out
@@ -197,5 +219,18 @@ const headerStyles = {
     fontWeight: '500',
     cursor: 'pointer',
     letterSpacing: '0.02em',
+  },
+  iconButton: {
+    background: 'none',
+    border: 'none',
+    color: colors.textSecondary,
+    fontSize: '18px',
+    cursor: 'pointer',
+    padding: '4px 8px',
+    lineHeight: 1,
+    transition: 'color 0.15s',
+    ':hover': {
+      color: colors.accent,
+    },
   },
 } as const

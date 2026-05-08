@@ -12,6 +12,7 @@ import type {
   Accommodation,
   Participant,
   Poll,
+  Preferences,
   Proposal,
   Trip,
   Vote,
@@ -60,6 +61,8 @@ const ACCOMMODATIONS_TABLE_ID = process.env
   .PUBLIC_APPWRITE_ACCOMMODATIONS_TABLE_ID as string
 const POLLS_TABLE_ID = process.env.PUBLIC_APPWRITE_POLLS_TABLE_ID as string
 const VOTES_TABLE_ID = process.env.PUBLIC_APPWRITE_VOTES_TABLE_ID as string
+const PREFERENCES_TABLE_ID = process.env
+  .PUBLIC_APPWRITE_PREFERENCES_TABLE_ID as string
 
 export async function getCoordinatorParticipant(
   tripId: string,
@@ -1070,4 +1073,56 @@ export async function deleteAccommodation(
     tableId: ACCOMMODATIONS_TABLE_ID,
     rowId: accommodationId,
   })
+}
+
+export async function getPreferences(
+  userId: string,
+  db: TablesDB = tablesDb
+): Promise<Preferences | null> {
+  const rows = await fetchRows<Preferences>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: PREFERENCES_TABLE_ID,
+      queries: [Query.equal('userId', userId), Query.limit(1)],
+    })
+  )
+  return rows.length > 0 ? rows[0] : null
+}
+
+export async function createPreferences(
+  userId: string,
+  data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>,
+  db: TablesDB = tablesDb
+): Promise<Preferences> {
+  return fetchRow<Preferences>(
+    db.createRow({
+      databaseId: DATABASE_ID,
+      tableId: PREFERENCES_TABLE_ID,
+      rowId: ID.unique(),
+      data: { userId, ...data } as Record<string, unknown>,
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.write(Role.user(userId)),
+      ],
+    })
+  )
+}
+
+export async function updatePreferences(
+  userId: string,
+  data: Partial<
+    Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
+  >,
+  db: TablesDB = tablesDb
+): Promise<Preferences> {
+  const existing = await getPreferences(userId, db)
+  if (!existing) throw new Error('Preferences not found.')
+  return fetchRow<Preferences>(
+    db.updateRow({
+      databaseId: DATABASE_ID,
+      tableId: PREFERENCES_TABLE_ID,
+      rowId: existing.$id,
+      data: data as Record<string, unknown>,
+    })
+  )
 }

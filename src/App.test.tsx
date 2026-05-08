@@ -3,13 +3,30 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import App from './App'
-import type { Trip } from './types.d.ts'
+import type { Preferences, Trip } from './types.d.ts'
 
 const defaultUser: Models.User = {
   $id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
 } as Models.User
+
+const defaultPreferences: Preferences = {
+  $id: 'pref-1',
+  $createdAt: '2024-01-01T00:00:00.000Z',
+  $updatedAt: '2024-01-01T00:00:00.000Z',
+  userId: 'user-1',
+  skiSnowboard: JSON.stringify(['Ski']),
+  difficulty: JSON.stringify(['Red']),
+  piste: JSON.stringify(['On-Piste']),
+  timeSlopes: 20,
+  timeEating: 20,
+  timeApres: 20,
+  timeHotel: 40,
+  accommodation: JSON.stringify(['Chalet']),
+  mostImportantAspect: 'Good snow',
+}
+
 const sampleTrip: Trip = {
   $id: 'trip-1',
   $createdAt: '2024-01-01T00:00:00.000Z',
@@ -38,6 +55,7 @@ function renderApp(props = {}) {
       deleteTrip={() => Promise.resolve()}
       leaveTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
+      getPreferences={() => Promise.resolve(defaultPreferences)}
       {...props}
     />
   )
@@ -58,6 +76,7 @@ function renderAppWithTrip(props = {}) {
       deleteTrip={() => Promise.resolve()}
       leaveTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
+      getPreferences={() => Promise.resolve(defaultPreferences)}
       {...props}
     />
   )
@@ -250,6 +269,7 @@ describe('App', () => {
         deleteTrip={() => Promise.resolve()}
         leaveTrip={() => Promise.resolve()}
         getCoordinatorParticipant={getCoordinatorParticipant}
+        getPreferences={() => Promise.resolve(defaultPreferences)}
       />
     )
 
@@ -295,6 +315,7 @@ describe('App', () => {
         deleteTrip={() => Promise.resolve()}
         leaveTrip={() => Promise.resolve()}
         getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
+        getPreferences={() => Promise.resolve(defaultPreferences)}
       />
     )
 
@@ -323,5 +344,67 @@ describe('App', () => {
     })
     await user.click(screen.getByRole('button', { name: /sign out/i }))
     await screen.findByText('Logout failed')
+  })
+
+  it('shows preferences blocker when user has no preferences', async () => {
+    renderApp({
+      getPreferences: () => Promise.resolve(null),
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /welcome/i }))
+    })
+    expect(screen.getByText(/set your preferences/i))
+  })
+
+  it('shows the app after saving preferences from blocker', async () => {
+    const ue = userEvent.setup()
+    const mockCreate = mock(() =>
+      Promise.resolve({
+        $id: 'pref-1',
+        userId: 'user-1',
+        skiSnowboard: JSON.stringify(['Ski']),
+        difficulty: JSON.stringify(['Red']),
+        piste: JSON.stringify(['On-Piste']),
+        timeSlopes: 20,
+        timeEating: 20,
+        timeApres: 20,
+        timeHotel: 40,
+        accommodation: JSON.stringify(['Chalet']),
+        mostImportantAspect: 'Good snow',
+      })
+    )
+    renderApp({
+      getPreferences: () => Promise.resolve(null),
+      createPreferences: mockCreate,
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /welcome/i }))
+    })
+
+    // Set a text field
+    await ue.type(
+      screen.getByPlaceholderText(/great après-ski scene/i),
+      'Good snow'
+    )
+
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^my trips$/i }))
+    })
+  })
+
+  it('opens preferences modal from header gear icon', async () => {
+    const ue = userEvent.setup()
+    renderApp()
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /preferences/i }))
+    })
+    await ue.click(screen.getByRole('button', { name: /preferences/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /preferences/i }))
+    })
   })
 })

@@ -70,3 +70,19 @@ export interface Vote {
   proposalIds: string[]
   tokenCounts: number[]
 }
+
+export interface Preferences {
+  $id: string
+  $createdAt: string
+  $updatedAt: string
+  userId: string
+  skiSnowboard: string
+  difficulty: string
+  piste: string
+  timeSlopes: number
+  timeEating: number
+  timeApres: number
+  timeHotel: number
+  accommodation: string
+  mostImportantAspect: string
+}

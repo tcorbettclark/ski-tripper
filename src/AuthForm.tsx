@@ -52,7 +52,7 @@ export default function AuthForm({
       await createEmailPasswordSession(email, password)
       const user = await accountGet()
       onSuccess(user)
-    } catch (err: unknown) {
+    } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
       setLoading(false)

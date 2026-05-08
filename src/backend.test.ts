@@ -1712,3 +1712,128 @@ describe('deleteProposal with cascade delete', () => {
     expect(deletedIds).toContain('prop-1')
   })
 })
+
+import { createPreferences, getPreferences, updatePreferences } from './backend'
+
+describe('getPreferences', () => {
+  it('returns preferences when a row exists', async () => {
+    const db = createMockDb({
+      listRows: mock(() =>
+        Promise.resolve({
+          rows: [
+            {
+              $id: 'pref-1',
+              userId: 'user-1',
+              skiSnowboard: JSON.stringify(['Ski']),
+            },
+          ],
+        })
+      ),
+    })
+    const result = await getPreferences('user-1', db)
+    expect(result).not.toBeNull()
+    expect(result?.$id).toBe('pref-1')
+  })
+
+  it('returns null when no row exists', async () => {
+    const db = createMockDb()
+    const result = await getPreferences('user-1', db)
+    expect(result).toBeNull()
+  })
+
+  it('propagates errors', async () => {
+    const db = createMockDb({
+      listRows: mock(() => Promise.reject(new Error('Network error'))),
+    })
+    expect(getPreferences('user-1', db)).rejects.toThrow('Network error')
+  })
+})
+
+describe('createPreferences', () => {
+  it('creates a preferences row with user permissions', async () => {
+    const db = createMockDb()
+    const result = await createPreferences(
+      'user-1',
+      {
+        skiSnowboard: JSON.stringify(['Ski']),
+        difficulty: JSON.stringify(['Red']),
+        piste: JSON.stringify(['On-Piste']),
+        timeSlopes: 20,
+        timeEating: 20,
+        timeApres: 20,
+        timeHotel: 40,
+        accommodation: JSON.stringify(['Chalet']),
+        mostImportantAspect: 'Good snow',
+      },
+      db
+    )
+    expect(db.createRow).toHaveBeenCalledTimes(1)
+    const [{ data }] = db.createRow.mock.calls[0]
+    expect(data.userId).toBe('user-1')
+    expect(data.skiSnowboard).toBe(JSON.stringify(['Ski']))
+    expect(result.$id).toBe('new-id')
+  })
+
+  it('propagates errors', async () => {
+    const db = createMockDb({
+      createRow: mock(() => Promise.reject(new Error('Create failed'))),
+    })
+    expect(
+      createPreferences(
+        'user-1',
+        {
+          skiSnowboard: JSON.stringify(['Ski']),
+          difficulty: JSON.stringify(['Red']),
+          piste: JSON.stringify(['On-Piste']),
+          timeSlopes: 20,
+          timeEating: 20,
+          timeApres: 20,
+          timeHotel: 40,
+          accommodation: JSON.stringify(['Chalet']),
+          mostImportantAspect: 'Good snow',
+        },
+        db
+      )
+    ).rejects.toThrow('Create failed')
+  })
+})
+
+describe('updatePreferences', () => {
+  it('updates existing preferences', async () => {
+    const db = createMockDb({
+      listRows: mock(() =>
+        Promise.resolve({
+          rows: [{ $id: 'pref-1', userId: 'user-1' }],
+        })
+      ),
+    })
+    const result = await updatePreferences(
+      'user-1',
+      { mostImportantAspect: 'Updated' },
+      db
+    )
+    expect(db.updateRow).toHaveBeenCalledTimes(1)
+    const [{ rowId }] = db.updateRow.mock.calls[0]
+    expect(rowId).toBe('pref-1')
+    expect(result.$id).toBe('1')
+  })
+
+  it('throws when preferences do not exist', async () => {
+    const db = createMockDb()
+    expect(
+      updatePreferences('user-1', { mostImportantAspect: 'Updated' }, db)
+    ).rejects.toThrow('Preferences not found.')
+  })
+
+  it('propagates errors', async () => {
+    const db = createMockDb({
+      listRows: mock(() =>
+        Promise.resolve({ rows: [{ $id: 'pref-1', userId: 'user-1' }] })
+      ),
+      updateRow: mock(() => Promise.reject(new Error('Update failed'))),
+    })
+    expect(
+      updatePreferences('user-1', { mostImportantAspect: 'Updated' }, db)
+    ).rejects.toThrow('Update failed')
+  })
+})
