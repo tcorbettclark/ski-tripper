@@ -33,6 +33,16 @@ interface ListTripsResult {
 
 interface AppProps {
   accountGet?: () => Promise<Models.User>
+  accountCreate?: (
+    id: string,
+    email: string,
+    password: string,
+    name: string
+  ) => Promise<Models.User>
+  createEmailPasswordSession?: (
+    email: string,
+    password: string
+  ) => Promise<Models.Session>
   deleteSession?: () => Promise<unknown>
   listTrips?: (userId: string) => Promise<ListTripsResult>
   listParticipatedTrips?: (userId: string) => Promise<{
@@ -72,6 +82,9 @@ interface AppProps {
 }
 
 const defaultAccountGet = _account.get.bind(_account)
+const defaultAccountCreate = _account.create.bind(_account)
+const defaultCreateEmailPasswordSession =
+  _account.createEmailPasswordSession.bind(_account)
 const defaultDeleteSession = _account.deleteSession.bind(_account, 'current')
 const defaultListTrips = _listTrips.bind(_listTrips)
 const defaultListParticipatedTrips = _listParticipatedTrips.bind(
@@ -94,6 +107,8 @@ type TripDetailTab = 'proposals' | 'poll'
 
 export default function App({
   accountGet = defaultAccountGet,
+  accountCreate = defaultAccountCreate,
+  createEmailPasswordSession = defaultCreateEmailPasswordSession,
   deleteSession = defaultDeleteSession,
   listTrips = defaultListTrips,
   listParticipatedTrips = defaultListParticipatedTrips,
@@ -236,6 +251,9 @@ export default function App({
         mode={page}
         onSuccess={setUser}
         onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
+        accountCreate={accountCreate}
+        createEmailPasswordSession={createEmailPasswordSession}
+        accountGet={accountGet}
       />
     )
   }
@@ -290,7 +308,11 @@ export default function App({
           </p>
           <PreferencesForm
             userId={user.$id}
-            onSaved={(prefs) => setPreferences(prefs)}
+            onSaved={(prefs) => {
+              setPreferences(prefs)
+              setView('tripList')
+              setSelectedTripId(null)
+            }}
             createPreferences={createPreferences}
           />
         </div>

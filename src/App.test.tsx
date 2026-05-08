@@ -394,6 +394,75 @@ describe('App', () => {
     })
   })
 
+  it('after signup and preferences, shows Trips page with create and join buttons', async () => {
+    const ue = userEvent.setup()
+    let signedUp = false
+    const mockAccountGet = mock(() => {
+      if (signedUp) return Promise.resolve(defaultUser)
+      return Promise.reject(new Error('Not authenticated'))
+    })
+    const mockCreatePrefs = mock(() =>
+      Promise.resolve({
+        ...defaultPreferences,
+      })
+    )
+    render(
+      <App
+        accountGet={mockAccountGet}
+        accountCreate={() => {
+          signedUp = true
+          return Promise.resolve(defaultUser)
+        }}
+        createEmailPasswordSession={() => Promise.resolve({} as Models.Session)}
+        deleteSession={() => Promise.resolve()}
+        listTrips={() => Promise.resolve({ trips: [], coordinatorUserIds: {} })}
+        listParticipatedTrips={() => Promise.resolve({ trips: [] })}
+        listTripParticipants={() => Promise.resolve({ participants: [] })}
+        listPolls={() => Promise.resolve({ polls: [] })}
+        updateTrip={() => Promise.resolve({} as Trip)}
+        deleteTrip={() => Promise.resolve()}
+        leaveTrip={() => Promise.resolve()}
+        getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
+        getPreferences={() => Promise.resolve(null)}
+        createPreferences={mockCreatePrefs}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+    await ue.click(screen.getByRole('button', { name: /sign up/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /create account/i }))
+    })
+
+    await ue.type(screen.getByPlaceholderText(/jane smith/i), 'Alice')
+    await ue.type(
+      screen.getByPlaceholderText(/you@example.com/i),
+      'alice@example.com'
+    )
+    await ue.type(screen.getByPlaceholderText('••••••••'), 'password123')
+    await ue.click(screen.getByRole('button', { name: /sign up$/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /welcome/i }))
+    })
+
+    await ue.type(
+      screen.getByPlaceholderText(/great après-ski scene/i),
+      'Good snow'
+    )
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /^my trips$/i }))
+    })
+    expect(screen.getByRole('button', { name: /\+ new trip/i }))
+    expect(screen.getByRole('button', { name: /\+ join trip/i }))
+    expect(screen.queryByRole('button', { name: /proposals/i })).toBeNull()
+  })
+
   it('opens preferences modal from header gear icon', async () => {
     const ue = userEvent.setup()
     await act(async () => {
