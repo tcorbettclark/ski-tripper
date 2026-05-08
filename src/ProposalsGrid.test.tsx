@@ -154,6 +154,86 @@ describe('ProposalsGrid', () => {
     expect(screen.getByText('No proposals yet.')).toBeDefined()
   })
 
+  it('shows plain counts when not searching', () => {
+    render(
+      <ProposalsGrid
+        proposals={proposals}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'DRAFT (1)' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'SUBMITTED (1)' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'REJECTED (0)' })).toBeDefined()
+  })
+
+  it('shows filtered/total counts when searching', async () => {
+    const user = userEvent.setup()
+    render(
+      <ProposalsGrid
+        proposals={proposals}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    const searchInput = screen.getByPlaceholderText('Search proposals…')
+    await user.type(searchInput, 'Z')
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 350))
+    })
+
+    expect(screen.getByRole('button', { name: 'DRAFT (1/1)' })).toBeDefined()
+    expect(
+      screen.getByRole('button', { name: 'SUBMITTED (0/1)' })
+    ).toBeDefined()
+    expect(screen.getByRole('button', { name: 'REJECTED (0/0)' })).toBeDefined()
+  })
+
+  it('reverts to plain counts when search is cleared', async () => {
+    const user = userEvent.setup()
+    render(
+      <ProposalsGrid
+        proposals={proposals}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    const searchInput = screen.getByPlaceholderText('Search proposals…')
+    await user.type(searchInput, 'Z')
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 350))
+    })
+
+    await user.clear(searchInput)
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 350))
+    })
+
+    expect(screen.getByRole('button', { name: 'DRAFT (1)' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'SUBMITTED (1)' })).toBeDefined()
+  })
+
   it('shows search results empty state', async () => {
     const user = userEvent.setup()
     render(

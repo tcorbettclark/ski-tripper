@@ -62,14 +62,8 @@ export default function ProposalsGrid({
     return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const filteredProposals = useMemo(() => {
+  const searchFilteredProposals = useMemo(() => {
     let result = proposals
-
-    result = [...result].sort((a, b) =>
-      (a.resortName || '')
-        .toLowerCase()
-        .localeCompare((b.resortName || '').toLowerCase())
-    )
 
     if (debouncedQuery) {
       const query = debouncedQuery.toLowerCase().trim()
@@ -83,18 +77,48 @@ export default function ProposalsGrid({
       )
     }
 
-    result = result.filter((p) => p.state === statusFilter)
-
     return result
-  }, [proposals, debouncedQuery, statusFilter])
+  }, [proposals, debouncedQuery])
+
+  const filteredProposals = useMemo(() => {
+    const result = searchFilteredProposals
+      .filter((p) => p.state === statusFilter)
+      .sort((a, b) =>
+        (a.resortName || '')
+          .toLowerCase()
+          .localeCompare((b.resortName || '').toLowerCase())
+      )
+    return result
+  }, [searchFilteredProposals, statusFilter])
+
+  const isSearching = debouncedQuery.length > 0
 
   const tabCounts = useMemo(() => {
-    return {
+    const filtered = {
+      DRAFT: searchFilteredProposals.filter((p) => p.state === 'DRAFT').length,
+      SUBMITTED: searchFilteredProposals.filter((p) => p.state === 'SUBMITTED')
+        .length,
+      REJECTED: searchFilteredProposals.filter((p) => p.state === 'REJECTED')
+        .length,
+    }
+    const total = {
       DRAFT: proposals.filter((p) => p.state === 'DRAFT').length,
       SUBMITTED: proposals.filter((p) => p.state === 'SUBMITTED').length,
       REJECTED: proposals.filter((p) => p.state === 'REJECTED').length,
     }
-  }, [proposals])
+    if (isSearching) {
+      return {
+        DRAFT: { filtered: filtered.DRAFT, total: total.DRAFT },
+        SUBMITTED: { filtered: filtered.SUBMITTED, total: total.SUBMITTED },
+        REJECTED: { filtered: filtered.REJECTED, total: total.REJECTED },
+      }
+    }
+    return {
+      DRAFT: { filtered: total.DRAFT, total: total.DRAFT },
+      SUBMITTED: { filtered: total.SUBMITTED, total: total.SUBMITTED },
+      REJECTED: { filtered: total.REJECTED, total: total.REJECTED },
+    }
+  }, [proposals, searchFilteredProposals, isSearching])
 
   if (proposals.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
@@ -123,7 +147,11 @@ export default function ProposalsGrid({
                 statusFilter === status ? styles.tabActive : styles.tabInactive
               }
             >
-              {status} ({tabCounts[status]})
+              {status} (
+              {isSearching
+                ? `${tabCounts[status].filtered}/${tabCounts[status].total}`
+                : tabCounts[status].total}
+              )
             </button>
           )
         )}
