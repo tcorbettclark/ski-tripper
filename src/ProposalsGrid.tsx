@@ -32,6 +32,7 @@ interface ProposalsGridProps {
   submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
   resubmitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  debounceMs?: number
 }
 
 export default function ProposalsGrid({
@@ -50,6 +51,7 @@ export default function ProposalsGrid({
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
   resubmitProposal = _resubmitProposal,
+  debounceMs = 300,
 }: ProposalsGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -58,9 +60,9 @@ export default function ProposalsGrid({
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery)
-    }, 300)
+    }, debounceMs)
     return () => clearTimeout(timer)
-  }, [searchQuery])
+  }, [searchQuery, debounceMs])
 
   const searchFilteredProposals = useMemo(() => {
     let result = proposals

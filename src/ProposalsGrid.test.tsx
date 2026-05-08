@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { act, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ProposalsGrid from './ProposalsGrid'
 import type { Proposal } from './types.d.ts'
@@ -48,21 +48,25 @@ const proposals: Proposal[] = [
   },
 ]
 
+function defaultProps(overrides: Record<string, unknown> = {}) {
+  return {
+    proposals,
+    userId: 'user-1',
+    onUpdated: () => {},
+    onDeleted: () => {},
+    onSubmitted: () => {},
+    updateProposal: mockUpdateProposal,
+    deleteProposal: mockDeleteProposal,
+    submitProposal: mockSubmitProposal,
+    rejectProposal: mockRejectProposal,
+    debounceMs: 0,
+    ...overrides,
+  }
+}
+
 describe('ProposalsGrid', () => {
   it('renders proposals filtered by default status', () => {
-    render(
-      <ProposalsGrid
-        proposals={proposals}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps()} />)
 
     expect(screen.getByText(/Z Resort/)).toBeDefined()
     expect(screen.queryByText(/A Resort/)).toBeNull()
@@ -73,19 +77,7 @@ describe('ProposalsGrid', () => {
       ...p,
       state: 'DRAFT' as const,
     }))
-    render(
-      <ProposalsGrid
-        proposals={allDrafts}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
 
     const headings = screen.getAllByRole('heading')
     expect(headings.length).toBe(2)
@@ -95,19 +87,7 @@ describe('ProposalsGrid', () => {
 
   it('filters by DRAFT status', async () => {
     const user = userEvent.setup()
-    render(
-      <ProposalsGrid
-        proposals={proposals}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps()} />)
 
     await user.click(screen.getByRole('button', { name: /^DRAFT/ }))
     expect(screen.getByText(/Z Resort/)).toBeDefined()
@@ -116,19 +96,7 @@ describe('ProposalsGrid', () => {
 
   it('filters by SUBMITTED status', async () => {
     const user = userEvent.setup()
-    render(
-      <ProposalsGrid
-        proposals={proposals}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps()} />)
 
     await user.click(screen.getByRole('button', { name: /^SUBMITTED/ }))
     expect(screen.getByText(/A Resort/)).toBeDefined()
@@ -138,15 +106,7 @@ describe('ProposalsGrid', () => {
   it('shows empty message when no proposals', () => {
     render(
       <ProposalsGrid
-        proposals={[]}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
+        {...defaultProps({ proposals: [] })}
         emptyMessage="No proposals yet."
       />
     )
@@ -155,19 +115,7 @@ describe('ProposalsGrid', () => {
   })
 
   it('shows plain counts when not searching', () => {
-    render(
-      <ProposalsGrid
-        proposals={proposals}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps()} />)
 
     expect(screen.getByRole('button', { name: 'DRAFT (1)' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'SUBMITTED (1)' })).toBeDefined()
@@ -176,25 +124,10 @@ describe('ProposalsGrid', () => {
 
   it('shows filtered/total counts when searching', async () => {
     const user = userEvent.setup()
-    render(
-      <ProposalsGrid
-        proposals={proposals}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps()} />)
 
     const searchInput = screen.getByPlaceholderText('Search proposals…')
     await user.type(searchInput, 'Z')
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 350))
-    })
 
     expect(screen.getByRole('button', { name: 'DRAFT (1/1)' })).toBeDefined()
     expect(
@@ -205,30 +138,11 @@ describe('ProposalsGrid', () => {
 
   it('reverts to plain counts when search is cleared', async () => {
     const user = userEvent.setup()
-    render(
-      <ProposalsGrid
-        proposals={proposals}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps()} />)
 
     const searchInput = screen.getByPlaceholderText('Search proposals…')
     await user.type(searchInput, 'Z')
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 350))
-    })
-
     await user.clear(searchInput)
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 350))
-    })
 
     expect(screen.getByRole('button', { name: 'DRAFT (1)' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'SUBMITTED (1)' })).toBeDefined()
@@ -236,25 +150,10 @@ describe('ProposalsGrid', () => {
 
   it('shows search results empty state', async () => {
     const user = userEvent.setup()
-    render(
-      <ProposalsGrid
-        proposals={proposals}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-      />
-    )
+    render(<ProposalsGrid {...defaultProps()} />)
 
     const searchInput = screen.getByPlaceholderText('Search proposals…')
     await user.type(searchInput, 'nonexistent')
-    await act(async () => {
-      await new Promise((r) => setTimeout(r, 350))
-    })
 
     expect(
       screen.getByText(
