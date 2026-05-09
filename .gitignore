@@ -7,3 +7,4 @@ dist-test
 .env.*.local
 .backups/
 .DS_Store
+.playwright-cli
