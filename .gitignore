@@ -8,3 +8,4 @@ dist-test
 .backups/
 .DS_Store
 .playwright-cli
+.env.app-explorer.md
