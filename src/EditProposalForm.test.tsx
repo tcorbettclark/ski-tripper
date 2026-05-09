@@ -85,6 +85,35 @@ describe('EditProposalForm', () => {
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
+  it('passes updated proposal from server response to onUpdated, not original prop', async () => {
+    const onUpdated = mock(() => {})
+    const updatedFromServer = {
+      ...sampleProposal,
+      resortName: 'Updated Resort',
+      $updatedAt: '2024-02-01T00:00:00Z',
+    }
+    const updateProposal = mock(() => Promise.resolve(updatedFromServer))
+    renderForm({ onUpdated, updateProposal })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()
+    })
+
+    await act(async () => {
+      const form = document.querySelector('form')
+      form?.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      )
+    })
+
+    await waitFor(() => {
+      expect(onUpdated).toHaveBeenCalledTimes(1)
+      const passedProposal = onUpdated.mock.calls[0][0] as Proposal
+      expect(passedProposal.resortName).toBe('Updated Resort')
+      expect(passedProposal.$updatedAt).toBe('2024-02-01T00:00:00Z')
+    })
+  })
+
   it('shows error message when updateProposal rejects', async () => {
     const updateProposal = mock(() =>
       Promise.reject(new Error('Update failed'))

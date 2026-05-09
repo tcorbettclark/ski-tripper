@@ -173,7 +173,7 @@ export default function EditProposalForm({
     }
     setSaving(true)
     try {
-      await updateProposal(proposal.$id, userId, form)
+      const updatedProposal = await updateProposal(proposal.$id, userId, form)
       for (const acc of Object.values(accommodations)) {
         if (acc.id) {
           await updateAccommodation(acc.id, userId, {
@@ -191,7 +191,7 @@ export default function EditProposalForm({
           })
         }
       }
-      onUpdated(proposal)
+      onUpdated(updatedProposal)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
