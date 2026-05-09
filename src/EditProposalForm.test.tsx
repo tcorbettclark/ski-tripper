@@ -26,7 +26,7 @@ function renderForm(props = {}) {
   const defaults = {
     proposal: sampleProposal,
     userId: 'user-1',
-    onUpdated: mock(() => {}),
+    onUpdated: mock((_p: unknown) => {}),
     onCancel: mock(() => {}),
     updateProposal: mock(() =>
       Promise.resolve({ $id: 'p-1', resortName: 'Updated' })
@@ -108,7 +108,9 @@ describe('EditProposalForm', () => {
 
     await waitFor(() => {
       expect(onUpdated).toHaveBeenCalledTimes(1)
-      const passedProposal = onUpdated.mock.calls[0][0] as Proposal
+      const passedProposal = (
+        onUpdated.mock.calls as unknown[][]
+      )[0][0] as Proposal
       expect(passedProposal.resortName).toBe('Updated Resort')
       expect(passedProposal.$updatedAt).toBe('2024-02-01T00:00:00Z')
     })
