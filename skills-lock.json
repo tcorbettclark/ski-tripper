@@ -5,6 +5,12 @@
       "source": "appwrite/agent-skills",
       "sourceType": "github",
       "computedHash": "38ba75d56d9d6fba0cf6150d9ee9fef5f7ff352b148bf715557c12be6b1a4905"
+    },
+    "playwright-cli": {
+      "source": "microsoft/playwright-cli",
+      "sourceType": "github",
+      "skillPath": "skills/playwright-cli/SKILL.md",
+      "computedHash": "84495cfda62b6c012afc4cc34a0c35bfc7923ba35983b8c04ce4cace0f35a5d8"
     }
   }
 }
