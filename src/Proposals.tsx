@@ -158,10 +158,19 @@ export default function Proposals({
     setProposals((p) => [proposal as Proposal, ...p])
   }, [])
 
-  const handleUpdated = useCallback((updated: unknown) => {
-    const u = updated as Proposal
-    setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
-  }, [])
+  const handleUpdated = useCallback(
+    (updated: unknown) => {
+      const u = updated as Proposal
+      setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
+      listAccommodations(u.$id)
+        .then((accs) => {
+          if (!mountedRef.current) return
+          setAccommodations((prev) => ({ ...prev, [u.$id]: accs }))
+        })
+        .catch(() => {})
+    },
+    [listAccommodations]
+  )
 
   const handleDeleted = useCallback((id: string) => {
     setProposals((p) => p.filter((prop) => prop.$id !== id))

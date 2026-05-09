@@ -49,6 +49,7 @@ function renderProposals(props = {}) {
     getCoordinatorParticipant: mock(() =>
       Promise.resolve({ participants: [] })
     ),
+    listAccommodations: mock((_proposalId: string) => Promise.resolve([])),
   }
   return render(<Proposals {...defaults} {...props} />)
 }
@@ -191,6 +192,84 @@ describe('Proposals', () => {
     })
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: /^reject$/i })).toBeNull()
+    })
+  })
+
+  it('re-fetches accommodations when handleUpdated is called', async () => {
+    const initialAccommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-01T00:00:00Z',
+        proposalId: 'p-1',
+        name: 'Old Hotel',
+        url: '',
+        cost: '€100',
+        description: 'Old description',
+      },
+    ]
+    const updatedAccommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-02T00:00:00Z',
+        proposalId: 'p-1',
+        name: 'New Hotel',
+        url: '',
+        cost: '€200',
+        description: 'New description',
+      },
+    ]
+    let listAccCallCount = 0
+    const listAccommodationsFn = mock((_proposalId: string) => {
+      listAccCallCount++
+      if (listAccCallCount === 1) return Promise.resolve(initialAccommodations)
+      return Promise.resolve(updatedAccommodations)
+    })
+    const updateProposalFn = mock(() =>
+      Promise.resolve({
+        ...sampleProposals[0],
+        resortName: 'Updated Resort',
+      })
+    )
+
+    await act(async () => {
+      renderProposals({
+        tripId: 'trip-1',
+        listAccommodations: listAccommodationsFn,
+        updateProposal: updateProposalFn,
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('€100')).toBeTruthy()
+    })
+
+    const initialCallCount = listAccommodationsFn.mock.calls.length
+
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()
+    })
+
+    const forms = document.querySelectorAll('form')
+    const editForm = forms[forms.length - 1]
+    await act(async () => {
+      editForm?.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      )
+    })
+
+    await waitFor(() => {
+      expect(listAccommodationsFn.mock.calls.length).toBeGreaterThan(
+        initialCallCount
+      )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('€200')).toBeTruthy()
     })
   })
 
