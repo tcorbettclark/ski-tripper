@@ -6,7 +6,7 @@ copy = "wt step copy-from-main --yes"
 
 [aliases]
 # Intended to be used within a worktree to sync work back to main.
-merge-and-continue = "wt merge --no-commit --no-remove && wt step copy-to-main --yes"
+merge-and-continue = "wt merge --no-commit --no-squash --no-remove && wt step copy-to-main --yes"
 
 # Can be used from anywhere, but typically from main to sync work out to all worktrees.
 sync-all-from-main = "wt step for-each -- sh -c 'git rebase main && wt step copy-from-main --yes'"
