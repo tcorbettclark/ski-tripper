@@ -145,6 +145,7 @@ describe('DiscussionDialog', () => {
           proposalId="prop-1"
           proposalResortName="Test Resort"
           userId="user-1"
+          userName="Alice"
           onClose={onClose}
           listDiscussion={listDiscussionMock}
         />
