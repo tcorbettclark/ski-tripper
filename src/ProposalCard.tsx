@@ -282,7 +282,7 @@ export default function ProposalCard({
               disabled={resubmitting}
               style={styles.resubmitButton}
             >
-              {resubmitting ? 'Resubmitting…' : 'Move back to Submitted'}
+              {resubmitting ? 'Moving to Draft…' : 'Move back to Draft'}
             </button>
           )}
           {resubmitError && <p style={formStyles.error}>{resubmitError}</p>}

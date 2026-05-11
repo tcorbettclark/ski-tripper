@@ -151,7 +151,7 @@ describe('ProposalCard', () => {
     )
 
     expect(
-      screen.getByRole('button', { name: 'Move back to Submitted' })
+      screen.getByRole('button', { name: 'Move back to Draft' })
     ).toBeDefined()
   })
 
@@ -174,7 +174,7 @@ describe('ProposalCard', () => {
     )
 
     expect(
-      screen.queryByRole('button', { name: 'Move back to Submitted' })
+      screen.queryByRole('button', { name: 'Move back to Draft' })
     ).toBeNull()
   })
 
@@ -314,9 +314,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(
-      screen.getByRole('button', { name: 'Move back to Submitted' })
-    )
+    await user.click(screen.getByRole('button', { name: 'Move back to Draft' }))
     await screen.findByText('Resubmit failed')
     expect(onResubmitted).not.toHaveBeenCalled()
   })

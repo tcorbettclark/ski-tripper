@@ -730,21 +730,23 @@ export async function resubmitProposal(
     })
   )
   if (proposal.state !== 'REJECTED') {
-    throw new Error('Only rejected proposals can be resubmitted.')
+    throw new Error('Only rejected proposals can be moved back to draft.')
   }
   const { participants } = await getCoordinatorParticipant(proposal.tripId, db)
   if (
     participants.length === 0 ||
     participants[0].participantUserId !== pollCreatorUserId
   ) {
-    throw new Error('Only the coordinator can resubmit this proposal.')
+    throw new Error(
+      'Only the coordinator can move this proposal back to draft.'
+    )
   }
   return fetchRow<Proposal>(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
       rowId: proposalId,
-      data: { state: 'SUBMITTED' } as Record<string, unknown>,
+      data: { state: 'DRAFT' } as Record<string, unknown>,
     })
   )
 }
