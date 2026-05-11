@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   deleteProposal as _deleteProposal,
+  listDiscussion as _listDiscussion,
   rejectProposal as _rejectProposal,
   resubmitProposal as _resubmitProposal,
   submitProposal as _submitProposal,
@@ -8,14 +9,16 @@ import {
 } from './backend'
 import { getCountryFlagUrl } from './countries'
 import DetailField from './DetailField'
+import DiscussionDialog from './DiscussionDialog'
 import EditProposalForm from './EditProposalForm'
 import { borders, colors, fonts, formStyles } from './theme'
-import type { Accommodation, Proposal } from './types.d.ts'
+import type { Accommodation, Discussion, Proposal } from './types.d.ts'
 import { isValidUrl, sanitizeUrl } from './utils'
 
 interface ProposalCardProps {
   proposal: Proposal
   userId: string
+  userName?: string
   isCoordinator?: boolean
   previewMode?: boolean
   accommodations?: Accommodation[]
@@ -48,11 +51,13 @@ interface ProposalCardProps {
     accommodationId: string,
     userId: string
   ) => Promise<unknown>
+  listDiscussion?: (proposalId: string) => Promise<Discussion[]>
 }
 
 export default function ProposalCard({
   proposal,
   userId,
+  userName = '',
   isCoordinator = false,
   accommodations = [],
   onUpdated,
@@ -69,9 +74,12 @@ export default function ProposalCard({
   createAccommodation,
   updateAccommodation,
   deleteAccommodation,
+  listDiscussion = _listDiscussion,
 }: ProposalCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showDiscussion, setShowDiscussion] = useState(false)
+  const [discussionCount, setDiscussionCount] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
   const [resubmitting, setResubmitting] = useState(false)
@@ -80,6 +88,12 @@ export default function ProposalCard({
   const [rejectError, setRejectError] = useState<string | null>(null)
   const [resubmitError, setResubmitError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  useEffect(() => {
+    listDiscussion(proposal.$id)
+      .then((rows) => setDiscussionCount(rows.length))
+      .catch(() => {})
+  }, [proposal.$id, listDiscussion])
 
   const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'
@@ -182,6 +196,17 @@ export default function ProposalCard({
               </span>
             </div>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowDiscussion(true)}
+            style={styles.discussionButton}
+            aria-label={`Discussion (${discussionCount} comments)`}
+          >
+            💬
+            {discussionCount > 0 && (
+              <span style={styles.discussionBadge}>{discussionCount}</span>
+            )}
+          </button>
         </div>
 
         <div style={styles.grid}>
@@ -335,6 +360,17 @@ export default function ProposalCard({
           </div>
         </div>
       )}
+
+      {showDiscussion && (
+        <DiscussionDialog
+          proposalId={proposal.$id}
+          proposalResortName={proposal.resortName || '—'}
+          userId={userId}
+          userName={userName}
+          onClose={() => setShowDiscussion(false)}
+          listDiscussion={listDiscussion}
+        />
+      )}
     </>
   )
 }
@@ -354,6 +390,9 @@ const styles = {
   },
   header: {
     marginBottom: '20px',
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   resortName: {
     fontFamily: fonts.display,
@@ -561,5 +600,32 @@ const styles = {
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer',
+  },
+  discussionButton: {
+    position: 'relative' as const,
+    background: 'none',
+    border: borders.muted,
+    borderRadius: '8px',
+    padding: '6px 10px',
+    cursor: 'pointer',
+    fontSize: '18px',
+    lineHeight: 1,
+    color: colors.textSecondary,
+  },
+  discussionBadge: {
+    position: 'absolute' as const,
+    top: '-4px',
+    right: '-4px',
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontSize: '10px',
+    fontWeight: '700',
+    minWidth: '16px',
+    height: '16px',
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0 4px',
   },
 } as const

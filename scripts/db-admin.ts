@@ -18,6 +18,8 @@ const PROPOSALS_TABLE_ID = process.env
   .PUBLIC_APPWRITE_PROPOSALS_TABLE_ID as string
 const POLLS_TABLE_ID = process.env.PUBLIC_APPWRITE_POLLS_TABLE_ID as string
 const VOTES_TABLE_ID = process.env.PUBLIC_APPWRITE_VOTES_TABLE_ID as string
+const DISCUSSION_TABLE_ID = process.env
+  .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
 
 export const TABLE_IDS = {
   trips: TRIPS_TABLE_ID,
@@ -25,6 +27,7 @@ export const TABLE_IDS = {
   proposals: PROPOSALS_TABLE_ID,
   polls: POLLS_TABLE_ID,
   votes: VOTES_TABLE_ID,
+  discussions: DISCUSSION_TABLE_ID,
 } as const
 
 export type TableName = keyof typeof TABLE_IDS

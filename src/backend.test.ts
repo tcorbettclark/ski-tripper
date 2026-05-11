@@ -3,18 +3,24 @@ import type { TablesDB } from 'appwrite'
 import {
   closePoll,
   createAccommodation,
+  createDiscussionComment,
   createPoll,
+  createPreferences,
   createProposal,
+  createSystemMessage,
   createTrip,
   deleteAccommodation,
+  deleteDiscussionComment,
   deleteProposal,
   deleteTrip,
+  getPreferences,
   getProposal,
   getTrip,
   getTripByCode,
   joinTrip,
   leaveTrip,
   listAccommodations,
+  listDiscussion,
   listParticipatedTrips,
   listPolls,
   listProposals,
@@ -23,6 +29,8 @@ import {
   rejectProposal,
   submitProposal,
   updateAccommodation,
+  updateDiscussionComment,
+  updatePreferences,
   updateProposal,
   updateTrip,
   upsertVote,
@@ -1707,8 +1715,19 @@ describe('deleteAccommodation', () => {
 })
 
 describe('deleteProposal with cascade delete', () => {
-  it('deletes accommodations before deleting proposal', async () => {
+  it('deletes accommodations and discussions before deleting proposal', async () => {
     const deleteRow = mock(() => Promise.resolve())
+    const listRows = mock()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'acc-1' }, { $id: 'acc-2' }],
+        })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          rows: [{ $id: 'd-1' }],
+        })
+      )
     const db = createMockDb({
       getRow: mock(() =>
         Promise.resolve({
@@ -1717,27 +1736,22 @@ describe('deleteProposal with cascade delete', () => {
           state: 'DRAFT',
         })
       ),
-      listRows: mock(() =>
-        Promise.resolve({
-          rows: [{ $id: 'acc-1' }, { $id: 'acc-2' }],
-        })
-      ),
+      listRows,
       deleteRow,
     })
     await deleteProposal('prop-1', 'user-1', db)
-    expect(deleteRow).toHaveBeenCalledTimes(3)
+    expect(deleteRow).toHaveBeenCalledTimes(4)
     const deletedIds = (
       deleteRow.mock.calls as unknown as [{ rowId: string }][]
     ).map(([args]) => args.rowId)
     expect(deletedIds).toContain('acc-1')
     expect(deletedIds).toContain('acc-2')
+    expect(deletedIds).toContain('d-1')
     expect(deletedIds).toContain('prop-1')
   })
 })
 
-import { createPreferences, getPreferences, updatePreferences } from './backend'
-
-describe('getPreferences', () => {
+describe('deleteProposal with cascade delete', () => {
   it('returns preferences when a row exists', async () => {
     const db = createMockDb({
       listRows: mock(() =>
@@ -1857,5 +1871,183 @@ describe('updatePreferences', () => {
     expect(
       updatePreferences('user-1', { mostImportantAspect: 'Updated' }, db)
     ).rejects.toThrow('Update failed')
+  })
+})
+
+describe('listDiscussion', () => {
+  it('returns discussion rows ordered by creation date', async () => {
+    const db = createMockDb({
+      listRows: mock(() =>
+        Promise.resolve({
+          rows: [
+            {
+              $id: 'd-1',
+              proposalId: 'prop-1',
+              type: 'system',
+              body: 'Submitted',
+            },
+            {
+              $id: 'd-2',
+              proposalId: 'prop-1',
+              type: 'comment',
+              body: 'Nice!',
+            },
+          ],
+        })
+      ),
+    })
+    const result = await listDiscussion('prop-1', db)
+    expect(result).toHaveLength(2)
+    expect(result[0].$id).toBe('d-1')
+  })
+
+  it('propagates errors', async () => {
+    const db = createMockDb({
+      listRows: mock(() => Promise.reject(new Error('Network error'))),
+    })
+    expect(listDiscussion('prop-1', db)).rejects.toThrow('Network error')
+  })
+})
+
+describe('createDiscussionComment', () => {
+  it('creates a comment row with correct data and permissions', async () => {
+    const db = createMockDb()
+    const result = await createDiscussionComment(
+      'prop-1',
+      'user-1',
+      'Alice',
+      'Great proposal!',
+      db
+    )
+    expect(db.createRow).toHaveBeenCalledTimes(1)
+    const [{ data }] = db.createRow.mock.calls[0]
+    expect(data.proposalId).toBe('prop-1')
+    expect(data.authorUserId).toBe('user-1')
+    expect(data.authorUserName).toBe('Alice')
+    expect(data.body).toBe('Great proposal!')
+    expect(data.type).toBe('comment')
+    expect(result.$id).toBe('new-id')
+  })
+})
+
+describe('updateDiscussionComment', () => {
+  it('updates the comment body when the author edits their own comment', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'd-1',
+          authorUserId: 'user-1',
+          type: 'comment',
+          body: 'Old text',
+        })
+      ),
+    })
+    const result = await updateDiscussionComment(
+      'd-1',
+      'user-1',
+      'Updated text',
+      db
+    )
+    expect(db.updateRow).toHaveBeenCalledTimes(1)
+    const [{ data }] = db.updateRow.mock.calls[0]
+    expect(data.body).toBe('Updated text')
+    expect(result.$id).toBe('1')
+  })
+
+  it('throws when a different user tries to edit', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'd-1',
+          authorUserId: 'user-2',
+          type: 'comment',
+          body: 'Old text',
+        })
+      ),
+    })
+    expect(
+      updateDiscussionComment('d-1', 'user-1', 'Hack', db)
+    ).rejects.toThrow('Only the author can edit this comment.')
+  })
+
+  it('throws when trying to edit a system message', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'd-1',
+          authorUserId: 'user-1',
+          type: 'system',
+          body: 'Submitted',
+        })
+      ),
+    })
+    expect(
+      updateDiscussionComment('d-1', 'user-1', 'Hack', db)
+    ).rejects.toThrow('System messages cannot be edited.')
+  })
+})
+
+describe('deleteDiscussionComment', () => {
+  it('deletes a comment when the author deletes their own', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'd-1',
+          authorUserId: 'user-1',
+          type: 'comment',
+        })
+      ),
+    })
+    await deleteDiscussionComment('d-1', 'user-1', db)
+    expect(db.deleteRow).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when a different user tries to delete', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'd-1',
+          authorUserId: 'user-2',
+          type: 'comment',
+        })
+      ),
+    })
+    expect(deleteDiscussionComment('d-1', 'user-1', db)).rejects.toThrow(
+      'Only the author can delete this comment.'
+    )
+  })
+
+  it('throws when trying to delete a system message', async () => {
+    const db = createMockDb({
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'd-1',
+          authorUserId: '',
+          type: 'system',
+        })
+      ),
+    })
+    expect(deleteDiscussionComment('d-1', '', db)).rejects.toThrow(
+      'System messages cannot be deleted.'
+    )
+  })
+})
+
+describe('createSystemMessage', () => {
+  it('creates a system message row with read-only permissions', async () => {
+    const db = createMockDb()
+    const result = await createSystemMessage(
+      'prop-1',
+      'Alice submitted this proposal',
+      db
+    )
+    expect(db.createRow).toHaveBeenCalledTimes(1)
+    const [{ data }] = db.createRow.mock.calls[0]
+    expect(data.proposalId).toBe('prop-1')
+    expect(data.authorUserId).toBe('')
+    expect(data.authorUserName).toBe('System')
+    expect(data.body).toBe('Alice submitted this proposal')
+    expect(data.type).toBe('system')
+    expect(result.$id).toBe('new-id')
   })
 })

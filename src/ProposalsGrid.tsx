@@ -15,6 +15,7 @@ type StatusFilter = 'DRAFT' | 'SUBMITTED' | 'REJECTED'
 interface ProposalsGridProps {
   proposals: Proposal[]
   userId: string
+  userName?: string
   isCoordinator?: boolean
   accommodations?: Record<string, Accommodation[]>
   onUpdated: (proposal: unknown) => void
@@ -38,6 +39,7 @@ interface ProposalsGridProps {
 export default function ProposalsGrid({
   proposals,
   userId,
+  userName = '',
   isCoordinator = false,
   accommodations = {},
   onUpdated,
@@ -170,6 +172,7 @@ export default function ProposalsGrid({
               key={proposal.$id}
               proposal={proposal}
               userId={userId}
+              userName={userName}
               isCoordinator={isCoordinator}
               accommodations={accommodations[proposal.$id] || []}
               onUpdated={onUpdated}

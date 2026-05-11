@@ -270,6 +270,7 @@ export default function Proposals({
         <ProposalsGrid
           proposals={proposals}
           userId={user.$id}
+          userName={user.name || ''}
           isCoordinator={isCoordinator}
           accommodations={accommodations}
           onUpdated={handleUpdated}

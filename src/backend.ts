@@ -10,6 +10,7 @@ import {
 } from 'appwrite'
 import type {
   Accommodation,
+  Discussion,
   Participant,
   Poll,
   Preferences,
@@ -63,6 +64,8 @@ const POLLS_TABLE_ID = process.env.PUBLIC_APPWRITE_POLLS_TABLE_ID as string
 const VOTES_TABLE_ID = process.env.PUBLIC_APPWRITE_VOTES_TABLE_ID as string
 const PREFERENCES_TABLE_ID = process.env
   .PUBLIC_APPWRITE_PREFERENCES_TABLE_ID as string
+const DISCUSSION_TABLE_ID = process.env
+  .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
 
 export async function getCoordinatorParticipant(
   tripId: string,
@@ -632,12 +635,26 @@ export async function deleteProposal(
       queries: [Query.equal('proposalId', proposalId), Query.limit(5)],
     })
   )
+  const discussions = await fetchRows<Discussion>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: DISCUSSION_TABLE_ID,
+      queries: [Query.equal('proposalId', proposalId), Query.limit(5000)],
+    })
+  )
   await Promise.all([
     ...accommodations.map((a) =>
       db.deleteRow({
         databaseId: DATABASE_ID,
         tableId: ACCOMMODATIONS_TABLE_ID,
         rowId: a.$id,
+      })
+    ),
+    ...discussions.map((d) =>
+      db.deleteRow({
+        databaseId: DATABASE_ID,
+        tableId: DISCUSSION_TABLE_ID,
+        rowId: d.$id,
       })
     ),
   ])
@@ -675,7 +692,7 @@ export async function submitProposal(
     throw new Error(
       'At least one accommodation is required to submit a proposal.'
     )
-  return fetchRow<Proposal>(
+  const updated = await fetchRow<Proposal>(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -683,6 +700,12 @@ export async function submitProposal(
       data: { state: 'SUBMITTED' } as Record<string, unknown>,
     })
   )
+  await createSystemMessage(
+    proposalId,
+    `${proposal.proposerUserName} submitted this proposal`,
+    db
+  )
+  return updated
 }
 
 export async function rejectProposal(
@@ -707,7 +730,7 @@ export async function rejectProposal(
   ) {
     throw new Error('Only the coordinator can reject this proposal.')
   }
-  return fetchRow<Proposal>(
+  const updated = await fetchRow<Proposal>(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -715,6 +738,12 @@ export async function rejectProposal(
       data: { state: 'REJECTED' } as Record<string, unknown>,
     })
   )
+  await createSystemMessage(
+    proposalId,
+    `${participants[0].participantUserName} rejected this proposal`,
+    db
+  )
+  return updated
 }
 
 export async function resubmitProposal(
@@ -741,7 +770,7 @@ export async function resubmitProposal(
       'Only the coordinator can move this proposal back to draft.'
     )
   }
-  return fetchRow<Proposal>(
+  const updated = await fetchRow<Proposal>(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -749,6 +778,12 @@ export async function resubmitProposal(
       data: { state: 'DRAFT' } as Record<string, unknown>,
     })
   )
+  await createSystemMessage(
+    proposalId,
+    `${participants[0].participantUserName} moved this proposal back to submitted`,
+    db
+  )
+  return updated
 }
 
 export async function createPoll(
@@ -1146,6 +1181,122 @@ export async function updatePreferences(
       tableId: PREFERENCES_TABLE_ID,
       rowId: existing.$id,
       data: data as Record<string, unknown>,
+    })
+  )
+}
+
+export async function listDiscussion(
+  proposalId: string,
+  db: TablesDB = tablesDb
+): Promise<Discussion[]> {
+  return fetchRows<Discussion>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: DISCUSSION_TABLE_ID,
+      queries: [
+        Query.equal('proposalId', proposalId),
+        Query.orderAsc('$createdAt'),
+        Query.limit(500),
+      ],
+    })
+  )
+}
+
+export async function createDiscussionComment(
+  proposalId: string,
+  authorUserId: string,
+  authorUserName: string,
+  body: string,
+  db: TablesDB = tablesDb
+): Promise<Discussion> {
+  return fetchRow<Discussion>(
+    db.createRow({
+      databaseId: DATABASE_ID,
+      tableId: DISCUSSION_TABLE_ID,
+      rowId: ID.unique(),
+      data: {
+        proposalId,
+        authorUserId,
+        authorUserName,
+        body,
+        type: 'comment',
+      } as Record<string, unknown>,
+      permissions: [
+        Permission.read(Role.users()),
+        Permission.write(Role.user(authorUserId)),
+      ],
+    })
+  )
+}
+
+export async function updateDiscussionComment(
+  commentId: string,
+  authorUserId: string,
+  body: string,
+  db: TablesDB = tablesDb
+): Promise<Discussion> {
+  const comment = await fetchRow<Discussion>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: DISCUSSION_TABLE_ID,
+      rowId: commentId,
+    })
+  )
+  if (comment.authorUserId !== authorUserId)
+    throw new Error('Only the author can edit this comment.')
+  if (comment.type !== 'comment')
+    throw new Error('System messages cannot be edited.')
+  return fetchRow<Discussion>(
+    db.updateRow({
+      databaseId: DATABASE_ID,
+      tableId: DISCUSSION_TABLE_ID,
+      rowId: commentId,
+      data: { body } as Record<string, unknown>,
+    })
+  )
+}
+
+export async function deleteDiscussionComment(
+  commentId: string,
+  authorUserId: string,
+  db: TablesDB = tablesDb
+): Promise<void> {
+  const comment = await fetchRow<Discussion>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: DISCUSSION_TABLE_ID,
+      rowId: commentId,
+    })
+  )
+  if (comment.authorUserId !== authorUserId)
+    throw new Error('Only the author can delete this comment.')
+  if (comment.type !== 'comment')
+    throw new Error('System messages cannot be deleted.')
+  await db.deleteRow({
+    databaseId: DATABASE_ID,
+    tableId: DISCUSSION_TABLE_ID,
+    rowId: commentId,
+  })
+}
+
+export async function createSystemMessage(
+  proposalId: string,
+  body: string,
+  db: TablesDB = tablesDb
+): Promise<Discussion> {
+  return fetchRow<Discussion>(
+    db.createRow({
+      databaseId: DATABASE_ID,
+      tableId: DISCUSSION_TABLE_ID,
+      rowId: ID.unique(),
+      data: {
+        proposalId,
+        authorUserId: '',
+        authorUserName: 'System',
+        body,
+        type: 'system',
+      } as Record<string, unknown>,
+      permissions: [Permission.read(Role.users())],
     })
   )
 }

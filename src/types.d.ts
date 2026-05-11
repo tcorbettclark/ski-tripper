@@ -70,6 +70,17 @@ export interface Vote {
   tokenCounts: number[]
 }
 
+export interface Discussion {
+  $id: string
+  $createdAt: string
+  $updatedAt: string
+  proposalId: string
+  authorUserId: string
+  authorUserName: string
+  body: string
+  type: 'comment' | 'system'
+}
+
 export interface Preferences {
   $id: string
   $createdAt: string
