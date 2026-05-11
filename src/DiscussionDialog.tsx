@@ -155,7 +155,18 @@ export default function DiscussionDialog({
             if (comment.type === 'system') {
               return (
                 <div key={comment.$id} style={styles.systemMessage}>
-                  {comment.body}
+                  <span style={styles.systemMessageBody}>{comment.body}</span>
+                  <span style={styles.systemMessageTimestamp}>
+                    {new Date(comment.$createdAt).toLocaleDateString(
+                      undefined,
+                      {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }
+                    )}
+                  </span>
                 </div>
               )
             }
@@ -391,11 +402,19 @@ const styles = {
   },
   systemMessage: {
     textAlign: 'center' as const,
+    padding: '8px 0',
+  },
+  systemMessageBody: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
     fontSize: '12px',
     fontStyle: 'italic',
-    padding: '8px 0',
+  },
+  systemMessageTimestamp: {
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    marginLeft: '8px',
   },
   commentBubble: {
     background: 'rgba(59,189,232,0.06)',
