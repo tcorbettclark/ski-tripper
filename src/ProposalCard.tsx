@@ -156,20 +156,22 @@ export default function ProposalCard({
 
   if (isEditing) {
     return (
-      <EditProposalForm
-        proposal={proposal}
-        userId={userId}
-        onUpdated={(updated) => {
-          onUpdated(updated)
-          setIsEditing(false)
-        }}
-        onCancel={() => setIsEditing(false)}
-        updateProposal={updateProposal}
-        listAccommodations={listAccommodations}
-        createAccommodation={createAccommodation}
-        updateAccommodation={updateAccommodation}
-        deleteAccommodation={deleteAccommodation}
-      />
+      <div style={styles.card}>
+        <EditProposalForm
+          proposal={proposal}
+          userId={userId}
+          onUpdated={(updated) => {
+            onUpdated(updated)
+            setIsEditing(false)
+          }}
+          onCancel={() => setIsEditing(false)}
+          updateProposal={updateProposal}
+          listAccommodations={listAccommodations}
+          createAccommodation={createAccommodation}
+          updateAccommodation={updateAccommodation}
+          deleteAccommodation={deleteAccommodation}
+        />
+      </div>
     )
   }
 
