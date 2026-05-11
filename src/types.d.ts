@@ -64,7 +64,6 @@ export interface Vote {
   $createdAt: string
   $updatedAt: string
   pollId: string
-  tripId: string
   voterUserId: string
   voterUserName: string
   proposalIds: string[]

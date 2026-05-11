@@ -1053,10 +1053,11 @@ describe('upsertVote', () => {
           $id: 'poll-1',
           state: 'OPEN',
           proposalIds: ['p-1', 'p-2', 'p-3'],
+          tripId: 'trip-1',
         })
       ),
     })
-    await upsertVote('poll-1', 'trip-1', 'user-1', ['p-1'], [2], db)
+    await upsertVote('poll-1', 'user-1', ['p-1'], [2], db)
     expect(db.createRow).toHaveBeenCalledTimes(1)
     const [{ data }] = db.createRow.mock.calls[0]
     expect(data.pollId).toBe('poll-1')
@@ -1082,10 +1083,11 @@ describe('upsertVote', () => {
           $id: 'poll-1',
           state: 'OPEN',
           proposalIds: ['p-1', 'p-2', 'p-3'],
+          tripId: 'trip-1',
         })
       ),
     })
-    await upsertVote('poll-1', 'trip-1', 'user-1', ['p-2'], [1], db)
+    await upsertVote('poll-1', 'user-1', ['p-2'], [1], db)
     expect(db.updateRow).toHaveBeenCalledTimes(1)
     const [{ rowId: docId }] = db.updateRow.mock.calls[0]
     expect(docId).toBe('vote-1')
@@ -1094,7 +1096,9 @@ describe('upsertVote', () => {
 
   it('throws when poll is not OPEN', async () => {
     const listRows = mock(() =>
-      Promise.resolve({ rows: [{ $id: 'part-1', userId: 'user-1' }] })
+      Promise.resolve({
+        rows: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }],
+      })
     )
     const db = createMockDb({
       listRows,
@@ -1103,37 +1107,19 @@ describe('upsertVote', () => {
           $id: 'poll-1',
           state: 'CLOSED',
           proposalIds: ['p-1'],
+          tripId: 'trip-1',
         })
       ),
     })
-    expect(
-      upsertVote('poll-1', 'trip-1', 'user-1', [], [], db)
-    ).rejects.toThrow('Voting is only allowed on open polls.')
+    expect(upsertVote('poll-1', 'user-1', [], [], db)).rejects.toThrow(
+      'Voting is only allowed on open polls.'
+    )
   })
 
   it('throws when total tokens exceed the number of proposals', async () => {
     const listRows = mock(() =>
-      Promise.resolve({ rows: [{ $id: 'part-1', userId: 'user-1' }] })
-    )
-    const db = createMockDb({
-      listRows,
-      getRow: mock(() =>
-        Promise.resolve({
-          $id: 'poll-1',
-          state: 'OPEN',
-          proposalIds: ['p-1', 'p-2'],
-        })
-      ),
-    })
-    expect(
-      upsertVote('poll-1', 'trip-1', 'user-1', ['p-1'], [3], db)
-    ).rejects.toThrow('Total tokens cannot exceed 2.')
-  })
-
-  it('throws when a voted proposalId is not in the poll', async () => {
-    const listRows = mock(() =>
       Promise.resolve({
-        rows: [{ $id: 'part-1', participantUserId: 'user-1' }],
+        rows: [{ $id: 'part-1', userId: 'user-1', tripId: 'trip-1' }],
       })
     )
     const db = createMockDb({
@@ -1143,12 +1129,37 @@ describe('upsertVote', () => {
           $id: 'poll-1',
           state: 'OPEN',
           proposalIds: ['p-1', 'p-2'],
+          tripId: 'trip-1',
         })
       ),
     })
-    expect(
-      upsertVote('poll-1', 'trip-1', 'user-1', ['p-99'], [1], db)
-    ).rejects.toThrow('Vote contains proposal IDs not in this poll.')
+    expect(upsertVote('poll-1', 'user-1', ['p-1'], [3], db)).rejects.toThrow(
+      'Total tokens cannot exceed 2.'
+    )
+  })
+
+  it('throws when a voted proposalId is not in the poll', async () => {
+    const listRows = mock(() =>
+      Promise.resolve({
+        rows: [
+          { $id: 'part-1', participantUserId: 'user-1', tripId: 'trip-1' },
+        ],
+      })
+    )
+    const db = createMockDb({
+      listRows,
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'poll-1',
+          state: 'OPEN',
+          proposalIds: ['p-1', 'p-2'],
+          tripId: 'trip-1',
+        })
+      ),
+    })
+    expect(upsertVote('poll-1', 'user-1', ['p-99'], [1], db)).rejects.toThrow(
+      'Vote contains proposal IDs not in this poll.'
+    )
     expect(db.createRow).not.toHaveBeenCalled()
     expect(db.updateRow).not.toHaveBeenCalled()
   })
@@ -1156,7 +1167,9 @@ describe('upsertVote', () => {
   it('throws when proposalIds and tokenCounts have different lengths', async () => {
     const listRows = mock(() =>
       Promise.resolve({
-        rows: [{ $id: 'part-1', participantUserId: 'user-1' }],
+        rows: [
+          { $id: 'part-1', participantUserId: 'user-1', tripId: 'trip-1' },
+        ],
       })
     )
     const db = createMockDb({
@@ -1166,11 +1179,12 @@ describe('upsertVote', () => {
           $id: 'poll-1',
           state: 'OPEN',
           proposalIds: ['p-1', 'p-2'],
+          tripId: 'trip-1',
         })
       ),
     })
     expect(
-      upsertVote('poll-1', 'trip-1', 'user-1', ['p-1', 'p-2'], [1], db)
+      upsertVote('poll-1', 'user-1', ['p-1', 'p-2'], [1], db)
     ).rejects.toThrow('proposalIds and tokenCounts must have the same length.')
     expect(db.createRow).not.toHaveBeenCalled()
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -1178,9 +1192,9 @@ describe('upsertVote', () => {
 
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
-    expect(
-      upsertVote('poll-1', 'trip-1', 'user-1', [], [], db)
-    ).rejects.toThrow('You must be a participant to access this trip.')
+    expect(upsertVote('poll-1', 'user-1', [], [], db)).rejects.toThrow(
+      'You must be a participant to access this trip.'
+    )
   })
 })
 
@@ -1197,15 +1211,23 @@ describe('listVotes', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'v-1', pollId: 'poll-1' }] })
       )
-    const db = createMockDb({ listRows })
-    const result = await listVotes('poll-1', 'trip-1', 'user-1', db)
+    const db = createMockDb({
+      listRows,
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'poll-1',
+          tripId: 'trip-1',
+        })
+      ),
+    })
+    const result = await listVotes('poll-1', 'user-1', db)
     expect(result.votes).toHaveLength(1)
     expect(result.votes[0].$id).toBe('v-1')
   })
 
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
-    expect(listVotes('poll-1', 'trip-1', 'user-1', db)).rejects.toThrow(
+    expect(listVotes('poll-1', 'user-1', db)).rejects.toThrow(
       'You must be a participant to access this trip.'
     )
   })
@@ -1246,10 +1268,10 @@ describe('deleteTrip', () => {
         Promise.resolve({ rows: [{ $id: 'prop-1' }] })
       )
       .mockImplementationOnce(() =>
-        Promise.resolve({ rows: [{ $id: 'vote-1' }] })
+        Promise.resolve({ rows: [{ $id: 'poll-1' }] })
       )
       .mockImplementationOnce(() =>
-        Promise.resolve({ rows: [{ $id: 'poll-1' }] })
+        Promise.resolve({ rows: [{ $id: 'vote-1' }] })
       )
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'acc-1' }, { $id: 'acc-2' }] })
@@ -1280,10 +1302,9 @@ describe('deleteTrip', () => {
       .mockImplementationOnce(() => Promise.resolve({ rows: [{ $id: 'p-1' }] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
-      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
     const db = createMockDb({ listRows })
     await deleteTrip('trip-1', 'user-1', db)
-    expect(listRows).toHaveBeenCalledTimes(5)
+    expect(listRows).toHaveBeenCalledTimes(4)
   })
 
   it('propagates errors from trip deletion', async () => {
@@ -1371,6 +1392,9 @@ describe('deleteTrip', () => {
       )
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
+      .mockImplementationOnce(() =>
+        Promise.resolve({ rows: [{ $id: 'poll-1' }] })
+      )
       .mockImplementationOnce(() => Promise.resolve({ rows: manyVotes }))
     const db = createMockDb({ listRows })
     expect(deleteTrip('trip-1', 'user-1', db)).rejects.toThrow(
@@ -1390,7 +1414,6 @@ describe('deleteTrip', () => {
           rows: [{ $id: 'coord-1', participantUserId: 'user-1' }],
         })
       )
-      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: manyPolls }))
@@ -1416,7 +1439,6 @@ describe('deleteTrip', () => {
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: [{ $id: 'prop-1' }] })
       )
-      .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() => Promise.resolve({ rows: [] }))
       .mockImplementationOnce(() =>
         Promise.resolve({ rows: manyAccommodations })

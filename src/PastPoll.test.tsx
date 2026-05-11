@@ -62,7 +62,6 @@ function createMockVote(overrides: Partial<Vote> = {}): Vote {
     $createdAt: new Date().toISOString(),
     $updatedAt: new Date().toISOString(),
     pollId: TEST_IDS.POLL,
-    tripId: TEST_IDS.TRIP,
     voterUserId: TEST_IDS.USER,
     voterUserName: 'Alice',
     proposalIds: [TEST_IDS.PROPOSAL_1],
@@ -75,11 +74,7 @@ function renderPastPoll(
   overrides: {
     poll?: Poll
     proposals?: Proposal[]
-    listVotes?: (
-      pollId: string,
-      tripId: string,
-      userId: string
-    ) => Promise<{ votes: Vote[] }>
+    listVotes?: (pollId: string, userId: string) => Promise<{ votes: Vote[] }>
   } = {}
 ) {
   const poll = overrides.poll ?? createMockPoll()
@@ -90,7 +85,6 @@ function renderPastPoll(
     <PastPoll
       poll={poll}
       proposals={proposals}
-      tripId={TEST_IDS.TRIP}
       userId={TEST_IDS.USER}
       listVotes={listVotes}
     />
@@ -117,7 +111,6 @@ describe('PastPoll', () => {
         <PastPoll
           poll={createMockPoll()}
           proposals={[createMockProposal()]}
-          tripId={TEST_IDS.TRIP}
           userId={TEST_IDS.USER}
           listVotes={listVotes}
         />
@@ -131,7 +124,7 @@ describe('PastPoll', () => {
     })
   })
 
-  it('calls listVotes with correct pollId, tripId, and userId', async () => {
+  it('calls listVotes with correct pollId and userId', async () => {
     const poll = createMockPoll()
     const listVotes = mock(() => Promise.resolve({ votes: [] }))
 
@@ -140,18 +133,13 @@ describe('PastPoll', () => {
         <PastPoll
           poll={poll}
           proposals={[createMockProposal()]}
-          tripId={TEST_IDS.TRIP}
           userId={TEST_IDS.USER}
           listVotes={listVotes}
         />
       )
     })
 
-    expect(listVotes).toHaveBeenCalledWith(
-      poll.$id,
-      TEST_IDS.TRIP,
-      TEST_IDS.USER
-    )
+    expect(listVotes).toHaveBeenCalledWith(poll.$id, TEST_IDS.USER)
   })
 
   it('renders PollResults after votes load', async () => {

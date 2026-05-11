@@ -30,11 +30,7 @@ interface PollComponentProps {
     tripId: string,
     userId: string
   ) => Promise<{ proposals: Proposal[] }>
-  listVotes?: (
-    pollId: string,
-    tripId: string,
-    userId: string
-  ) => Promise<{ votes: Vote[] }>
+  listVotes?: (pollId: string, userId: string) => Promise<{ votes: Vote[] }>
   createPoll?: (
     tripId: string,
     userId: string,
@@ -44,7 +40,6 @@ interface PollComponentProps {
   closePoll?: (pollId: string, userId: string) => Promise<PollType>
   upsertVote?: (
     pollId: string,
-    tripId: string,
     userId: string,
     proposalIds: string[],
     tokenCounts: number[]
@@ -133,7 +128,7 @@ export default function Poll({
         setActivePoll(open)
         setPastPolls(past)
         if (open) {
-          const votesResult = await listVotes(open.$id, tripId, user.$id)
+          const votesResult = await listVotes(open.$id, user.$id)
           if (mountedRef.current) setVotes(votesResult.votes)
         }
       })
@@ -296,7 +291,6 @@ export default function Poll({
                   key={poll.$id}
                   poll={poll}
                   proposals={proposals}
-                  tripId={tripId}
                   userId={user.$id}
                   listVotes={listVotes}
                 />

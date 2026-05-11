@@ -61,7 +61,6 @@ function createMockVote(overrides: Record<string, unknown> = {}) {
   return {
     $id: TEST_IDS.VOTE_1,
     pollId: TEST_IDS.POLL_OPEN,
-    tripId: TEST_IDS.TRIP,
     voterUserId: TEST_IDS.USER,
     proposalIds: [TEST_IDS.PROPOSAL_1],
     tokenCounts: [5],
@@ -305,7 +304,6 @@ describe('Poll', () => {
       await waitFor(() => {
         expect(listVotes).toHaveBeenCalledWith(
           TEST_IDS.POLL_OPEN,
-          TEST_IDS.TRIP,
           TEST_IDS.USER
         )
       })
@@ -496,7 +494,6 @@ describe('Poll', () => {
       await waitFor(() => {
         expect(listVotes).toHaveBeenCalledWith(
           TEST_IDS.POLL_CLOSED,
-          TEST_IDS.TRIP,
           TEST_IDS.USER
         )
       })

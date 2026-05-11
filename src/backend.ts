@@ -264,7 +264,7 @@ export async function deleteTrip(
     tableId: TRIPS_TABLE_ID,
     rowId: tripId,
   })
-  const [participants, proposals, votes, polls] = await Promise.all([
+  const [participants, proposals, polls] = await Promise.all([
     fetchRows<Participant>(
       db.listRows({
         databaseId: DATABASE_ID,
@@ -279,13 +279,6 @@ export async function deleteTrip(
         queries: [Query.equal('tripId', tripId), Query.limit(1000)],
       })
     ),
-    fetchRows<Vote>(
-      db.listRows({
-        databaseId: DATABASE_ID,
-        tableId: VOTES_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(5000)],
-      })
-    ),
     fetchRows<Poll>(
       db.listRows({
         databaseId: DATABASE_ID,
@@ -294,6 +287,22 @@ export async function deleteTrip(
       })
     ),
   ])
+  const votes =
+    polls.length > 0
+      ? await fetchRows<Vote>(
+          db.listRows({
+            databaseId: DATABASE_ID,
+            tableId: VOTES_TABLE_ID,
+            queries: [
+              Query.equal(
+                'pollId',
+                polls.map((p) => p.$id)
+              ),
+              Query.limit(5000),
+            ],
+          })
+        )
+      : []
   const accommodations =
     proposals.length > 0
       ? await fetchRows<Accommodation>(
@@ -475,6 +484,21 @@ async function _verifyParticipant(
   )
   if (participants.length === 0)
     throw new Error('You must be a participant to access this trip.')
+}
+
+async function _verifyParticipantByPoll(
+  pollId: string,
+  participantUserId: string,
+  db: TablesDB
+): Promise<void> {
+  const poll = await fetchRow<Poll>(
+    db.getRow({
+      databaseId: DATABASE_ID,
+      tableId: POLLS_TABLE_ID,
+      rowId: pollId,
+    })
+  )
+  await _verifyParticipant(poll.tripId, participantUserId, db)
 }
 
 export async function createProposal(
@@ -850,13 +874,11 @@ export async function listPolls(
 
 export async function upsertVote(
   pollId: string,
-  tripId: string,
   voterUserId: string,
   proposalIds: string[],
   tokenCounts: number[],
   db: TablesDB = tablesDb
 ): Promise<Vote> {
-  await _verifyParticipant(tripId, voterUserId, db)
   const poll = await fetchRow<Poll>(
     db.getRow({
       databaseId: DATABASE_ID,
@@ -864,6 +886,7 @@ export async function upsertVote(
       rowId: pollId,
     })
   )
+  await _verifyParticipant(poll.tripId, voterUserId, db)
   if (poll.state !== 'OPEN') {
     throw new Error('Voting is only allowed on open polls.')
   }
@@ -906,7 +929,6 @@ export async function upsertVote(
       rowId: ID.unique(),
       data: {
         pollId,
-        tripId,
         voterUserId,
         proposalIds,
         tokenCounts,
@@ -921,11 +943,10 @@ export async function upsertVote(
 
 export async function listVotes(
   pollId: string,
-  tripId: string,
   participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<{ votes: Vote[] }> {
-  await _verifyParticipant(tripId, participantUserId, db)
+  await _verifyParticipantByPoll(pollId, participantUserId, db)
   const votes = await fetchRows<Vote>(
     db.listRows({
       databaseId: DATABASE_ID,

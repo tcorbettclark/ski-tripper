@@ -7,19 +7,13 @@ import { formatDate } from './utils'
 interface PastPollProps {
   poll: Poll
   proposals: Proposal[]
-  tripId: string
   userId: string
-  listVotes: (
-    pollId: string,
-    tripId: string,
-    userId: string
-  ) => Promise<{ votes: Vote[] }>
+  listVotes: (pollId: string, userId: string) => Promise<{ votes: Vote[] }>
 }
 
 export default function PastPoll({
   poll,
   proposals,
-  tripId,
   userId,
   listVotes,
 }: PastPollProps) {
@@ -38,7 +32,7 @@ export default function PastPoll({
   useEffect(() => {
     setLoading(true)
     setError('')
-    listVotes(poll.$id, tripId, userId)
+    listVotes(poll.$id, userId)
       .then(async (result) => {
         if (!mountedRef.current) return
         setVotes(result.votes)
@@ -50,7 +44,7 @@ export default function PastPoll({
       .finally(() => {
         if (mountedRef.current) setLoading(false)
       })
-  }, [poll.$id, tripId, userId, listVotes])
+  }, [poll.$id, userId, listVotes])
 
   return (
     <div style={styles.container}>

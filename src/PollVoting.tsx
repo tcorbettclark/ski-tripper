@@ -13,7 +13,6 @@ interface PollVotingProps {
   onVoteSaved: (vote: unknown) => void
   upsertVote?: (
     pollId: string,
-    tripId: string,
     userId: string,
     proposalIds: string[],
     tokenCounts: number[]
@@ -82,7 +81,6 @@ export default function PollVoting({
     try {
       const result = await upsertVote(
         poll.$id,
-        poll.tripId,
         userId,
         nonZeroIds,
         nonZeroIds.map((id) => allocations[id])

@@ -214,7 +214,6 @@ describe('PollVoting', () => {
     await waitFor(() => {
       expect(upsertVote).toHaveBeenCalledWith(
         'poll-1',
-        'trip-1',
         'user-1',
         ['p-1', 'p-2'],
         [2, 1]
