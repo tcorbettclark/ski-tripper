@@ -6,14 +6,14 @@ copy = "wt step copy-from-main --yes"
 
 [aliases]
 # Intended to be used within a worktree to sync work back to main.
-merge-and-continue = "wt merge --no-commit --no-squash --no-remove && wt step copy-to-main --yes"
+merge-and-continue = "wt merge --no-commit --no-squash --no-remove && wt step copy-to-main"
 
 # Can be used from anywhere, but typically from main to sync work out to all worktrees.
-sync-all-from-main = "wt step for-each -- sh -c 'git rebase main && wt step copy-from-main --yes'"
+sync-all-from-main = "wt step for-each -- sh -c 'git rebase main && wt step copy-from-main'"
 
 # Use from within a worktree to copy e.g. .env files to/from main.
-copy-to-main = "wt step copy-ignored --from {{ branch }} --to {{ default_branch }} --force"
-copy-from-main = "wt step copy-ignored --from {{ default_branch }} --to {{ branch }} --force"
+copy-to-main = "wt step copy-ignored --from {{ branch }} --to {{ default_branch }} --force --yes"
+copy-from-main = "wt step copy-ignored --from {{ default_branch }} --to {{ branch }} --force --yes"
 
 # Start up the developement server on a unique port (also shown in `wt list`).
 dev-server = "bun run dev --port={{ branch | hash_port }}"
