@@ -8,7 +8,7 @@ const mockUpdateProposal = mock(async () => ({}))
 const mockDeleteProposal = mock(async () => {})
 const mockSubmitProposal = mock(async () => ({}))
 const mockRejectProposal = mock(async () => ({}))
-const mockResubmitProposal = mock(async () => ({}))
+const mockRevertProposalToDraft = mock(async () => ({}))
 
 const baseProposal: Proposal = {
   $id: 'proposal-1',
@@ -130,7 +130,7 @@ describe('ProposalCard', () => {
     expect(screen.getByText('Delete Proposal?')).toBeDefined()
   })
 
-  it('shows resubmit button for coordinator + REJECTED', () => {
+  it('shows revert-to-draft button for coordinator + REJECTED', () => {
     const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
     render(
       <ProposalCard
@@ -141,12 +141,12 @@ describe('ProposalCard', () => {
         onDeleted={() => {}}
         onSubmitted={() => {}}
         onRejected={() => {}}
-        onResubmitted={() => {}}
+        onRevertedToDraft={() => {}}
         updateProposal={mockUpdateProposal}
         deleteProposal={mockDeleteProposal}
         submitProposal={mockSubmitProposal}
         rejectProposal={mockRejectProposal}
-        resubmitProposal={mockResubmitProposal}
+        revertProposalToDraft={mockRevertProposalToDraft}
       />
     )
 
@@ -155,7 +155,7 @@ describe('ProposalCard', () => {
     ).toBeDefined()
   })
 
-  it('does not show resubmit button for non-coordinator + REJECTED', () => {
+  it('does not show revert-to-draft button for non-coordinator + REJECTED', () => {
     const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
     render(
       <ProposalCard
@@ -169,7 +169,7 @@ describe('ProposalCard', () => {
         deleteProposal={mockDeleteProposal}
         submitProposal={mockSubmitProposal}
         rejectProposal={mockRejectProposal}
-        resubmitProposal={mockResubmitProposal}
+        revertProposalToDraft={mockRevertProposalToDraft}
       />
     )
 
@@ -289,11 +289,9 @@ describe('ProposalCard', () => {
     expect(onRejected).not.toHaveBeenCalled()
   })
 
-  it('shows error when resubmitProposal rejects', async () => {
-    const failingResubmit = mock(() =>
-      Promise.reject(new Error('Resubmit failed'))
-    )
-    const onResubmitted = mock()
+  it('shows error when revertProposalToDraft rejects', async () => {
+    const failingRevert = mock(() => Promise.reject(new Error('Revert failed')))
+    const onRevertedToDraft = mock()
     const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
     const user = userEvent.setup()
     render(
@@ -305,18 +303,18 @@ describe('ProposalCard', () => {
         onDeleted={() => {}}
         onSubmitted={() => {}}
         onRejected={() => {}}
-        onResubmitted={onResubmitted}
+        onRevertedToDraft={onRevertedToDraft}
         updateProposal={mockUpdateProposal}
         deleteProposal={mockDeleteProposal}
         submitProposal={mockSubmitProposal}
         rejectProposal={mockRejectProposal}
-        resubmitProposal={failingResubmit}
+        revertProposalToDraft={failingRevert}
       />
     )
 
     await user.click(screen.getByRole('button', { name: 'Move back to Draft' }))
-    await screen.findByText('Resubmit failed')
-    expect(onResubmitted).not.toHaveBeenCalled()
+    await screen.findByText('Revert failed')
+    expect(onRevertedToDraft).not.toHaveBeenCalled()
   })
 
   it('shows error when deleteProposal rejects', async () => {

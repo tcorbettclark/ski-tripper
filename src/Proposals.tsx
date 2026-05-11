@@ -8,7 +8,7 @@ import {
   listAccommodations as _listAccommodations,
   listProposals as _listProposals,
   rejectProposal as _rejectProposal,
-  resubmitProposal as _resubmitProposal,
+  revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
   updateProposal as _updateProposal,
 } from './backend'
@@ -54,7 +54,10 @@ interface ProposalsProps {
   deleteProposal?: (proposalId: string, userId: string) => Promise<void>
   submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
-  resubmitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  revertProposalToDraft?: (
+    proposalId: string,
+    userId: string
+  ) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
   ) => Promise<{ participants: Array<{ participantUserId: string }> }>
@@ -72,7 +75,7 @@ export default function Proposals({
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
-  resubmitProposal = _resubmitProposal,
+  revertProposalToDraft = _revertProposalToDraft,
   getCoordinatorParticipant = _getCoordinatorParticipant,
 }: ProposalsProps) {
   const [proposals, setProposals] = useState<Proposal[]>([])
@@ -181,7 +184,7 @@ export default function Proposals({
     setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
   }, [])
 
-  const handleResubmitted = useCallback((updated: unknown) => {
+  const handleRevertedToDraft = useCallback((updated: unknown) => {
     const u = updated as Proposal
     setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
   }, [])
@@ -277,13 +280,13 @@ export default function Proposals({
           onDeleted={handleDeleted}
           onSubmitted={handleSubmitted}
           onRejected={handleRejected}
-          onResubmitted={handleResubmitted}
+          onRevertedToDraft={handleRevertedToDraft}
           emptyMessage="No proposals yet. Create one above."
           updateProposal={updateProposal}
           deleteProposal={deleteProposal}
           submitProposal={submitProposal}
           rejectProposal={rejectProposal}
-          resubmitProposal={resubmitProposal}
+          revertProposalToDraft={revertProposalToDraft}
         />
       )}
     </div>

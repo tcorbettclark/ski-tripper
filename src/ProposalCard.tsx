@@ -3,7 +3,7 @@ import {
   deleteProposal as _deleteProposal,
   listDiscussion as _listDiscussion,
   rejectProposal as _rejectProposal,
-  resubmitProposal as _resubmitProposal,
+  revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
   updateProposal as _updateProposal,
 } from './backend'
@@ -26,7 +26,7 @@ interface ProposalCardProps {
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
-  onResubmitted?: (proposal: unknown) => void
+  onRevertedToDraft?: (proposal: unknown) => void
   updateProposal?: (
     proposalId: string,
     userId: string,
@@ -35,7 +35,10 @@ interface ProposalCardProps {
   deleteProposal?: (proposalId: string, userId: string) => Promise<void>
   submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
-  resubmitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  revertProposalToDraft?: (
+    proposalId: string,
+    userId: string
+  ) => Promise<unknown>
   listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
   createAccommodation?: (
     proposalId: string,
@@ -64,12 +67,12 @@ export default function ProposalCard({
   onDeleted,
   onSubmitted,
   onRejected = () => {},
-  onResubmitted = () => {},
+  onRevertedToDraft = () => {},
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
-  resubmitProposal = _resubmitProposal,
+  revertProposalToDraft = _revertProposalToDraft,
   listAccommodations,
   createAccommodation,
   updateAccommodation,
@@ -82,11 +85,11 @@ export default function ProposalCard({
   const [discussionCount, setDiscussionCount] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
-  const [resubmitting, setResubmitting] = useState(false)
+  const [reverting, setReverting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [rejectError, setRejectError] = useState<string | null>(null)
-  const [resubmitError, setResubmitError] = useState<string | null>(null)
+  const [revertError, setRevertError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -100,7 +103,7 @@ export default function ProposalCard({
   const isRejected = proposal.state === 'REJECTED'
   const canAct = isOwner && isDraft
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
-  const canResubmit = isCoordinator && isRejected
+  const canRevertToDraft = isCoordinator && isRejected
 
   async function handleSubmit() {
     setSubmitting(true)
@@ -128,16 +131,16 @@ export default function ProposalCard({
     }
   }
 
-  async function handleResubmit() {
-    setResubmitting(true)
-    setResubmitError(null)
+  async function handleRevertToDraft() {
+    setReverting(true)
+    setRevertError(null)
     try {
-      const result = await resubmitProposal(proposal.$id, userId)
-      onResubmitted(result)
+      const result = await revertProposalToDraft(proposal.$id, userId)
+      onRevertedToDraft(result)
     } catch (err) {
-      setResubmitError(err instanceof Error ? err.message : String(err))
+      setRevertError(err instanceof Error ? err.message : String(err))
     } finally {
-      setResubmitting(false)
+      setReverting(false)
     }
   }
 
@@ -302,17 +305,17 @@ export default function ProposalCard({
             </button>
           )}
           {rejectError && <p style={formStyles.error}>{rejectError}</p>}
-          {canResubmit && (
+          {canRevertToDraft && (
             <button
               type="button"
-              onClick={handleResubmit}
-              disabled={resubmitting}
-              style={styles.resubmitButton}
+              onClick={handleRevertToDraft}
+              disabled={reverting}
+              style={styles.revertButton}
             >
-              {resubmitting ? 'Moving to Draft…' : 'Move back to Draft'}
+              {reverting ? 'Moving to Draft…' : 'Move back to Draft'}
             </button>
           )}
-          {resubmitError && <p style={formStyles.error}>{resubmitError}</p>}
+          {revertError && <p style={formStyles.error}>{revertError}</p>}
         </div>
       </div>
 
@@ -501,7 +504,7 @@ const styles = {
     cursor: 'pointer',
     letterSpacing: '0.03em',
   },
-  resubmitButton: {
+  revertButton: {
     padding: '6px 16px',
     borderRadius: '5px',
     border: '1px solid rgba(59,189,232,0.3)',

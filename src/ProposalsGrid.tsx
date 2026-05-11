@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   deleteProposal as _deleteProposal,
   rejectProposal as _rejectProposal,
-  resubmitProposal as _resubmitProposal,
+  revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
   updateProposal as _updateProposal,
 } from './backend'
@@ -22,7 +22,7 @@ interface ProposalsGridProps {
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
-  onResubmitted?: (proposal: unknown) => void
+  onRevertedToDraft?: (proposal: unknown) => void
   emptyMessage?: string
   updateProposal?: (
     proposalId: string,
@@ -32,7 +32,10 @@ interface ProposalsGridProps {
   deleteProposal?: (proposalId: string, userId: string) => Promise<void>
   submitProposal?: (proposalId: string, userId: string) => Promise<unknown>
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
-  resubmitProposal?: (proposalId: string, userId: string) => Promise<unknown>
+  revertProposalToDraft?: (
+    proposalId: string,
+    userId: string
+  ) => Promise<unknown>
   debounceMs?: number
 }
 
@@ -46,13 +49,13 @@ export default function ProposalsGrid({
   onDeleted,
   onSubmitted,
   onRejected = () => {},
-  onResubmitted = () => {},
+  onRevertedToDraft = () => {},
   emptyMessage = 'No proposals yet. Create one above.',
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
-  resubmitProposal = _resubmitProposal,
+  revertProposalToDraft = _revertProposalToDraft,
   debounceMs = 300,
 }: ProposalsGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -179,12 +182,12 @@ export default function ProposalsGrid({
               onDeleted={onDeleted}
               onSubmitted={onSubmitted}
               onRejected={onRejected}
-              onResubmitted={onResubmitted}
+              onRevertedToDraft={onRevertedToDraft}
               updateProposal={updateProposal}
               deleteProposal={deleteProposal}
               submitProposal={submitProposal}
               rejectProposal={rejectProposal}
-              resubmitProposal={resubmitProposal}
+              revertProposalToDraft={revertProposalToDraft}
             />
           ))}
         </div>

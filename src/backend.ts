@@ -746,7 +746,7 @@ export async function rejectProposal(
   return updated
 }
 
-export async function resubmitProposal(
+export async function revertProposalToDraft(
   proposalId: string,
   pollCreatorUserId: string,
   db: TablesDB = tablesDb
@@ -780,7 +780,7 @@ export async function resubmitProposal(
   )
   await createSystemMessage(
     proposalId,
-    `${participants[0].participantUserName} moved this proposal back to submitted`,
+    `${participants[0].participantUserName} moved this proposal back to draft`,
     db
   )
   return updated
