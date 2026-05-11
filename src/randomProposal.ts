@@ -1,3 +1,5 @@
+import { dayjs } from './utils'
+
 interface Proposal {
   title?: string
   description: string
@@ -366,22 +368,20 @@ export function randomProposal(): Proposal & {
   const accommodation =
     ACCOMMODATIONS[Math.floor(Math.random() * ACCOMMODATIONS.length)]
 
-  const departureStart = new Date('2026-12-01')
-  const departureEnd = new Date('2027-04-15')
+  const departureStart = dayjs('2026-12-01').startOf('day')
+  const departureEnd = dayjs('2027-04-15').startOf('day')
   const duration = Math.floor(Math.random() * 7) + 7
 
-  const departDate = new Date(
-    departureStart.getTime() +
-      Math.random() * (departureEnd.getTime() - departureStart.getTime())
+  const departDate = dayjs(
+    departureStart.valueOf() +
+      Math.random() * (departureEnd.valueOf() - departureStart.valueOf())
   )
-  const endDate = new Date(
-    departDate.getTime() + duration * 24 * 60 * 60 * 1000
-  )
+  const endDate = departDate.add(duration, 'day')
 
   return {
     ...proposal,
-    startDate: departDate.toISOString().split('T')[0],
-    endDate: endDate.toISOString().split('T')[0],
+    startDate: departDate.format('YYYY-MM-DD'),
+    endDate: endDate.format('YYYY-MM-DD'),
     accommodation,
   }
 }

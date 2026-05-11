@@ -1,9 +1,12 @@
 import { sanitizeUrl } from '@braintree/sanitize-url'
-import humanizeDuration from 'humanize-duration'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 import adjectives from 'threewords/data/adjectives.json'
 import nouns from 'threewords/data/nouns.json'
 
-export { sanitizeUrl }
+dayjs.extend(relativeTime)
+
+export { dayjs, sanitizeUrl }
 
 export function isValidUrl(url: string | undefined): boolean {
   if (!url) return true
@@ -20,15 +23,18 @@ export function randomThreeWords(): string {
 }
 
 export function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
+  return dayjs(iso).format('DD MMM YYYY')
 }
 
 export function formatTimeRemaining(endDate: string) {
-  const ms = new Date(endDate).getTime() - Date.now()
-  if (ms <= 0) return '0 days left'
-  return `${humanizeDuration(ms, { largest: 1, round: true })} left`
+  const end = dayjs(endDate)
+  if (end.isBefore(dayjs())) return '0 days left'
+  return end.fromNow()
+}
+
+export function formatRelativeTime(iso: string) {
+  const date = dayjs(iso)
+  const diffDays = dayjs().diff(date, 'day')
+  if (diffDays < 3) return date.fromNow()
+  return formatDate(iso)
 }

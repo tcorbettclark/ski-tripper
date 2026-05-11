@@ -18,7 +18,7 @@ import type {
   Trip,
   Vote,
 } from './types.d'
-import { isValidUrl, randomThreeWords } from './utils'
+import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
 const client = new Client()
   .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
@@ -832,11 +832,8 @@ export async function createPoll(
     throw new Error('No submitted proposals to poll on.')
   }
   const proposalIds = proposals.map((p) => p.$id)
-  const now = new Date()
-  const startDate = now.toISOString()
-  const endDate = new Date(
-    now.getTime() + durationDays * 24 * 60 * 60 * 1000
-  ).toISOString()
+  const startDate = dayjs().toISOString()
+  const endDate = dayjs().add(durationDays, 'day').toISOString()
   return fetchRow<Poll>(
     db.createRow({
       databaseId: DATABASE_ID,

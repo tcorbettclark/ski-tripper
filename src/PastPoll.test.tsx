@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import PastPoll from './PastPoll'
 import type { Poll, Proposal, Vote } from './types.d.ts'
+import { dayjs } from './utils'
 
 const TEST_IDS = {
   POLL: 'poll-1',
@@ -12,13 +13,9 @@ const TEST_IDS = {
 } as const
 
 function createMockPoll(overrides: Partial<Poll> = {}): Poll {
-  const baseDate = new Date('2026-04-05T00:00:00.000Z')
-  const startDate = new Date(
-    baseDate.getTime() - 7 * 24 * 60 * 60 * 1000
-  ).toISOString()
-  const endDate = new Date(
-    baseDate.getTime() - 1 * 24 * 60 * 60 * 1000
-  ).toISOString()
+  const baseDate = dayjs('2026-04-05T00:00:00.000Z')
+  const startDate = baseDate.subtract(7, 'day').toISOString()
+  const endDate = baseDate.subtract(1, 'day').toISOString()
   return {
     $id: TEST_IDS.POLL,
     $createdAt: new Date().toISOString(),

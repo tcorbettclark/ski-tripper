@@ -7,6 +7,7 @@ import {
 } from './backend'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Discussion } from './types.d'
+import { formatRelativeTime } from './utils'
 
 interface DiscussionDialogProps {
   proposalId: string
@@ -157,15 +158,7 @@ export default function DiscussionDialog({
                 <div key={comment.$id} style={styles.systemMessage}>
                   <span style={styles.systemMessageBody}>{comment.body}</span>
                   <span style={styles.systemMessageTimestamp}>
-                    {new Date(comment.$createdAt).toLocaleDateString(
-                      undefined,
-                      {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }
-                    )}
+                    {formatRelativeTime(comment.$createdAt)}
                   </span>
                 </div>
               )
@@ -182,15 +175,7 @@ export default function DiscussionDialog({
                     )}
                   </span>
                   <span style={styles.commentTimestamp}>
-                    {new Date(comment.$createdAt).toLocaleDateString(
-                      undefined,
-                      {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }
-                    )}
+                    {formatRelativeTime(comment.$createdAt)}
                   </span>
                   {isOwner && !isEditing && (
                     <span style={styles.commentActions}>

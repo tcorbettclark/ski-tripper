@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react'
 import type { Models } from 'appwrite'
 import Poll from './Poll'
+import { dayjs } from './utils'
 
 // Constants for test data
 const TEST_IDS = {
@@ -39,13 +40,9 @@ function createMockProposal(overrides: Record<string, unknown> = {}) {
 }
 
 function createMockPoll(overrides: Record<string, unknown> = {}) {
-  const baseDate = new Date('2026-04-05T00:00:00.000Z')
-  const startDate = new Date(
-    baseDate.getTime() - 7 * 24 * 60 * 60 * 1000
-  ).toISOString()
-  const endDate = new Date(
-    baseDate.getTime() - 1 * 24 * 60 * 60 * 1000
-  ).toISOString()
+  const baseDate = dayjs('2026-04-05T00:00:00.000Z')
+  const startDate = baseDate.subtract(7, 'day').toISOString()
+  const endDate = baseDate.subtract(1, 'day').toISOString()
   return {
     $id: TEST_IDS.POLL_OPEN,
     tripId: TEST_IDS.TRIP,
