@@ -209,6 +209,7 @@ export default function App({
     try {
       await deleteSession()
       setUser(null)
+      setPage('login')
     } catch (err) {
       setLogoutError(err instanceof Error ? err.message : String(err))
     }
