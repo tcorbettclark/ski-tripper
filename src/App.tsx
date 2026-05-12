@@ -59,7 +59,7 @@ interface AppProps {
     tripId: string,
     userId: string
   ) => Promise<{
-    polls: Array<{ state: string }>
+    polls: Array<{ state: string; endDate: string }>
   }>
   updateTrip?: (
     tripId: string,
@@ -135,6 +135,9 @@ export default function App({
   const [preferences, setPreferences] = useState<Preferences | null>(null)
   const [checkingPreferences, setCheckingPreferences] = useState(false)
   const [showPreferencesModal, setShowPreferencesModal] = useState(false)
+  const [activePollEndDate, setActivePollEndDate] = useState<string | null>(
+    null
+  )
   const autoSelectedRef = useRef(false)
 
   const loadTrips = useCallback(
@@ -198,6 +201,8 @@ export default function App({
       setTripDetailTab('proposals')
       listPolls(trip.$id, user.$id).then(({ polls }) => {
         const hasActivePoll = polls.some((p) => p.state === 'OPEN')
+        const open = polls.find((p) => p.state === 'OPEN')
+        setActivePollEndDate(open?.endDate || null)
         setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
       })
       setView('tripDetail')
@@ -223,6 +228,8 @@ export default function App({
     setTripDetailTab('proposals')
     listPolls(tripId, user.$id).then(({ polls }) => {
       const hasActivePoll = polls.some((p) => p.state === 'OPEN')
+      const open = polls.find((p) => p.state === 'OPEN')
+      setActivePollEndDate(open?.endDate || null)
       setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
     })
   }
@@ -233,6 +240,11 @@ export default function App({
     setTripDetailTab('proposals')
     setShowTripInfo(false)
     setTripInfoTripId(null)
+    setActivePollEndDate(null)
+  }
+
+  function handleActivePollChange(endDate: string | null) {
+    setActivePollEndDate(endDate)
   }
 
   function handleShowTripInfo(tripId: string) {
@@ -340,6 +352,7 @@ export default function App({
         onLogout={handleLogout}
         logoutError={logoutError}
         onOpenPreferences={() => setShowPreferencesModal(true)}
+        activePollEndDate={activePollEndDate}
       />
 
       {view === 'tripList' && (
@@ -369,7 +382,11 @@ export default function App({
           )}
           {tripDetailTab === 'poll' && (
             <ErrorBoundary>
-              <Poll user={user} tripId={selectedTripId} />
+              <Poll
+                user={user}
+                tripId={selectedTripId}
+                onActivePollChange={handleActivePollChange}
+              />
             </ErrorBoundary>
           )}
         </>

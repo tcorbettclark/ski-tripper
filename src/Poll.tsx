@@ -20,11 +20,12 @@ import type {
   Proposal,
   Vote,
 } from './types.d.ts'
-import { formatDate, formatTimeRemaining } from './utils'
+import { formatDate } from './utils'
 
 interface PollComponentProps {
   user: Models.User
   tripId: string
+  onActivePollChange?: (endDate: string | null) => void
   listPolls?: (tripId: string, userId: string) => Promise<{ polls: PollType[] }>
   listProposals?: (
     tripId: string,
@@ -53,6 +54,7 @@ interface PollComponentProps {
 export default function Poll({
   user,
   tripId,
+  onActivePollChange,
   listPolls = _listPolls,
   listProposals = _listProposals,
   listVotes = _listVotes,
@@ -95,6 +97,7 @@ export default function Poll({
       setVotes([])
       setIsCoordinator(false)
       setLoading(false)
+      onActivePollChange?.(null)
       return
     }
     setLoading(false)
@@ -127,6 +130,7 @@ export default function Poll({
         const past = pollsResult.polls.filter((p) => p.state === 'CLOSED')
         setActivePoll(open)
         setPastPolls(past)
+        onActivePollChange?.(open?.endDate || null)
         if (open) {
           const votesResult = await listVotes(open.$id, user.$id)
           if (mountedRef.current) setVotes(votesResult.votes)
@@ -147,6 +151,7 @@ export default function Poll({
     listPolls,
     listVotes,
     listAccommodations,
+    onActivePollChange,
   ])
 
   const handleVoteSaved = useCallback((vote: unknown) => {
@@ -169,6 +174,7 @@ export default function Poll({
       )
       setActivePoll(poll)
       setVotes([])
+      onActivePollChange?.(poll.endDate)
     } catch (err) {
       setCreatePollError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -184,6 +190,7 @@ export default function Poll({
       const closed = await closePoll(activePoll.$id, user.$id)
       setActivePoll(null)
       setPastPolls((p) => [closed, ...p])
+      onActivePollChange?.(null)
     } catch (err) {
       setClosePollError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -216,8 +223,7 @@ export default function Poll({
                   <span style={styles.pollStatus}>Active Poll · OPEN</span>
                   <p style={styles.pollDates}>
                     {formatDate(activePoll.startDate)} –{' '}
-                    {formatDate(activePoll.endDate)} ·{' '}
-                    {formatTimeRemaining(activePoll.endDate)}
+                    {formatDate(activePoll.endDate)}
                   </p>
                 </div>
                 {isCoordinator && (

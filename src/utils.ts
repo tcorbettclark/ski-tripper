@@ -32,6 +32,21 @@ export function formatTimeRemaining(endDate: string) {
   return end.fromNow()
 }
 
+export function formatCountdown(endDate: string) {
+  const now = dayjs()
+  const end = dayjs(endDate)
+  const diffMs = end.diff(now)
+  if (diffMs <= 0) return 'Ended'
+  const totalSeconds = Math.floor(diffMs / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  if (days > 0) return `${days}d ${hours}h`
+  if (hours > 0) return `${hours}h ${minutes}m`
+  return `${minutes}m ${seconds}s`
+}
+
 export function formatRelativeTime(iso: string) {
   const date = dayjs(iso)
   const diffDays = dayjs().diff(date, 'day')

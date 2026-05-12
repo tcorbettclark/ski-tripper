@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import App from './App'
 import type { Preferences, Trip } from './types.d.ts'
+import { dayjs } from './utils'
 
 const defaultUser: Models.User = {
   $id: 'user-1',
@@ -196,8 +197,32 @@ describe('App', () => {
         }),
     })
     await waitFor(() => {
-      const pollTab = screen.getByRole('button', { name: /^poll$/i })
+      const pollTab = screen.getByRole('button', { name: /^poll/i })
       expect(pollTab.className !== 'active' || pollTab)
+    })
+  })
+
+  it('shows countdown in header when an active poll exists', async () => {
+    const future = dayjs().add(2, 'day').toISOString()
+    renderAppWithTrip({
+      listPolls: () =>
+        Promise.resolve({
+          polls: [
+            {
+              $id: 'poll-1',
+              state: 'OPEN',
+              tripId: 'trip-1',
+              pollCreatorUserId: 'user-1',
+              pollCreatorUserName: 'Test',
+              proposalIds: [],
+              startDate: '2024-01-01T00:00:00.000Z',
+              endDate: future,
+            },
+          ],
+        }),
+    })
+    await waitFor(() => {
+      expect(screen.getByText(/Poll closing in \d+d \d+h/))
     })
   })
 

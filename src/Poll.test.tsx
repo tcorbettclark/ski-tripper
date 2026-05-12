@@ -220,9 +220,11 @@ describe('Poll', () => {
 
     it('calls createPoll when Create Poll button is clicked', async () => {
       const createPoll = mock(() => Promise.resolve(createMockPoll()))
+      const onActivePollChange = mock(() => {})
       await act(async () => {
         renderPoll({
           createPoll,
+          onActivePollChange,
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
@@ -232,6 +234,10 @@ describe('Poll', () => {
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+      })
+
+      await waitFor(() => {
+        expect(onActivePollChange).toHaveBeenCalled()
       })
 
       expect(createPoll).toHaveBeenCalledWith(
@@ -344,17 +350,19 @@ describe('Poll', () => {
       })
     })
 
-    it('calls closePoll when Close Poll button is clicked', async () => {
+    it('calls closePoll and notifies on close', async () => {
       const closePoll = mock(() =>
         Promise.resolve(
           createMockPoll({ $id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' })
         )
       )
+      const onActivePollChange = mock(() => {})
       await act(async () => {
         renderPoll({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
           closePoll,
+          onActivePollChange,
         })
       })
       await waitFor(() => {
@@ -363,6 +371,10 @@ describe('Poll', () => {
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      await waitFor(() => {
+        expect(onActivePollChange).toHaveBeenCalledWith(null)
       })
 
       expect(closePoll).toHaveBeenCalledWith(TEST_IDS.POLL_OPEN, TEST_IDS.USER)

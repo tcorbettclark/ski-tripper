@@ -1,4 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
 import { borders, colors, fonts, formStyles } from './theme'
+import { formatCountdown } from './utils'
 
 interface HeaderProps {
   view: string
@@ -11,6 +13,7 @@ interface HeaderProps {
   onLogout: () => void
   logoutError?: string | null
   onOpenPreferences?: () => void
+  activePollEndDate?: string | null
 }
 
 export default function Header({
@@ -24,7 +27,19 @@ export default function Header({
   onLogout,
   logoutError,
   onOpenPreferences,
+  activePollEndDate,
 }: HeaderProps) {
+  const [_now, setNow] = useState(Date.now())
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  useEffect(() => {
+    if (activePollEndDate) {
+      intervalRef.current = setInterval(() => setNow(Date.now()), 1000)
+      return () => {
+        if (intervalRef.current) clearInterval(intervalRef.current)
+      }
+    }
+  }, [activePollEndDate])
   if (view === 'tripList') {
     return (
       <header style={headerStyles.bar}>
@@ -89,7 +104,12 @@ export default function Header({
               : headerStyles.subTab
           }
         >
-          Poll
+          {activePollEndDate
+            ? (() => {
+                const cd = formatCountdown(activePollEndDate)
+                return cd === 'Ended' ? 'Poll ended' : `Poll closing in ${cd}`
+              })()
+            : 'Polls'}
         </button>
       </nav>
       <div style={headerStyles.userGroup}>
