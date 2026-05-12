@@ -37,6 +37,7 @@ interface ProposalsGridProps {
     userId: string
   ) => Promise<unknown>
   debounceMs?: number
+  onAuthError?: (err: unknown) => void
 }
 
 export default function ProposalsGrid({
@@ -57,6 +58,7 @@ export default function ProposalsGrid({
   rejectProposal = _rejectProposal,
   revertProposalToDraft = _revertProposalToDraft,
   debounceMs = 300,
+  onAuthError,
 }: ProposalsGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -188,6 +190,7 @@ export default function ProposalsGrid({
               submitProposal={submitProposal}
               rejectProposal={rejectProposal}
               revertProposalToDraft={revertProposalToDraft}
+              onAuthError={onAuthError}
             />
           ))}
         </div>

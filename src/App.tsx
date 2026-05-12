@@ -7,6 +7,7 @@ import {
   deleteTrip as _deleteTrip,
   getCoordinatorParticipant as _getCoordinatorParticipant,
   getPreferences as _getPreferences,
+  hasSession as _hasSession,
   leaveTrip as _leaveTrip,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
@@ -23,8 +24,8 @@ import Proposals from './Proposals'
 import TripInfo from './TripInfo'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
-
 import type { Preferences, Trip } from './types.d.ts'
+import useAuth from './useAuth'
 
 interface ListTripsResult {
   trips: Trip[]
@@ -32,17 +33,8 @@ interface ListTripsResult {
 }
 
 interface AppProps {
+  hasSession?: () => boolean
   accountGet?: () => Promise<Models.User>
-  accountCreate?: (
-    id: string,
-    email: string,
-    password: string,
-    name: string
-  ) => Promise<Models.User>
-  createEmailPasswordSession?: (
-    email: string,
-    password: string
-  ) => Promise<Models.Session>
   deleteSession?: () => Promise<unknown>
   listTrips?: (userId: string) => Promise<ListTripsResult>
   listParticipatedTrips?: (userId: string) => Promise<{
@@ -81,34 +73,24 @@ interface AppProps {
   ) => Promise<Preferences>
 }
 
-const defaultAccountGet = _account.get.bind(_account)
-const defaultAccountCreate = _account.create.bind(_account)
-const defaultCreateEmailPasswordSession =
-  _account.createEmailPasswordSession.bind(_account)
-const defaultDeleteSession = _account.deleteSession.bind(_account, 'current')
-const defaultListTrips = _listTrips.bind(_listTrips)
-const defaultListParticipatedTrips = _listParticipatedTrips.bind(
-  _listParticipatedTrips
-)
-const defaultListTripParticipants = _listTripParticipants.bind(
-  _listTripParticipants
-)
-const defaultListPolls = _listPolls.bind(_listPolls)
-const defaultUpdateTrip = _updateTrip.bind(_updateTrip)
-const defaultDeleteTrip = _deleteTrip.bind(_deleteTrip)
-const defaultLeaveTrip = _leaveTrip.bind(_leaveTrip)
-const defaultGetCoordinatorParticipant = _getCoordinatorParticipant.bind(
-  _getCoordinatorParticipant
-)
-const defaultGetPreferences = _getPreferences.bind(_getPreferences)
-const defaultCreatePreferences = _createPreferences.bind(_createPreferences)
+const defaultAccountGet = () => _account.get()
+const defaultDeleteSession = () => _account.deleteSession('current')
+const defaultListTrips = _listTrips
+const defaultListParticipatedTrips = _listParticipatedTrips
+const defaultListTripParticipants = _listTripParticipants
+const defaultListPolls = _listPolls
+const defaultUpdateTrip = _updateTrip
+const defaultDeleteTrip = _deleteTrip
+const defaultLeaveTrip = _leaveTrip
+const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
+const defaultGetPreferences = _getPreferences
+const defaultCreatePreferences = _createPreferences
 
 type TripDetailTab = 'proposals' | 'poll'
 
 export default function App({
+  hasSession = _hasSession,
   accountGet = defaultAccountGet,
-  accountCreate = defaultAccountCreate,
-  createEmailPasswordSession = defaultCreateEmailPasswordSession,
   deleteSession = defaultDeleteSession,
   listTrips = defaultListTrips,
   listParticipatedTrips = defaultListParticipatedTrips,
@@ -121,8 +103,8 @@ export default function App({
   getPreferences = defaultGetPreferences,
   createPreferences = defaultCreatePreferences,
 }: AppProps) {
-  const [user, setUser] = useState<Models.User | null>(null)
-  const [checking, setChecking] = useState(true)
+  const { user, checking, sessionExpiredMessage, login, logout, onAuthError } =
+    useAuth({ hasSession, accountGet, deleteSession })
   const [page, setPage] = useState<'login' | 'signup'>('login')
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('proposals')
@@ -167,13 +149,6 @@ export default function App({
   }, [user, loadTrips])
 
   useEffect(() => {
-    accountGet()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setChecking(false))
-  }, [accountGet])
-
-  useEffect(() => {
     if (!user) {
       setPreferences(null)
       return
@@ -213,7 +188,7 @@ export default function App({
     setLogoutError(null)
     try {
       await deleteSession()
-      setUser(null)
+      logout()
       setPage('login')
     } catch (err) {
       setLogoutError(err instanceof Error ? err.message : String(err))
@@ -262,11 +237,9 @@ export default function App({
     return (
       <AuthForm
         mode={page}
-        onSuccess={setUser}
+        onSuccess={login}
         onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
-        accountCreate={accountCreate}
-        createEmailPasswordSession={createEmailPasswordSession}
-        accountGet={accountGet}
+        sessionExpiredMessage={sessionExpiredMessage}
       />
     )
   }
@@ -377,6 +350,7 @@ export default function App({
                 tripId={selectedTripId}
                 key={refreshProposalsKey}
                 onRefresh={() => setRefreshProposalsKey((k) => k + 1)}
+                onAuthError={onAuthError}
               />
             </ErrorBoundary>
           )}
@@ -386,6 +360,7 @@ export default function App({
                 user={user}
                 tripId={selectedTripId}
                 onActivePollChange={handleActivePollChange}
+                onAuthError={onAuthError}
               />
             </ErrorBoundary>
           )}

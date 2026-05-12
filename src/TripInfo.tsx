@@ -39,7 +39,10 @@ interface TripInfoProps {
   onLeft?: () => void
   onUpdated?: (trip: unknown) => void
   onDeleted?: () => void
+  onAuthError?: (err: unknown) => void
 }
+
+const noopAuthError = () => {}
 
 export default function TripInfo({
   trip,
@@ -54,6 +57,7 @@ export default function TripInfo({
   onLeft,
   onUpdated,
   onDeleted,
+  onAuthError = noopAuthError,
 }: TripInfoProps) {
   const [coordinator, setCoordinator] = useState<{ name: string } | null>(null)
   const [isCoordinator, setIsCoordinator] = useState(false)
@@ -91,8 +95,8 @@ export default function TripInfo({
           setCoordinator({ name: participants[0].participantUserName })
         }
       })
-      .catch(() => {})
-  }, [trip, user.$id, getCoordinatorParticipant])
+      .catch(onAuthError)
+  }, [trip, user.$id, getCoordinatorParticipant, onAuthError])
 
   useEffect(() => {
     if (!open) {
@@ -107,8 +111,8 @@ export default function TripInfo({
         if (!mountedRef.current) return
         setParticipants(participants)
       })
-      .catch(() => {})
-  }, [trip, listTripParticipants])
+      .catch(onAuthError)
+  }, [trip, listTripParticipants, onAuthError])
 
   function handleCopyCode() {
     if (!trip.code) return

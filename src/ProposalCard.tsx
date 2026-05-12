@@ -55,7 +55,10 @@ interface ProposalCardProps {
     userId: string
   ) => Promise<unknown>
   listDiscussion?: (proposalId: string) => Promise<Discussion[]>
+  onAuthError?: (err: unknown) => void
 }
+
+const noopAuthError = () => {}
 
 export default function ProposalCard({
   proposal,
@@ -78,6 +81,7 @@ export default function ProposalCard({
   updateAccommodation,
   deleteAccommodation,
   listDiscussion = _listDiscussion,
+  onAuthError = noopAuthError,
 }: ProposalCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -95,8 +99,8 @@ export default function ProposalCard({
   useEffect(() => {
     listDiscussion(proposal.$id)
       .then((rows) => setDiscussionCount(rows.length))
-      .catch(() => {})
-  }, [proposal.$id, listDiscussion])
+      .catch(onAuthError)
+  }, [proposal.$id, listDiscussion, onAuthError])
 
   const isOwner = userId === proposal.proposerUserId
   const isDraft = proposal.state === 'DRAFT'

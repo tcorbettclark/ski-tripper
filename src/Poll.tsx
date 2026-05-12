@@ -26,6 +26,7 @@ interface PollComponentProps {
   user: Models.User
   tripId: string
   onActivePollChange?: (endDate: string | null) => void
+  onAuthError?: (err: unknown) => void
   listPolls?: (tripId: string, userId: string) => Promise<{ polls: PollType[] }>
   listProposals?: (
     tripId: string,
@@ -51,10 +52,13 @@ interface PollComponentProps {
   listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
 }
 
+const noopAuthError = () => {}
+
 export default function Poll({
   user,
   tripId,
   onActivePollChange,
+  onAuthError = noopAuthError,
   listPolls = _listPolls,
   listProposals = _listProposals,
   listVotes = _listVotes,
@@ -118,7 +122,10 @@ export default function Poll({
         const accMap: Record<string, Accommodation[]> = {}
         const accResults = await Promise.all(
           proposalsResult.proposals.map((p) =>
-            listAccommodations(p.$id).catch(() => [])
+            listAccommodations(p.$id).catch((err) => {
+              onAuthError(err)
+              return []
+            })
           )
         )
         if (!mountedRef.current) return
@@ -152,6 +159,7 @@ export default function Poll({
     listVotes,
     listAccommodations,
     onActivePollChange,
+    onAuthError,
   ])
 
   const handleVoteSaved = useCallback((vote: unknown) => {

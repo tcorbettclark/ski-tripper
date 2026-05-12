@@ -22,6 +22,7 @@ interface ProposalsProps {
   user: Models.User
   tripId: string
   onRefresh?: () => void
+  onAuthError?: (err: unknown) => void
   listProposals?: (
     tripId: string,
     userId: string
@@ -63,10 +64,13 @@ interface ProposalsProps {
   ) => Promise<{ participants: Array<{ participantUserId: string }> }>
 }
 
+const noopAuthError = () => {}
+
 export default function Proposals({
   user,
   tripId,
   onRefresh: _onRefresh,
+  onAuthError = noopAuthError,
   listProposals = _listProposals,
   createProposal = _createProposal,
   listAccommodations = _listAccommodations,
@@ -124,7 +128,10 @@ export default function Proposals({
       .then((loadedProposals) => {
         if (!mountedRef.current || !loadedProposals) return
         const accommodationPromises = loadedProposals.map((p) =>
-          listAccommodations(p.$id).catch(() => [])
+          listAccommodations(p.$id).catch((err) => {
+            onAuthError(err)
+            return []
+          })
         )
         return Promise.all(accommodationPromises).then(
           (accommodationResults) => ({
@@ -155,6 +162,7 @@ export default function Proposals({
     listProposals,
     listAccommodations,
     getCoordinatorParticipant,
+    onAuthError,
   ])
 
   const handleCreated = useCallback((proposal: unknown) => {
@@ -170,9 +178,9 @@ export default function Proposals({
           if (!mountedRef.current) return
           setAccommodations((prev) => ({ ...prev, [u.$id]: accs }))
         })
-        .catch(() => {})
+        .catch(onAuthError)
     },
-    [listAccommodations]
+    [listAccommodations, onAuthError]
   )
 
   const handleDeleted = useCallback((id: string) => {
@@ -287,6 +295,7 @@ export default function Proposals({
           submitProposal={submitProposal}
           rejectProposal={rejectProposal}
           revertProposalToDraft={revertProposalToDraft}
+          onAuthError={onAuthError}
         />
       )}
     </div>

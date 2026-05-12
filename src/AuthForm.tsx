@@ -6,7 +6,7 @@ import { authStyles, formStyles } from './theme'
 
 interface AuthFormProps {
   mode?: 'login' | 'signup'
-  onSuccess: (user: Models.User) => void
+  onSuccess: (session: Models.Session, user: Models.User) => void
   onSwitchMode: () => void
   accountCreate?: (
     id: string,
@@ -20,6 +20,7 @@ interface AuthFormProps {
   ) => Promise<Models.Session>
   accountGet?: () => Promise<Models.User>
   generateId?: () => string
+  sessionExpiredMessage?: string | null
 }
 
 export default function AuthForm({
@@ -32,6 +33,7 @@ export default function AuthForm({
     _account.createEmailPasswordSession(email, password),
   accountGet = () => _account.get(),
   generateId = () => ID.unique(),
+  sessionExpiredMessage = null,
 }: AuthFormProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -49,9 +51,9 @@ export default function AuthForm({
       if (isSignup) {
         await accountCreate(generateId(), email, password, name)
       }
-      await createEmailPasswordSession(email, password)
+      const session = await createEmailPasswordSession(email, password)
       const user = await accountGet()
-      onSuccess(user)
+      onSuccess(session, user)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -64,6 +66,9 @@ export default function AuthForm({
       <div style={bannerStyles}>Work in progress - not live!</div>
       <div style={authStyles.card}>
         <p style={authStyles.eyebrow}>⛷ Ski Tripper</p>
+        {sessionExpiredMessage && (
+          <p style={formStyles.error}>{sessionExpiredMessage}</p>
+        )}
         <h1 style={authStyles.title}>
           {isSignup ? 'Create Account' : 'Sign In'}
         </h1>

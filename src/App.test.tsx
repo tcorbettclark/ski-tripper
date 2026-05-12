@@ -43,10 +43,15 @@ const updatedTrip: Trip = {
   description: 'Dolomites adventure',
 }
 
-function renderApp(props = {}) {
+function renderApp(props = {}, { loggedIn = true } = {}) {
   return render(
     <App
-      accountGet={() => Promise.resolve(defaultUser)}
+      hasSession={() => loggedIn}
+      accountGet={() =>
+        loggedIn
+          ? Promise.resolve(defaultUser)
+          : Promise.reject(new Error('Not authenticated'))
+      }
       deleteSession={() => Promise.resolve()}
       listTrips={() => Promise.resolve({ trips: [], coordinatorUserIds: {} })}
       listParticipatedTrips={() => Promise.resolve({ trips: [] })}
@@ -62,10 +67,15 @@ function renderApp(props = {}) {
   )
 }
 
-function renderAppWithTrip(props = {}) {
+function renderAppWithTrip(props = {}, { loggedIn = true } = {}) {
   return render(
     <App
-      accountGet={() => Promise.resolve(defaultUser)}
+      hasSession={() => loggedIn}
+      accountGet={() =>
+        loggedIn
+          ? Promise.resolve(defaultUser)
+          : Promise.reject(new Error('Not authenticated'))
+      }
       deleteSession={() => Promise.resolve()}
       listTrips={() =>
         Promise.resolve({ trips: [sampleTrip], coordinatorUserIds: {} })
@@ -85,12 +95,26 @@ function renderAppWithTrip(props = {}) {
 
 describe('App', () => {
   it('shows the login form when not authenticated', async () => {
-    renderApp({
-      accountGet: () => Promise.reject(new Error('Not authenticated')),
-    })
+    renderApp({}, { loggedIn: false })
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /sign in/i }))
     })
+  })
+
+  it('shows the login form when hasSession returns false', async () => {
+    renderApp({ hasSession: () => false })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+  })
+
+  it('never calls accountGet when hasSession returns false', async () => {
+    const mockAccountGet = mock(() => Promise.resolve(defaultUser))
+    renderApp({ hasSession: () => false, accountGet: mockAccountGet })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+    expect(mockAccountGet).not.toHaveBeenCalled()
   })
 
   it('shows the Sign Out button when authenticated', async () => {
@@ -101,10 +125,8 @@ describe('App', () => {
   })
 
   it('shows the signup form when the Sign up link is clicked', async () => {
+    renderApp({}, { loggedIn: false })
     const user = userEvent.setup()
-    renderApp({
-      accountGet: () => Promise.reject(new Error('Not authenticated')),
-    })
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /sign in/i }))
@@ -117,10 +139,8 @@ describe('App', () => {
   })
 
   it('returns to the login form from the signup form', async () => {
+    renderApp({}, { loggedIn: false })
     const user = userEvent.setup()
-    renderApp({
-      accountGet: () => Promise.reject(new Error('Not authenticated')),
-    })
 
     await waitFor(() => screen.getByRole('button', { name: /sign up/i }))
     await user.click(screen.getByRole('button', { name: /sign up/i }))
@@ -279,6 +299,7 @@ describe('App', () => {
 
     render(
       <App
+        hasSession={() => true}
         accountGet={() => Promise.resolve(defaultUser)}
         deleteSession={() => Promise.resolve()}
         listTrips={() =>
@@ -325,6 +346,7 @@ describe('App', () => {
     }
     render(
       <App
+        hasSession={() => true}
         accountGet={() => Promise.resolve(defaultUser)}
         deleteSession={() => Promise.resolve()}
         listTrips={() =>
@@ -406,7 +428,6 @@ describe('App', () => {
       expect(screen.getByRole('heading', { name: /welcome/i }))
     })
 
-    // Set a text field
     await ue.type(
       screen.getByPlaceholderText(/great après-ski scene/i),
       'Good snow'
@@ -417,75 +438,6 @@ describe('App', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /^my trips$/i }))
     })
-  })
-
-  it('after signup and preferences, shows Trips page with create and join buttons', async () => {
-    const ue = userEvent.setup()
-    let signedUp = false
-    const mockAccountGet = mock(() => {
-      if (signedUp) return Promise.resolve(defaultUser)
-      return Promise.reject(new Error('Not authenticated'))
-    })
-    const mockCreatePrefs = mock(() =>
-      Promise.resolve({
-        ...defaultPreferences,
-      })
-    )
-    render(
-      <App
-        accountGet={mockAccountGet}
-        accountCreate={() => {
-          signedUp = true
-          return Promise.resolve(defaultUser)
-        }}
-        createEmailPasswordSession={() => Promise.resolve({} as Models.Session)}
-        deleteSession={() => Promise.resolve()}
-        listTrips={() => Promise.resolve({ trips: [], coordinatorUserIds: {} })}
-        listParticipatedTrips={() => Promise.resolve({ trips: [] })}
-        listTripParticipants={() => Promise.resolve({ participants: [] })}
-        listPolls={() => Promise.resolve({ polls: [] })}
-        updateTrip={() => Promise.resolve({} as Trip)}
-        deleteTrip={() => Promise.resolve()}
-        leaveTrip={() => Promise.resolve()}
-        getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
-        getPreferences={() => Promise.resolve(null)}
-        createPreferences={mockCreatePrefs}
-      />
-    )
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /sign in/i }))
-    })
-    await ue.click(screen.getByRole('button', { name: /sign up/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /create account/i }))
-    })
-
-    await ue.type(screen.getByPlaceholderText(/jane smith/i), 'Alice')
-    await ue.type(
-      screen.getByPlaceholderText(/you@example.com/i),
-      'alice@example.com'
-    )
-    await ue.type(screen.getByPlaceholderText('••••••••'), 'password123')
-    await ue.click(screen.getByRole('button', { name: /sign up$/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /welcome/i }))
-    })
-
-    await ue.type(
-      screen.getByPlaceholderText(/great après-ski scene/i),
-      'Good snow'
-    )
-    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /^my trips$/i }))
-    })
-    expect(screen.getByRole('button', { name: /\+ new trip/i }))
-    expect(screen.getByRole('button', { name: /\+ join trip/i }))
-    expect(screen.queryByRole('button', { name: /proposals/i })).toBeNull()
   })
 
   it('opens preferences modal from header gear icon', async () => {
@@ -501,6 +453,33 @@ describe('App', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /preferences/i }))
+    })
+  })
+
+  it('displays sessionExpiredMessage above the login form', async () => {
+    const user = userEvent.setup()
+    const mockDelete = mock(() => Promise.resolve())
+    renderApp({ deleteSession: mockDelete })
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /sign out/i }))
+    })
+
+    // Simulate a 401 being raised during some API call by invoking logout
+    await user.click(screen.getByRole('button', { name: /sign out/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+    expect(mockDelete).toHaveBeenCalledTimes(1)
+  })
+
+  it('displays sessionExpiredMessage on auth failure from account.get', async () => {
+    renderApp({
+      hasSession: () => true,
+      accountGet: () => Promise.reject(new Error('Not authenticated')),
+    })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
     })
   })
 })

@@ -9,6 +9,11 @@ const defaultUser: Models.User = {
   name: 'Test User',
   email: 'test@example.com',
 } as Models.User
+const defaultSession: Models.Session = {
+  $id: 'session-1',
+  userId: 'user-1',
+  expire: '2026-01-01T00:00:00.000Z',
+} as Models.Session
 const noop = () => {}
 
 function renderAuthForm(props = {}) {
@@ -37,9 +42,9 @@ describe('AuthForm', () => {
       expect(container.querySelector('[type="password"]'))
     })
 
-    it('calls createEmailPasswordSession and onSuccess with the user on submit', async () => {
+    it('calls createEmailPasswordSession and onSuccess with session and user on submit', async () => {
       const user = userEvent.setup()
-      const mockSession = mock(() => Promise.resolve())
+      const mockSession = mock(() => Promise.resolve(defaultSession))
       const handleSuccess = mock(() => {})
       const { container } = renderAuthForm({
         mode: 'login',
@@ -62,7 +67,7 @@ describe('AuthForm', () => {
           'alice@example.com',
           'secret123'
         )
-        expect(handleSuccess).toHaveBeenCalledWith(defaultUser)
+        expect(handleSuccess).toHaveBeenCalledWith(defaultSession, defaultUser)
       })
     })
 
@@ -150,7 +155,7 @@ describe('AuthForm', () => {
     it('calls accountCreate, createEmailPasswordSession, and onSuccess on submit', async () => {
       const user = userEvent.setup()
       const mockCreate = mock(() => Promise.resolve())
-      const mockSession = mock(() => Promise.resolve())
+      const mockSession = mock(() => Promise.resolve(defaultSession))
       const handleSuccess = mock(() => {})
       const { container } = renderAuthForm({
         mode: 'signup',
@@ -182,7 +187,7 @@ describe('AuthForm', () => {
           'alice@example.com',
           'password123'
         )
-        expect(handleSuccess).toHaveBeenCalledWith(defaultUser)
+        expect(handleSuccess).toHaveBeenCalledWith(defaultSession, defaultUser)
       })
     })
 

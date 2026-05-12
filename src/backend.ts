@@ -20,6 +20,14 @@ import type {
 } from './types.d'
 import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
+export function hasSession(): boolean {
+  const projectId = process.env.PUBLIC_APPWRITE_PROJECT_ID as string
+  if (projectId && document.cookie.includes(`a_session_${projectId}`))
+    return true
+  if (localStorage.getItem('cookieFallback')) return true
+  return false
+}
+
 const client = new Client()
   .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
   .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
