@@ -14,6 +14,7 @@ interface FieldProps {
   placeholder?: string
   variant?: 'default' | 'auth'
   minLength?: number
+  autoComplete?: string
   options?: string[]
 }
 
@@ -27,6 +28,7 @@ export default function Field({
   placeholder,
   variant = 'default',
   minLength,
+  autoComplete,
   options,
 }: FieldProps) {
   const styles = fieldStyles[variant] || fieldStyles.default
@@ -70,6 +72,7 @@ export default function Field({
         required={required}
         placeholder={placeholder}
         minLength={minLength}
+        autoComplete={autoComplete}
         style={styles.input}
       />
     </div>
