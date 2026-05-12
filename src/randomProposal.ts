@@ -1,7 +1,6 @@
 import { dayjs } from './utils'
 
 interface Proposal {
-  title?: string
   description: string
   resortName: string
   country: string

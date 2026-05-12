@@ -40,7 +40,6 @@ function createMockProposal(overrides: Partial<Proposal> = {}): Proposal {
     proposerUserName: 'Alice',
     tripId: TEST_IDS.TRIP,
     state: 'SUBMITTED',
-    title: 'Chamonix',
     description: 'French Alps',
     resortName: 'Chamonix',
     startDate: '2026-03-29T00:00:00.000Z',

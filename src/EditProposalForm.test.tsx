@@ -11,7 +11,6 @@ const sampleProposal: Proposal = {
   proposerUserName: 'John Doe',
   tripId: 'trip-1',
   state: 'DRAFT',
-  title: 'Test',
   description: 'Great powder skiing',
   resortName: "Val d'Isère",
   startDate: '2024-01-01',

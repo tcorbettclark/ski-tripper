@@ -509,7 +509,6 @@ export async function createProposal(
   proposerUserId: string,
   proposerUserName: string,
   data: {
-    title?: string
     description: string
     resortName?: string
     country?: string

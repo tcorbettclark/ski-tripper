@@ -18,7 +18,6 @@ const baseProposal: Proposal = {
   proposerUserName: 'John Doe',
   tripId: 'trip-1',
   state: 'DRAFT',
-  title: 'Test Proposal',
   description: 'A test proposal description',
   resortName: 'Test Resort',
   startDate: '2024-01-01',

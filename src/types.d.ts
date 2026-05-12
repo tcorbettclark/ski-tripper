@@ -24,7 +24,6 @@ export interface Proposal {
   proposerUserName: string
   tripId: string
   state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
-  title: string
   description: string
   resortName: string
   startDate: string

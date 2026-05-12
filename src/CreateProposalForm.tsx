@@ -28,7 +28,6 @@ interface CreateProposalFormProps {
     userId: string,
     userName: string,
     data: {
-      title: string
       description: string
       resortName: string
       country: string
@@ -136,7 +135,6 @@ export default function CreateProposalForm({
     try {
       const userAccount = await accountGet()
       const proposal = await createProposal(tripId, userId, userAccount.name, {
-        title: form.resortName,
         description: form.description,
         resortName: form.resortName,
         country: form.country,

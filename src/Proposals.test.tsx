@@ -15,7 +15,6 @@ const sampleProposals = [
     proposerUserName: 'Alice',
     tripId: 'trip-1',
     state: 'DRAFT' as const,
-    title: "Val d'Isère Trip",
     resortName: "Val d'Isère",
     country: 'France',
     altitudeRange: '1850m - 3456m',

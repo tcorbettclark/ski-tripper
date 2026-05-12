@@ -462,13 +462,7 @@ describe('createProposal', () => {
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
     expect(
-      createProposal(
-        'trip-1',
-        'user-1',
-        'Alice',
-        { title: 't', description: 'd' },
-        db
-      )
+      createProposal('trip-1', 'user-1', 'Alice', { description: 'd' }, db)
     ).rejects.toThrow('You must be a participant to access this trip.')
     expect(db.createRow).not.toHaveBeenCalled()
   })
@@ -480,13 +474,7 @@ describe('createProposal', () => {
       createRow: mock(() => Promise.reject(new Error('Create failed'))),
     })
     expect(
-      createProposal(
-        'trip-1',
-        'user-1',
-        'Alice',
-        { title: 't', description: 'd' },
-        db
-      )
+      createProposal('trip-1', 'user-1', 'Alice', { description: 'd' }, db)
     ).rejects.toThrow('Create failed')
   })
 })
