@@ -1,6 +1,0 @@
-{
-  "thoughts": "thoughts",
-  "agents": {
-    "model": "Ollama/MiniMax-M2.7:cloud"
-  }
-}
