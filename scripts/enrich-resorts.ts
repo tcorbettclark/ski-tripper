@@ -241,7 +241,9 @@ async function enrichResort(
 - skiSeasonMonths: typical season (e.g. "Dec-Apr")
 - websiteUrl: official resort website URL
 
-Be accurate and specific. Use real data. Search the web if you are not certain about any facts.`
+Be accurate and specific. Use real data. Search the web if you are not certain about any facts.
+
+Do not include any additional text or explanations. Return valid JSON only.`
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
