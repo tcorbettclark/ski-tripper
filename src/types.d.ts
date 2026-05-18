@@ -80,6 +80,16 @@ export interface Discussion {
   type: 'comment' | 'system'
 }
 
+export interface Resort {
+  $id: string
+  $createdAt: string
+  $updatedAt: string
+  resortName: string
+  country: string
+  region: string
+  enriched: boolean
+}
+
 export interface Preferences {
   $id: string
   $createdAt: string

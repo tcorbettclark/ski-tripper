@@ -24,6 +24,7 @@ const ACCOMMODATIONS_TABLE_ID = process.env
   .PUBLIC_APPWRITE_ACCOMMODATIONS_TABLE_ID as string
 const DISCUSSION_TABLE_ID = process.env
   .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
+const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 
 export const TABLE_IDS = {
   accommodations: ACCOMMODATIONS_TABLE_ID,
@@ -32,6 +33,7 @@ export const TABLE_IDS = {
   polls: POLLS_TABLE_ID,
   preferences: PREFERENCES_TABLE_ID,
   proposals: PROPOSALS_TABLE_ID,
+  resorts: RESORTS_TABLE_ID,
   trips: TRIPS_TABLE_ID,
   votes: VOTES_TABLE_ID,
 } as const
