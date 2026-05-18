@@ -40,7 +40,7 @@ async function callLLM(
   ollama: Ollama,
   jsonResponseSchema: JSONSchema.JSONSchema,
   toolDefs: ToolDef[],
-  tools: Function[],
+  _tools: ((...args: never[]) => unknown)[],
   content: string
 ) {
   const zodResponseSchema = z.fromJSONSchema(jsonResponseSchema)
