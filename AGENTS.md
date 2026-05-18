@@ -1,15 +1,32 @@
 # Agent Guidelines for Ski Tripper
 
+## General
+
+Agree simple "done criteria" up-front.
+
+Long-term quality over speed. Small steps compound into big and sustainable progress.
+
+Keep changes small and focussed:
+- One logical change per commit
+- If a task feels too large, break it into subtasks and track progress with todo tool
+- Prefer multiple small commits over one large commit
+- Run ALL feedback loops after each change, not at the end
+
+Before committing, check "done criteria" satisfiedand run ALL feedback loops:
+
+| Task                   | Command                               |
+| ---------------------- | ------------------------------------- |
+| Linting and formatting | `bun run check <path.to/file.ts>`     |
+| Type checking          | `bun run typecheck <path.to/file.ts>` |
+| Testing                | `bun run test <path.to/file.test.ts>` |
+
+Without a file path, these commands run on the entire project.
+
+If any fail, fix issues first before committing.
+
 ## Package Manager
 
 Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
-
-## File-Scoped Commands
-
-| Task | Command |
-|------|---------|
-| Lint | `bun run lint path.to/file.ts` |
-| Test | `bun run test path/to/file.test.ts` |
 
 ## Code Style
 
