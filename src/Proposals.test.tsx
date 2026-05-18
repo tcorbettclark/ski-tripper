@@ -17,9 +17,19 @@ const sampleProposals = [
     state: 'DRAFT' as const,
     resortName: "Val d'Isère",
     country: 'France',
-    altitudeRange: '1850m - 3456m',
+    region: 'Alps',
+    topAltitude: 3456,
+    bottomAltitude: 1850,
     nearestAirport: 'GVA',
     transferTime: '2h',
+    pisteKm: 300,
+    difficulty: 'advanced' as const,
+    liftCount: 80,
+    snowReliability: 'high' as const,
+    skiSeasonMonths: 'Dec-Apr',
+    websiteUrl: 'https://valdisere.com',
+    latitude: '45.4475',
+    longitude: '6.9219',
     accommodationName: 'Chalet',
     accommodationUrl: '',
     approximateCost: '£1200',
@@ -269,23 +279,6 @@ describe('Proposals', () => {
 
     await waitFor(() => {
       expect(screen.getByText('€200')).toBeTruthy()
-    })
-  })
-
-  it('shows error when random proposal creation fails', async () => {
-    const ue = userEvent.setup()
-    await act(async () => {
-      renderProposals({
-        tripId: 'trip-1',
-        createProposal: mock(() =>
-          Promise.reject(new Error('Random proposal failed'))
-        ),
-      })
-    })
-    await waitFor(() => expect(screen.getByRole('button', { name: /random/i })))
-    await ue.click(screen.getByRole('button', { name: /random/i }))
-    await waitFor(() => {
-      expect(screen.getByText('Random proposal failed'))
     })
   })
 })

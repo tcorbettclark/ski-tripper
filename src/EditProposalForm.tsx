@@ -73,9 +73,19 @@ export default function EditProposalForm({
   const [form, setForm] = useState({
     resortName: proposal.resortName || '',
     country: proposal.country || '',
-    altitudeRange: proposal.altitudeRange || '',
+    region: proposal.region || '',
+    topAltitude: proposal.topAltitude?.toString() || '',
+    bottomAltitude: proposal.bottomAltitude?.toString() || '',
     nearestAirport: proposal.nearestAirport || '',
     transferTime: proposal.transferTime || '',
+    pisteKm: proposal.pisteKm?.toString() || '',
+    difficulty: proposal.difficulty || '',
+    liftCount: proposal.liftCount?.toString() || '',
+    snowReliability: proposal.snowReliability || '',
+    skiSeasonMonths: proposal.skiSeasonMonths || '',
+    websiteUrl: proposal.websiteUrl || '',
+    latitude: proposal.latitude || '',
+    longitude: proposal.longitude || '',
     description: proposal.description || '',
     startDate: proposal.startDate || '',
     endDate: proposal.endDate || '',
@@ -173,7 +183,13 @@ export default function EditProposalForm({
     }
     setSaving(true)
     try {
-      const updatedProposal = await updateProposal(proposal.$id, userId, form)
+      const updatedProposal = await updateProposal(proposal.$id, userId, {
+        ...form,
+        topAltitude: Number(form.topAltitude),
+        bottomAltitude: Number(form.bottomAltitude),
+        pisteKm: Number(form.pisteKm),
+        liftCount: Number(form.liftCount),
+      })
       for (const acc of Object.values(accommodations)) {
         if (acc.id) {
           await updateAccommodation(acc.id, userId, {
@@ -221,12 +237,30 @@ export default function EditProposalForm({
         options={COUNTRIES}
       />
       <Field
-        label="Altitude Range"
-        name="altitudeRange"
-        value={form.altitudeRange}
+        label="Region"
+        name="region"
+        value={form.region}
         onChange={handleChange}
         required
-        placeholder="e.g. 1800m - 3200m"
+        placeholder="e.g. Alps"
+      />
+      <Field
+        label="Top Altitude (m)"
+        name="topAltitude"
+        type="number"
+        value={form.topAltitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 3330"
+      />
+      <Field
+        label="Bottom Altitude (m)"
+        name="bottomAltitude"
+        type="number"
+        value={form.bottomAltitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 1500"
       />
       <Field
         label="Nearest Airport"
@@ -243,6 +277,73 @@ export default function EditProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 1h 30m"
+      />
+      <Field
+        label="Piste Km"
+        name="pisteKm"
+        type="number"
+        value={form.pisteKm}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 600"
+      />
+      <Field
+        label="Difficulty"
+        name="difficulty"
+        value={form.difficulty}
+        onChange={handleChange}
+        required
+        options={['beginner', 'intermediate', 'advanced']}
+      />
+      <Field
+        label="Lift Count"
+        name="liftCount"
+        type="number"
+        value={form.liftCount}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 50"
+      />
+      <Field
+        label="Snow Reliability"
+        name="snowReliability"
+        value={form.snowReliability}
+        onChange={handleChange}
+        required
+        options={['high', 'medium', 'low']}
+      />
+      <Field
+        label="Ski Season Months"
+        name="skiSeasonMonths"
+        value={form.skiSeasonMonths}
+        onChange={handleChange}
+        required
+        placeholder="e.g. Dec-Apr"
+      />
+      <Field
+        label="Website URL"
+        name="websiteUrl"
+        type="url"
+        value={form.websiteUrl}
+        onChange={handleChange}
+        required
+        placeholder="https://..."
+      />
+      <Field
+        label="Latitude"
+        name="latitude"
+        value={form.latitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 45.9163"
+      />
+      <Field
+        label="Longitude"
+        name="longitude"
+        value={form.longitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 7.7554"
       />
       <Field
         label="Start Date"

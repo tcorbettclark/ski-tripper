@@ -15,6 +15,7 @@ import type {
   Poll,
   Preferences,
   Proposal,
+  Resort,
   Trip,
   Vote,
 } from './types.d'
@@ -74,6 +75,7 @@ const PREFERENCES_TABLE_ID = process.env
   .PUBLIC_APPWRITE_PREFERENCES_TABLE_ID as string
 const DISCUSSION_TABLE_ID = process.env
   .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
+const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 
 export async function getCoordinatorParticipant(
   tripId: string,
@@ -518,17 +520,30 @@ export async function createProposal(
   proposerUserName: string,
   data: {
     description: string
-    resortName?: string
-    country?: string
-    altitudeRange?: string
-    nearestAirport?: string
-    transferTime?: string
-    startDate?: string
-    endDate?: string
+    startDate: string
+    endDate: string
+    resortData: {
+      resortName: string
+      country: string
+      region: string
+      topAltitude: number
+      bottomAltitude: number
+      nearestAirport: string
+      transferTime: string
+      pisteKm: number
+      difficulty: 'beginner' | 'intermediate' | 'advanced'
+      liftCount: number
+      snowReliability: 'high' | 'medium' | 'low'
+      skiSeasonMonths: string
+      websiteUrl: string
+      latitude: string
+      longitude: string
+    }
   },
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
   await _verifyParticipant(tripId, proposerUserId, db)
+  const { resortData, ...userData } = data
   return fetchRow<Proposal>(
     db.createRow({
       databaseId: DATABASE_ID,
@@ -539,7 +554,8 @@ export async function createProposal(
         proposerUserId,
         proposerUserName,
         state: 'DRAFT',
-        ...data,
+        ...userData,
+        ...resortData,
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
@@ -1281,6 +1297,19 @@ export async function deleteDiscussionComment(
     tableId: DISCUSSION_TABLE_ID,
     rowId: commentId,
   })
+}
+
+export async function listResorts(
+  db: TablesDB = tablesDb
+): Promise<{ resorts: Resort[] }> {
+  const resorts = await fetchRows<Resort>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: RESORTS_TABLE_ID,
+      queries: [Query.orderAsc('resortName'), Query.limit(5000)],
+    })
+  )
+  return { resorts }
 }
 
 export async function createSystemMessage(

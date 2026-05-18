@@ -17,8 +17,18 @@ const sampleProposal: Proposal = {
   endDate: '2024-01-07',
   nearestAirport: 'GVA',
   transferTime: '2h 30m',
-  altitudeRange: '1850m - 3456m',
   country: 'France',
+  region: 'Alps',
+  topAltitude: 3456,
+  bottomAltitude: 1850,
+  pisteKm: 300,
+  difficulty: 'advanced',
+  liftCount: 80,
+  snowReliability: 'high',
+  skiSeasonMonths: 'Dec-Apr',
+  websiteUrl: 'https://valdisere.com',
+  latitude: '45.4475',
+  longitude: '6.9219',
 }
 
 function renderForm(props = {}) {

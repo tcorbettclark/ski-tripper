@@ -30,8 +30,18 @@ export interface Proposal {
   endDate: string
   nearestAirport: string
   transferTime: string
-  altitudeRange: string
   country: string
+  region: string
+  topAltitude: number
+  bottomAltitude: number
+  pisteKm: number
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  liftCount: number
+  snowReliability: 'high' | 'medium' | 'low'
+  skiSeasonMonths: string
+  websiteUrl: string
+  latitude: string
+  longitude: string
 }
 
 export interface Accommodation {
@@ -87,6 +97,19 @@ export interface Resort {
   resortName: string
   country: string
   region: string
+  description: string
+  latitude: string
+  longitude: string
+  topAltitude: number
+  bottomAltitude: number
+  nearestAirport: string
+  transferTime: string
+  pisteKm: number
+  difficulty: 'beginner' | 'intermediate' | 'advanced'
+  liftCount: number
+  snowReliability: 'high' | 'medium' | 'low'
+  skiSeasonMonths: string
+  websiteUrl: string
   enriched: boolean
 }
 

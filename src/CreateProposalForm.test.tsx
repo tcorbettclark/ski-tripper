@@ -24,7 +24,7 @@ describe('CreateProposalForm', () => {
     const { container } = renderForm()
     expect(screen.getByText(/resort name/i)).toBeTruthy()
     expect(screen.getByLabelText(/country/i)).toBeTruthy()
-    expect(screen.getByText(/altitude range/i)).toBeTruthy()
+    expect(screen.getByText(/top altitude/i)).toBeTruthy()
     expect(screen.getByText(/nearest airport/i)).toBeTruthy()
     expect(screen.getByText(/transfer time/i)).toBeTruthy()
     expect(screen.getByText(/start date/i)).toBeTruthy()
@@ -53,9 +53,19 @@ describe('CreateProposalForm', () => {
 
     fill('resortName', "Val d'Isère")
     fill('country', 'France')
-    fill('altitudeRange', '1800m - 3200m')
+    fill('region', 'Alps')
+    fill('topAltitude', '3330')
+    fill('bottomAltitude', '1850')
     fill('nearestAirport', 'GVA')
     fill('transferTime', '1h 30m')
+    fill('pisteKm', '300')
+    fill('difficulty', 'advanced')
+    fill('liftCount', '80')
+    fill('snowReliability', 'high')
+    fill('skiSeasonMonths', 'Dec-Apr')
+    fill('websiteUrl', 'https://valdisere.com')
+    fill('latitude', '45.4475')
+    fill('longitude', '6.9219')
     fill('startDate', '2027-01-15')
     fill('endDate', '2027-01-22')
     fill('description', 'Great resort for all levels.')
@@ -74,12 +84,13 @@ describe('CreateProposalForm', () => {
     const call = createProposal.mock.calls[0]
     if (!call) return
     const [calledTripId, calledUserId, calledCreatorName, calledData] =
-      call as unknown as [string, string, string, Record<string, string>]
+      call as unknown as [string, string, string, Record<string, unknown>]
     expect(calledTripId).toBe('trip-1')
     expect(calledUserId).toBe('user-1')
     expect(calledCreatorName).toBe('Alice')
-    expect(calledData.resortName).toBe("Val d'Isère")
-    expect(calledData.country).toBe('France')
+    const resortData = calledData.resortData as Record<string, unknown>
+    expect(resortData.resortName).toBe("Val d'Isère")
+    expect(resortData.country).toBe('France')
     expect(calledData.description).toBe('Great resort for all levels.')
 
     expect(createAccommodation).toHaveBeenCalledTimes(1)

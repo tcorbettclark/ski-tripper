@@ -29,13 +29,25 @@ interface CreateProposalFormProps {
     userName: string,
     data: {
       description: string
-      resortName: string
-      country: string
-      altitudeRange: string
-      nearestAirport: string
-      transferTime: string
       startDate: string
       endDate: string
+      resortData: {
+        resortName: string
+        country: string
+        region: string
+        topAltitude: number
+        bottomAltitude: number
+        nearestAirport: string
+        transferTime: string
+        pisteKm: number
+        difficulty: 'beginner' | 'intermediate' | 'advanced'
+        liftCount: number
+        snowReliability: 'high' | 'medium' | 'low'
+        skiSeasonMonths: string
+        websiteUrl: string
+        latitude: string
+        longitude: string
+      }
     }
   ) => Promise<unknown>
   createAccommodation?: (
@@ -49,9 +61,19 @@ interface CreateProposalFormProps {
 const EMPTY_FORM = {
   resortName: '',
   country: '',
-  altitudeRange: '',
+  region: '',
+  topAltitude: '',
+  bottomAltitude: '',
   nearestAirport: '',
   transferTime: '',
+  pisteKm: '',
+  difficulty: '' as '' | 'beginner' | 'intermediate' | 'advanced',
+  liftCount: '',
+  snowReliability: '' as '' | 'high' | 'medium' | 'low',
+  skiSeasonMonths: '',
+  websiteUrl: '',
+  latitude: '',
+  longitude: '',
   description: '',
   startDate: '',
   endDate: '',
@@ -136,13 +158,25 @@ export default function CreateProposalForm({
       const userAccount = await accountGet()
       const proposal = await createProposal(tripId, userId, userAccount.name, {
         description: form.description,
-        resortName: form.resortName,
-        country: form.country,
-        altitudeRange: form.altitudeRange,
-        nearestAirport: form.nearestAirport,
-        transferTime: form.transferTime,
         startDate: form.startDate,
         endDate: form.endDate,
+        resortData: {
+          resortName: form.resortName,
+          country: form.country,
+          region: form.region,
+          topAltitude: Number(form.topAltitude),
+          bottomAltitude: Number(form.bottomAltitude),
+          nearestAirport: form.nearestAirport,
+          transferTime: form.transferTime,
+          pisteKm: Number(form.pisteKm),
+          difficulty: form.difficulty || 'intermediate',
+          liftCount: Number(form.liftCount),
+          snowReliability: form.snowReliability || 'medium',
+          skiSeasonMonths: form.skiSeasonMonths,
+          websiteUrl: form.websiteUrl,
+          latitude: form.latitude,
+          longitude: form.longitude,
+        },
       })
       const typedProposal = proposal as { $id: string }
       for (const acc of Object.values(accommodations)) {
@@ -184,12 +218,30 @@ export default function CreateProposalForm({
         options={COUNTRIES}
       />
       <Field
-        label="Altitude Range"
-        name="altitudeRange"
-        value={form.altitudeRange}
+        label="Region"
+        name="region"
+        value={form.region}
         onChange={handleChange}
         required
-        placeholder="e.g. 1800m - 3200m"
+        placeholder="e.g. Alps"
+      />
+      <Field
+        label="Top Altitude (m)"
+        name="topAltitude"
+        type="number"
+        value={form.topAltitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 3330"
+      />
+      <Field
+        label="Bottom Altitude (m)"
+        name="bottomAltitude"
+        type="number"
+        value={form.bottomAltitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 1500"
       />
       <Field
         label="Nearest Airport"
@@ -206,6 +258,73 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 1h 30m"
+      />
+      <Field
+        label="Piste Km"
+        name="pisteKm"
+        type="number"
+        value={form.pisteKm}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 600"
+      />
+      <Field
+        label="Difficulty"
+        name="difficulty"
+        value={form.difficulty}
+        onChange={handleChange}
+        required
+        options={['beginner', 'intermediate', 'advanced']}
+      />
+      <Field
+        label="Lift Count"
+        name="liftCount"
+        type="number"
+        value={form.liftCount}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 50"
+      />
+      <Field
+        label="Snow Reliability"
+        name="snowReliability"
+        value={form.snowReliability}
+        onChange={handleChange}
+        required
+        options={['high', 'medium', 'low']}
+      />
+      <Field
+        label="Ski Season Months"
+        name="skiSeasonMonths"
+        value={form.skiSeasonMonths}
+        onChange={handleChange}
+        required
+        placeholder="e.g. Dec-Apr"
+      />
+      <Field
+        label="Website URL"
+        name="websiteUrl"
+        type="url"
+        value={form.websiteUrl}
+        onChange={handleChange}
+        required
+        placeholder="https://..."
+      />
+      <Field
+        label="Latitude"
+        name="latitude"
+        value={form.latitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 45.9163"
+      />
+      <Field
+        label="Longitude"
+        name="longitude"
+        value={form.longitude}
+        onChange={handleChange}
+        required
+        placeholder="e.g. 7.7554"
       />
       <Field
         label="Start Date"

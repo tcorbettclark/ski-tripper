@@ -24,8 +24,18 @@ const baseProposal: Proposal = {
   endDate: '2024-01-07',
   nearestAirport: 'TEST',
   transferTime: '1 hour',
-  altitudeRange: '1000-2000m',
   country: 'Test Country',
+  region: 'Alps',
+  topAltitude: 3000,
+  bottomAltitude: 1500,
+  pisteKm: 600,
+  difficulty: 'intermediate',
+  liftCount: 50,
+  snowReliability: 'high',
+  skiSeasonMonths: 'Dec-Apr',
+  websiteUrl: 'https://example.com',
+  latitude: '45.9163',
+  longitude: '7.7554',
 }
 
 describe('ProposalCard', () => {

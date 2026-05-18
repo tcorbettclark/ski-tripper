@@ -435,6 +435,29 @@ describe('listParticipatedTrips', () => {
 })
 
 describe('createProposal', () => {
+  const minimalProposalData = {
+    description: 'd',
+    startDate: '2024-12-01',
+    endDate: '2024-12-08',
+    resortData: {
+      resortName: 'Test Resort',
+      country: 'France',
+      region: 'Alps',
+      topAltitude: 3000,
+      bottomAltitude: 1500,
+      nearestAirport: 'GVA',
+      transferTime: '1h',
+      pisteKm: 100,
+      difficulty: 'intermediate' as const,
+      liftCount: 30,
+      snowReliability: 'medium' as const,
+      skiSeasonMonths: 'Dec-Apr',
+      websiteUrl: 'https://example.com',
+      latitude: '45.0',
+      longitude: '7.0',
+    },
+  }
+
   it('creates a proposal document when user is a participant', async () => {
     const listRows = mock(() =>
       Promise.resolve({
@@ -446,7 +469,28 @@ describe('createProposal', () => {
       'trip-1',
       'user-1',
       'Alice',
-      { description: 'Alps Trip' },
+      {
+        description: 'Alps Trip',
+        startDate: '2024-12-01',
+        endDate: '2024-12-08',
+        resortData: {
+          resortName: 'Chamonix',
+          country: 'France',
+          region: 'Alps',
+          topAltitude: 3842,
+          bottomAltitude: 1000,
+          nearestAirport: 'GVA',
+          transferTime: '1h',
+          pisteKm: 150,
+          difficulty: 'advanced',
+          liftCount: 50,
+          snowReliability: 'high',
+          skiSeasonMonths: 'Dec-Apr',
+          websiteUrl: 'https://chamonix.com',
+          latitude: '45.9237',
+          longitude: '6.8694',
+        },
+      },
       db
     )
     expect(db.createRow).toHaveBeenCalledTimes(1)
@@ -462,7 +506,7 @@ describe('createProposal', () => {
   it('throws when user is not a participant', async () => {
     const db = createMockDb()
     expect(
-      createProposal('trip-1', 'user-1', 'Alice', { description: 'd' }, db)
+      createProposal('trip-1', 'user-1', 'Alice', minimalProposalData, db)
     ).rejects.toThrow('You must be a participant to access this trip.')
     expect(db.createRow).not.toHaveBeenCalled()
   })
@@ -474,7 +518,7 @@ describe('createProposal', () => {
       createRow: mock(() => Promise.reject(new Error('Create failed'))),
     })
     expect(
-      createProposal('trip-1', 'user-1', 'Alice', { description: 'd' }, db)
+      createProposal('trip-1', 'user-1', 'Alice', minimalProposalData, db)
     ).rejects.toThrow('Create failed')
   })
 })

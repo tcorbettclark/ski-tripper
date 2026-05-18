@@ -221,7 +221,10 @@ export default function ProposalCard({
         <div style={styles.grid}>
           <DetailField label="Start Date" value={proposal.startDate} />
           <DetailField label="End Date" value={proposal.endDate} />
-          <DetailField label="Altitude Range" value={proposal.altitudeRange} />
+          <DetailField
+            label="Altitude Range"
+            value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
+          />
           <DetailField
             label="Nearest Airport"
             value={proposal.nearestAirport}
