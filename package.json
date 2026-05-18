@@ -36,12 +36,14 @@
     "ci": "biome ci",
     "cors-finder": "bash scripts/find-cors-test.sh",
     "db-admin": "bun run scripts/db-admin.ts",
-    "seed-resorts": "bun run scripts/seed-resorts.ts"
+    "seed-resorts": "bun run scripts/seed-resorts.ts",
+    "enrich-resorts": "bun run scripts/enrich-resorts.ts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
     "appwrite": "^24.2.0",
     "dayjs": "^1.11.20",
+    "exa-js": "^2.13.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "threewords": "^0.0.1"
