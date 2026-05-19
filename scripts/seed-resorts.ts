@@ -69,6 +69,8 @@ async function callLLM(
   model: string,
   maxRetries = 3
 ): Promise<Candidate[]> {
+  console.log(`[callLLM] Calling model ${model} (max ${maxRetries} retries)...`)
+  console.log(`[callLLM] Prompt: ${prompt.slice(0, 200)}...`)
   const responseCodec = jsonCodec(candidateSchema)
   const jsonSchema: JSONSchema.JSONSchema = {
     type: 'object',
@@ -108,20 +110,32 @@ async function callLLM(
         ],
       })
 
+      console.log(
+        `[callLLM] Attempt ${attempt}: received response (${response.message.content?.length ?? 0} chars)`
+      )
+
       const result = responseCodec.decode(response.message.content, {
         reportInput: true,
       })
 
       if (!result) {
+        console.error(
+          `[callLLM] Attempt ${attempt}: decode returned null/falsy, raw response: ${response.message.content?.slice(0, 300)}`
+        )
         throw new Error('LLM returned empty or invalid response')
       }
 
+      console.log(
+        `[callLLM] Successfully parsed ${result.resorts.length} candidate(s)`
+      )
       return result.resorts
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(`Attempt ${attempt}/${maxRetries} failed: ${message}`)
+      console.error(
+        `[callLLM] Attempt ${attempt}/${maxRetries} failed: ${message}`
+      )
       if (attempt === maxRetries) {
-        console.error('Max retries reached, skipping this batch.')
+        console.error('[callLLM] Max retries reached, skipping this batch.')
         return []
       }
     }
@@ -131,6 +145,9 @@ async function callLLM(
 }
 
 async function listAllResortNames(): Promise<string[]> {
+  console.log(
+    '[listAllResortNames] Fetching existing resort names from database...'
+  )
   const names: string[] = []
   let offset = 0
   const limit = 100
@@ -143,9 +160,13 @@ async function listAllResortNames(): Promise<string[]> {
     for (const row of rows) {
       names.push((row as Record<string, unknown>).resortName as string)
     }
+    console.log(
+      `[listAllResortNames] Fetched ${rows.length} rows (total so far: ${names.length})`
+    )
     if (rows.length < limit) break
     offset += limit
   }
+  console.log(`[listAllResortNames] Total existing resorts: ${names.length}`)
   return names
 }
 
@@ -154,7 +175,13 @@ async function deduplicateWithLLM(
   existingNames: string[],
   model: string
 ): Promise<Candidate[]> {
+  console.log(
+    `[deduplicateWithLLM] Starting deduplication: ${candidates.length} candidates against ${existingNames.length} existing resorts`
+  )
   if (existingNames.length === 0 || candidates.length === 0) {
+    console.log(
+      '[deduplicateWithLLM] Skipping deduplication (no existing resorts or no candidates)'
+    )
     return candidates
   }
 
@@ -162,13 +189,20 @@ async function deduplicateWithLLM(
 
   const afterExact = candidates.filter((c) => {
     if (existingLower.has(c.resortName.toLowerCase())) {
-      console.log(`  Exact duplicate removed: ${c.resortName}`)
+      console.log(
+        `[deduplicateWithLLM] Exact duplicate removed: ${c.resortName}`
+      )
       return false
     }
     return true
   })
 
+  console.log(
+    `[deduplicateWithLLM] After exact dedup: ${afterExact.length} candidates remain (removed ${candidates.length - afterExact.length})`
+  )
+
   if (afterExact.length === 0) {
+    console.log('[deduplicateWithLLM] No candidates remain after exact dedup')
     return afterExact
   }
 
@@ -215,6 +249,9 @@ ${afterExact.map((c) => c.resortName).join(', ')}
 
 Which candidates are duplicates of existing resorts? Consider alternate spellings, abbreviations, and common name variations (e.g., "St. Anton" = "Sankt Anton", "Val d'Isere" = "Val d'Isère"). Only flag clear duplicates, not merely resorts in the same area. Return the result as JSON.`
 
+  console.log(
+    `[deduplicateWithLLM] Calling LLM for fuzzy deduplication with ${afterExact.length} candidates...`
+  )
   try {
     const response = await ollama.chat({
       stream: false as const,
@@ -233,6 +270,9 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
     })
 
     if (!result) {
+      console.log(
+        '[deduplicateWithLLM] LLM dedup decode returned null, keeping all candidates'
+      )
       return afterExact
     }
 
@@ -241,17 +281,22 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
     const removed = afterExact.filter((c) => duplicateNames.has(c.resortName))
 
     if (removed.length > 0) {
-      console.log('\nLLM identified fuzzy duplicates:')
+      console.log(
+        `[deduplicateWithLLM] LLM identified ${removed.length} fuzzy duplicate(s):`
+      )
       for (const d of result.duplicates) {
-        console.log(`  - ${d.candidate}: ${d.reason}`)
+        console.log(`[deduplicateWithLLM]   - ${d.candidate}: ${d.reason}`)
       }
     }
 
+    console.log(
+      `[deduplicateWithLLM] After fuzzy dedup: ${kept.length} candidates remain`
+    )
     return kept
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     console.error(
-      `Deduplication LLM call failed: ${message}. Keeping all candidates.`
+      `[deduplicateWithLLM] Deduplication LLM call failed: ${message}. Keeping all candidates.`
     )
     return afterExact
   }
@@ -304,8 +349,14 @@ async function writeResorts(
   candidates: Candidate[],
   region: string
 ): Promise<void> {
+  console.log(
+    `[writeResorts] Writing ${candidates.length} resort(s) to database (region: ${region})...`
+  )
   let created = 0
   for (const candidate of candidates) {
+    console.log(
+      `[writeResorts] Creating: ${candidate.resortName} (${candidate.country}) [region=${region}]`
+    )
     await adminTablesDb.createRow({
       databaseId: DATABASE_ID,
       tableId: RESORTS_TABLE_ID,
@@ -318,9 +369,13 @@ async function writeResorts(
       },
     })
     created++
-    console.log(`  Created: ${candidate.resortName} (${candidate.country})`)
+    console.log(
+      `[writeResorts] Created: ${candidate.resortName} (${candidate.country}) [enriched=false]`
+    )
   }
-  console.log(`\nDone. Created ${created} resort(s).`)
+  console.log(
+    `[writeResorts] Done. Created ${created}/${candidates.length} resort(s).`
+  )
 }
 
 async function seed(options: {
@@ -346,37 +401,39 @@ async function seed(options: {
     process.exit(1)
   }
 
-  console.log(`Seeding resorts for region: ${region}`)
+  console.log(`[seed] Seeding resorts for region: ${region}`)
   console.log(
-    `Requesting ${count} candidate(s) from LLM (model: ${model})...\n`
+    `[seed] Requesting ${count} candidate(s) from LLM (model: ${model})...\n`
   )
 
   const prompt = `List ${count} well-known ski resorts in the "${region}" region. Include the resort name and the country it is in. Return results as JSON.`
 
   const candidates = await callLLM(prompt, model)
   if (candidates.length === 0) {
-    console.error('No candidates returned from LLM. Aborting.')
+    console.error('[seed] No candidates returned from LLM. Aborting.')
     process.exit(1)
   }
 
-  console.log(`LLM returned ${candidates.length} candidate(s):\n`)
+  console.log(`[seed] LLM returned ${candidates.length} candidate(s):\n`)
   for (const c of candidates) {
     console.log(`  - ${c.resortName} (${c.country})`)
   }
 
   const existingNames = await listAllResortNames()
-  console.log(`\nFound ${existingNames.length} existing resort(s) in database.`)
+  console.log(
+    `[seed] Found ${existingNames.length} existing resort(s) in database.`
+  )
 
   const afterDedup = await deduplicateWithLLM(candidates, existingNames, model)
-  console.log(`\nAfter deduplication: ${afterDedup.length} candidate(s)`)
+  console.log(`\n[seed] After deduplication: ${afterDedup.length} candidate(s)`)
 
   const confirmed = await confirmWithUser(afterDedup)
   if (confirmed.length === 0) {
-    console.log('No resorts confirmed. Aborting.')
+    console.log('[seed] No resorts confirmed. Aborting.')
     process.exit(0)
   }
 
-  console.log(`\nWriting ${confirmed.length} resort(s) to database...`)
+  console.log(`\n[seed] Writing ${confirmed.length} resort(s) to database...`)
   await writeResorts(confirmed, region)
 }
 

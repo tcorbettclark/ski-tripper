@@ -50,6 +50,7 @@ const webSearchTool = {
 }
 
 async function executeWebSearch(query: string): Promise<string> {
+  console.log(`[executeWebSearch] Searching for: "${query}"`)
   const results = await exa.search(query, {
     type: 'auto',
     numResults: 3,
@@ -69,6 +70,9 @@ async function executeWebSearch(query: string): Promise<string> {
       return parts.join('\n')
     })
 
+  console.log(
+    `[executeWebSearch] Got ${results.results.length} result(s) for: "${query}"`
+  )
   return snippets.join('\n\n---\n\n')
 }
 
@@ -247,6 +251,9 @@ Do not include any additional text or explanations. Return valid JSON only.`
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      console.log(
+        `  [enrichResort] Attempt ${attempt}/${maxRetries} for "${resortName}"`
+      )
       const messages: Array<{
         role: 'system' | 'user' | 'assistant' | 'tool'
         content: string
@@ -262,6 +269,7 @@ Do not include any additional text or explanations. Return valid JSON only.`
       let finalContent = ''
 
       for (let round = 0; round < 5; round++) {
+        console.log(`  [enrichResort] LLM round ${round + 1}/5`)
         const response = await ollama.chat({
           stream: false as const,
           model,
@@ -273,6 +281,9 @@ Do not include any additional text or explanations. Return valid JSON only.`
           response.message.tool_calls &&
           response.message.tool_calls.length > 0
         ) {
+          console.log(
+            `  [enrichResort] LLM requested ${response.message.tool_calls.length} tool call(s)`
+          )
           messages.push({
             role: 'assistant',
             content: response.message.content ?? '',
@@ -283,7 +294,7 @@ Do not include any additional text or explanations. Return valid JSON only.`
             const fnArgs = toolCall.function.arguments as { query?: string }
 
             if (fnName === 'web_search' && fnArgs.query) {
-              console.log(`  [web_search] ${fnArgs.query}`)
+              console.log(`  [enrichResort] [web_search] ${fnArgs.query}`)
               const searchResult = await executeWebSearch(fnArgs.query)
               messages.push({
                 role: 'tool',
@@ -297,27 +308,46 @@ Do not include any additional text or explanations. Return valid JSON only.`
         }
 
         finalContent = response.message.content
+        console.log(
+          `  [enrichResort] LLM returned final response (${finalContent.length} chars)`
+        )
         break
       }
 
       if (!finalContent) {
+        console.error(
+          `  [enrichResort] No final content received after tool call rounds`
+        )
         throw new Error('LLM returned empty response after tool calls')
       }
 
+      console.log(
+        `  [enrichResort] Parsing enriched data for "${resortName}"...`
+      )
       const result = responseCodec.decode(finalContent, {
         reportInput: true,
       })
 
       if (!result) {
+        console.error(
+          `  [enrichResort] Failed to parse enriched data, raw response: ${finalContent.slice(0, 300)}`
+        )
         throw new Error('LLM returned empty or invalid response')
       }
 
+      console.log(
+        `  [enrichResort] Successfully parsed enriched data for "${resortName}"`
+      )
       return result
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(`  Attempt ${attempt}/${maxRetries} failed: ${message}`)
+      console.error(
+        `  [enrichResort] Attempt ${attempt}/${maxRetries} failed: ${message}`
+      )
       if (attempt === maxRetries) {
-        console.error('  Max retries reached, skipping this resort.')
+        console.error(
+          `  [enrichResort] Max retries reached for "${resortName}", skipping.`
+        )
         return null
       }
     }
@@ -334,6 +364,9 @@ interface UnenrichedResort {
 }
 
 async function listUnenrichedResorts(): Promise<UnenrichedResort[]> {
+  console.log(
+    '[listUnenrichedResorts] Fetching un-enriched resorts from database...'
+  )
   const resorts: UnenrichedResort[] = []
   let offset = 0
   const limit = 100
@@ -356,9 +389,15 @@ async function listUnenrichedResorts(): Promise<UnenrichedResort[]> {
         region: r.region as string,
       })
     }
+    console.log(
+      `[listUnenrichedResorts] Fetched ${rows.length} rows (total so far: ${resorts.length})`
+    )
     if (rows.length < limit) break
     offset += limit
   }
+  console.log(
+    `[listUnenrichedResorts] Total un-enriched resorts: ${resorts.length}`
+  )
   return resorts
 }
 
@@ -451,6 +490,9 @@ async function writeEnrichedResort(
   resortId: string,
   data: EnrichData
 ): Promise<void> {
+  console.log(
+    `  [writeEnrichedResort] Writing enriched data for resort ${resortId}...`
+  )
   await adminTablesDb.updateRow({
     databaseId: DATABASE_ID,
     tableId: RESORTS_TABLE_ID,
@@ -472,21 +514,24 @@ async function writeEnrichedResort(
       enriched: true,
     },
   })
+  console.log(
+    `  [writeEnrichedResort] Successfully wrote enriched data for resort ${resortId}`
+  )
 }
 
 async function enrich(options: { model?: string }) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
 
-  console.log('Fetching un-enriched resorts from database...')
+  console.log('[enrich] Fetching un-enriched resorts from database...')
   const resorts = await listUnenrichedResorts()
 
   if (resorts.length === 0) {
-    console.log('No un-enriched resorts found. Nothing to do.')
+    console.log('[enrich] No un-enriched resorts found. Nothing to do.')
     process.exit(0)
   }
 
-  console.log(`Found ${resorts.length} un-enriched resort(s).`)
-  console.log(`Using model: ${model}\n`)
+  console.log(`[enrich] Found ${resorts.length} un-enriched resort(s).`)
+  console.log(`[enrich] Using model: ${model}\n`)
 
   let enriched = 0
   let skipped = 0
@@ -496,18 +541,19 @@ async function enrich(options: { model?: string }) {
   for (let i = 0; i < resorts.length; i++) {
     if (stopRequested) {
       console.log(
-        `\nStopped. Skipped ${resorts.length - i} remaining resort(s).`
+        `\n[enrich] Stopped. Skipped ${resorts.length - i} remaining resort(s).`
       )
       break
     }
 
     const resort = resorts[i]
     console.log(
-      `\n[${i + 1}/${resorts.length}] Enriching ${resort.resortName} (${resort.country})...`
+      `\n[enrich] [${i + 1}/${resorts.length}] Enriching ${resort.resortName} (${resort.country})...`
     )
 
     const data = await enrichResort(resort.resortName, resort.country, model)
     if (!data) {
+      console.log(`  [enrich] Failed to enrich ${resort.resortName}, skipping.`)
       skipped++
       continue
     }
@@ -518,18 +564,18 @@ async function enrich(options: { model?: string }) {
     if (result.accepted) {
       await writeEnrichedResort(resort.$id, result.data)
       enriched++
-      console.log(`  Written to database (enriched: true).`)
+      console.log(`  [enrich] Written to database (enriched: true).`)
     } else {
       if (result.data === data && !autoAccept) {
         stopRequested = true
       }
       skipped++
-      console.log(`  Skipped.`)
+      console.log(`  [enrich] Skipped ${resort.resortName}.`)
     }
   }
 
   console.log(
-    `\nDone. Enriched: ${enriched}, Skipped: ${skipped}, Total: ${resorts.length}`
+    `\n[enrich] Done. Enriched: ${enriched}, Skipped: ${skipped}, Total: ${resorts.length}`
   )
 }
 
