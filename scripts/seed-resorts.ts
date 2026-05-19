@@ -2,6 +2,7 @@
 
 import * as readline from 'node:readline/promises'
 import { Command } from 'commander'
+import Exa from 'exa-js'
 import {
   ID,
   Client as NodeClient,
@@ -28,6 +29,54 @@ const ollama = new Ollama({
   host: 'https://ollama.com',
   headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
 })
+
+const exa = new Exa(process.env.EXA_API_KEY as string)
+
+const webSearchTool = {
+  type: 'function' as const,
+  function: {
+    name: 'web_search',
+    description:
+      'Search the web for factual information about ski resorts. Use this to look up accurate resort names, countries, and regions.',
+    parameters: {
+      type: 'object',
+      required: ['query'],
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Search query for ski resort information',
+        },
+      },
+    },
+  },
+}
+
+async function executeWebSearch(query: string): Promise<string> {
+  console.log(`[executeWebSearch] Searching for: "${query}"`)
+  const results = await exa.search(query, {
+    type: 'auto',
+    numResults: 3,
+    contents: {
+      text: { maxCharacters: 3000 },
+      highlights: { maxCharacters: 500 },
+    },
+  })
+
+  const snippets = results.results
+    .filter((r) => r.text || r.highlights)
+    .map((r) => {
+      const parts: string[] = []
+      if (r.title) parts.push(`Title: ${r.title}`)
+      if (r.text) parts.push(r.text)
+      if (r.highlights) parts.push(r.highlights.join(' ... '))
+      return parts.join('\n')
+    })
+
+  console.log(
+    `[executeWebSearch] Got ${results.results.length} result(s) for: "${query}"`
+  )
+  return snippets.join('\n\n---\n\n')
+}
 
 const candidateSchema = z.object({
   resorts: z.array(
@@ -98,29 +147,81 @@ async function callLLM(
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const response = await ollama.chat({
-        stream: false as const,
-        model,
-        messages: [
-          {
-            role: 'system',
-            content: `You are a ski resort expert. Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only include real, well-known ski resorts. Be accurate about which country each resort is in.`,
-          },
-          { role: 'user', content: prompt },
-        ],
-      })
+      console.log(`[callLLM] Attempt ${attempt}/${maxRetries}`)
+      const messages: Array<{
+        role: 'system' | 'user' | 'assistant' | 'tool'
+        content: string
+        tool_name?: string
+      }> = [
+        {
+          role: 'system',
+          content: `You are a ski resort expert. Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only include real, well-known ski resorts. Be accurate about which country each resort is in. Use the web_search tool to look up any information you are not completely certain about.`,
+        },
+        { role: 'user', content: prompt },
+      ]
 
-      console.log(
-        `[callLLM] Attempt ${attempt}: received response (${response.message.content?.length ?? 0} chars)`
-      )
+      let finalContent = ''
 
-      const result = responseCodec.decode(response.message.content, {
+      for (let round = 0; round < 5; round++) {
+        console.log(`[callLLM] LLM round ${round + 1}/5`)
+        const response = await ollama.chat({
+          stream: false as const,
+          model,
+          messages,
+          tools: [webSearchTool],
+        })
+
+        if (
+          response.message.tool_calls &&
+          response.message.tool_calls.length > 0
+        ) {
+          console.log(
+            `[callLLM] LLM requested ${response.message.tool_calls.length} tool call(s)`
+          )
+          messages.push({
+            role: 'assistant',
+            content: response.message.content ?? '',
+          })
+
+          for (const toolCall of response.message.tool_calls) {
+            const fnName = toolCall.function.name
+            const fnArgs = toolCall.function.arguments as { query?: string }
+
+            if (fnName === 'web_search' && fnArgs.query) {
+              console.log(`[callLLM] [web_search] ${fnArgs.query}`)
+              const searchResult = await executeWebSearch(fnArgs.query)
+              messages.push({
+                role: 'tool',
+                content: searchResult,
+                tool_name: fnName,
+              })
+            }
+          }
+
+          continue
+        }
+
+        finalContent = response.message.content
+        console.log(
+          `[callLLM] LLM returned final response (${finalContent.length} chars)`
+        )
+        break
+      }
+
+      if (!finalContent) {
+        console.error(
+          `[callLLM] No final content received after tool call rounds`
+        )
+        throw new Error('LLM returned empty response after tool calls')
+      }
+
+      const result = responseCodec.decode(finalContent, {
         reportInput: true,
       })
 
       if (!result) {
         console.error(
-          `[callLLM] Attempt ${attempt}: decode returned null/falsy, raw response: ${response.message.content?.slice(0, 300)}`
+          `[callLLM] Attempt ${attempt}: decode returned null/falsy, raw response: ${finalContent.slice(0, 300)}`
         )
         throw new Error('LLM returned empty or invalid response')
       }
@@ -247,7 +348,7 @@ ${existingNames.join(', ')}
 And these candidate resorts to add:
 ${afterExact.map((c) => c.resortName).join(', ')}
 
-Which candidates are duplicates of existing resorts? Consider alternate spellings, abbreviations, and common name variations (e.g., "St. Anton" = "Sankt Anton", "Val d'Isere" = "Val d'Isère"). Only flag clear duplicates, not merely resorts in the same area. Return the result as JSON.`
+Which candidates are duplicates of existing resorts? Consider alternate spellings, abbreviations, and common name variations (e.g., "St. Anton" = "Sankt Anton", "Val d'Isere" = "Val d'Isère"). Only flag clear duplicates, not merely resorts in the same area. Only return valid JSON.`
 
   console.log(
     `[deduplicateWithLLM] Calling LLM for fuzzy deduplication with ${afterExact.length} candidates...`
@@ -406,7 +507,7 @@ async function seed(options: {
     `[seed] Requesting ${count} candidate(s) from LLM (model: ${model})...\n`
   )
 
-  const prompt = `List ${count} well-known ski resorts in the "${region}" region. Include the resort name and the country it is in. Return results as JSON.`
+  const prompt = `List ${count} well-known ski resorts in the "${region}" region. Include the resort name and the country it is in. Return results as JSON without any introductory text.`
 
   const candidates = await callLLM(prompt, model)
   if (candidates.length === 0) {

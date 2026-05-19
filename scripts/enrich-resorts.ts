@@ -261,7 +261,7 @@ Do not include any additional text or explanations. Return valid JSON only.`
       }> = [
         {
           role: 'system',
-          content: `You are a ski resort expert. Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Be accurate about resort statistics. Use real, factual data. Use the web_search tool to look up any information you are not completely certain about.`,
+          content: `You are a ski resort expert. Return results as raw JSON without any introductory text. Match this schema: ${JSON.stringify(jsonSchema)}. Be accurate about resort statistics. Use real, factual data. Use the web_search tool to look up any information you are not completely certain about.`,
         },
         { role: 'user', content: prompt },
       ]
