@@ -303,6 +303,13 @@ export default function Overview({
         <div style={overviewStyles.quickActions}>
           <button
             type="button"
+            onClick={() => onNavigateToTab('resorts')}
+            style={overviewStyles.quickActionButton}
+          >
+            Browse Resorts
+          </button>
+          <button
+            type="button"
             onClick={() => onNavigateToTab('proposals')}
             style={overviewStyles.quickActionButton}
           >

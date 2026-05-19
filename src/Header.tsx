@@ -97,6 +97,17 @@ export default function Header({
         </button>
         <button
           type="button"
+          onClick={() => onTripDetailTabChange('resorts')}
+          style={
+            tripDetailTab === 'resorts'
+              ? headerStyles.subTabActive
+              : headerStyles.subTab
+          }
+        >
+          Resorts
+        </button>
+        <button
+          type="button"
           onClick={() => onTripDetailTabChange('proposals')}
           style={
             tripDetailTab === 'proposals'

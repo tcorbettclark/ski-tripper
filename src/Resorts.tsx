@@ -1,0 +1,961 @@
+import type { Models } from 'appwrite'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { TableVirtuoso } from 'react-virtuoso'
+import { listResorts as _listResorts } from './backend'
+import { borders, colors, fonts, formStyles } from './theme'
+import type { Resort } from './types.d.ts'
+
+interface ResortsProps {
+  user: Models.User
+  tripId: string
+  onNavigateToProposals?: () => void
+  onAuthError?: (err: unknown) => void
+  listResorts?: () => Promise<{ resorts: Resort[] }>
+}
+
+const NOOP_AUTH_ERROR = () => {}
+
+export default function Resorts({
+  user,
+  tripId,
+  onNavigateToProposals,
+  onAuthError = NOOP_AUTH_ERROR,
+  listResorts = _listResorts,
+}: ResortsProps) {
+  const [resorts, setResorts] = useState<Resort[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [countryFilter, setCountryFilter] = useState('')
+  const [regionFilter, setRegionFilter] = useState('')
+  const [minPisteKm, setMinPisteKm] = useState(0)
+  const [selectedResort, setSelectedResort] = useState<Resort | null>(null)
+  const [showProposalForm, setShowProposalForm] = useState(false)
+  const [proposalError, setProposalError] = useState('')
+  const [proposalSaving, setProposalSaving] = useState(false)
+  const [proposalSuccess, setProposalSuccess] = useState(false)
+  const mountedRef = useRef(true)
+
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    setLoading(true)
+    setError('')
+    listResorts()
+      .then((result) => {
+        if (!mountedRef.current) return
+        setResorts(result.resorts)
+      })
+      .catch((err) => {
+        if (!mountedRef.current) return
+        setError(err instanceof Error ? err.message : String(err))
+        onAuthError(err)
+      })
+      .finally(() => {
+        if (mountedRef.current) setLoading(false)
+      })
+  }, [listResorts, onAuthError])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
+  const countryOptions = useMemo(
+    () => [...new Set(resorts.map((r) => r.country).filter(Boolean))].sort(),
+    [resorts]
+  )
+
+  const regionOptions = useMemo(
+    () => [...new Set(resorts.map((r) => r.region).filter(Boolean))].sort(),
+    [resorts]
+  )
+
+  const filteredResorts = useMemo(() => {
+    let result = resorts
+
+    if (debouncedQuery) {
+      const q = debouncedQuery.toLowerCase().trim()
+      result = result.filter(
+        (r) =>
+          r.resortName?.toLowerCase().includes(q) ||
+          r.country?.toLowerCase().includes(q) ||
+          r.region?.toLowerCase().includes(q) ||
+          r.description?.toLowerCase().includes(q)
+      )
+    }
+
+    if (countryFilter) {
+      result = result.filter((r) => r.country === countryFilter)
+    }
+
+    if (regionFilter) {
+      result = result.filter((r) => r.region === regionFilter)
+    }
+
+    if (minPisteKm > 0) {
+      result = result.filter((r) => r.pisteKm >= minPisteKm)
+    }
+
+    return result
+  }, [resorts, debouncedQuery, countryFilter, regionFilter, minPisteKm])
+
+  const handleRowClick = useCallback((resort: Resort) => {
+    setSelectedResort(resort)
+    setShowProposalForm(false)
+    setProposalError('')
+    setProposalSuccess(false)
+  }, [])
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedResort(null)
+    setShowProposalForm(false)
+    setProposalError('')
+    setProposalSuccess(false)
+  }, [])
+
+  const handleProposeResort = useCallback(() => {
+    setShowProposalForm(true)
+    setProposalError('')
+    setProposalSuccess(false)
+  }, [])
+
+  const handleSubmitProposal = useCallback(
+    async (
+      e: React.FormEvent,
+      resort: Resort,
+      startDate: string,
+      endDate: string,
+      description: string
+    ) => {
+      e.preventDefault()
+      if (!tripId) return
+      setProposalSaving(true)
+      setProposalError('')
+      try {
+        const { createProposal } = await import('./backend')
+        const account = (await import('./backend')).account
+        const userAccount = await account.get()
+        await createProposal(tripId, user.$id, userAccount.name, {
+          description,
+          startDate,
+          endDate,
+          resortData: {
+            resortName: resort.resortName,
+            country: resort.country,
+            region: resort.region,
+            topAltitude: resort.topAltitude,
+            bottomAltitude: resort.bottomAltitude,
+            nearestAirport: resort.nearestAirport,
+            transferTime: resort.transferTime,
+            pisteKm: resort.pisteKm,
+            difficulty: resort.difficulty,
+            liftCount: resort.liftCount,
+            snowReliability: resort.snowReliability,
+            skiSeasonMonths: resort.skiSeasonMonths,
+            websiteUrl: resort.websiteUrl,
+            latitude: resort.latitude,
+            longitude: resort.longitude,
+          },
+        })
+        setProposalSuccess(true)
+      } catch (err: unknown) {
+        setProposalError(err instanceof Error ? err.message : String(err))
+      } finally {
+        setProposalSaving(false)
+      }
+    },
+    [tripId, user.$id]
+  )
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery('')
+    setCountryFilter('')
+    setRegionFilter('')
+    setMinPisteKm(0)
+  }, [])
+
+  if (loading) {
+    return (
+      <div style={resortsStyles.container}>
+        <div style={resortsStyles.toolbar}>
+          <h2 style={resortsStyles.heading}>Resorts</h2>
+        </div>
+        <p style={resortsStyles.loading}>Loading resorts...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={resortsStyles.container}>
+        <div style={resortsStyles.toolbar}>
+          <h2 style={resortsStyles.heading}>Resorts</h2>
+        </div>
+        <p style={formStyles.error}>{error}</p>
+      </div>
+    )
+  }
+
+  const columns = [
+    { key: 'resortName', label: 'Resort Name', width: '28%' },
+    { key: 'country', label: 'Country', width: '14%' },
+    { key: 'region', label: 'Region', width: '16%' },
+    { key: 'pisteKm', label: 'Piste Km', width: '12%' },
+    { key: 'altitudeRange', label: 'Altitude Range', width: '16%' },
+    { key: 'skiSeasonMonths', label: 'Season', width: '14%' },
+  ] as const
+
+  function getCellValue(resort: Resort, key: string): string {
+    switch (key) {
+      case 'resortName':
+        return resort.resortName
+      case 'country':
+        return resort.country
+      case 'region':
+        return resort.region
+      case 'pisteKm':
+        return resort.pisteKm ? String(resort.pisteKm) : ''
+      case 'altitudeRange':
+        if (resort.bottomAltitude && resort.topAltitude) {
+          return `${resort.bottomAltitude}m–${resort.topAltitude}m`
+        }
+        return ''
+      case 'skiSeasonMonths':
+        return resort.skiSeasonMonths
+      default:
+        return ''
+    }
+  }
+
+  const hasActiveFilters =
+    searchQuery || countryFilter || regionFilter || minPisteKm > 0
+
+  return (
+    <div style={resortsStyles.container}>
+      <div style={resortsStyles.toolbar}>
+        <h2 style={resortsStyles.heading}>Resorts</h2>
+        {onNavigateToProposals && (
+          <button
+            type="button"
+            onClick={onNavigateToProposals}
+            style={resortsStyles.navButton}
+          >
+            View Proposals
+          </button>
+        )}
+      </div>
+
+      <div style={resortsStyles.controlsRow}>
+        <input
+          type="text"
+          placeholder="Search resorts..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={resortsStyles.searchInput}
+        />
+        <select
+          value={countryFilter}
+          onChange={(e) => setCountryFilter(e.target.value)}
+          style={resortsStyles.filterSelect}
+        >
+          <option value="">All Countries</option>
+          {countryOptions.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <select
+          value={regionFilter}
+          onChange={(e) => setRegionFilter(e.target.value)}
+          style={resortsStyles.filterSelect}
+        >
+          <option value="">All Regions</option>
+          {regionOptions.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+        <div style={resortsStyles.sliderGroup}>
+          <label
+            htmlFor="min-piste-km-slider"
+            style={resortsStyles.sliderLabel}
+          >
+            Min Piste Km: {minPisteKm}
+          </label>
+          <input
+            id="min-piste-km-slider"
+            type="range"
+            min={0}
+            max={600}
+            step={10}
+            value={minPisteKm}
+            onChange={(e) => setMinPisteKm(Number(e.target.value))}
+            style={resortsStyles.slider}
+          />
+        </div>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            style={resortsStyles.clearButton}
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      <div style={resortsStyles.resultCount}>
+        {filteredResorts.length} of {resorts.length} resorts
+      </div>
+
+      <div style={resortsStyles.tableContainer}>
+        <TableVirtuoso
+          data={filteredResorts}
+          components={{
+            Table: ({ style, ...props }) => (
+              <table
+                {...props}
+                style={{ ...style, width: '100%', borderCollapse: 'collapse' }}
+              />
+            ),
+          }}
+          fixedHeaderContent={() => (
+            <tr style={resortsStyles.headerRow}>
+              {columns.map((col) => (
+                <th
+                  key={col.key}
+                  style={{ ...resortsStyles.th, width: col.width }}
+                >
+                  {col.label}
+                </th>
+              ))}
+            </tr>
+          )}
+          itemContent={(_index, resort) => (
+            <>
+              {columns.map((col) => (
+                <td
+                  key={col.key}
+                  style={{
+                    ...resortsStyles.td,
+                    width: col.width,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => handleRowClick(resort)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ')
+                      handleRowClick(resort)
+                  }}
+                  tabIndex={col.key === 'resortName' ? 0 : -1}
+                >
+                  {col.key === 'resortName'
+                    ? resort.resortName
+                    : getCellValue(resort, col.key)}
+                </td>
+              ))}
+            </>
+          )}
+        />
+      </div>
+
+      {selectedResort && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={resortsStyles.overlay}
+          onClick={handleCloseDetail}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') handleCloseDetail()
+          }}
+        >
+          <div
+            role="document"
+            style={resortsStyles.detailPopup}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div style={resortsStyles.detailHeader}>
+              <h3 style={resortsStyles.detailTitle}>
+                {selectedResort.resortName}
+              </h3>
+              <button
+                type="button"
+                onClick={handleCloseDetail}
+                style={resortsStyles.detailCloseButton}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={resortsStyles.detailGrid}>
+              <DetailField label="Country" value={selectedResort.country} />
+              <DetailField label="Region" value={selectedResort.region} />
+              <DetailField
+                label="Piste Km"
+                value={
+                  selectedResort.pisteKm ? String(selectedResort.pisteKm) : ''
+                }
+              />
+              <DetailField
+                label="Altitude Range"
+                value={
+                  selectedResort.bottomAltitude && selectedResort.topAltitude
+                    ? `${selectedResort.bottomAltitude}m–${selectedResort.topAltitude}m`
+                    : ''
+                }
+              />
+              <DetailField
+                label="Nearest Airport"
+                value={selectedResort.nearestAirport}
+              />
+              <DetailField
+                label="Transfer Time"
+                value={selectedResort.transferTime}
+              />
+              <DetailField
+                label="Difficulty"
+                value={selectedResort.difficulty}
+              />
+              <DetailField
+                label="Lift Count"
+                value={
+                  selectedResort.liftCount
+                    ? String(selectedResort.liftCount)
+                    : ''
+                }
+              />
+              <DetailField
+                label="Snow Reliability"
+                value={selectedResort.snowReliability}
+              />
+              <DetailField
+                label="Ski Season"
+                value={selectedResort.skiSeasonMonths}
+              />
+              <DetailField label="Latitude" value={selectedResort.latitude} />
+              <DetailField label="Longitude" value={selectedResort.longitude} />
+            </div>
+
+            {selectedResort.description && (
+              <div style={resortsStyles.detailDescriptionSection}>
+                <span style={resortsStyles.detailDescriptionLabel}>
+                  Description
+                </span>
+                <p style={resortsStyles.detailDescriptionText}>
+                  {selectedResort.description}
+                </p>
+              </div>
+            )}
+
+            {selectedResort.websiteUrl && (
+              <a
+                href={selectedResort.websiteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={resortsStyles.websiteLink}
+              >
+                Visit website
+              </a>
+            )}
+
+            {!showProposalForm && !proposalSuccess && (
+              <button
+                type="button"
+                onClick={handleProposeResort}
+                style={resortsStyles.proposeButton}
+              >
+                Propose this resort
+              </button>
+            )}
+
+            {proposalSuccess && (
+              <p style={resortsStyles.successMessage}>
+                Proposal created successfully!
+                {onNavigateToProposals && (
+                  <button
+                    type="button"
+                    onClick={onNavigateToProposals}
+                    style={resortsStyles.navButtonSmall}
+                  >
+                    View in Proposals
+                  </button>
+                )}
+              </p>
+            )}
+
+            {showProposalForm && !proposalSuccess && (
+              <ProposalForm
+                resort={selectedResort}
+                saving={proposalSaving}
+                error={proposalError}
+                onSubmit={handleSubmitProposal}
+                onCancel={() => {
+                  setShowProposalForm(false)
+                  setProposalError('')
+                }}
+                onAuthError={onAuthError}
+                tripId={tripId}
+                userId={user.$id}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DetailField({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={resortsStyles.detailField}>
+      <span style={resortsStyles.detailFieldLabel}>{label}</span>
+      <span style={resortsStyles.detailFieldValue}>{value || '—'}</span>
+    </div>
+  )
+}
+
+interface ProposalFormProps {
+  resort: Resort
+  saving: boolean
+  error: string
+  onSubmit: (
+    e: React.FormEvent,
+    resort: Resort,
+    startDate: string,
+    endDate: string,
+    description: string
+  ) => Promise<void>
+  onCancel: () => void
+  onAuthError?: (err: unknown) => void
+  tripId: string
+  userId: string
+}
+
+function ProposalForm({
+  resort,
+  saving,
+  error,
+  onSubmit,
+  onCancel,
+}: ProposalFormProps) {
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [description, setDescription] = useState('')
+
+  return (
+    <form
+      onSubmit={(e) => onSubmit(e, resort, startDate, endDate, description)}
+      style={resortsStyles.proposalForm}
+    >
+      <h4 style={resortsStyles.proposalFormTitle}>Create Proposal</h4>
+      <p style={resortsStyles.proposalFormSubtitle}>For {resort.resortName}</p>
+      <div style={resortsStyles.proposalFormRow}>
+        <div style={resortsStyles.proposalFormField}>
+          <label
+            htmlFor="proposal-start-date"
+            style={resortsStyles.proposalFormLabel}
+          >
+            Start Date
+          </label>
+          <input
+            id="proposal-start-date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            required
+            style={resortsStyles.proposalFormInput}
+          />
+        </div>
+        <div style={resortsStyles.proposalFormField}>
+          <label
+            htmlFor="proposal-end-date"
+            style={resortsStyles.proposalFormLabel}
+          >
+            End Date
+          </label>
+          <input
+            id="proposal-end-date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            required
+            style={resortsStyles.proposalFormInput}
+          />
+        </div>
+      </div>
+      <div style={resortsStyles.proposalFormField}>
+        <label
+          htmlFor="proposal-description"
+          style={resortsStyles.proposalFormLabel}
+        >
+          Description
+        </label>
+        <textarea
+          id="proposal-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          style={resortsStyles.proposalFormTextarea}
+          placeholder="Describe the trip idea..."
+        />
+      </div>
+      {error && <p style={formStyles.error}>{error}</p>}
+      <div style={resortsStyles.proposalFormActions}>
+        <button type="submit" disabled={saving} style={formStyles.saveButton}>
+          {saving ? 'Creating...' : 'Create Proposal'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={formStyles.cancelButton}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  )
+}
+
+const resortsStyles = {
+  container: {
+    padding: '40px 48px',
+    maxWidth: '960px',
+    margin: '0 auto',
+    fontFamily: fonts.body,
+  },
+  toolbar: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '28px',
+    paddingBottom: '20px',
+    borderBottom: borders.subtle,
+  },
+  heading: {
+    fontFamily: fonts.display,
+    fontSize: '30px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    margin: 0,
+    letterSpacing: '-0.01em',
+  },
+  navButton: {
+    padding: '9px 22px',
+    borderRadius: '7px',
+    border: 'none',
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    letterSpacing: '0.02em',
+  },
+  navButtonSmall: {
+    marginLeft: '8px',
+    padding: '4px 12px',
+    borderRadius: '4px',
+    border: 'none',
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  loading: {
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    margin: 0,
+  },
+  controlsRow: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '12px',
+    marginBottom: '16px',
+    flexWrap: 'wrap' as const,
+  },
+  searchInput: {
+    flex: '1 1 240px',
+    minWidth: '180px',
+    padding: '10px 16px',
+    borderRadius: '8px',
+    border: borders.card,
+    background: colors.bgInput,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    outline: 'none',
+  },
+  filterSelect: {
+    padding: '10px 12px',
+    borderRadius: '8px',
+    border: borders.card,
+    background: colors.bgInput,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    outline: 'none',
+    cursor: 'pointer',
+  },
+  sliderGroup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '2px',
+    minWidth: '140px',
+  },
+  sliderLabel: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    color: colors.textSecondary,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase' as const,
+  },
+  slider: {
+    width: '140px',
+    accentColor: colors.accent,
+  },
+  clearButton: {
+    padding: '10px 16px',
+    borderRadius: '7px',
+    border: borders.card,
+    background: 'transparent',
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    cursor: 'pointer',
+  },
+  resultCount: {
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    color: colors.textSecondary,
+    marginBottom: '12px',
+  },
+  tableContainer: {
+    borderRadius: '10px',
+    border: borders.card,
+    overflow: 'hidden',
+    background: colors.bgCard,
+    height: 'calc(100vh - 300px)',
+    minHeight: '300px',
+  },
+  headerRow: {
+    background: colors.bgCard,
+  },
+  th: {
+    padding: '12px 16px',
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase' as const,
+    textAlign: 'left' as const,
+    borderBottom: borders.subtle,
+    whiteSpace: 'nowrap' as const,
+    position: 'sticky' as const,
+    top: 0,
+    zIndex: 1,
+    background: colors.bgCard,
+  },
+  td: {
+    padding: '10px 16px',
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: colors.textData,
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '200px',
+  },
+  overlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200,
+  },
+  detailPopup: {
+    background: colors.bgCard,
+    border: borders.card,
+    borderRadius: '12px',
+    padding: '28px',
+    maxWidth: '560px',
+    width: '100%',
+    maxHeight: '80vh',
+    overflowY: 'auto' as const,
+    margin: '16px',
+  },
+  detailHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '20px',
+  },
+  detailTitle: {
+    fontFamily: fonts.display,
+    fontSize: '24px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    margin: 0,
+  },
+  detailCloseButton: {
+    background: 'none',
+    border: 'none',
+    color: colors.textSecondary,
+    fontSize: '24px',
+    cursor: 'pointer',
+    padding: '4px 8px',
+    lineHeight: 1,
+  },
+  detailGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '12px',
+    marginBottom: '16px',
+  },
+  detailField: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '2px',
+  },
+  detailFieldLabel: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase' as const,
+  },
+  detailFieldValue: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: colors.textPrimary,
+  },
+  detailDescriptionSection: {
+    marginBottom: '16px',
+  },
+  detailDescriptionLabel: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase' as const,
+  },
+  detailDescriptionText: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: colors.textPrimary,
+    lineHeight: '1.6',
+    margin: '4px 0 0',
+  },
+  websiteLink: {
+    display: 'inline-block',
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.accent,
+    marginBottom: '16px',
+  },
+  proposeButton: {
+    padding: '12px 24px',
+    borderRadius: '8px',
+    border: 'none',
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    width: '100%',
+  },
+  successMessage: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: '#4ade80',
+    margin: '0',
+  },
+  proposalForm: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '14px',
+    marginTop: '16px',
+    padding: '16px',
+    background: colors.bgInput,
+    borderRadius: '8px',
+    border: borders.card,
+  },
+  proposalFormTitle: {
+    fontFamily: fonts.display,
+    fontSize: '18px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    margin: 0,
+  },
+  proposalFormSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.textSecondary,
+    margin: '-8px 0 0',
+  },
+  proposalFormRow: {
+    display: 'flex',
+    gap: '12px',
+  },
+  proposalFormField: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+    flex: '1 1 auto',
+  },
+  proposalFormLabel: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase' as const,
+  },
+  proposalFormInput: {
+    padding: '10px 14px',
+    borderRadius: '7px',
+    border: borders.card,
+    background: colors.bgCard,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    outline: 'none',
+  },
+  proposalFormTextarea: {
+    padding: '10px 14px',
+    borderRadius: '7px',
+    border: borders.card,
+    background: colors.bgCard,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    outline: 'none',
+    resize: 'vertical' as const,
+    minHeight: '60px',
+  },
+  proposalFormActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+} as const

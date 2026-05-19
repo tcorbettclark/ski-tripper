@@ -22,6 +22,7 @@ import Poll from './Poll'
 import PreferencesForm from './PreferencesForm'
 import PreferencesModal from './PreferencesModal'
 import Proposals from './Proposals'
+import Resorts from './Resorts'
 import TripInfo from './TripInfo'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
@@ -87,7 +88,7 @@ const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
 
-type TripDetailTab = 'overview' | 'proposals' | 'poll'
+type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
 export default function App({
   hasSession = _hasSession,
@@ -349,6 +350,16 @@ export default function App({
                 onNavigateToTab={(tab) =>
                   setTripDetailTab(tab as TripDetailTab)
                 }
+                onAuthError={onAuthError}
+              />
+            </ErrorBoundary>
+          )}
+          {tripDetailTab === 'resorts' && (
+            <ErrorBoundary>
+              <Resorts
+                user={user}
+                tripId={selectedTripId}
+                onNavigateToProposals={() => setTripDetailTab('proposals')}
                 onAuthError={onAuthError}
               />
             </ErrorBoundary>
