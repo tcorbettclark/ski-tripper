@@ -17,6 +17,7 @@ import {
 } from './backend'
 import ErrorBoundary from './ErrorBoundary'
 import Header from './Header'
+import Overview from './Overview'
 import Poll from './Poll'
 import PreferencesForm from './PreferencesForm'
 import PreferencesModal from './PreferencesModal'
@@ -86,7 +87,7 @@ const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
 
-type TripDetailTab = 'proposals' | 'poll'
+type TripDetailTab = 'overview' | 'proposals' | 'poll'
 
 export default function App({
   hasSession = _hasSession,
@@ -107,7 +108,7 @@ export default function App({
     useAuth({ hasSession, accountGet, deleteSession })
   const [page, setPage] = useState<'login' | 'signup'>('login')
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
-  const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('proposals')
+  const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
   const [trips, setTrips] = useState<Trip[]>([])
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
@@ -173,12 +174,10 @@ export default function App({
       autoSelectedRef.current = true
       const trip = trips[0]
       setSelectedTripId(trip.$id)
-      setTripDetailTab('proposals')
+      setTripDetailTab('overview')
       listPolls(trip.$id, user.$id).then(({ polls }) => {
-        const hasActivePoll = polls.some((p) => p.state === 'OPEN')
         const open = polls.find((p) => p.state === 'OPEN')
         setActivePollEndDate(open?.endDate || null)
-        setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
       })
       setView('tripDetail')
     }
@@ -200,19 +199,17 @@ export default function App({
     setSelectedTripId(tripId)
     setView('tripDetail')
     setShowTripInfo(false)
-    setTripDetailTab('proposals')
+    setTripDetailTab('overview')
     listPolls(tripId, user.$id).then(({ polls }) => {
-      const hasActivePoll = polls.some((p) => p.state === 'OPEN')
       const open = polls.find((p) => p.state === 'OPEN')
       setActivePollEndDate(open?.endDate || null)
-      setTripDetailTab(hasActivePoll ? 'poll' : 'proposals')
     })
   }
 
   function handleViewAllTrips() {
     setView('tripList')
     setSelectedTripId(null)
-    setTripDetailTab('proposals')
+    setTripDetailTab('overview')
     setShowTripInfo(false)
     setTripInfoTripId(null)
     setActivePollEndDate(null)
@@ -343,6 +340,19 @@ export default function App({
 
       {view === 'tripDetail' && selectedTripId && selectedTrip && (
         <>
+          {tripDetailTab === 'overview' && (
+            <ErrorBoundary>
+              <Overview
+                user={user}
+                trip={selectedTrip}
+                tripId={selectedTripId}
+                onNavigateToTab={(tab) =>
+                  setTripDetailTab(tab as TripDetailTab)
+                }
+                onAuthError={onAuthError}
+              />
+            </ErrorBoundary>
+          )}
           {tripDetailTab === 'proposals' && (
             <ErrorBoundary>
               <Proposals

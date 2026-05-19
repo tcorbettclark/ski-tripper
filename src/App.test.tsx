@@ -191,14 +191,14 @@ describe('App', () => {
     })
   })
 
-  it('defaults to the Proposals tab for a single trip with no active polls', async () => {
+  it('defaults to the Overview tab for a single trip with no active polls', async () => {
     renderAppWithTrip()
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /proposals/i }))
+      expect(screen.getByRole('button', { name: /^overview$/i }))
     })
   })
 
-  it('defaults to the Poll tab when there is an active poll', async () => {
+  it('defaults to the Overview tab when there is an active poll', async () => {
     renderAppWithTrip({
       listPolls: () =>
         Promise.resolve({
@@ -210,15 +210,14 @@ describe('App', () => {
               pollCreatorUserId: 'user-1',
               pollCreatorUserName: 'Test',
               proposalIds: [],
-              startDate: '2024-01-01T00:00:00.000Z',
+              startDate: '2024-01-01T00:00:00Z',
               endDate: '2025-01-08T00:00:00.000Z',
             },
           ],
         }),
     })
     await waitFor(() => {
-      const pollTab = screen.getByRole('button', { name: /^poll/i })
-      expect(pollTab.className !== 'active' || pollTab)
+      expect(screen.getByRole('button', { name: /^overview$/i }))
     })
   })
 
@@ -372,7 +371,7 @@ describe('App', () => {
     await ue.click(screen.getByText('Alps adventure'))
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /proposals/i }))
+      expect(screen.getByRole('button', { name: /^proposals$/i }))
     })
     await ue.click(screen.getByRole('button', { name: /my trips/i }))
 

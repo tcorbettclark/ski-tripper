@@ -86,6 +86,17 @@ export default function Header({
       <nav style={headerStyles.centerTabs}>
         <button
           type="button"
+          onClick={() => onTripDetailTabChange('overview')}
+          style={
+            tripDetailTab === 'overview'
+              ? headerStyles.subTabActive
+              : headerStyles.subTab
+          }
+        >
+          Overview
+        </button>
+        <button
+          type="button"
           onClick={() => onTripDetailTabChange('proposals')}
           style={
             tripDetailTab === 'proposals'
