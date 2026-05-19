@@ -158,6 +158,20 @@ async function deduplicateWithLLM(
     return candidates
   }
 
+  const existingLower = new Set(existingNames.map((n) => n.toLowerCase()))
+
+  const afterExact = candidates.filter((c) => {
+    if (existingLower.has(c.resortName.toLowerCase())) {
+      console.log(`  Exact duplicate removed: ${c.resortName}`)
+      return false
+    }
+    return true
+  })
+
+  if (afterExact.length === 0) {
+    return afterExact
+  }
+
   const dedupeSchema = z.object({
     duplicates: z.array(
       z.object({
@@ -197,7 +211,7 @@ async function deduplicateWithLLM(
 ${existingNames.join(', ')}
 
 And these candidate resorts to add:
-${candidates.map((c) => c.resortName).join(', ')}
+${afterExact.map((c) => c.resortName).join(', ')}
 
 Which candidates are duplicates of existing resorts? Consider alternate spellings, abbreviations, and common name variations (e.g., "St. Anton" = "Sankt Anton", "Val d'Isere" = "Val d'Isère"). Only flag clear duplicates, not merely resorts in the same area. Return the result as JSON.`
 
@@ -219,15 +233,15 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
     })
 
     if (!result) {
-      return candidates
+      return afterExact
     }
 
     const duplicateNames = new Set(result.duplicates.map((d) => d.candidate))
-    const kept = candidates.filter((c) => !duplicateNames.has(c.resortName))
-    const removed = candidates.filter((c) => duplicateNames.has(c.resortName))
+    const kept = afterExact.filter((c) => !duplicateNames.has(c.resortName))
+    const removed = afterExact.filter((c) => duplicateNames.has(c.resortName))
 
     if (removed.length > 0) {
-      console.log('\nLLM identified duplicates:')
+      console.log('\nLLM identified fuzzy duplicates:')
       for (const d of result.duplicates) {
         console.log(`  - ${d.candidate}: ${d.reason}`)
       }
@@ -239,7 +253,7 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
     console.error(
       `Deduplication LLM call failed: ${message}. Keeping all candidates.`
     )
-    return candidates
+    return afterExact
   }
 }
 
