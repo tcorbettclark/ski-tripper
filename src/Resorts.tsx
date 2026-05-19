@@ -383,6 +383,8 @@ export default function Resorts({
             role="document"
             style={resortsStyles.detailPopup}
             onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             <div style={resortsStyles.detailHeader}>
               <h3 style={resortsStyles.detailTitle}>
