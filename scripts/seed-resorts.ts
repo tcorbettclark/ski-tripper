@@ -135,7 +135,7 @@ async function callLLM(
             },
             country: {
               type: 'string',
-              description: 'The country ISO code where the resort is located',
+              description: 'The country where the resort is located',
             },
           },
           required: ['resortName', 'country'],

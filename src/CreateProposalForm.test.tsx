@@ -1,7 +1,62 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react'
 import type { Models } from 'appwrite'
 import CreateProposalForm from './CreateProposalForm'
+import type { Resort } from './types.d'
+
+const sampleResorts: Resort[] = [
+  {
+    $id: 'r-1',
+    $createdAt: '2025-01-01T00:00:00Z',
+    $updatedAt: '2025-01-01T00:00:00Z',
+    resortName: "Val d'Isère",
+    country: 'France',
+    region: 'Alps',
+    description: 'A famous ski resort',
+    latitude: '45.4475',
+    longitude: '6.9219',
+    topAltitude: 3330,
+    bottomAltitude: 1850,
+    nearestAirport: 'GVA',
+    transferTime: '1h 30m',
+    pisteKm: 300,
+    difficulty: 'advanced',
+    liftCount: 80,
+    snowReliability: 'high',
+    skiSeasonMonths: 'Dec-Apr',
+    websiteUrl: 'https://valdisere.com',
+    enriched: true,
+  },
+  {
+    $id: 'r-2',
+    $createdAt: '2025-01-01T00:00:00Z',
+    $updatedAt: '2025-01-01T00:00:00Z',
+    resortName: 'Whistler',
+    country: 'Canada',
+    region: 'British Columbia',
+    description: 'North American resort',
+    latitude: '50.1207',
+    longitude: '-122.9640',
+    topAltitude: 2280,
+    bottomAltitude: 675,
+    nearestAirport: 'YVR',
+    transferTime: '2h',
+    pisteKm: 200,
+    difficulty: 'intermediate',
+    liftCount: 37,
+    snowReliability: 'high',
+    skiSeasonMonths: 'Nov-Apr',
+    websiteUrl: 'https://whistler.com',
+    enriched: true,
+  },
+]
 
 function renderForm(props = {}) {
   const defaults = {
@@ -17,6 +72,17 @@ function renderForm(props = {}) {
   }
   const utils = render(<CreateProposalForm {...defaults} {...props} />)
   return { ...utils, ...defaults, ...props }
+}
+
+function getSuggestionsDropdown(container: HTMLElement) {
+  return container.querySelector('[data-testid="resort-suggestions"]')
+}
+
+function typeInResortInput(container: HTMLElement, value: string) {
+  const input = container.querySelector(
+    '[name="resortName"]'
+  ) as HTMLInputElement
+  fireEvent.change(input, { target: { name: 'resortName', value } })
 }
 
 describe('CreateProposalForm', () => {
@@ -164,6 +230,99 @@ describe('CreateProposalForm', () => {
 
     await act(async () => {
       resolvePromise?.({ $id: 'p-1' })
+    })
+  })
+
+  describe('resort autocomplete', () => {
+    it('shows suggestions when typing resort name', () => {
+      const { container } = renderForm({ resorts: sampleResorts })
+      typeInResortInput(container, 'Val')
+      const dropdown = getSuggestionsDropdown(container)
+      expect(dropdown).toBeTruthy()
+      expect(
+        within(dropdown! as HTMLElement).getByText("Val d'Isère")
+      ).toBeTruthy()
+    })
+
+    it('does not show suggestions when input is empty', () => {
+      const { container } = renderForm({ resorts: sampleResorts })
+      typeInResortInput(container, '')
+      const dropdown = getSuggestionsDropdown(container)
+      expect(dropdown).toBeNull()
+    })
+
+    it('auto-fills resort fields when a suggestion is selected', () => {
+      const { container } = renderForm({ resorts: sampleResorts })
+      typeInResortInput(container, 'Val')
+
+      const suggestion = container.querySelector(
+        '[data-testid="resort-suggestion-r-1"]'
+      ) as HTMLElement
+      fireEvent.mouseDown(suggestion)
+
+      const countrySelect = container.querySelector(
+        '[name="country"]'
+      ) as HTMLSelectElement
+      expect(countrySelect.value).toBe('France')
+
+      const regionInput = container.querySelector(
+        '[name="region"]'
+      ) as HTMLInputElement
+      expect(regionInput.value).toBe('Alps')
+
+      const topAltInput = container.querySelector(
+        '[name="topAltitude"]'
+      ) as HTMLInputElement
+      expect(topAltInput.value).toBe('3330')
+
+      const bottomAltInput = container.querySelector(
+        '[name="bottomAltitude"]'
+      ) as HTMLInputElement
+      expect(bottomAltInput.value).toBe('1850')
+
+      const airportInput = container.querySelector(
+        '[name="nearestAirport"]'
+      ) as HTMLInputElement
+      expect(airportInput.value).toBe('GVA')
+    })
+
+    it('does not pre-fill description when resort is selected', () => {
+      const { container } = renderForm({ resorts: sampleResorts })
+      typeInResortInput(container, 'Val')
+
+      const suggestion = container.querySelector(
+        '[data-testid="resort-suggestion-r-1"]'
+      ) as HTMLElement
+      fireEvent.mouseDown(suggestion)
+
+      const desc = container.querySelector(
+        '#description'
+      ) as HTMLTextAreaElement
+      expect(desc.value).toBe('')
+    })
+
+    it('allows free-text entry for resort name not in catalog', () => {
+      const { container } = renderForm({ resorts: sampleResorts })
+      typeInResortInput(container, 'My Custom Resort')
+      const input = container.querySelector(
+        '[name="resortName"]'
+      ) as HTMLInputElement
+      expect(input.value).toBe('My Custom Resort')
+
+      const countrySelect = container.querySelector(
+        '[name="country"]'
+      ) as HTMLSelectElement
+      expect(countrySelect.value).toBe('')
+    })
+
+    it('filters suggestions by country and region', () => {
+      const { container } = renderForm({ resorts: sampleResorts })
+      typeInResortInput(container, 'Canada')
+      const dropdown = getSuggestionsDropdown(container)
+      expect(dropdown).toBeTruthy()
+      expect(
+        within(dropdown! as HTMLElement).getByText('Whistler')
+      ).toBeTruthy()
     })
   })
 })
