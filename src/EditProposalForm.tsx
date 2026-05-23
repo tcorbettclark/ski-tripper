@@ -438,7 +438,7 @@ export default function EditProposalForm({
               onChange={(e) =>
                 updateAccommodationField(tempId, 'description', e.target.value)
               }
-              placeholder="Short description of the accommodation"
+              placeholder="Notes/description about the accommodation"
             />
           </div>
         ))}
