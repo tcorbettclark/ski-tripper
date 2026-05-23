@@ -15,6 +15,18 @@ import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
 import { isValidUrl, sanitizeUrl } from './utils'
 
+const difficultyLabels: Record<string, string> = {
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  advanced: 'Advanced',
+}
+
+const snowReliabilityLabels: Record<string, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+}
+
 interface ProposalCardProps {
   proposal: Proposal
   userId: string
@@ -200,6 +212,9 @@ export default function ProposalCard({
                   )}
                 {proposal.country || '—'}
               </span>
+              {proposal.region && (
+                <span style={styles.regionLabel}>{proposal.region}</span>
+              )}
               <span style={getBadgeStyle(proposal.state)}>
                 {proposal.state}
               </span>
@@ -225,11 +240,41 @@ export default function ProposalCard({
             label="Altitude Range"
             value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
           />
+          <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
+          <DetailField
+            label="Difficulty"
+            value={difficultyLabels[proposal.difficulty] ?? proposal.difficulty}
+          />
+          <DetailField label="Lifts" value={String(proposal.liftCount)} />
+          <DetailField
+            label="Snow Reliability"
+            value={
+              snowReliabilityLabels[proposal.snowReliability] ??
+              proposal.snowReliability
+            }
+          />
+          <DetailField label="Ski Season" value={proposal.skiSeasonMonths} />
           <DetailField
             label="Nearest Airport"
             value={proposal.nearestAirport}
           />
           <DetailField label="Transfer Time" value={proposal.transferTime} />
+          <DetailField label="Latitude" value={proposal.latitude} />
+          <DetailField label="Longitude" value={proposal.longitude} />
+          {proposal.websiteUrl && isValidUrl(proposal.websiteUrl) && (
+            <div style={{ gridColumn: '1/-1' }}>
+              <DetailField label="Website">
+                <a
+                  href={sanitizeUrl(proposal.websiteUrl)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.websiteLink}
+                >
+                  {proposal.websiteUrl.replace(/^https?:\/\//, '')} ↗
+                </a>
+              </DetailField>
+            </div>
+          )}
           <div style={{ gridColumn: '1/-1' }}>
             <DetailField label="Description" value={proposal.description} />
           </div>
@@ -348,8 +393,8 @@ export default function ProposalCard({
               Delete Proposal?
             </h4>
             <p style={styles.confirmText}>
-              Are you sure you want to delete "{proposal.resortName}"? This
-              cannot be undone.
+              Are you sure you want to delete &quot;{proposal.resortName}&quot;?
+              This cannot be undone.
             </p>
             <div style={styles.confirmActions}>
               <button
@@ -420,6 +465,13 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: '13px',
     color: colors.textSecondary,
+  },
+  regionLabel: {
+    color: colors.textSecondary,
+  },
+  websiteLink: {
+    color: colors.accent,
+    textDecoration: 'none',
   },
   flag: {
     display: 'inline-block',

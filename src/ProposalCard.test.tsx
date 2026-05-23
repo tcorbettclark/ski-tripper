@@ -60,6 +60,88 @@ describe('ProposalCard', () => {
     expect(screen.getByText('John Doe')).toBeDefined()
   })
 
+  it('displays new resort fields', () => {
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    expect(screen.getByText('Alps')).toBeDefined()
+    expect(screen.getByText('600 km')).toBeDefined()
+    expect(screen.getByText('Intermediate')).toBeDefined()
+    expect(screen.getByText('50')).toBeDefined()
+    expect(screen.getByText('High')).toBeDefined()
+    expect(screen.getByText('Dec-Apr')).toBeDefined()
+    expect(screen.getByText('45.9163')).toBeDefined()
+    expect(screen.getByText('7.7554')).toBeDefined()
+  })
+
+  it('displays altitude range from topAltitude and bottomAltitude', () => {
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    expect(screen.getByText('1500m – 3000m')).toBeDefined()
+  })
+
+  it('displays website link when websiteUrl is valid', () => {
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    const link = screen.getByText('example.com ↗')
+    expect(link).toBeDefined()
+    expect(link.closest('a')!.getAttribute('href')).toBe('https://example.com/')
+  })
+
+  it('hides website link when websiteUrl is empty', () => {
+    const noWebsiteProposal = { ...baseProposal, websiteUrl: '' }
+    render(
+      <ProposalCard
+        proposal={noWebsiteProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    expect(screen.queryByText(/↗/)).toBeNull()
+  })
+
   it('shows edit and submit buttons for owner + DRAFT', () => {
     render(
       <ProposalCard
