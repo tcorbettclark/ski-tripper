@@ -194,7 +194,22 @@ describe('Resorts', () => {
     expect(screen.queryByRole('button', { name: /view proposals/i })).toBeNull()
   })
 
-  it('shows clear filters button after typing in search', async () => {
+  it('disables clear filters button when no filters are active', async () => {
+    await act(async () => {
+      render(<Resorts {...defaultProps()} />)
+    })
+    await waitFor(() => {
+      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    })
+
+    const clearButton = screen.getByRole('button', {
+      name: /clear filters/i,
+    }) as HTMLButtonElement
+    expect(clearButton).toBeTruthy()
+    expect(clearButton.disabled).toBe(true)
+  })
+
+  it('enables clear filters button when filters are active', async () => {
     const eventUser = userEvent.setup()
     await act(async () => {
       render(<Resorts {...defaultProps()} />)
@@ -203,12 +218,14 @@ describe('Resorts', () => {
       expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
     })
 
-    expect(screen.queryByRole('button', { name: /clear filters/i })).toBeNull()
-
     const searchInput = screen.getByPlaceholderText('Search resorts...')
     await eventUser.type(searchInput, 'Chamonix')
 
-    expect(screen.getByRole('button', { name: /clear filters/i })).toBeTruthy()
+    const clearButton = screen.getByRole('button', {
+      name: /clear filters/i,
+    }) as HTMLButtonElement
+    expect(clearButton).toBeTruthy()
+    expect(clearButton.disabled).toBe(false)
   })
 
   it('clears search when clear button is clicked', async () => {

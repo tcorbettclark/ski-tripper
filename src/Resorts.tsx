@@ -304,15 +304,19 @@ export default function Resorts({
             style={resortsStyles.slider}
           />
         </div>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            onClick={clearFilters}
-            style={resortsStyles.clearButton}
-          >
-            Clear filters
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={clearFilters}
+          disabled={!hasActiveFilters}
+          style={{
+            ...resortsStyles.clearButton,
+            ...(hasActiveFilters
+              ? resortsStyles.clearButtonEnabled
+              : resortsStyles.clearButtonDisabled),
+          }}
+        >
+          Clear filters
+        </button>
       </div>
 
       <div style={resortsStyles.resultCount}>
@@ -735,6 +739,12 @@ const resortsStyles = {
     color: colors.textSecondary,
     fontFamily: fonts.body,
     fontSize: '13px',
+  },
+  clearButtonDisabled: {
+    opacity: 0.4,
+    cursor: 'default',
+  },
+  clearButtonEnabled: {
     cursor: 'pointer',
   },
   resultCount: {
