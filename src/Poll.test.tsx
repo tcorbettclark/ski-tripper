@@ -700,6 +700,35 @@ describe('Poll', () => {
       })
     })
 
+    it('shows empty state for non-coordinator when no active poll', async () => {
+      await act(async () => {
+        renderPoll({
+          getCoordinatorParticipant: createNonCoordinatorMock(),
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/No open poll yet/i))
+        expect(screen.getByText(/coordinator will create one when ready/i))
+      })
+    })
+
+    it('shows empty state for coordinator without submitted proposals', async () => {
+      await act(async () => {
+        renderPoll({
+          getCoordinatorParticipant: createCoordinatorMock(),
+          listProposals: mock(() =>
+            Promise.resolve({
+              proposals: [createMockProposal({ state: 'DRAFT' })],
+            })
+          ),
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getByText(/No open poll/i))
+        expect(screen.getByText(/Submit proposals to enable poll creation/i))
+      })
+    })
+
     it('shows error when closePoll rejects', async () => {
       const closePoll = mock(() =>
         Promise.reject(new Error('Close poll failed'))

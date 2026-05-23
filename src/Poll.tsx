@@ -295,7 +295,13 @@ export default function Poll({
                 <p style={formStyles.error}>{createPollError}</p>
               )}
             </div>
-          ) : null}
+          ) : (
+            <p style={styles.promptMessage}>
+              {isCoordinator
+                ? 'No open poll. Submit proposals to enable poll creation.'
+                : 'No open poll yet. The coordinator will create one when ready.'}
+            </p>
+          )}
 
           {pastPolls.length > 0 && (
             <div style={styles.pastSection}>
