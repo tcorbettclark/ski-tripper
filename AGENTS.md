@@ -28,6 +28,10 @@ If any fail, fix issues first before committing.
 
 Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
 
+## Code Search
+
+Use the semble-search subagent to find code. Only use grep when the subagent cannot find the code.
+
 ## Code Style
 
 - TypeScript with strict mode
