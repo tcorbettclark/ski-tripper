@@ -556,7 +556,7 @@ function ProposalForm({
 }: ProposalFormProps) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [description, setDescription] = useState('')
+  const [description, setDescription] = useState(resort.description || '')
 
   return (
     <form

@@ -119,6 +119,7 @@ function resortToFormFields(resort: Resort): Partial<typeof EMPTY_FORM> {
     websiteUrl: resort.websiteUrl,
     latitude: resort.latitude,
     longitude: resort.longitude,
+    description: resort.description || '',
   }
 }
 

@@ -286,7 +286,7 @@ describe('CreateProposalForm', () => {
       expect(airportInput.value).toBe('GVA')
     })
 
-    it('does not pre-fill description when resort is selected', () => {
+    it('pre-fills description when resort is selected', () => {
       const { container } = renderForm({ resorts: sampleResorts })
       typeInResortInput(container, 'Val')
 
@@ -298,7 +298,7 @@ describe('CreateProposalForm', () => {
       const desc = container.querySelector(
         '#description'
       ) as HTMLTextAreaElement
-      expect(desc.value).toBe('')
+      expect(desc.value).toBe('A famous ski resort')
     })
 
     it('allows free-text entry for resort name not in catalog', () => {
