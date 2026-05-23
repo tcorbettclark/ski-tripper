@@ -141,6 +141,7 @@ export const fieldStyles = {
       textTransform: 'uppercase' as const,
     },
     input: {
+      height: '40px',
       padding: '10px 14px',
       borderRadius: '7px',
       border: borders.card,
