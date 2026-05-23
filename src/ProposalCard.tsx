@@ -259,8 +259,24 @@ export default function ProposalCard({
             value={proposal.nearestAirport}
           />
           <DetailField label="Transfer Time" value={proposal.transferTime} />
-          <DetailField label="Latitude" value={proposal.latitude} />
-          <DetailField label="Longitude" value={proposal.longitude} />
+          <DetailField label="Latitude/longitude">
+            {proposal.latitude || proposal.longitude ? (
+              <>
+                {proposal.latitude}, {proposal.longitude}{' '}
+                <a
+                  href={`https://www.google.com/maps?q=${proposal.latitude},${proposal.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.mapLink}
+                  aria-label="Open in Google Maps"
+                >
+                  🔗
+                </a>
+              </>
+            ) : (
+              '—'
+            )}
+          </DetailField>
           {proposal.websiteUrl && isValidUrl(proposal.websiteUrl) && (
             <div style={{ gridColumn: '1/-1' }}>
               <DetailField label="Website">
@@ -472,6 +488,11 @@ const styles = {
   websiteLink: {
     color: colors.accent,
     textDecoration: 'none',
+  },
+  mapLink: {
+    color: colors.accent,
+    textDecoration: 'none',
+    fontSize: '12px',
   },
   flag: {
     display: 'inline-block',

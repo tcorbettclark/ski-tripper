@@ -81,8 +81,12 @@ describe('ProposalCard', () => {
     expect(screen.getByText('50')).toBeDefined()
     expect(screen.getByText('High')).toBeDefined()
     expect(screen.getByText('Dec-Apr')).toBeDefined()
-    expect(screen.getByText('45.9163')).toBeDefined()
-    expect(screen.getByText('7.7554')).toBeDefined()
+    expect(
+      screen.getByText((content) => content.includes('45.9163'))
+    ).toBeDefined()
+    expect(
+      screen.getByText((content) => content.includes('7.7554'))
+    ).toBeDefined()
   })
 
   it('displays altitude range from topAltitude and bottomAltitude', () => {

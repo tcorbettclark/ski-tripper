@@ -448,8 +448,24 @@ export default function Resorts({
                 label="Ski Season"
                 value={selectedResort.skiSeasonMonths}
               />
-              <DetailField label="Latitude" value={selectedResort.latitude} />
-              <DetailField label="Longitude" value={selectedResort.longitude} />
+              <DetailField label="Latitude/longitude">
+                {selectedResort.latitude || selectedResort.longitude ? (
+                  <>
+                    {selectedResort.latitude}, {selectedResort.longitude}{' '}
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={resortsStyles.mapLink}
+                      aria-label="Open in Google Maps"
+                    >
+                      🔗
+                    </a>
+                  </>
+                ) : (
+                  '—'
+                )}
+              </DetailField>
             </div>
 
             {selectedResort.description && (
@@ -521,11 +537,21 @@ export default function Resorts({
   )
 }
 
-function DetailField({ label, value }: { label: string; value: string }) {
+function DetailField({
+  label,
+  value,
+  children,
+}: {
+  label: string
+  value?: string
+  children?: React.ReactNode
+}) {
   return (
     <div style={resortsStyles.detailField}>
       <span style={resortsStyles.detailFieldLabel}>{label}</span>
-      <span style={resortsStyles.detailFieldValue}>{value || '—'}</span>
+      <span style={resortsStyles.detailFieldValue}>
+        {children ?? (value || '—')}
+      </span>
     </div>
   )
 }
@@ -861,6 +887,11 @@ const resortsStyles = {
   },
   detailDescriptionSection: {
     marginBottom: '16px',
+  },
+  mapLink: {
+    color: colors.accent,
+    textDecoration: 'none',
+    fontSize: '12px',
   },
   detailDescriptionLabel: {
     fontFamily: fonts.body,
