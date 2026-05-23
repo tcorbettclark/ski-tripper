@@ -30,7 +30,7 @@ Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
 
 ## Code Search
 
-Use the semble-search subagent to find code. Only use grep when the subagent cannot find the code.
+Use the semble MCP to search code.
 
 ## Code Style
 
