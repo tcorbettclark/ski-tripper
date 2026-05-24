@@ -99,18 +99,11 @@ describe('CreateProposalForm', () => {
     expect(textarea).toBeTruthy()
   })
 
-  it('renders accommodations section with add button', () => {
-    renderForm()
-    expect(screen.getByText(/accommodations/i)).toBeTruthy()
-    expect(screen.getByText(/\+ add accommodation/i)).toBeTruthy()
-  })
-
-  it('calls createProposal and createAccommodation on submit', async () => {
+  it('calls createProposal on submit', async () => {
     const createProposal = mock(() =>
       Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })
     )
-    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-1' }))
-    const { container } = renderForm({ createProposal, createAccommodation })
+    const { container } = renderForm({ createProposal })
 
     function fill(name: string, value: string) {
       const el = container.querySelector(`[name="${name}"]`)
@@ -136,11 +129,6 @@ describe('CreateProposalForm', () => {
     fill('endDate', '2027-01-22')
     fill('description', 'Great resort for all levels.')
 
-    const accNameInput = container.querySelector('[name^="acc-name-"]')
-    if (accNameInput) {
-      fireEvent.change(accNameInput, { target: { value: 'Hotel Bellevue' } })
-    }
-
     fireEvent.submit(container.querySelector('form') as HTMLFormElement)
 
     await waitFor(() => {
@@ -158,25 +146,15 @@ describe('CreateProposalForm', () => {
     expect(resortData.resortName).toBe("Val d'Isère")
     expect(resortData.country).toBe('France')
     expect(calledData.description).toBe('Great resort for all levels.')
-
-    expect(createAccommodation).toHaveBeenCalledTimes(1)
-    const [, , accData] = createAccommodation.mock.calls[0] as unknown as [
-      unknown,
-      unknown,
-      { name: string },
-    ]
-    expect(accData.name).toBe('Hotel Bellevue')
   })
 
   it('calls onCreated with result and onDismiss on success', async () => {
     const result = { $id: 'p-1', resortName: "Val d'Isère" }
     const createProposal = mock(() => Promise.resolve(result))
-    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-1' }))
     const onCreated = mock(() => {})
     const onDismiss = mock(() => {})
     const { container } = renderForm({
       createProposal,
-      createAccommodation,
       onCreated,
       onDismiss,
     })
