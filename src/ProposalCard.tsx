@@ -288,11 +288,10 @@ export default function ProposalCard({
           {proposal.proposerUserName && (
             <span style={styles.headerRight}>
               {proposal.state === 'DRAFT'
-                ? 'being drafted by'
+                ? `...being drafted by ${proposal.proposerUserName}`
                 : proposal.state === 'SUBMITTED'
-                  ? 'proposed by'
-                  : 'was proposed by'}{' '}
-              {proposal.proposerUserName}
+                  ? `Proposed by ${proposal.proposerUserName}`
+                  : `(was proposed by ${proposal.proposerUserName})`}
             </span>
           )}
         </div>

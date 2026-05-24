@@ -265,7 +265,12 @@ const styles = {
     resize: 'vertical',
     minHeight: '80px',
   },
-  actions: { display: 'flex', gap: '8px', alignItems: 'center' },
+  actions: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
   saveButton: {
     padding: '8px 20px',
     borderRadius: '6px',
