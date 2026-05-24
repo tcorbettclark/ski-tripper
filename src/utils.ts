@@ -29,7 +29,7 @@ export function randomThreeWords(): string {
 }
 
 export function formatDate(iso: string) {
-  return dayjs(iso).format('DD MMM YYYY')
+  return dayjs(iso).format('ddd DD MMM YYYY')
 }
 
 export function formatTimeRemaining(endDate: string) {

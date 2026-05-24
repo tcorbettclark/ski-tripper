@@ -17,7 +17,7 @@ import DiscussionSection from './DiscussionSection'
 import EditProposalForm from './EditProposalForm'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
-import { ensureUrlScheme, isValidUrl, sanitizeUrl } from './utils'
+import { ensureUrlScheme, formatDate, isValidUrl, sanitizeUrl } from './utils'
 
 const difficultyLabels: Record<string, string> = {
   beginner: 'Beginner',
@@ -347,8 +347,14 @@ export default function ProposalCard({
           {!proposalCollapsed && (
             <>
               <div style={styles.grid}>
-                <DetailField label="Start Date" value={proposal.startDate} />
-                <DetailField label="End Date" value={proposal.endDate} />
+                <DetailField
+                  label="Start Date"
+                  value={formatDate(proposal.startDate)}
+                />
+                <DetailField
+                  label="End Date"
+                  value={formatDate(proposal.endDate)}
+                />
                 <DetailField
                   label="Altitude Range"
                   value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
