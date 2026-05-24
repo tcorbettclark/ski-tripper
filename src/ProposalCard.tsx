@@ -143,6 +143,8 @@ export default function ProposalCard({
   const isDraft = proposal.state === 'DRAFT'
   const isRejected = proposal.state === 'REJECTED'
   const canAct = isOwner && isDraft
+  const isAccommodationEditing =
+    addingAccommodation || editingAccommodationId !== null
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
   const canRevertToDraft = isCoordinator && isRejected
 
@@ -585,7 +587,11 @@ export default function ProposalCard({
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(true)}
-                style={styles.deleteButton}
+                disabled={isAccommodationEditing}
+                style={{
+                  ...styles.deleteButton,
+                  ...(isAccommodationEditing ? styles.buttonDisabled : {}),
+                }}
               >
                 Delete
               </button>
@@ -593,8 +599,13 @@ export default function ProposalCard({
                 <button
                   type="button"
                   onClick={initiateSubmit}
-                  disabled={submitting}
-                  style={styles.submitButton}
+                  disabled={submitting || isAccommodationEditing}
+                  style={{
+                    ...styles.submitButton,
+                    ...(submitting || isAccommodationEditing
+                      ? styles.buttonDisabled
+                      : {}),
+                  }}
                 >
                   {submitting ? 'Submitting…' : 'Submit'}
                 </button>
@@ -1118,6 +1129,10 @@ const styles = {
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer',
+  },
+  buttonDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed' as const,
   },
 } as const
 
