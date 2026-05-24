@@ -6,7 +6,6 @@ import {
   getCoordinatorParticipant as _getCoordinatorParticipant,
   listAccommodations as _listAccommodations,
   listProposals as _listProposals,
-  listResorts as _listResorts,
   rejectProposal as _rejectProposal,
   revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
@@ -20,6 +19,7 @@ import type { Accommodation, Proposal, Resort } from './types.d.ts'
 interface ProposalsProps {
   user: Models.User
   tripId: string
+  resorts: Resort[]
   onRefresh?: () => void
   onAuthError?: (err: unknown) => void
   listProposals?: (
@@ -69,7 +69,6 @@ interface ProposalsProps {
   getCoordinatorParticipant?: (
     tripId: string
   ) => Promise<{ participants: Array<{ participantUserId: string }> }>
-  listResorts?: () => Promise<{ resorts: Resort[] }>
 }
 
 const noopAuthError = () => {}
@@ -77,6 +76,7 @@ const noopAuthError = () => {}
 export default function Proposals({
   user,
   tripId,
+  resorts,
   onRefresh: _onRefresh,
   onAuthError = noopAuthError,
   listProposals = _listProposals,
@@ -88,27 +88,17 @@ export default function Proposals({
   rejectProposal = _rejectProposal,
   revertProposalToDraft = _revertProposalToDraft,
   getCoordinatorParticipant = _getCoordinatorParticipant,
-  listResorts = _listResorts,
 }: ProposalsProps) {
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [accommodations, setAccommodations] = useState<
     Record<string, Accommodation[]>
   >({})
-  const [resorts, setResorts] = useState<Resort[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [proposalsLoading, setProposalsLoading] = useState(false)
   const [proposalsError, setProposalsError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
   const mountedRef = useRef(true)
-
-  useEffect(() => {
-    listResorts()
-      .then((result) => {
-        if (mountedRef.current) setResorts(result.resorts)
-      })
-      .catch(() => {})
-  }, [listResorts])
 
   useEffect(() => {
     mountedRef.current = true

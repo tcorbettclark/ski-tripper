@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react'
 import {
   listPolls as _listPolls,
   listProposals as _listProposals,
-  listResorts as _listResorts,
   listTripParticipants as _listTripParticipants,
 } from './backend'
 import { borders, colors, fonts, formStyles } from './theme'
@@ -14,6 +13,7 @@ interface OverviewProps {
   user: Models.User
   trip: Trip
   tripId: string
+  resorts: Resort[]
   onNavigateToTab: (tab: 'resorts' | 'proposals' | 'poll') => void
   onAuthError?: (err: unknown) => void
   listTripParticipants?: (
@@ -24,7 +24,6 @@ interface OverviewProps {
     userId: string
   ) => Promise<{ proposals: Proposal[] }>
   listPolls?: (tripId: string, userId: string) => Promise<{ polls: Poll[] }>
-  listResorts?: () => Promise<{ resorts: Resort[] }>
 }
 
 const noopAuthError = () => {}
@@ -33,25 +32,22 @@ export default function Overview({
   user,
   trip,
   tripId,
+  resorts,
   onNavigateToTab,
   onAuthError = noopAuthError,
   listTripParticipants = _listTripParticipants,
   listProposals = _listProposals,
   listPolls = _listPolls,
-  listResorts = _listResorts,
 }: OverviewProps) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
-  const [resorts, setResorts] = useState<Resort[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(true)
   const [proposalsLoading, setProposalsLoading] = useState(true)
   const [pollsLoading, setPollsLoading] = useState(true)
-  const [resortsLoading, setResortsLoading] = useState(true)
   const [participantsError, setParticipantsError] = useState('')
   const [proposalsError, setProposalsError] = useState('')
   const [pollsError, setPollsError] = useState('')
-  const [resortsError, setResortsError] = useState('')
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -123,24 +119,6 @@ export default function Overview({
         if (mountedRef.current) setPollsLoading(false)
       })
   }, [tripId, user.$id, listPolls, onAuthError])
-
-  useEffect(() => {
-    setResortsLoading(true)
-    setResortsError('')
-    listResorts()
-      .then((result) => {
-        if (!mountedRef.current) return
-        setResorts(result.resorts)
-      })
-      .catch((err) => {
-        if (!mountedRef.current) return
-        const msg = err instanceof Error ? err.message : String(err)
-        setResortsError(msg)
-      })
-      .finally(() => {
-        if (mountedRef.current) setResortsLoading(false)
-      })
-  }, [listResorts])
 
   const draftCount = proposals.filter((p) => p.state === 'DRAFT').length
   const submittedCount = proposals.filter((p) => p.state === 'SUBMITTED').length
@@ -272,13 +250,11 @@ export default function Overview({
 
       <section style={overviewStyles.section}>
         <h3 style={overviewStyles.sectionHeading}>Resort Catalog</h3>
-        {resortsLoading && (
+        {resorts.length === 0 ? (
           <div style={overviewStyles.card}>
             <p style={overviewStyles.loading}>Loading resorts...</p>
           </div>
-        )}
-        {resortsError && <p style={formStyles.error}>{resortsError}</p>}
-        {!resortsLoading && !resortsError && (
+        ) : (
           <div style={overviewStyles.card}>
             <p style={overviewStyles.resortSummary}>
               {resorts.length} resorts available

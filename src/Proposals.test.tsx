@@ -59,7 +59,7 @@ function renderProposals(props = {}) {
       Promise.resolve({ participants: [] })
     ),
     listAccommodations: mock((_proposalId: string) => Promise.resolve([])),
-    listResorts: mock(() => Promise.resolve({ resorts: [] })),
+    resorts: [] as any[],
   }
   return render(<Proposals {...defaults} {...props} />)
 }
@@ -155,7 +155,7 @@ describe('Proposals', () => {
           getCoordinatorParticipant={mock(() =>
             Promise.resolve({ participants: [] })
           )}
-          listResorts={mock(() => Promise.resolve({ resorts: [] }))}
+          resorts={[]}
         />
       )
     })

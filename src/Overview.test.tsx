@@ -182,13 +182,13 @@ function renderOverview(props = {}) {
     user,
     trip: sampleTrip,
     tripId: 'trip-1',
+    resorts: sampleResorts,
     onNavigateToTab: mock(() => {}),
     listTripParticipants: mock(() =>
       Promise.resolve({ participants: sampleParticipants })
     ),
     listProposals: mock(() => Promise.resolve({ proposals: sampleProposals })),
     listPolls: mock(() => Promise.resolve({ polls: samplePolls })),
-    listResorts: mock(() => Promise.resolve({ resorts: sampleResorts })),
   }
   return render(<Overview {...defaults} {...props} />)
 }
@@ -247,7 +247,7 @@ describe('Overview', () => {
     })
   })
 
-  it('shows loading state for each section while data loads', async () => {
+  it('shows loading state for participants, proposals, and polls while data loads', async () => {
     const listTripParticipants = mock(
       () => new Promise<{ participants: Participant[] }>(() => {})
     )
@@ -255,20 +255,24 @@ describe('Overview', () => {
       () => new Promise<{ proposals: Proposal[] }>(() => {})
     )
     const listPolls = mock(() => new Promise<{ polls: Poll[] }>(() => {}))
-    const listResorts = mock(() => new Promise<{ resorts: Resort[] }>(() => {}))
 
     await act(async () => {
       renderOverview({
         listTripParticipants,
         listProposals,
         listPolls,
-        listResorts,
       })
     })
 
     expect(screen.getAllByText(/Loading\.\.\./).length).toBeGreaterThanOrEqual(
       2
     )
+  })
+
+  it('shows "Loading resorts..." when resorts prop is empty', async () => {
+    await act(async () => {
+      renderOverview({ resorts: [] })
+    })
     expect(screen.getByText(/Loading resorts\.\.\./)).toBeTruthy()
   })
 
@@ -334,19 +338,6 @@ describe('Overview', () => {
     })
     await waitFor(() => {
       expect(screen.getByText('Failed to load'))
-    })
-  })
-
-  it('shows error when resorts fetch fails', async () => {
-    await act(async () => {
-      renderOverview({
-        listResorts: mock(() =>
-          Promise.reject(new Error('Resorts unavailable'))
-        ),
-      })
-    })
-    await waitFor(() => {
-      expect(screen.getByText('Resorts unavailable'))
     })
   })
 

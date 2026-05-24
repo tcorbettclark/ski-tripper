@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import Resorts from './Resorts'
@@ -80,127 +80,71 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
   return {
     user,
     tripId: 'trip-1',
+    resorts: sampleResorts,
     onNavigateToProposals: mock(() => {}),
     onAuthError: mock(() => {}),
-    listResorts: mock(() => Promise.resolve({ resorts: sampleResorts })),
     ...overrides,
   }
 }
 
 describe('Resorts', () => {
-  it('renders loading state', async () => {
-    const neverResolves = mock(
-      () => new Promise<{ resorts: Resort[] }>(() => {})
-    )
-    await act(async () => {
-      render(<Resorts {...defaultProps({ listResorts: neverResolves })} />)
-    })
+  it('renders loading state when resorts is empty', () => {
+    render(<Resorts {...defaultProps({ resorts: [] })} />)
     expect(screen.getByText('Loading resorts...')).toBeTruthy()
   })
 
-  it('renders error state', async () => {
-    await act(async () => {
-      render(
-        <Resorts
-          {...defaultProps({
-            listResorts: mock(() => Promise.reject(new Error('Load failed'))),
-          })}
-        />
-      )
-    })
-    await waitFor(() => {
-      expect(screen.getByText('Load failed')).toBeTruthy()
-    })
+  it('renders heading and filters', () => {
+    render(<Resorts {...defaultProps()} />)
+    expect(screen.getByText('Resorts')).toBeTruthy()
+    expect(screen.getByPlaceholderText('Search resorts...')).toBeTruthy()
+    expect(screen.getByDisplayValue('All Countries')).toBeTruthy()
+    expect(screen.getByDisplayValue('All Regions')).toBeTruthy()
   })
 
-  it('renders heading and filters after loading', async () => {
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('Resorts')).toBeTruthy()
-      expect(screen.getByPlaceholderText('Search resorts...')).toBeTruthy()
-      expect(screen.getByDisplayValue('All Countries')).toBeTruthy()
-      expect(screen.getByDisplayValue('All Regions')).toBeTruthy()
-    })
+  it('shows result count', () => {
+    render(<Resorts {...defaultProps()} />)
+    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
   })
 
-  it('shows result count', async () => {
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+  it('renders table headers', () => {
+    render(<Resorts {...defaultProps()} />)
+    expect(screen.getByText('Resort Name')).toBeTruthy()
+    expect(screen.getByText('Country')).toBeTruthy()
+    expect(screen.getByText('Region')).toBeTruthy()
+    expect(screen.getByText('Piste Km')).toBeTruthy()
+    expect(screen.getByText('Altitude Range')).toBeTruthy()
+    expect(screen.getByText('Season')).toBeTruthy()
   })
 
-  it('renders table headers', async () => {
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('Resort Name')).toBeTruthy()
-      expect(screen.getByText('Country')).toBeTruthy()
-      expect(screen.getByText('Region')).toBeTruthy()
-      expect(screen.getByText('Piste Km')).toBeTruthy()
-      expect(screen.getByText('Altitude Range')).toBeTruthy()
-      expect(screen.getByText('Season')).toBeTruthy()
-    })
-  })
-
-  it('renders country filter options from data', async () => {
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+  it('renders country filter options from data', () => {
+    render(<Resorts {...defaultProps()} />)
     const countrySelect = screen.getByDisplayValue('All Countries')
     const options = countrySelect.querySelectorAll('option')
     expect(options.length).toBe(4)
   })
 
-  it('renders region filter options from data', async () => {
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+  it('renders region filter options from data', () => {
+    render(<Resorts {...defaultProps()} />)
     const regionSelect = screen.getByDisplayValue('All Regions')
     const options = regionSelect.querySelectorAll('option')
     expect(options.length).toBe(3)
   })
 
-  it('shows View Proposals button when onNavigateToProposals is provided', async () => {
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /view proposals/i })
-      ).toBeTruthy()
-    })
+  it('shows View Proposals button when onNavigateToProposals is provided', () => {
+    render(<Resorts {...defaultProps()} />)
+    expect(screen.getByRole('button', { name: /view proposals/i })).toBeTruthy()
   })
 
-  it('does not show View Proposals button when onNavigateToProposals is not provided', async () => {
+  it('does not show View Proposals button when onNavigateToProposals is not provided', () => {
     const { onNavigateToProposals, ...propsWithoutNav } = defaultProps()
-    await act(async () => {
-      render(<Resorts {...propsWithoutNav} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+    render(<Resorts {...propsWithoutNav} />)
+    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
     expect(screen.queryByRole('button', { name: /view proposals/i })).toBeNull()
   })
 
-  it('disables clear filters button when no filters are active', async () => {
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+  it('disables clear filters button when no filters are active', () => {
+    render(<Resorts {...defaultProps()} />)
+    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
 
     const clearButton = screen.getByRole('button', {
       name: /clear filters/i,
@@ -211,12 +155,7 @@ describe('Resorts', () => {
 
   it('enables clear filters button when filters are active', async () => {
     const eventUser = userEvent.setup()
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+    render(<Resorts {...defaultProps()} />)
 
     const searchInput = screen.getByPlaceholderText('Search resorts...')
     await eventUser.type(searchInput, 'Chamonix')
@@ -230,12 +169,7 @@ describe('Resorts', () => {
 
   it('clears search when clear button is clicked', async () => {
     const eventUser = userEvent.setup()
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+    render(<Resorts {...defaultProps()} />)
 
     const searchInput = screen.getByPlaceholderText('Search resorts...')
     await eventUser.type(searchInput, 'Ch')
@@ -249,14 +183,7 @@ describe('Resorts', () => {
   it('calls onNavigateToProposals when View Proposals button is clicked', async () => {
     const onNavigateToProposals = mock(() => {})
     const eventUser = userEvent.setup()
-    await act(async () => {
-      render(<Resorts {...defaultProps({ onNavigateToProposals })} />)
-    })
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /view proposals/i })
-      ).toBeTruthy()
-    })
+    render(<Resorts {...defaultProps({ onNavigateToProposals })} />)
 
     await eventUser.click(
       screen.getByRole('button', { name: /view proposals/i })
@@ -266,12 +193,7 @@ describe('Resorts', () => {
 
   it('shows 0 result count when no resorts match country filter', async () => {
     const eventUser = userEvent.setup()
-    await act(async () => {
-      render(<Resorts {...defaultProps()} />)
-    })
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
+    render(<Resorts {...defaultProps()} />)
 
     const countrySelect = screen.getByDisplayValue('All Countries')
     await eventUser.selectOptions(countrySelect, 'Canada')

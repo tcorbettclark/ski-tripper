@@ -1,16 +1,15 @@
 import type { Models } from 'appwrite'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
-import { listResorts as _listResorts } from './backend'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Resort } from './types.d.ts'
 
 interface ResortsProps {
   user: Models.User
   tripId: string
+  resorts: Resort[]
   onNavigateToProposals?: () => void
   onAuthError?: (err: unknown) => void
-  listResorts?: () => Promise<{ resorts: Resort[] }>
 }
 
 const NOOP_AUTH_ERROR = () => {}
@@ -18,13 +17,10 @@ const NOOP_AUTH_ERROR = () => {}
 export default function Resorts({
   user,
   tripId,
+  resorts,
   onNavigateToProposals,
   onAuthError = NOOP_AUTH_ERROR,
-  listResorts = _listResorts,
 }: ResortsProps) {
-  const [resorts, setResorts] = useState<Resort[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [countryFilter, setCountryFilter] = useState('')
@@ -35,32 +31,6 @@ export default function Resorts({
   const [proposalError, setProposalError] = useState('')
   const [proposalSaving, setProposalSaving] = useState(false)
   const [proposalSuccess, setProposalSuccess] = useState(false)
-  const mountedRef = useRef(true)
-
-  useEffect(() => {
-    mountedRef.current = true
-    return () => {
-      mountedRef.current = false
-    }
-  }, [])
-
-  useEffect(() => {
-    setLoading(true)
-    setError('')
-    listResorts()
-      .then((result) => {
-        if (!mountedRef.current) return
-        setResorts(result.resorts)
-      })
-      .catch((err) => {
-        if (!mountedRef.current) return
-        setError(err instanceof Error ? err.message : String(err))
-        onAuthError(err)
-      })
-      .finally(() => {
-        if (mountedRef.current) setLoading(false)
-      })
-  }, [listResorts, onAuthError])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -183,24 +153,13 @@ export default function Resorts({
     setMinPisteKm(0)
   }, [])
 
-  if (loading) {
+  if (resorts.length === 0) {
     return (
       <div style={resortsStyles.container}>
         <div style={resortsStyles.toolbar}>
           <h2 style={resortsStyles.heading}>Resorts</h2>
         </div>
         <p style={resortsStyles.loading}>Loading resorts...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div style={resortsStyles.container}>
-        <div style={resortsStyles.toolbar}>
-          <h2 style={resortsStyles.heading}>Resorts</h2>
-        </div>
-        <p style={formStyles.error}>{error}</p>
       </div>
     )
   }

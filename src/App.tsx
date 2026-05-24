@@ -11,6 +11,7 @@ import {
   leaveTrip as _leaveTrip,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
+  listResorts as _listResorts,
   listTripParticipants as _listTripParticipants,
   listTrips as _listTrips,
   updateTrip as _updateTrip,
@@ -26,7 +27,7 @@ import Resorts from './Resorts'
 import TripInfo from './TripInfo'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
-import type { Preferences, Trip } from './types.d.ts'
+import type { Preferences, Resort, Trip } from './types.d.ts'
 import useAuth from './useAuth'
 
 interface ListTripsResult {
@@ -73,6 +74,7 @@ interface AppProps {
     userId: string,
     data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
   ) => Promise<Preferences>
+  listResorts?: () => Promise<{ resorts: Resort[] }>
 }
 
 const defaultAccountGet = () => _account.get()
@@ -87,6 +89,7 @@ const defaultLeaveTrip = _leaveTrip
 const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
+const defaultListResorts = _listResorts
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -104,6 +107,7 @@ export default function App({
   getCoordinatorParticipant = defaultGetCoordinatorParticipant,
   getPreferences = defaultGetPreferences,
   createPreferences = defaultCreatePreferences,
+  listResorts = defaultListResorts,
 }: AppProps) {
   const { user, checking, sessionExpiredMessage, login, logout, onAuthError } =
     useAuth({ hasSession, accountGet, deleteSession })
@@ -122,6 +126,7 @@ export default function App({
   const [activePollEndDate, setActivePollEndDate] = useState<string | null>(
     null
   )
+  const [resorts, setResorts] = useState<Resort[]>([])
   const autoSelectedRef = useRef(false)
 
   const loadTrips = useCallback(
@@ -168,6 +173,16 @@ export default function App({
     if (!user) return
     loadTrips(user.$id)
   }, [user, loadTrips])
+
+  useEffect(() => {
+    if (!selectedTripId) {
+      setResorts([])
+      return
+    }
+    listResorts()
+      .then((result) => setResorts(result.resorts))
+      .catch(() => {})
+  }, [selectedTripId, listResorts])
 
   useEffect(() => {
     if (trips.length !== 1 || !user || autoSelectedRef.current) return
@@ -347,6 +362,7 @@ export default function App({
                 user={user}
                 trip={selectedTrip}
                 tripId={selectedTripId}
+                resorts={resorts}
                 onNavigateToTab={(tab) =>
                   setTripDetailTab(tab as TripDetailTab)
                 }
@@ -359,6 +375,7 @@ export default function App({
               <Resorts
                 user={user}
                 tripId={selectedTripId}
+                resorts={resorts}
                 onNavigateToProposals={() => setTripDetailTab('proposals')}
                 onAuthError={onAuthError}
               />
@@ -370,6 +387,7 @@ export default function App({
                 user={user}
                 tripId={selectedTripId}
                 key={refreshProposalsKey}
+                resorts={resorts}
                 onRefresh={() => setRefreshProposalsKey((k) => k + 1)}
                 onAuthError={onAuthError}
               />
