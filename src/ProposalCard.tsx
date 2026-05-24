@@ -881,6 +881,7 @@ const styles = {
   accommodationItem: {
     display: 'flex',
     justifyContent: 'flex-end',
+    marginTop: '12px',
   },
   accommodationItemContent: {
     flex: 1,
