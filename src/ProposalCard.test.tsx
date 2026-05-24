@@ -54,10 +54,8 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.getByText('Test Resort')).toBeDefined()
-    expect(screen.getByText('Test Country')).toBeDefined()
-    expect(screen.getByText('DRAFT')).toBeDefined()
-    expect(screen.getByText('John Doe')).toBeDefined()
+    expect(screen.getByText(/Test Resort/)).toBeDefined()
+    expect(screen.getByText(/being drafted by John Doe/)).toBeDefined()
   })
 
   it('displays new resort fields', () => {
@@ -75,7 +73,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.getByText('Alps')).toBeDefined()
+    expect(screen.getByText(/Alps/)).toBeDefined()
     expect(screen.getByText('600 km')).toBeDefined()
     expect(screen.getByText('Intermediate')).toBeDefined()
     expect(screen.getByText('50')).toBeDefined()

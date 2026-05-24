@@ -268,28 +268,33 @@ export default function ProposalCard({
     <>
       <div style={styles.card}>
         <div style={styles.header}>
-          <div>
-            <h3 style={styles.resortName}>{proposal.resortName || '—'}</h3>
-            <div style={styles.subHeader}>
-              <span>
-                {proposal.country &&
-                  getCountryFlagUrl(proposal.country) !== undefined && (
-                    <img
-                      src={getCountryFlagUrl(proposal.country)}
-                      alt={proposal.country}
-                      style={styles.flag}
-                    />
-                  )}
-                {proposal.country || '—'}
-              </span>
-              {proposal.region && (
-                <span style={styles.regionLabel}>{proposal.region}</span>
+          <span style={styles.headerLeft}>
+            {proposal.country &&
+              getCountryFlagUrl(proposal.country) !== undefined && (
+                <img
+                  src={getCountryFlagUrl(proposal.country)}
+                  alt={proposal.country}
+                  style={styles.flag}
+                />
               )}
-              <span style={getBadgeStyle(proposal.state)}>
-                {proposal.state}
-              </span>
-            </div>
-          </div>
+            {(proposal.country || proposal.region) && ' '}
+            {proposal.resortName || '—'}
+            {proposal.country
+              ? ` in ${proposal.region ? `${proposal.region}, ` : ''}${proposal.country}`
+              : proposal.region
+                ? ` in ${proposal.region}`
+                : ''}
+          </span>
+          {proposal.proposerUserName && (
+            <span style={styles.headerRight}>
+              {proposal.state === 'DRAFT'
+                ? 'being drafted by'
+                : proposal.state === 'SUBMITTED'
+                  ? 'proposed by'
+                  : 'was proposed by'}{' '}
+              {proposal.proposerUserName}
+            </span>
+          )}
         </div>
 
         <div style={styles.section}>
@@ -335,10 +340,6 @@ export default function ProposalCard({
               <div style={styles.grid}>
                 <DetailField label="Start Date" value={proposal.startDate} />
                 <DetailField label="End Date" value={proposal.endDate} />
-                <DetailField
-                  label="Proposed By"
-                  value={proposal.proposerUserName}
-                />
                 <DetailField
                   label="Altitude Range"
                   value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
@@ -782,12 +783,6 @@ function AccommodationEditForm({
   )
 }
 
-function getBadgeStyle(state: Proposal['state']) {
-  if (state === 'DRAFT') return styles.badgeDraft
-  if (state === 'REJECTED') return styles.badgeRejected
-  return styles.badgeSubmitted
-}
-
 const styles = {
   card: {
     background: colors.bgCard,
@@ -798,26 +793,21 @@ const styles = {
   header: {
     marginBottom: '20px',
     display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    gap: '12px',
   },
-  resortName: {
+  headerLeft: {
     fontFamily: fonts.display,
     fontSize: '22px',
     fontWeight: '600',
     color: colors.textPrimary,
-    margin: '0 0 6px 0',
   },
-  subHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    color: colors.textSecondary,
-  },
-  regionLabel: {
-    color: colors.textSecondary,
+  headerRight: {
+    fontFamily: fonts.display,
+    fontSize: '22px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginLeft: 'auto',
   },
   websiteLinkInline: {
     fontFamily: fonts.body,
@@ -999,39 +989,6 @@ const styles = {
     fontWeight: '500',
     cursor: 'pointer',
     letterSpacing: '0.03em',
-  },
-  badgeDraft: {
-    display: 'inline-block',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontSize: '11px',
-    fontWeight: '600',
-    letterSpacing: '0.08em',
-    color: colors.textSecondary,
-    background: 'rgba(106,148,174,0.15)',
-    border: '1px solid rgba(106,148,174,0.2)',
-  },
-  badgeSubmitted: {
-    display: 'inline-block',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontSize: '11px',
-    fontWeight: '600',
-    letterSpacing: '0.08em',
-    color: colors.accent,
-    background: 'rgba(59,189,232,0.12)',
-    border: '1px solid rgba(59,189,232,0.25)',
-  },
-  badgeRejected: {
-    display: 'inline-block',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    fontSize: '11px',
-    fontWeight: '600',
-    letterSpacing: '0.08em',
-    color: colors.error,
-    background: 'rgba(255,107,107,0.12)',
-    border: '1px solid rgba(255,107,107,0.25)',
   },
   backdrop: {
     position: 'fixed' as const,
