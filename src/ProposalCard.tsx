@@ -461,7 +461,7 @@ export default function ProposalCard({
               {accommodations.length === 0 && !addingAccommodation && (
                 <p style={styles.noAccommodations}>No accommodations yet.</p>
               )}
-              {accommodations.map((acc) =>
+              {accommodations.map((acc, index) =>
                 editingAccommodationId === acc.$id ? (
                   <AccommodationEditForm
                     key={acc.$id}
@@ -531,7 +531,9 @@ export default function ProposalCard({
                         </div>
                       )}
                     </div>
-                    <hr style={styles.accommodationDivider} />
+                    {(isDraft || index < accommodations.length - 1) && (
+                      <hr style={styles.accommodationDivider} />
+                    )}
                   </div>
                 )
               )}
@@ -960,9 +962,9 @@ const styles = {
   submitButton: {
     padding: '6px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(59,189,232,0.3)',
-    background: 'transparent',
-    color: colors.accent,
+    border: 'none',
+    background: colors.accent,
+    color: colors.bgPrimary,
     fontFamily: fonts.body,
     fontSize: '12px',
     fontWeight: '500',
@@ -1004,6 +1006,7 @@ const styles = {
     fontWeight: '500',
     cursor: 'pointer',
     letterSpacing: '0.03em',
+    marginLeft: 'auto',
   },
   backdrop: {
     position: 'fixed' as const,
