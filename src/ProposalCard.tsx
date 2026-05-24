@@ -791,7 +791,8 @@ const styles = {
     padding: '24px',
   },
   header: {
-    marginBottom: '20px',
+    marginBottom: '0',
+    paddingBottom: '20px',
     display: 'flex',
     alignItems: 'baseline',
     gap: '12px',
@@ -808,6 +809,7 @@ const styles = {
     fontWeight: '600',
     color: colors.textPrimary,
     marginLeft: 'auto',
+    fontStyle: 'italic',
   },
   websiteLinkInline: {
     fontFamily: fonts.body,
@@ -827,7 +829,9 @@ const styles = {
     marginRight: '6px',
   },
   section: {
-    marginBottom: '20px',
+    borderTop: borders.subtle,
+    paddingTop: '10px',
+    marginBottom: '10px',
   },
   sectionHeader: {
     display: 'flex',
@@ -837,7 +841,6 @@ const styles = {
     width: '100%',
     background: 'none',
     border: 'none',
-    borderBottom: borders.subtle,
     paddingBottom: '8px',
     marginBottom: '12px',
     cursor: 'pointer',
@@ -933,7 +936,7 @@ const styles = {
     justifyContent: 'space-between',
     gap: '8px',
     flexWrap: 'wrap' as const,
-    paddingTop: '16px',
+    padding: '10px 0',
     borderTop: borders.subtle,
   },
   actionsRight: {
