@@ -8,6 +8,7 @@ import { COUNTRIES } from './countries'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 import type { Resort } from './types.d'
+import { ensureUrlScheme } from './utils'
 
 interface CreateProposalFormProps {
   tripId: string
@@ -191,7 +192,7 @@ export default function CreateProposalForm({
           liftCount: Number(form.liftCount),
           snowReliability: form.snowReliability || 'medium',
           skiSeasonMonths: form.skiSeasonMonths,
-          websiteUrl: form.websiteUrl,
+          websiteUrl: ensureUrlScheme(form.websiteUrl),
           latitude: form.latitude,
           longitude: form.longitude,
         },
@@ -360,11 +361,11 @@ export default function CreateProposalForm({
       <Field
         label="Website URL"
         name="websiteUrl"
-        type="url"
+        type="text"
         value={form.websiteUrl}
         onChange={handleChange}
         required
-        placeholder="https://..."
+        placeholder="e.g. example.com"
       />
       <Field
         label="Latitude"

@@ -722,6 +722,108 @@ describe('ProposalCard', () => {
     expect(onAccommodationsChanged).toHaveBeenCalledWith('proposal-1')
   })
 
+  it('prepends https:// to accommodation URL when scheme is missing', async () => {
+    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const onAccommodationsChanged = mock()
+    const listAccommodations = mock(() => Promise.resolve([]))
+    const user = userEvent.setup()
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        createAccommodation={createAccommodation}
+        onAccommodationsChanged={onAccommodationsChanged}
+        listAccommodations={listAccommodations}
+      />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: '+ Add Accommodation' })
+    )
+
+    await user.type(screen.getByLabelText('Name'), 'New Hotel')
+    await user.type(screen.getByLabelText('URL'), 'example.com/hotel')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(createAccommodation).toHaveBeenCalledWith(
+      'proposal-1',
+      'user-1',
+      expect.objectContaining({ url: 'https://example.com/hotel' })
+    )
+  })
+
+  it('does not modify accommodation URL that already has https://', async () => {
+    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const onAccommodationsChanged = mock()
+    const listAccommodations = mock(() => Promise.resolve([]))
+    const user = userEvent.setup()
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        createAccommodation={createAccommodation}
+        onAccommodationsChanged={onAccommodationsChanged}
+        listAccommodations={listAccommodations}
+      />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: '+ Add Accommodation' })
+    )
+
+    await user.type(screen.getByLabelText('Name'), 'New Hotel')
+    await user.type(screen.getByLabelText('URL'), 'https://example.com/hotel')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(createAccommodation).toHaveBeenCalledWith(
+      'proposal-1',
+      'user-1',
+      expect.objectContaining({ url: 'https://example.com/hotel' })
+    )
+  })
+
+  it('does not modify accommodation URL that already has http://', async () => {
+    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const onAccommodationsChanged = mock()
+    const listAccommodations = mock(() => Promise.resolve([]))
+    const user = userEvent.setup()
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        createAccommodation={createAccommodation}
+        onAccommodationsChanged={onAccommodationsChanged}
+        listAccommodations={listAccommodations}
+      />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: '+ Add Accommodation' })
+    )
+
+    await user.type(screen.getByLabelText('Name'), 'New Hotel')
+    await user.type(screen.getByLabelText('URL'), 'http://example.com/hotel')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(createAccommodation).toHaveBeenCalledWith(
+      'proposal-1',
+      'user-1',
+      expect.objectContaining({ url: 'http://example.com/hotel' })
+    )
+  })
+
   it('displays accommodation delete error', async () => {
     const deleteAccommodation = mock(() =>
       Promise.reject(new Error('delete failed'))

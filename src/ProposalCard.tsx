@@ -17,7 +17,7 @@ import DiscussionSection from './DiscussionSection'
 import EditProposalForm from './EditProposalForm'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
-import { isValidUrl, sanitizeUrl } from './utils'
+import { ensureUrlScheme, isValidUrl, sanitizeUrl } from './utils'
 
 const difficultyLabels: Record<string, string> = {
   beginner: 'Beginner',
@@ -743,7 +743,7 @@ function AccommodationEditForm({
     try {
       await onSave({
         name,
-        url: url || undefined,
+        url: url ? ensureUrlScheme(url) : undefined,
         cost: cost || undefined,
         description: description || undefined,
       })
@@ -777,11 +777,11 @@ function AccommodationEditForm({
           </label>
           <input
             id="acc-url"
-            type="url"
+            type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             style={accFormStyles.input}
-            placeholder="https://..."
+            placeholder="e.g. example.com/hotel"
           />
         </div>
         <div style={accFormStyles.field}>

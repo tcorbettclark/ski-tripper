@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
-import { formatDate, formatRelativeTime, formatTimeRemaining } from './utils'
+import {
+  ensureUrlScheme,
+  formatDate,
+  formatRelativeTime,
+  formatTimeRemaining,
+} from './utils'
 
 const OriginalDate = Date
 const MOCK_NOW = new OriginalDate('2026-05-06T12:00:00Z').getTime()
@@ -66,5 +71,39 @@ describe('formatRelativeTime', () => {
 
   it('falls back to formatDate for older dates (>= 3 days)', () => {
     expect(formatRelativeTime('2026-05-01T12:00:00Z')).toBe('01 May 2026')
+  })
+})
+
+describe('ensureUrlScheme', () => {
+  it('prepends https:// when no scheme is present', () => {
+    expect(ensureUrlScheme('example.com')).toBe('https://example.com')
+  })
+
+  it('prepends https:// for a URL with path and no scheme', () => {
+    expect(ensureUrlScheme('example.com/ski')).toBe('https://example.com/ski')
+  })
+
+  it('does not modify a URL that already has https://', () => {
+    expect(ensureUrlScheme('https://example.com')).toBe('https://example.com')
+  })
+
+  it('does not modify a URL that already has http://', () => {
+    expect(ensureUrlScheme('http://example.com')).toBe('http://example.com')
+  })
+
+  it('handles uppercase HTTPS:// without modifying', () => {
+    expect(ensureUrlScheme('HTTPS://example.com')).toBe('HTTPS://example.com')
+  })
+
+  it('handles uppercase HTTP:// without modifying', () => {
+    expect(ensureUrlScheme('HTTP://example.com')).toBe('HTTP://example.com')
+  })
+
+  it('returns empty string unchanged', () => {
+    expect(ensureUrlScheme('')).toBe('')
+  })
+
+  it('returns whitespace-only string unchanged', () => {
+    expect(ensureUrlScheme('   ')).toBe('   ')
   })
 })

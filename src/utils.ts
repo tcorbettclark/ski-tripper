@@ -8,6 +8,12 @@ dayjs.extend(relativeTime)
 
 export { dayjs, sanitizeUrl }
 
+export function ensureUrlScheme(url: string): string {
+  if (!url.trim()) return url
+  if (/^https?:\/\//i.test(url)) return url
+  return `https://${url}`
+}
+
 export function isValidUrl(url: string | undefined): boolean {
   if (!url) return true
   return sanitizeUrl(url) !== 'about:blank'

@@ -4,6 +4,7 @@ import { COUNTRIES } from './countries'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 import type { Proposal } from './types.d.ts'
+import { ensureUrlScheme } from './utils'
 
 interface EditProposalFormProps {
   proposal: Proposal
@@ -62,6 +63,7 @@ export default function EditProposalForm({
     try {
       const updatedProposal = await updateProposal(proposal.$id, userId, {
         ...form,
+        websiteUrl: ensureUrlScheme(form.websiteUrl),
         topAltitude: Number(form.topAltitude),
         bottomAltitude: Number(form.bottomAltitude),
         pisteKm: Number(form.pisteKm),
@@ -182,11 +184,11 @@ export default function EditProposalForm({
       <Field
         label="Website URL"
         name="websiteUrl"
-        type="url"
+        type="text"
         value={form.websiteUrl}
         onChange={handleChange}
         required
-        placeholder="https://..."
+        placeholder="e.g. example.com"
       />
       <Field
         label="Latitude"
