@@ -108,7 +108,7 @@ export default function ProposalCard({
   const [latLngHovered, setLatLngHovered] = useState(false)
   const [websiteHovered, setWebsiteHovered] = useState(false)
   const [proposalCollapsed, setProposalCollapsed] = useState(false)
-  const [resortCollapsed, setResortCollapsed] = useState(false)
+
   const [submitting, setSubmitting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
   const [reverting, setReverting] = useState(false)
@@ -331,31 +331,14 @@ export default function ProposalCard({
             </span>
           </button>
           {!proposalCollapsed && (
-            <div style={styles.grid}>
-              <DetailField label="Start Date" value={proposal.startDate} />
-              <DetailField label="End Date" value={proposal.endDate} />
-              <DetailField
-                label="Proposed By"
-                value={proposal.proposerUserName}
-              />
-            </div>
-          )}
-        </div>
-
-        <div style={styles.section}>
-          <button
-            type="button"
-            onClick={() => setResortCollapsed((c) => !c)}
-            style={styles.sectionHeader}
-          >
-            <span style={styles.sectionTitle}>Resort</span>
-            <span style={styles.collapseIcon}>
-              {resortCollapsed ? '+' : '−'}
-            </span>
-          </button>
-          {!resortCollapsed && (
             <>
               <div style={styles.grid}>
+                <DetailField label="Start Date" value={proposal.startDate} />
+                <DetailField label="End Date" value={proposal.endDate} />
+                <DetailField
+                  label="Proposed By"
+                  value={proposal.proposerUserName}
+                />
                 <DetailField
                   label="Altitude Range"
                   value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
@@ -432,6 +415,18 @@ export default function ProposalCard({
                     label="Description"
                     value={proposal.description}
                   />
+                </div>
+              )}
+              {canAct && (
+                <div style={styles.sectionEditRow}>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    style={styles.accommodationEditButton}
+                    aria-label="Edit proposal"
+                  >
+                    Edit
+                  </button>
                 </div>
               )}
             </>
@@ -517,6 +512,7 @@ export default function ProposalCard({
                               setAccommodationError(null)
                             }}
                             style={styles.accommodationEditButton}
+                            aria-label={`Edit accommodation ${acc.name}`}
                           >
                             Edit
                           </button>
@@ -564,13 +560,6 @@ export default function ProposalCard({
                 Delete
               </button>
               <div style={styles.actionsRight}>
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  style={styles.editButton}
-                >
-                  Edit
-                </button>
                 <button
                   type="button"
                   onClick={handleSubmit}
@@ -886,6 +875,11 @@ const styles = {
   descriptionSection: {
     marginTop: '12px',
   },
+  sectionEditRow: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: '8px',
+  },
   accommodationsSection: {
     marginBottom: '20px',
   },
@@ -957,18 +951,6 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     flexWrap: 'wrap' as const,
-  },
-  editButton: {
-    padding: '6px 16px',
-    borderRadius: '5px',
-    border: borders.muted,
-    background: 'transparent',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '12px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    letterSpacing: '0.03em',
   },
   submitButton: {
     padding: '6px 16px',

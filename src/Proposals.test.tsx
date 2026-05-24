@@ -244,11 +244,14 @@ describe('Proposals', () => {
       })
     )
 
+    const updateAccommodationFn = mock(() => Promise.resolve({ $id: 'acc-1' }))
+
     await act(async () => {
       renderProposals({
         tripId: 'trip-1',
         listAccommodations: listAccommodationsFn,
         updateProposal: updateProposalFn,
+        updateAccommodation: updateAccommodationFn,
       })
     })
 
@@ -259,8 +262,10 @@ describe('Proposals', () => {
     const initialCallCount = listAccommodationsFn.mock.calls.length
 
     const user = userEvent.setup()
-    const editButtons = screen.getAllByRole('button', { name: 'Edit' })
-    await user.click(editButtons[editButtons.length - 1])
+    const editButton = screen.getByRole('button', {
+      name: /Edit accommodation/,
+    })
+    await user.click(editButton)
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()

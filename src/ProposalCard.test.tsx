@@ -161,7 +161,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Edit proposal' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Submit' })).toBeDefined()
   })
 
@@ -180,7 +180,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Edit proposal' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull()
   })
 
@@ -616,9 +616,9 @@ describe('ProposalCard', () => {
     )
 
     const accommodationEditButtons = screen.getAllByRole('button', {
-      name: 'Edit',
+      name: /Edit accommodation/,
     })
-    expect(accommodationEditButtons.length).toBeGreaterThanOrEqual(2)
+    expect(accommodationEditButtons.length).toBeGreaterThanOrEqual(1)
   })
 
   it('hides accommodation edit/delete buttons for non-owner', () => {
@@ -646,7 +646,9 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(
+      screen.queryByRole('button', { name: /Edit accommodation/ })
+    ).toBeNull()
     expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
   })
 
@@ -718,9 +720,9 @@ describe('ProposalCard', () => {
     })
 
     const user = userEvent.setup()
-    const accommodationEditButton = screen.getAllByRole('button', {
-      name: 'Edit',
-    })[0]
+    const accommodationEditButton = screen.getByRole('button', {
+      name: 'Edit accommodation Hotel',
+    })
 
     await user.click(accommodationEditButton)
 
