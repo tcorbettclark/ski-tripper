@@ -99,6 +99,10 @@ export default function ProposalCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showDiscussion, setShowDiscussion] = useState(false)
   const [discussionCount, setDiscussionCount] = useState(0)
+  const [latLngHovered, setLatLngHovered] = useState(false)
+  const [websiteHovered, setWebsiteHovered] = useState(false)
+  const [proposalCollapsed, setProposalCollapsed] = useState(false)
+  const [resortCollapsed, setResortCollapsed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
   const [reverting, setReverting] = useState(false)
@@ -233,73 +237,123 @@ export default function ProposalCard({
           </button>
         </div>
 
-        <div style={styles.grid}>
-          <DetailField label="Start Date" value={proposal.startDate} />
-          <DetailField label="End Date" value={proposal.endDate} />
-          <DetailField
-            label="Altitude Range"
-            value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
-          />
-          <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
-          <DetailField
-            label="Difficulty"
-            value={difficultyLabels[proposal.difficulty] ?? proposal.difficulty}
-          />
-          <DetailField label="Lifts" value={String(proposal.liftCount)} />
-          <DetailField
-            label="Snow Reliability"
-            value={
-              snowReliabilityLabels[proposal.snowReliability] ??
-              proposal.snowReliability
-            }
-          />
-          <DetailField label="Ski Season" value={proposal.skiSeasonMonths} />
-          <DetailField
-            label="Nearest Airport"
-            value={proposal.nearestAirport}
-          />
-          <DetailField label="Transfer Time" value={proposal.transferTime} />
-          <DetailField label="Latitude/longitude">
-            {proposal.latitude || proposal.longitude ? (
-              <>
-                {proposal.latitude}, {proposal.longitude}{' '}
-                <a
-                  href={`https://www.google.com/maps?q=${proposal.latitude},${proposal.longitude}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={styles.mapLink}
-                  aria-label="Open in Google Maps"
-                >
-                  🔗
-                </a>
-              </>
-            ) : (
-              '—'
-            )}
-          </DetailField>
-          {proposal.websiteUrl && isValidUrl(proposal.websiteUrl) && (
-            <div style={{ gridColumn: '1/-1' }}>
-              <DetailField label="Website">
-                <a
-                  href={sanitizeUrl(proposal.websiteUrl)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={styles.websiteLink}
-                >
-                  {proposal.websiteUrl.replace(/^https?:\/\//, '')} ↗
-                </a>
-              </DetailField>
+        <div style={styles.section}>
+          <button
+            type="button"
+            onClick={() => setProposalCollapsed((c) => !c)}
+            style={styles.sectionHeader}
+          >
+            <span style={styles.sectionTitle}>Proposal</span>
+            <span style={styles.collapseIcon}>
+              {proposalCollapsed ? '+' : '−'}
+            </span>
+          </button>
+          {!proposalCollapsed && (
+            <div style={styles.grid}>
+              <DetailField label="Start Date" value={proposal.startDate} />
+              <DetailField label="End Date" value={proposal.endDate} />
+              <DetailField
+                label="Proposed By"
+                value={proposal.proposerUserName}
+              />
             </div>
           )}
-          <div style={{ gridColumn: '1/-1' }}>
-            <DetailField label="Description" value={proposal.description} />
-          </div>
-          <div style={{ gridColumn: '1/-1' }}>
-            <DetailField
-              label="Proposed By"
-              value={proposal.proposerUserName}
-            />
-          </div>
+        </div>
+
+        <div style={styles.section}>
+          <button
+            type="button"
+            onClick={() => setResortCollapsed((c) => !c)}
+            style={styles.sectionHeader}
+          >
+            <span style={styles.sectionTitle}>Resort</span>
+            <span style={styles.collapseIcon}>
+              {resortCollapsed ? '+' : '−'}
+            </span>
+          </button>
+          {!resortCollapsed && (
+            <>
+              <div style={styles.grid}>
+                <DetailField
+                  label="Altitude Range"
+                  value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
+                />
+                <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
+                <DetailField
+                  label="Difficulty"
+                  value={
+                    difficultyLabels[proposal.difficulty] ?? proposal.difficulty
+                  }
+                />
+                <DetailField label="Lifts" value={String(proposal.liftCount)} />
+                <DetailField
+                  label="Snow Reliability"
+                  value={
+                    snowReliabilityLabels[proposal.snowReliability] ??
+                    proposal.snowReliability
+                  }
+                />
+                <DetailField
+                  label="Ski Season"
+                  value={proposal.skiSeasonMonths}
+                />
+                <DetailField
+                  label="Nearest Airport"
+                  value={proposal.nearestAirport}
+                />
+                <DetailField
+                  label="Transfer Time"
+                  value={proposal.transferTime}
+                />
+                <DetailField label="Latitude/longitude">
+                  {proposal.latitude || proposal.longitude ? (
+                    <a
+                      href={`https://www.google.com/maps?q=${proposal.latitude},${proposal.longitude}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.detailFieldValue,
+                        color: colors.accent,
+                        textDecoration: latLngHovered ? 'underline' : 'none',
+                      }}
+                      onMouseEnter={() => setLatLngHovered(true)}
+                      onMouseLeave={() => setLatLngHovered(false)}
+                    >
+                      {proposal.latitude}, {proposal.longitude}
+                    </a>
+                  ) : (
+                    '—'
+                  )}
+                </DetailField>
+                {proposal.websiteUrl && isValidUrl(proposal.websiteUrl) && (
+                  <DetailField label="Website">
+                    <a
+                      href={sanitizeUrl(proposal.websiteUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        ...styles.websiteLinkInline,
+                        textDecoration: websiteHovered ? 'underline' : 'none',
+                      }}
+                      aria-label="Visit website"
+                      onMouseEnter={() => setWebsiteHovered(true)}
+                      onMouseLeave={() => setWebsiteHovered(false)}
+                    >
+                      {proposal.websiteUrl.replace(/^https?:\/\//, '')}
+                    </a>
+                  </DetailField>
+                )}
+              </div>
+              {proposal.description && (
+                <div style={styles.descriptionSection}>
+                  <DetailField
+                    label="Description"
+                    value={proposal.description}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         {accommodations.length > 0 && (
@@ -487,14 +541,15 @@ const styles = {
   regionLabel: {
     color: colors.textSecondary,
   },
-  websiteLink: {
+  websiteLinkInline: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
     color: colors.accent,
-    textDecoration: 'none',
   },
-  mapLink: {
-    color: colors.accent,
-    textDecoration: 'none',
-    fontSize: '12px',
+  detailFieldValue: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: colors.textPrimary,
   },
   flag: {
     display: 'inline-block',
@@ -503,11 +558,44 @@ const styles = {
     verticalAlign: 'middle',
     marginRight: '6px',
   },
+  section: {
+    marginBottom: '20px',
+  },
+  sectionHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: '6px',
+    width: '100%',
+    background: 'none',
+    border: 'none',
+    borderBottom: borders.subtle,
+    paddingBottom: '8px',
+    marginBottom: '12px',
+    cursor: 'pointer',
+    padding: '0 0 8px 0',
+  },
+  sectionTitle: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  },
+  collapseIcon: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.textSecondary,
+    lineHeight: 1,
+  },
   grid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '16px 24px',
-    marginBottom: '20px',
+    gap: '12px',
+  },
+  descriptionSection: {
+    marginTop: '12px',
   },
   accommodationsSection: {
     marginBottom: '20px',

@@ -122,7 +122,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    const link = screen.getByText('example.com ↗')
+    const link = screen.getByText('example.com')
     expect(link).toBeDefined()
     expect(link.closest('a')!.getAttribute('href')).toBe('https://example.com/')
   })
