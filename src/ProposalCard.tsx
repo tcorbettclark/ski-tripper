@@ -277,7 +277,7 @@ export default function ProposalCard({
                   style={styles.flag}
                 />
               )}
-            {(proposal.country || proposal.region) && ' '}
+
             {proposal.resortName || '—'}
             {proposal.country
               ? ` in ${proposal.region ? `${proposal.region}, ` : ''}${proposal.country}`
@@ -803,6 +803,9 @@ const styles = {
     fontSize: '22px',
     fontWeight: '600',
     color: colors.textPrimary,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
   },
   headerRight: {
     fontFamily: fonts.display,
@@ -826,8 +829,6 @@ const styles = {
     display: 'inline-block',
     width: '20px',
     height: '14px',
-    verticalAlign: 'middle',
-    marginRight: '6px',
   },
   section: {
     borderTop: borders.subtle,
