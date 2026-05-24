@@ -894,7 +894,7 @@ const styles = {
     fontSize: '13px',
     color: colors.textSecondary,
     fontStyle: 'italic',
-    margin: '8px 0 0',
+    margin: '16px 0',
   },
   accommodationItem: {
     display: 'flex',
