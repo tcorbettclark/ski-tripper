@@ -31,6 +31,8 @@ export default function Resorts({
   const [proposalError, setProposalError] = useState('')
   const [proposalSaving, setProposalSaving] = useState(false)
   const [proposalSuccess, setProposalSuccess] = useState(false)
+  const [websiteHovered, setWebsiteHovered] = useState(false)
+  const [latLngHovered, setLatLngHovered] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -409,22 +411,42 @@ export default function Resorts({
               />
               <DetailField label="Latitude/longitude">
                 {selectedResort.latitude || selectedResort.longitude ? (
-                  <>
-                    {selectedResort.latitude}, {selectedResort.longitude}{' '}
-                    <a
-                      href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={resortsStyles.mapLink}
-                      aria-label="Open in Google Maps"
-                    >
-                      🔗
-                    </a>
-                  </>
+                  <a
+                    href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      ...resortsStyles.detailFieldValue,
+                      color: colors.accent,
+                      textDecoration: latLngHovered ? 'underline' : 'none',
+                    }}
+                    onMouseEnter={() => setLatLngHovered(true)}
+                    onMouseLeave={() => setLatLngHovered(false)}
+                  >
+                    {selectedResort.latitude}, {selectedResort.longitude}
+                  </a>
                 ) : (
                   '—'
                 )}
               </DetailField>
+              {selectedResort.websiteUrl && (
+                <DetailField label="Website">
+                  <a
+                    href={selectedResort.websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      ...resortsStyles.websiteLinkInline,
+                      textDecoration: websiteHovered ? 'underline' : 'none',
+                    }}
+                    aria-label="Visit website"
+                    onMouseEnter={() => setWebsiteHovered(true)}
+                    onMouseLeave={() => setWebsiteHovered(false)}
+                  >
+                    {selectedResort.websiteUrl}
+                  </a>
+                </DetailField>
+              )}
             </div>
 
             {selectedResort.description && (
@@ -436,17 +458,6 @@ export default function Resorts({
                   {selectedResort.description}
                 </p>
               </div>
-            )}
-
-            {selectedResort.websiteUrl && (
-              <a
-                href={selectedResort.websiteUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={resortsStyles.websiteLink}
-              >
-                Visit website
-              </a>
             )}
 
             {!showProposalForm && !proposalSuccess && (
@@ -867,12 +878,10 @@ const resortsStyles = {
     lineHeight: '1.6',
     margin: '4px 0 0',
   },
-  websiteLink: {
-    display: 'inline-block',
+  websiteLinkInline: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: '12px',
     color: colors.accent,
-    marginBottom: '16px',
   },
   proposeButton: {
     padding: '12px 24px',
