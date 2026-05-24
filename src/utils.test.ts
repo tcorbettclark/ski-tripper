@@ -30,11 +30,11 @@ afterAll(() => {
 
 describe('formatDate', () => {
   it('formats an ISO date string', () => {
-    expect(formatDate('2026-04-29T00:00:00Z')).toBe('29 Apr 2026')
+    expect(formatDate('2026-04-29T00:00:00Z')).toBe('Wed 29 Apr 2026')
   })
 
   it('formats a date-only string', () => {
-    expect(formatDate('2026-01-05')).toBe('05 Jan 2026')
+    expect(formatDate('2026-01-05')).toBe('Mon 05 Jan 2026')
   })
 })
 
@@ -70,7 +70,7 @@ describe('formatRelativeTime', () => {
   })
 
   it('falls back to formatDate for older dates (>= 3 days)', () => {
-    expect(formatRelativeTime('2026-05-01T12:00:00Z')).toBe('01 May 2026')
+    expect(formatRelativeTime('2026-05-01T12:00:00Z')).toBe('Fri 01 May 2026')
   })
 })
 
