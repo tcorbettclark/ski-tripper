@@ -410,26 +410,28 @@ export default function ProposalCard({
                   </DetailField>
                 )}
               </div>
-              {proposal.description && (
-                <div style={styles.descriptionSection}>
-                  <DetailField
-                    label="Description"
-                    value={proposal.description}
-                  />
+              <div style={styles.accommodationItem}>
+                <div style={styles.accommodationItemContent}>
+                  {proposal.description && (
+                    <DetailField
+                      label="Description"
+                      value={proposal.description}
+                    />
+                  )}
                 </div>
-              )}
-              {canAct && (
-                <div style={styles.sectionEditRow}>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    style={styles.accommodationEditButton}
-                    aria-label="Edit proposal"
-                  >
-                    Edit
-                  </button>
-                </div>
-              )}
+                {canAct && (
+                  <div style={styles.accommodationItemActions}>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      style={styles.accommodationEditButton}
+                      aria-label="Edit proposal"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
@@ -865,14 +867,7 @@ const styles = {
     gridTemplateColumns: '1fr 1fr',
     gap: '12px',
   },
-  descriptionSection: {
-    marginTop: '12px',
-  },
-  sectionEditRow: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    marginTop: '8px',
-  },
+
   accommodationsSection: {
     marginBottom: '20px',
   },
