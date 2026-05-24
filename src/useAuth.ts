@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { account as _account, hasSession as _hasSession } from './backend'
 
 const IDLE_TIMEOUT_MS = 30_000
+const ACTIVITY_THROTTLE_MS = 1_000
 
 export default function useAuth(options?: {
   hasSession?: () => boolean
@@ -22,9 +23,6 @@ export default function useAuth(options?: {
   >(null)
   const sessionExpiryRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const hasSession = useCallback(() => sessionRef.current(), [])
-  const accountGet = useCallback(() => accountGetRef.current(), [])
 
   const clearTimers = useCallback(() => {
     if (sessionExpiryRef.current) {
@@ -63,7 +61,25 @@ export default function useAuth(options?: {
     [autoLogout]
   )
 
+  useEffect(() => {
+    if (!sessionRef.current()) {
+      setUser(null)
+      setChecking(false)
+      return
+    }
+    accountGetRef
+      .current()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setChecking(false))
+  }, [])
+
+  const lastActivityRef = useRef(0)
+
   const resetIdleTimer = useCallback(() => {
+    const now = Date.now()
+    if (now - lastActivityRef.current < ACTIVITY_THROTTLE_MS) return
+    lastActivityRef.current = now
     if (idleTimeoutRef.current) {
       clearTimeout(idleTimeoutRef.current)
     }
@@ -73,29 +89,20 @@ export default function useAuth(options?: {
   }, [autoLogout])
 
   useEffect(() => {
-    if (!hasSession()) {
-      setUser(null)
-      setChecking(false)
-      return
-    }
-    accountGet()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setChecking(false))
-  }, [hasSession, accountGet])
-
-  useEffect(() => {
     if (!user) return
+    lastActivityRef.current = Date.now()
     resetIdleTimer()
     window.addEventListener('mousedown', resetIdleTimer)
     window.addEventListener('keydown', resetIdleTimer)
     window.addEventListener('scroll', resetIdleTimer)
     window.addEventListener('touchstart', resetIdleTimer)
+    window.addEventListener('mousemove', resetIdleTimer)
     return () => {
       window.removeEventListener('mousedown', resetIdleTimer)
       window.removeEventListener('keydown', resetIdleTimer)
       window.removeEventListener('scroll', resetIdleTimer)
       window.removeEventListener('touchstart', resetIdleTimer)
+      window.removeEventListener('mousemove', resetIdleTimer)
       if (idleTimeoutRef.current) {
         clearTimeout(idleTimeoutRef.current)
         idleTimeoutRef.current = null
