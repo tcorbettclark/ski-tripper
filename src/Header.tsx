@@ -8,7 +8,6 @@ interface HeaderProps {
   tripDetailTab: string
   onViewAllTrips: () => void
   onTripDetailTabChange: (tab: string) => void
-  onShowTripInfo: () => void
   userName: string
   onLogout: () => void
   logoutError?: string | null
@@ -22,7 +21,6 @@ export default function Header({
   tripDetailTab,
   onViewAllTrips,
   onTripDetailTabChange,
-  onShowTripInfo,
   userName,
   onLogout,
   logoutError,
@@ -75,13 +73,7 @@ export default function Header({
         >
           ← My Trips
         </button>
-        <button
-          type="button"
-          onClick={onShowTripInfo}
-          style={headerStyles.tripName}
-        >
-          {tripName}
-        </button>
+        <span style={headerStyles.tripName}>{tripName}</span>
       </div>
       <nav style={headerStyles.centerTabs}>
         <button
@@ -194,12 +186,6 @@ const headerStyles = {
     fontWeight: '600',
     color: colors.textPrimary,
     letterSpacing: '0.01em',
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '6px 12px',
-    borderRadius: '6px',
-    transition: 'background 0.15s',
   },
   subTabs: {
     display: 'flex',

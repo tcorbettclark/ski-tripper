@@ -28,7 +28,6 @@ async function renderTable(trips: Trip[], props = {}) {
       <TripTable
         trips={trips}
         onSelectTrip={noop}
-        onShowTripInfo={noop}
         getCoordinatorParticipant={() =>
           Promise.resolve({
             participants: [

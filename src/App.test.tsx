@@ -35,13 +35,6 @@ const sampleTrip: Trip = {
   code: 'abc-123',
   description: 'Alps adventure',
 }
-const updatedTrip: Trip = {
-  $id: 'trip-1',
-  $createdAt: '2024-01-01T00:00:00.000Z',
-  $updatedAt: '2024-01-01T00:00:00.000Z',
-  code: 'abc-123',
-  description: 'Dolomites adventure',
-}
 
 function renderApp(props = {}, { loggedIn = true } = {}) {
   return render(
@@ -55,11 +48,7 @@ function renderApp(props = {}, { loggedIn = true } = {}) {
       deleteSession={() => Promise.resolve()}
       listTrips={() => Promise.resolve({ trips: [], coordinatorUserIds: {} })}
       listParticipatedTrips={() => Promise.resolve({ trips: [] })}
-      listTripParticipants={() => Promise.resolve({ participants: [] })}
       listPolls={() => Promise.resolve({ polls: [] })}
-      updateTrip={() => Promise.resolve(updatedTrip)}
-      deleteTrip={() => Promise.resolve()}
-      leaveTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
       {...props}
@@ -81,11 +70,7 @@ function renderAppWithTrip(props = {}, { loggedIn = true } = {}) {
         Promise.resolve({ trips: [sampleTrip], coordinatorUserIds: {} })
       }
       listParticipatedTrips={() => Promise.resolve({ trips: [] })}
-      listTripParticipants={() => Promise.resolve({ participants: [] })}
       listPolls={() => Promise.resolve({ polls: [] })}
-      updateTrip={() => Promise.resolve(updatedTrip)}
-      deleteTrip={() => Promise.resolve()}
-      leaveTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
       {...props}
@@ -187,7 +172,7 @@ describe('App', () => {
   it('auto-selects the single trip and goes to trip detail', async () => {
     renderAppWithTrip()
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /alps adventure/i }))
+      expect(screen.getAllByText('Alps adventure').length).toBeGreaterThan(0)
     })
   })
 
@@ -245,95 +230,6 @@ describe('App', () => {
     })
   })
 
-  it('shows the trip info panel when the info button is clicked', async () => {
-    const ue = userEvent.setup()
-    renderAppWithTrip({
-      getCoordinatorParticipant: () =>
-        Promise.resolve({
-          participants: [
-            {
-              participantUserId: 'user-1',
-              participantUserName: 'Test User',
-            },
-          ],
-        }),
-    })
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Alps adventure/i }))
-    })
-    await ue.click(screen.getByRole('button', { name: /Alps adventure/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText('Trip Info'))
-    })
-  })
-
-  it('shows the invite code in the trip info panel', async () => {
-    const ue = userEvent.setup()
-    renderAppWithTrip()
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /Alps adventure/i }))
-    })
-    await ue.click(screen.getByRole('button', { name: /Alps adventure/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText('Invite Code'))
-    })
-  })
-
-  it('updates the trip description in the header after editing via trip info', async () => {
-    const ue = userEvent.setup()
-    const getCoordinatorParticipant = () =>
-      Promise.resolve({
-        participants: [
-          {
-            participantUserId: 'user-1',
-            role: 'coordinator',
-            participantUserName: 'Test User',
-          },
-        ],
-      })
-
-    render(
-      <App
-        hasSession={() => true}
-        accountGet={() => Promise.resolve(defaultUser)}
-        deleteSession={() => Promise.resolve()}
-        listTrips={() =>
-          Promise.resolve({
-            trips: [sampleTrip],
-            coordinatorUserIds: {},
-          })
-        }
-        listParticipatedTrips={() => Promise.resolve({ trips: [] })}
-        listTripParticipants={() => Promise.resolve({ participants: [] })}
-        listPolls={() => Promise.resolve({ polls: [] })}
-        updateTrip={() => Promise.resolve(updatedTrip)}
-        deleteTrip={() => Promise.resolve()}
-        leaveTrip={() => Promise.resolve()}
-        getCoordinatorParticipant={getCoordinatorParticipant}
-        getPreferences={() => Promise.resolve(defaultPreferences)}
-      />
-    )
-
-    await waitFor(() => screen.getByRole('button', { name: /Alps adventure/i }))
-    await ue.click(screen.getByRole('button', { name: /Alps adventure/i }))
-
-    await waitFor(() => screen.getByText('Trip Info'))
-    await ue.click(screen.getByRole('button', { name: 'Edit description' }))
-
-    await waitFor(() => screen.getByRole('button', { name: /^save$/i }))
-    await ue.click(screen.getByRole('button', { name: /^save$/i }))
-
-    await waitFor(() => {
-      expect(screen.getAllByText('Dolomites adventure').length).toBeGreaterThan(
-        0
-      )
-    })
-  })
-
   it('returns to trip list when navigating back from trip detail', async () => {
     const ue = userEvent.setup()
     const anotherTrip: Trip = {
@@ -355,11 +251,7 @@ describe('App', () => {
           })
         }
         listParticipatedTrips={() => Promise.resolve({ trips: [] })}
-        listTripParticipants={() => Promise.resolve({ participants: [] })}
         listPolls={() => Promise.resolve({ polls: [] })}
-        updateTrip={() => Promise.resolve(updatedTrip)}
-        deleteTrip={() => Promise.resolve()}
-        leaveTrip={() => Promise.resolve()}
         getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
         getPreferences={() => Promise.resolve(defaultPreferences)}
       />

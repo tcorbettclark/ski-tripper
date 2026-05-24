@@ -9,7 +9,6 @@ const defaultProps = {
   tripDetailTab: 'proposals',
   onViewAllTrips: mock(() => {}),
   onTripDetailTabChange: mock(() => {}),
-  onShowTripInfo: mock(() => {}),
   userName: 'Alice',
   onLogout: mock(() => {}),
 }

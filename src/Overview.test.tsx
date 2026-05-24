@@ -375,4 +375,40 @@ describe('Overview', () => {
       expect(screen.getByText(/closed polls/i))
     })
   })
+
+  it('copies invite code to clipboard when copy button is clicked', async () => {
+    const writeText = mock(() => Promise.resolve())
+    navigator.clipboard.writeText = writeText
+    const eventUser = userEvent.setup()
+    await act(async () => {
+      renderOverview()
+    })
+    await waitFor(() => {
+      expect(screen.getByText('blue-mountain-lodge'))
+    })
+    await eventUser.click(
+      screen.getByRole('button', { name: /copy invite code/i })
+    )
+    expect(writeText).toHaveBeenCalledWith('blue-mountain-lodge')
+    await waitFor(() => {
+      expect(screen.getByText('Copied!'))
+    })
+  })
+
+  it('shows error when copy fails', async () => {
+    navigator.clipboard.writeText = mock(() => Promise.reject(new Error('No')))
+    const eventUser = userEvent.setup()
+    await act(async () => {
+      renderOverview()
+    })
+    await waitFor(() => {
+      expect(screen.getByText('blue-mountain-lodge'))
+    })
+    await eventUser.click(
+      screen.getByRole('button', { name: /copy invite code/i })
+    )
+    await waitFor(() => {
+      expect(screen.getByText('Failed to copy'))
+    })
+  })
 })

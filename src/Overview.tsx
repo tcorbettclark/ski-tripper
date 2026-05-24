@@ -48,6 +48,8 @@ export default function Overview({
   const [participantsError, setParticipantsError] = useState('')
   const [proposalsError, setProposalsError] = useState('')
   const [pollsError, setPollsError] = useState('')
+  const [codeCopied, setCodeCopied] = useState(false)
+  const [codeCopyError, setCodeCopyError] = useState('')
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -132,6 +134,24 @@ export default function Overview({
     return acc
   }, {})
 
+  function handleCopyCode() {
+    if (!trip.code) return
+    navigator.clipboard
+      .writeText(trip.code)
+      .then(() => {
+        if (!mountedRef.current) return
+        setCodeCopied(true)
+        setCodeCopyError('')
+        setTimeout(() => {
+          if (mountedRef.current) setCodeCopied(false)
+        }, 1500)
+      })
+      .catch(() => {
+        if (!mountedRef.current) return
+        setCodeCopyError('Failed to copy')
+      })
+  }
+
   return (
     <div style={overviewStyles.container}>
       <div style={overviewStyles.toolbar}>
@@ -147,7 +167,24 @@ export default function Overview({
           </div>
           <div style={overviewStyles.tripRow}>
             <span style={overviewStyles.label}>Invite code</span>
-            <span style={overviewStyles.codeValue}>{trip.code}</span>
+            <span style={overviewStyles.codeWithCopy}>
+              <span style={overviewStyles.codeValue}>{trip.code}</span>
+              <button
+                type="button"
+                onClick={handleCopyCode}
+                style={overviewStyles.copyButton}
+                title="Copy invite code"
+                aria-label="Copy invite code"
+              >
+                {codeCopied ? '✓' : '⧉'}
+              </button>
+              {codeCopied && (
+                <span style={overviewStyles.copyFeedback}>Copied!</span>
+              )}
+              {codeCopyError && (
+                <span style={overviewStyles.copyFeedback}>{codeCopyError}</span>
+              )}
+            </span>
           </div>
         </div>
       </section>
@@ -370,7 +407,28 @@ const overviewStyles = {
     fontSize: '14px',
     color: colors.accent,
     letterSpacing: '0.04em',
-    textAlign: 'right' as const,
+  },
+  codeWithCopy: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    justifyContent: 'flex-end',
+  },
+  copyButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.accent,
+    fontSize: '14px',
+    padding: '0 2px',
+    lineHeight: 1,
+    opacity: 0.7,
+  },
+  copyFeedback: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    color: colors.textSecondary,
+    marginLeft: '4px',
   },
   loading: {
     color: colors.textSecondary,

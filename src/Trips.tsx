@@ -16,7 +16,6 @@ interface TripsProps {
   user: Models.User
   trips: Trip[]
   onSelectTrip: (tripId: string) => void
-  onShowTripInfo: (tripId: string) => void
   onJoinedTrip?: () => void
   createTrip?: (
     userId: string,
@@ -38,7 +37,6 @@ export default function Trips({
   user,
   trips,
   onSelectTrip,
-  onShowTripInfo,
   onJoinedTrip,
   createTrip = _createTrip,
   getTripByCode = _getTripByCode,
@@ -105,7 +103,6 @@ export default function Trips({
       <TripTable
         trips={trips}
         onSelectTrip={onSelectTrip}
-        onShowTripInfo={onShowTripInfo}
         emptyMessage="No trips yet. Create one or join one above."
         getCoordinatorParticipant={getCoordinatorParticipant}
       />

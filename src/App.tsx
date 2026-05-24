@@ -4,17 +4,13 @@ import AuthForm from './AuthForm'
 import {
   account as _account,
   createPreferences as _createPreferences,
-  deleteTrip as _deleteTrip,
   getCoordinatorParticipant as _getCoordinatorParticipant,
   getPreferences as _getPreferences,
   hasSession as _hasSession,
-  leaveTrip as _leaveTrip,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
   listResorts as _listResorts,
-  listTripParticipants as _listTripParticipants,
   listTrips as _listTrips,
-  updateTrip as _updateTrip,
 } from './backend'
 import ErrorBoundary from './ErrorBoundary'
 import Header from './Header'
@@ -24,7 +20,6 @@ import PreferencesForm from './PreferencesForm'
 import PreferencesModal from './PreferencesModal'
 import Proposals from './Proposals'
 import Resorts from './Resorts'
-import TripInfo from './TripInfo'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
 import type { Preferences, Resort, Trip } from './types.d.ts'
@@ -43,26 +38,12 @@ interface AppProps {
   listParticipatedTrips?: (userId: string) => Promise<{
     trips: Trip[]
   }>
-  listTripParticipants?: (tripId: string) => Promise<{
-    participants: Array<{
-      $id: string
-      participantUserName: string
-      role: 'coordinator' | 'participant'
-    }>
-  }>
   listPolls?: (
     tripId: string,
     userId: string
   ) => Promise<{
     polls: Array<{ state: string; endDate: string }>
   }>
-  updateTrip?: (
-    tripId: string,
-    data: { description: string },
-    userId: string
-  ) => Promise<unknown>
-  deleteTrip?: (tripId: string, userId: string) => Promise<void>
-  leaveTrip?: (userId: string, tripId: string) => Promise<void>
   getCoordinatorParticipant?: (tripId: string) => Promise<{
     participants: Array<{
       participantUserId: string
@@ -81,11 +62,7 @@ const defaultAccountGet = () => _account.get()
 const defaultDeleteSession = () => _account.deleteSession('current')
 const defaultListTrips = _listTrips
 const defaultListParticipatedTrips = _listParticipatedTrips
-const defaultListTripParticipants = _listTripParticipants
 const defaultListPolls = _listPolls
-const defaultUpdateTrip = _updateTrip
-const defaultDeleteTrip = _deleteTrip
-const defaultLeaveTrip = _leaveTrip
 const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
@@ -99,11 +76,7 @@ export default function App({
   deleteSession = defaultDeleteSession,
   listTrips = defaultListTrips,
   listParticipatedTrips = defaultListParticipatedTrips,
-  listTripParticipants = defaultListTripParticipants,
   listPolls = defaultListPolls,
-  updateTrip = defaultUpdateTrip,
-  deleteTrip = defaultDeleteTrip,
-  leaveTrip = defaultLeaveTrip,
   getCoordinatorParticipant = defaultGetCoordinatorParticipant,
   getPreferences = defaultGetPreferences,
   createPreferences = defaultCreatePreferences,
@@ -117,8 +90,6 @@ export default function App({
   const [trips, setTrips] = useState<Trip[]>([])
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
-  const [showTripInfo, setShowTripInfo] = useState(false)
-  const [tripInfoTripId, setTripInfoTripId] = useState<string | null>(null)
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [preferences, setPreferences] = useState<Preferences | null>(null)
   const [checkingPreferences, setCheckingPreferences] = useState(false)
@@ -214,7 +185,6 @@ export default function App({
     if (!user) return
     setSelectedTripId(tripId)
     setView('tripDetail')
-    setShowTripInfo(false)
     setTripDetailTab('overview')
     listPolls(tripId, user.$id).then(({ polls }) => {
       const open = polls.find((p) => p.state === 'OPEN')
@@ -226,8 +196,6 @@ export default function App({
     setView('tripList')
     setSelectedTripId(null)
     setTripDetailTab('overview')
-    setShowTripInfo(false)
-    setTripInfoTripId(null)
     setActivePollEndDate(null)
   }
 
@@ -235,14 +203,7 @@ export default function App({
     setActivePollEndDate(endDate)
   }
 
-  function handleShowTripInfo(tripId: string) {
-    setTripInfoTripId(tripId)
-    setShowTripInfo(true)
-  }
-
   const selectedTrip = trips.find((t) => t.$id === selectedTripId) || null
-  const tripInfoTrip =
-    trips.find((t) => t.$id === (tripInfoTripId || selectedTripId)) || null
 
   if (checking) return null
 
@@ -333,7 +294,6 @@ export default function App({
         tripDetailTab={tripDetailTab}
         onViewAllTrips={handleViewAllTrips}
         onTripDetailTabChange={(tab) => setTripDetailTab(tab as TripDetailTab)}
-        onShowTripInfo={() => handleShowTripInfo(selectedTripId!)}
         userName={user.name || user.email}
         onLogout={handleLogout}
         logoutError={logoutError}
@@ -349,7 +309,6 @@ export default function App({
             onSelectTrip={handleSelectTrip}
             onJoinedTrip={handleJoinedTrip}
             getCoordinatorParticipant={getCoordinatorParticipant}
-            onShowTripInfo={handleShowTripInfo}
           />
         </ErrorBoundary>
       )}
@@ -404,37 +363,6 @@ export default function App({
             </ErrorBoundary>
           )}
         </>
-      )}
-
-      {showTripInfo && tripInfoTrip && (
-        <TripInfo
-          trip={tripInfoTrip}
-          user={user}
-          open={showTripInfo}
-          onClose={() => {
-            setShowTripInfo(false)
-            setTripInfoTripId(null)
-          }}
-          listTripParticipants={listTripParticipants}
-          updateTrip={updateTrip}
-          deleteTrip={deleteTrip}
-          leaveTrip={leaveTrip}
-          getCoordinatorParticipant={getCoordinatorParticipant}
-          onLeft={() => {
-            setTrips((ts) => ts.filter((t) => t.$id !== tripInfoTrip.$id))
-            handleViewAllTrips()
-          }}
-          onDeleted={() => {
-            setTrips((ts) => ts.filter((t) => t.$id !== tripInfoTrip.$id))
-            handleViewAllTrips()
-          }}
-          onUpdated={(updated) => {
-            const u = updated as { $id: string }
-            setTrips((ts) =>
-              ts.map((t) => (t.$id === u.$id ? (u as typeof t) : t))
-            )
-          }}
-        />
       )}
 
       <PreferencesModal

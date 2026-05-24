@@ -6,7 +6,6 @@ import type { Trip } from './types.d.ts'
 
 interface RenderRowProps {
   onSelectTrip?: () => void
-  onShowTripInfo?: () => void
   coordinatorUserId?: string
 }
 
@@ -28,7 +27,6 @@ async function renderRow(trip: Trip, props: RenderRowProps = {}) {
           <TripRow
             trip={trip}
             onSelectTrip={props.onSelectTrip || noop}
-            onShowTripInfo={props.onShowTripInfo || noop}
             getCoordinatorParticipant={() =>
               Promise.resolve({
                 participants: [
