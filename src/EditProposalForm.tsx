@@ -91,6 +91,7 @@ export default function EditProposalForm({
         onChange={handleChange}
         required
         options={COUNTRIES}
+        placeholder="Select a country…"
       />
       <Field
         label="Region"
@@ -150,6 +151,7 @@ export default function EditProposalForm({
         onChange={handleChange}
         required
         options={['beginner', 'intermediate', 'advanced']}
+        placeholder="Select a difficulty…"
       />
       <Field
         label="Lift Count"
@@ -167,6 +169,7 @@ export default function EditProposalForm({
         onChange={handleChange}
         required
         options={['high', 'medium', 'low']}
+        placeholder="Select snow reliability…"
       />
       <Field
         label="Ski Season Months"

@@ -47,7 +47,7 @@ export default function Field({
           required={required}
           style={styles.input}
         >
-          <option value="">Select a country…</option>
+          <option value="">{placeholder ?? 'Select an option…'}</option>
           {options.map((opt) => (
             <option key={opt} value={opt}>
               {opt}
