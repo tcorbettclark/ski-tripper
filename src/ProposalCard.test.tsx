@@ -610,7 +610,7 @@ describe('ProposalCard', () => {
     expect(screen.getByText('€100/night')).toBeDefined()
   })
 
-  it('shows edit and delete buttons on accommodations for owner of DRAFT', () => {
+  it('shows edit button on accommodations for owner of DRAFT', () => {
     const accommodations = [
       {
         $id: 'acc-1',
@@ -635,10 +635,10 @@ describe('ProposalCard', () => {
       />
     )
 
-    const allEditButtons = screen.getAllByRole('button', { name: 'Edit' })
-    expect(allEditButtons.length).toBeGreaterThanOrEqual(2)
-    const deleteButtons = screen.getAllByRole('button', { name: 'Delete' })
-    expect(deleteButtons.length).toBeGreaterThanOrEqual(2)
+    const accommodationEditButtons = screen.getAllByRole('button', {
+      name: 'Edit',
+    })
+    expect(accommodationEditButtons.length).toBeGreaterThanOrEqual(2)
   })
 
   it('hides accommodation edit/delete buttons for non-owner', () => {
@@ -723,19 +723,27 @@ describe('ProposalCard', () => {
       },
     ]
 
-    render(
-      <ProposalCard
-        proposal={baseProposal}
-        userId="user-1"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        accommodations={accommodations}
-        deleteAccommodation={deleteAccommodation}
-      />
-    )
+    await act(async () => {
+      render(
+        <ProposalCard
+          proposal={baseProposal}
+          userId="user-1"
+          onUpdated={() => {}}
+          onDeleted={() => {}}
+          onSubmitted={() => {}}
+          accommodations={accommodations}
+          deleteAccommodation={deleteAccommodation}
+        />
+      )
+    })
 
     const user = userEvent.setup()
+    const accommodationEditButton = screen.getAllByRole('button', {
+      name: 'Edit',
+    })[0]
+
+    await user.click(accommodationEditButton)
+
     const accommodationDeleteButton = screen.getAllByRole('button', {
       name: 'Delete',
     })[0]

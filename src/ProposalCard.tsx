@@ -452,16 +452,15 @@ export default function ProposalCard({
                     onCancel={() => {
                       setEditingAccommodationId(null)
                       setAccommodationError(null)
+                      setDeletingAccommodationError(null)
                     }}
+                    onDelete={() => handleDeleteAccommodation(acc.$id)}
+                    deleting={deletingAccommodationId === acc.$id}
+                    deleteError={deletingAccommodationError}
                     error={accommodationError}
                   />
                 ) : (
                   <div key={acc.$id}>
-                    {deletingAccommodationError && (
-                      <p style={formStyles.error}>
-                        {deletingAccommodationError}
-                      </p>
-                    )}
                     <div style={styles.accommodationItem}>
                       <div style={styles.accommodationItemContent}>
                         <div style={styles.grid}>
@@ -480,7 +479,7 @@ export default function ProposalCard({
                                 rel="noopener noreferrer"
                                 style={styles.accommodationLink}
                               >
-                                {acc.name || '—'} ↗
+                                {acc.name || '—'}
                               </a>
                             )}
                           </DetailField>
@@ -504,16 +503,6 @@ export default function ProposalCard({
                             style={styles.accommodationEditButton}
                           >
                             Edit
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteAccommodation(acc.$id)}
-                            disabled={deletingAccommodationId === acc.$id}
-                            style={styles.accommodationDeleteButton}
-                          >
-                            {deletingAccommodationId === acc.$id
-                              ? 'Deleting…'
-                              : 'Delete'}
                           </button>
                         </div>
                       )}
@@ -673,6 +662,9 @@ function AccommodationEditForm({
   initialData,
   onSave,
   onCancel,
+  onDelete,
+  deleting,
+  deleteError,
   error,
 }: {
   initialData?: { name: string; url: string; cost: string; description: string }
@@ -683,6 +675,9 @@ function AccommodationEditForm({
     description?: string
   }) => void
   onCancel: () => void
+  onDelete?: () => void
+  deleting?: boolean
+  deleteError?: string | null
   error: string | null
 }) {
   const [name, setName] = useState(initialData?.name ?? '')
@@ -765,21 +760,34 @@ function AccommodationEditForm({
         </div>
       </div>
       {error && <p style={formStyles.error}>{error}</p>}
+      {deleteError && <p style={formStyles.error}>{deleteError}</p>}
       <div style={accFormStyles.actions}>
-        <button
-          type="submit"
-          disabled={saving}
-          style={accFormStyles.saveButton}
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          style={accFormStyles.cancelButton}
-        >
-          Cancel
-        </button>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={deleting}
+            style={accFormStyles.deleteButton}
+          >
+            {deleting ? 'Deleting…' : 'Delete'}
+          </button>
+        )}
+        <div style={accFormStyles.actionsRight}>
+          <button
+            type="submit"
+            disabled={saving}
+            style={accFormStyles.saveButton}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            style={accFormStyles.cancelButton}
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </form>
   )
@@ -890,9 +898,7 @@ const styles = {
   },
   accommodationItem: {
     display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '12px',
+    justifyContent: 'flex-end',
   },
   accommodationItemContent: {
     flex: 1,
@@ -900,9 +906,8 @@ const styles = {
   },
   accommodationItemActions: {
     display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
     flexShrink: 0,
+    alignSelf: 'flex-end',
   },
   accommodationEditButton: {
     padding: '4px 10px',
@@ -910,18 +915,6 @@ const styles = {
     border: borders.muted,
     background: 'transparent',
     color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '11px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    letterSpacing: '0.03em',
-  },
-  accommodationDeleteButton: {
-    padding: '4px 10px',
-    borderRadius: '4px',
-    border: '1px solid rgba(255,107,107,0.3)',
-    background: 'transparent',
-    color: colors.error,
     fontFamily: fonts.body,
     fontSize: '11px',
     fontWeight: '500',
@@ -1199,6 +1192,11 @@ const accFormStyles = {
   },
   actions: {
     display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  actionsRight: {
+    display: 'flex',
     gap: '8px',
     alignItems: 'center',
   },
@@ -1219,6 +1217,17 @@ const accFormStyles = {
     border: borders.muted,
     background: 'transparent',
     color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+  },
+  deleteButton: {
+    padding: '6px 16px',
+    borderRadius: '5px',
+    border: '1px solid rgba(255,107,107,0.3)',
+    background: 'transparent',
+    color: colors.error,
     fontFamily: fonts.body,
     fontSize: '12px',
     fontWeight: '500',
