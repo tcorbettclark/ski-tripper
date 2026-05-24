@@ -97,10 +97,10 @@ describe('ProposalsGrid', () => {
     }))
     render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
 
-    const headings = screen.getAllByRole('heading')
-    expect(headings.length).toBe(2)
-    expect(headings[0].textContent).toContain('A Resort')
-    expect(headings[1].textContent).toContain('Z Resort')
+    const resortNames = screen.getAllByText(/Resort/)
+    expect(resortNames.length).toBe(2)
+    expect(resortNames[0].textContent).toContain('A Resort')
+    expect(resortNames[1].textContent).toContain('Z Resort')
   })
 
   it('filters by DRAFT status', async () => {
