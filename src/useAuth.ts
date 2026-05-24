@@ -2,7 +2,7 @@ import { AppwriteException, type Models } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { account as _account, hasSession as _hasSession } from './backend'
 
-const IDLE_TIMEOUT_MS = 30_000
+const IDLE_TIMEOUT_MS = 5 * 60_000
 const ACTIVITY_THROTTLE_MS = 1_000
 
 export default function useAuth(options?: {
