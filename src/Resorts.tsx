@@ -204,15 +204,6 @@ export default function Resorts({
     <div style={resortsStyles.container}>
       <div style={resortsStyles.toolbar}>
         <h2 style={resortsStyles.heading}>Resorts</h2>
-        {onNavigateToProposals && (
-          <button
-            type="button"
-            onClick={onNavigateToProposals}
-            style={resortsStyles.navButton}
-          >
-            View Proposals
-          </button>
-        )}
       </div>
 
       <div style={resortsStyles.controlsRow}>
@@ -649,18 +640,6 @@ const resortsStyles = {
     color: colors.textPrimary,
     margin: 0,
     letterSpacing: '-0.01em',
-  },
-  navButton: {
-    padding: '9px 22px',
-    borderRadius: '7px',
-    border: 'none',
-    background: colors.accent,
-    color: colors.bgPrimary,
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    letterSpacing: '0.02em',
   },
   navButtonSmall: {
     marginLeft: '8px',

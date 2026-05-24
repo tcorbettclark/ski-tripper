@@ -130,18 +130,6 @@ describe('Resorts', () => {
     expect(options.length).toBe(3)
   })
 
-  it('shows View Proposals button when onNavigateToProposals is provided', () => {
-    render(<Resorts {...defaultProps()} />)
-    expect(screen.getByRole('button', { name: /view proposals/i })).toBeTruthy()
-  })
-
-  it('does not show View Proposals button when onNavigateToProposals is not provided', () => {
-    const { onNavigateToProposals, ...propsWithoutNav } = defaultProps()
-    render(<Resorts {...propsWithoutNav} />)
-    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: /view proposals/i })).toBeNull()
-  })
-
   it('disables clear filters button when no filters are active', () => {
     render(<Resorts {...defaultProps()} />)
     expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
@@ -178,17 +166,6 @@ describe('Resorts', () => {
     )
 
     expect(searchInput).toBeTruthy()
-  })
-
-  it('calls onNavigateToProposals when View Proposals button is clicked', async () => {
-    const onNavigateToProposals = mock(() => {})
-    const eventUser = userEvent.setup()
-    render(<Resorts {...defaultProps({ onNavigateToProposals })} />)
-
-    await eventUser.click(
-      screen.getByRole('button', { name: /view proposals/i })
-    )
-    expect(onNavigateToProposals).toHaveBeenCalled()
   })
 
   it('shows 0 result count when no resorts match country filter', async () => {
