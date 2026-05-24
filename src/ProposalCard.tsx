@@ -114,6 +114,7 @@ export default function ProposalCard({
   const [reverting, setReverting] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
   const [rejectError, setRejectError] = useState<string | null>(null)
   const [revertError, setRevertError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
@@ -144,6 +145,15 @@ export default function ProposalCard({
   const canAct = isOwner && isDraft
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
   const canRevertToDraft = isCoordinator && isRejected
+
+  function initiateSubmit() {
+    setSubmitError(null)
+    if (accommodations.length === 0) {
+      setShowSubmitConfirm(true)
+      return
+    }
+    handleSubmit()
+  }
 
   async function handleSubmit() {
     setSubmitting(true)
@@ -576,7 +586,7 @@ export default function ProposalCard({
               <div style={styles.actionsRight}>
                 <button
                   type="button"
-                  onClick={handleSubmit}
+                  onClick={initiateSubmit}
                   disabled={submitting}
                   style={styles.submitButton}
                 >
@@ -654,6 +664,44 @@ export default function ProposalCard({
               </button>
             </div>
             {deleteError && <p style={formStyles.error}>{deleteError}</p>}
+          </div>
+        </div>
+      )}
+
+      {showSubmitConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="submit-confirm-title"
+          style={styles.backdrop}
+          onClick={() => setShowSubmitConfirm(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setShowSubmitConfirm(false)
+          }}
+        >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: stops click propagation from modal card */}
+          <div
+            role="presentation"
+            style={styles.confirmCard}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <h4 id="submit-confirm-title" style={styles.confirmTitle}>
+              No Accommodations
+            </h4>
+            <p style={styles.confirmText}>
+              At least one accommodation is required to submit a proposal.
+              Please add an accommodation before submitting.
+            </p>
+            <div style={styles.confirmActions}>
+              <button
+                type="button"
+                onClick={() => setShowSubmitConfirm(false)}
+                style={styles.cancelButton}
+              >
+                OK
+              </button>
+            </div>
           </div>
         </div>
       )}

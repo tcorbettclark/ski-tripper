@@ -333,9 +333,7 @@ describe('ProposalCard', () => {
     expect(flagImg.getAttribute('src')).toBe('https://flagcdn.com/w20/jp.png')
   })
 
-  it('shows error when submitProposal rejects', async () => {
-    const failingSubmit = mock(() => Promise.reject(new Error('Submit failed')))
-    const onSubmitted = mock()
+  it('shows popup when submitting with no accommodations', async () => {
     const user = userEvent.setup()
     render(
       <ProposalCard
@@ -343,7 +341,45 @@ describe('ProposalCard', () => {
         userId="user-1"
         onUpdated={() => {}}
         onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Submit' }))
+    expect(screen.getByText('No Accommodations')).toBeDefined()
+    expect(
+      screen.getByText(/At least one accommodation is required/)
+    ).toBeDefined()
+  })
+
+  it('shows error when submitProposal rejects', async () => {
+    const failingSubmit = mock(() => Promise.reject(new Error('Submit failed')))
+    const onSubmitted = mock()
+    const user = userEvent.setup()
+    const accommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-01T00:00:00Z',
+        proposalId: 'proposal-1',
+        name: 'Hotel Test',
+        url: '',
+        cost: '',
+        description: '',
+      },
+    ]
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
         onSubmitted={onSubmitted}
+        accommodations={accommodations}
         updateProposal={mockUpdateProposal}
         deleteProposal={mockDeleteProposal}
         submitProposal={failingSubmit}
