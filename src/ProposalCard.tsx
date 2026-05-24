@@ -409,8 +409,18 @@ export default function ProposalCard({
                   </DetailField>
                 )}
               </div>
-              <div style={styles.accommodationItem}>
-                <div style={styles.accommodationItemContent}>
+              <div
+                style={{
+                  ...styles.accommodationItem,
+                  justifyContent: 'space-between',
+                }}
+              >
+                <div
+                  style={{
+                    ...styles.accommodationItemContent,
+                    maxWidth: '75%',
+                  }}
+                >
                   {proposal.description && (
                     <DetailField
                       label="Description"
@@ -497,7 +507,7 @@ export default function ProposalCard({
                             )}
                           </DetailField>
                           <DetailField label="Cost" value={acc.cost} />
-                          <div style={{ gridColumn: '1/-1' }}>
+                          <div style={{ gridColumn: '1/-1', maxWidth: '75%' }}>
                             <DetailField
                               label="Description"
                               value={acc.description}
@@ -737,7 +747,13 @@ function AccommodationEditForm({
             placeholder="e.g. €150/night"
           />
         </div>
-        <div style={accFormStyles.field}>
+        <div
+          style={{
+            ...accFormStyles.field,
+            gridColumn: '1/-1',
+            maxWidth: '75%',
+          }}
+        >
           <label htmlFor="acc-desc" style={accFormStyles.label}>
             Description
           </label>
@@ -1099,7 +1115,6 @@ const accFormStyles = {
     outline: 'none' as const,
     resize: 'vertical' as const,
     minHeight: '60px',
-    gridColumn: '1/-1',
   },
   actions: {
     display: 'flex',
