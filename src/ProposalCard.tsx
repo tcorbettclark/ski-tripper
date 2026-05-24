@@ -339,27 +339,29 @@ export default function ProposalCard({
             <>
               <button
                 type="button"
-                onClick={() => setIsEditing(true)}
-                style={styles.editButton}
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting}
-                style={styles.submitButton}
-              >
-                {submitting ? 'Submitting…' : 'Submit'}
-              </button>
-              {submitError && <p style={formStyles.error}>{submitError}</p>}
-              <button
-                type="button"
                 onClick={() => setShowDeleteConfirm(true)}
                 style={styles.deleteButton}
               >
                 Delete
               </button>
+              <div style={styles.actionsRight}>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  style={styles.editButton}
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  style={styles.submitButton}
+                >
+                  {submitting ? 'Submitting…' : 'Submit'}
+                </button>
+                {submitError && <p style={formStyles.error}>{submitError}</p>}
+              </div>
             </>
           )}
           {canReject && (
@@ -530,11 +532,18 @@ const styles = {
   },
   actions: {
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     gap: '8px',
     flexWrap: 'wrap' as const,
     paddingTop: '16px',
     borderTop: borders.subtle,
+  },
+  actionsRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    flexWrap: 'wrap' as const,
   },
   editButton: {
     padding: '6px 16px',
