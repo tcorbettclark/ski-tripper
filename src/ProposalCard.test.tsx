@@ -437,7 +437,7 @@ describe('ProposalCard', () => {
     expect(onDeleted).not.toHaveBeenCalled()
   })
 
-  it('refreshes discussion count badge after closing discussion dialog', async () => {
+  it('shows discussion count in collapsible section header', async () => {
     const comments: Discussion[] = [
       {
         $id: 'd-1',
@@ -452,7 +452,6 @@ describe('ProposalCard', () => {
     ]
     const listDiscussion = mock(async () => [...comments])
 
-    const user = userEvent.setup()
     await act(async () => {
       render(
         <ProposalCard
@@ -472,26 +471,7 @@ describe('ProposalCard', () => {
     })
 
     await screen.findByRole('button', { name: /Discussion/i })
-    expect(listDiscussion).toHaveBeenCalledTimes(1)
-    expect(screen.getByText('1')).toBeDefined()
-
-    await user.click(screen.getByRole('button', { name: /Discussion/i }))
-    await screen.findByText('Hello')
-
-    comments.push({
-      $id: 'd-new',
-      $createdAt: new Date().toISOString(),
-      $updatedAt: new Date().toISOString(),
-      proposalId: 'proposal-1',
-      authorUserId: 'user-1',
-      authorUserName: 'Alice',
-      body: 'New comment',
-      type: 'comment',
-    })
-
-    await user.click(screen.getByText('✕').closest('button')!)
-
-    await screen.findByText('2')
+    expect(screen.getByText(/\(1\)/)).toBeDefined()
   })
 
   it('renders accommodations in collapsible section', () => {

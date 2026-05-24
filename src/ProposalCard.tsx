@@ -13,7 +13,7 @@ import {
 } from './backend'
 import { getCountryFlagUrl } from './countries'
 import DetailField from './DetailField'
-import DiscussionDialog from './DiscussionDialog'
+import DiscussionSection from './DiscussionSection'
 import EditProposalForm from './EditProposalForm'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
@@ -103,7 +103,7 @@ export default function ProposalCard({
 }: ProposalCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showDiscussion, setShowDiscussion] = useState(false)
+  const [discussionCollapsed, setDiscussionCollapsed] = useState(true)
   const [discussionCount, setDiscussionCount] = useState(0)
   const [latLngHovered, setLatLngHovered] = useState(false)
   const [websiteHovered, setWebsiteHovered] = useState(false)
@@ -290,17 +290,33 @@ export default function ProposalCard({
               </span>
             </div>
           </div>
+        </div>
+
+        <div style={styles.section}>
           <button
             type="button"
-            onClick={() => setShowDiscussion(true)}
-            style={styles.discussionButton}
-            aria-label={`Discussion (${discussionCount} comments)`}
+            onClick={() => setDiscussionCollapsed((c) => !c)}
+            style={styles.sectionHeader}
           >
-            💬
-            {discussionCount > 0 && (
-              <span style={styles.discussionBadge}>{discussionCount}</span>
-            )}
+            <span style={styles.sectionTitle}>
+              Discussion {discussionCount > 0 && `(${discussionCount})`}
+            </span>
+            <span style={styles.collapseIcon}>
+              {discussionCollapsed ? '+' : '−'}
+            </span>
           </button>
+          {!discussionCollapsed && (
+            <DiscussionSection
+              proposalId={proposal.$id}
+              userId={userId}
+              userName={userName}
+              onCommentsChanged={() => {
+                listDiscussion(proposal.$id)
+                  .then((rows) => setDiscussionCount(rows.length))
+                  .catch(onAuthError)
+              }}
+            />
+          )}
         </div>
 
         <div style={styles.section}>
@@ -637,22 +653,6 @@ export default function ProposalCard({
             {deleteError && <p style={formStyles.error}>{deleteError}</p>}
           </div>
         </div>
-      )}
-
-      {showDiscussion && (
-        <DiscussionDialog
-          proposalId={proposal.$id}
-          proposalResortName={proposal.resortName || '—'}
-          userId={userId}
-          userName={userName}
-          onClose={() => {
-            setShowDiscussion(false)
-            listDiscussion(proposal.$id)
-              .then((rows) => setDiscussionCount(rows.length))
-              .catch(onAuthError)
-          }}
-          listDiscussion={listDiscussion}
-        />
       )}
     </>
   )
@@ -1107,33 +1107,6 @@ const styles = {
     fontSize: '13px',
     fontWeight: '600',
     cursor: 'pointer',
-  },
-  discussionButton: {
-    position: 'relative' as const,
-    background: 'none',
-    border: borders.muted,
-    borderRadius: '8px',
-    padding: '6px 10px',
-    cursor: 'pointer',
-    fontSize: '18px',
-    lineHeight: 1,
-    color: colors.textSecondary,
-  },
-  discussionBadge: {
-    position: 'absolute' as const,
-    top: '-4px',
-    right: '-4px',
-    background: colors.accent,
-    color: colors.bgPrimary,
-    fontSize: '10px',
-    fontWeight: '700',
-    minWidth: '16px',
-    height: '16px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '0 4px',
   },
 } as const
 
