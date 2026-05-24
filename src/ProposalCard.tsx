@@ -496,7 +496,12 @@ export default function ProposalCard({
           proposalResortName={proposal.resortName || '—'}
           userId={userId}
           userName={userName}
-          onClose={() => setShowDiscussion(false)}
+          onClose={() => {
+            setShowDiscussion(false)
+            listDiscussion(proposal.$id)
+              .then((rows) => setDiscussionCount(rows.length))
+              .catch(onAuthError)
+          }}
           listDiscussion={listDiscussion}
         />
       )}

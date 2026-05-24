@@ -1,8 +1,8 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ProposalCard from './ProposalCard'
-import type { Proposal } from './types.d.ts'
+import type { Discussion, Proposal } from './types.d.ts'
 
 const mockUpdateProposal = mock(async () => ({}))
 const mockDeleteProposal = mock(async () => {})
@@ -435,5 +435,62 @@ describe('ProposalCard', () => {
     await user.click(confirmButtons[confirmButtons.length - 1])
     await screen.findByText('Delete failed')
     expect(onDeleted).not.toHaveBeenCalled()
+  })
+
+  it('refreshes discussion count badge after closing discussion dialog', async () => {
+    const comments: Discussion[] = [
+      {
+        $id: 'd-1',
+        $createdAt: '2024-06-15T10:00:00Z',
+        $updatedAt: '2024-06-15T10:00:00Z',
+        proposalId: 'proposal-1',
+        authorUserId: 'user-2',
+        authorUserName: 'Bob',
+        body: 'Hello',
+        type: 'comment',
+      },
+    ]
+    const listDiscussion = mock(async () => [...comments])
+
+    const user = userEvent.setup()
+    await act(async () => {
+      render(
+        <ProposalCard
+          proposal={baseProposal}
+          userId="user-1"
+          userName="Alice"
+          onUpdated={() => {}}
+          onDeleted={() => {}}
+          onSubmitted={() => {}}
+          updateProposal={mockUpdateProposal}
+          deleteProposal={mockDeleteProposal}
+          submitProposal={mockSubmitProposal}
+          rejectProposal={mockRejectProposal}
+          listDiscussion={listDiscussion}
+        />
+      )
+    })
+
+    await screen.findByRole('button', { name: /Discussion/i })
+    expect(listDiscussion).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('1')).toBeDefined()
+
+    await user.click(screen.getByRole('button', { name: /Discussion/i }))
+    await screen.findByText('Hello')
+
+    comments.push({
+      $id: 'd-new',
+      $createdAt: new Date().toISOString(),
+      $updatedAt: new Date().toISOString(),
+      proposalId: 'proposal-1',
+      authorUserId: 'user-1',
+      authorUserName: 'Alice',
+      body: 'New comment',
+      type: 'comment',
+    })
+
+    await user.click(screen.getByText('✕').closest('button')!)
+
+    await screen.findByText('2')
   })
 })
