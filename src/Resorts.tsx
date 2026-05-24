@@ -416,7 +416,7 @@ export default function Resorts({
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
-                      ...resortsStyles.detailFieldValue,
+                      ...resortsStyles.websiteLinkInline,
                       color: colors.accent,
                       textDecoration: latLngHovered ? 'underline' : 'none',
                     }}

@@ -312,7 +312,7 @@ export default function ProposalCard({
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
-                        ...styles.detailFieldValue,
+                        ...styles.websiteLinkInline,
                         color: colors.accent,
                         textDecoration: latLngHovered ? 'underline' : 'none',
                       }}
