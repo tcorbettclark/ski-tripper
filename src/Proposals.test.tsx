@@ -259,19 +259,15 @@ describe('Proposals', () => {
     const initialCallCount = listAccommodationsFn.mock.calls.length
 
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    const editButtons = screen.getAllByRole('button', { name: 'Edit' })
+    await user.click(editButtons[editButtons.length - 1])
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()
     })
 
-    const forms = document.querySelectorAll('form')
-    const editForm = forms[forms.length - 1]
-    await act(async () => {
-      editForm?.dispatchEvent(
-        new Event('submit', { bubbles: true, cancelable: true })
-      )
-    })
+    const saveButton = screen.getByRole('button', { name: 'Save' })
+    await user.click(saveButton)
 
     await waitFor(() => {
       expect(listAccommodationsFn.mock.calls.length).toBeGreaterThan(

@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
+  createAccommodation as _createAccommodation,
+  deleteAccommodation as _deleteAccommodation,
   deleteProposal as _deleteProposal,
+  listAccommodations as _listAccommodations,
   rejectProposal as _rejectProposal,
   revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
+  updateAccommodation as _updateAccommodation,
   updateProposal as _updateProposal,
 } from './backend'
 import ProposalCard from './ProposalCard'
@@ -23,6 +27,7 @@ interface ProposalsGridProps {
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
   onRevertedToDraft?: (proposal: unknown) => void
+  onAccommodationsChanged?: (proposalId: string) => void
   emptyMessage?: string
   updateProposal?: (
     proposalId: string,
@@ -34,6 +39,21 @@ interface ProposalsGridProps {
   rejectProposal?: (proposalId: string, userId: string) => Promise<unknown>
   revertProposalToDraft?: (
     proposalId: string,
+    userId: string
+  ) => Promise<unknown>
+  listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
+  createAccommodation?: (
+    proposalId: string,
+    userId: string,
+    data: { name: string; url?: string; cost?: string; description?: string }
+  ) => Promise<unknown>
+  updateAccommodation?: (
+    accommodationId: string,
+    userId: string,
+    data: { name?: string; url?: string; cost?: string; description?: string }
+  ) => Promise<unknown>
+  deleteAccommodation?: (
+    accommodationId: string,
     userId: string
   ) => Promise<unknown>
   debounceMs?: number
@@ -51,12 +71,17 @@ export default function ProposalsGrid({
   onSubmitted,
   onRejected = () => {},
   onRevertedToDraft = () => {},
+  onAccommodationsChanged,
   emptyMessage = 'No proposals yet. Create one above.',
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
   revertProposalToDraft = _revertProposalToDraft,
+  listAccommodations = _listAccommodations,
+  createAccommodation = _createAccommodation,
+  updateAccommodation = _updateAccommodation,
+  deleteAccommodation = _deleteAccommodation,
   debounceMs = 300,
   onAuthError,
 }: ProposalsGridProps) {
@@ -185,11 +210,16 @@ export default function ProposalsGrid({
               onSubmitted={onSubmitted}
               onRejected={onRejected}
               onRevertedToDraft={onRevertedToDraft}
+              onAccommodationsChanged={onAccommodationsChanged}
               updateProposal={updateProposal}
               deleteProposal={deleteProposal}
               submitProposal={submitProposal}
               rejectProposal={rejectProposal}
               revertProposalToDraft={revertProposalToDraft}
+              listAccommodations={listAccommodations}
+              createAccommodation={createAccommodation}
+              updateAccommodation={updateAccommodation}
+              deleteAccommodation={deleteAccommodation}
               onAuthError={onAuthError}
             />
           ))}

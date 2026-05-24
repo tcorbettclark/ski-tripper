@@ -493,4 +493,255 @@ describe('ProposalCard', () => {
 
     await screen.findByText('2')
   })
+
+  it('renders accommodations in collapsible section', () => {
+    const accommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-01T00:00:00Z',
+        proposalId: 'proposal-1',
+        name: 'Chalet Mont Blanc',
+        url: 'https://example.com/chalet',
+        cost: '€150/night',
+        description: 'Nice chalet near the slopes',
+      },
+    ]
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        accommodations={accommodations}
+      />
+    )
+
+    expect(screen.getByText('Accommodations')).toBeDefined()
+    expect(screen.getByText(/Chalet Mont Blanc/)).toBeDefined()
+    expect(screen.getByText('€150/night')).toBeDefined()
+  })
+
+  it('shows add accommodation button for owner of DRAFT', () => {
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: '+ Add Accommodation' })
+    ).toBeDefined()
+  })
+
+  it('hides add accommodation button for non-owner', () => {
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-2"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+      />
+    )
+
+    expect(
+      screen.queryByRole('button', { name: '+ Add Accommodation' })
+    ).toBeNull()
+  })
+
+  it('hides add accommodation button for SUBMITTED proposal', () => {
+    const submittedProposal = { ...baseProposal, state: 'SUBMITTED' as const }
+    render(
+      <ProposalCard
+        proposal={submittedProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+      />
+    )
+
+    expect(
+      screen.queryByRole('button', { name: '+ Add Accommodation' })
+    ).toBeNull()
+  })
+
+  it('toggles accommodation section collapse', async () => {
+    const user = userEvent.setup()
+    const accommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-01T00:00:00Z',
+        proposalId: 'proposal-1',
+        name: 'Chalet Mont Blanc',
+        url: '',
+        cost: '€100/night',
+        description: 'A hotel',
+      },
+    ]
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        accommodations={accommodations}
+      />
+    )
+
+    expect(screen.getByText('€100/night')).toBeDefined()
+
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
+    expect(screen.queryByText('€100/night')).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
+    expect(screen.getByText('€100/night')).toBeDefined()
+  })
+
+  it('shows edit and delete buttons on accommodations for owner of DRAFT', () => {
+    const accommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-01T00:00:00Z',
+        proposalId: 'proposal-1',
+        name: 'Hotel Test',
+        url: '',
+        cost: '€100',
+        description: '',
+      },
+    ]
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        accommodations={accommodations}
+      />
+    )
+
+    const allEditButtons = screen.getAllByRole('button', { name: 'Edit' })
+    expect(allEditButtons.length).toBeGreaterThanOrEqual(2)
+    const deleteButtons = screen.getAllByRole('button', { name: 'Delete' })
+    expect(deleteButtons.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('hides accommodation edit/delete buttons for non-owner', () => {
+    const accommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-01T00:00:00Z',
+        proposalId: 'proposal-1',
+        name: 'Hotel Test',
+        url: '',
+        cost: '€100',
+        description: '',
+      },
+    ]
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-2"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        accommodations={accommodations}
+      />
+    )
+
+    expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Delete' })).toBeNull()
+  })
+
+  it('creates accommodation inline', async () => {
+    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const onAccommodationsChanged = mock()
+    const listAccommodations = mock(() => Promise.resolve([]))
+    const user = userEvent.setup()
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        createAccommodation={createAccommodation}
+        onAccommodationsChanged={onAccommodationsChanged}
+        listAccommodations={listAccommodations}
+      />
+    )
+
+    await user.click(
+      screen.getByRole('button', { name: '+ Add Accommodation' })
+    )
+
+    expect(screen.getByLabelText('Name')).toBeDefined()
+
+    await user.type(screen.getByLabelText('Name'), 'New Hotel')
+    await user.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(createAccommodation).toHaveBeenCalledWith(
+      'proposal-1',
+      'user-1',
+      expect.objectContaining({ name: 'New Hotel' })
+    )
+    expect(onAccommodationsChanged).toHaveBeenCalledWith('proposal-1')
+  })
+
+  it('displays accommodation delete error', async () => {
+    const deleteAccommodation = mock(() =>
+      Promise.reject(new Error('delete failed'))
+    )
+    const accommodations = [
+      {
+        $id: 'acc-1',
+        $createdAt: '2024-01-01T00:00:00Z',
+        $updatedAt: '2024-01-01T00:00:00Z',
+        proposalId: 'proposal-1',
+        name: 'Hotel',
+        url: '',
+        cost: '',
+        description: '',
+      },
+    ]
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        accommodations={accommodations}
+        deleteAccommodation={deleteAccommodation}
+      />
+    )
+
+    const user = userEvent.setup()
+    const accommodationDeleteButton = screen.getAllByRole('button', {
+      name: 'Delete',
+    })[0]
+
+    await user.click(accommodationDeleteButton)
+
+    await screen.findByText('delete failed')
+  })
 })

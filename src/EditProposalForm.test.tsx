@@ -40,10 +40,6 @@ function renderForm(props = {}) {
     updateProposal: mock(() =>
       Promise.resolve({ $id: 'p-1', resortName: 'Updated' })
     ),
-    listAccommodations: mock(() => Promise.resolve([])),
-    createAccommodation: mock(() => Promise.resolve({ $id: 'acc-1' })),
-    updateAccommodation: mock(() => Promise.resolve({ $id: 'acc-1' })),
-    deleteAccommodation: mock(() => Promise.resolve()),
   }
   return render(<EditProposalForm {...defaults} {...props} />)
 }

@@ -1,7 +1,9 @@
 import type { Models } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  createAccommodation as _createAccommodation,
   createProposal as _createProposal,
+  deleteAccommodation as _deleteAccommodation,
   deleteProposal as _deleteProposal,
   getCoordinatorParticipant as _getCoordinatorParticipant,
   listAccommodations as _listAccommodations,
@@ -9,6 +11,7 @@ import {
   rejectProposal as _rejectProposal,
   revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
+  updateAccommodation as _updateAccommodation,
   updateProposal as _updateProposal,
 } from './backend'
 import CreateProposalForm from './CreateProposalForm'
@@ -66,6 +69,20 @@ interface ProposalsProps {
     proposalId: string,
     userId: string
   ) => Promise<unknown>
+  createAccommodation?: (
+    proposalId: string,
+    userId: string,
+    data: { name: string; url?: string; cost?: string; description?: string }
+  ) => Promise<unknown>
+  updateAccommodation?: (
+    accommodationId: string,
+    userId: string,
+    data: { name?: string; url?: string; cost?: string; description?: string }
+  ) => Promise<unknown>
+  deleteAccommodation?: (
+    accommodationId: string,
+    userId: string
+  ) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
   ) => Promise<{ participants: Array<{ participantUserId: string }> }>
@@ -87,6 +104,9 @@ export default function Proposals({
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
   revertProposalToDraft = _revertProposalToDraft,
+  createAccommodation = _createAccommodation,
+  updateAccommodation = _updateAccommodation,
+  deleteAccommodation = _deleteAccommodation,
   getCoordinatorParticipant = _getCoordinatorParticipant,
 }: ProposalsProps) {
   const [proposals, setProposals] = useState<Proposal[]>([])
@@ -207,6 +227,18 @@ export default function Proposals({
     setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
   }, [])
 
+  const handleAccommodationsChanged = useCallback(
+    (proposalId: string) => {
+      listAccommodations(proposalId)
+        .then((accs) => {
+          if (!mountedRef.current) return
+          setAccommodations((prev) => ({ ...prev, [proposalId]: accs }))
+        })
+        .catch(onAuthError)
+    },
+    [listAccommodations, onAuthError]
+  )
+
   if (loading) return <p style={styles.message}>Loading…</p>
 
   return (
@@ -256,12 +288,17 @@ export default function Proposals({
           onSubmitted={handleSubmitted}
           onRejected={handleRejected}
           onRevertedToDraft={handleRevertedToDraft}
+          onAccommodationsChanged={handleAccommodationsChanged}
           emptyMessage="No proposals yet. Create one above."
           updateProposal={updateProposal}
           deleteProposal={deleteProposal}
           submitProposal={submitProposal}
           rejectProposal={rejectProposal}
           revertProposalToDraft={revertProposalToDraft}
+          listAccommodations={listAccommodations}
+          createAccommodation={createAccommodation}
+          updateAccommodation={updateAccommodation}
+          deleteAccommodation={deleteAccommodation}
           onAuthError={onAuthError}
         />
       )}

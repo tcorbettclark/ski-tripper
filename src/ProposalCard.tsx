@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react'
 import {
+  createAccommodation as _createAccommodation,
+  deleteAccommodation as _deleteAccommodation,
   deleteProposal as _deleteProposal,
+  listAccommodations as _listAccommodations,
   listDiscussion as _listDiscussion,
   rejectProposal as _rejectProposal,
   revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
+  updateAccommodation as _updateAccommodation,
   updateProposal as _updateProposal,
 } from './backend'
 import { getCountryFlagUrl } from './countries'
@@ -39,6 +43,7 @@ interface ProposalCardProps {
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
   onRevertedToDraft?: (proposal: unknown) => void
+  onAccommodationsChanged?: (proposalId: string) => void
   updateProposal?: (
     proposalId: string,
     userId: string,
@@ -83,15 +88,16 @@ export default function ProposalCard({
   onSubmitted,
   onRejected = () => {},
   onRevertedToDraft = () => {},
+  onAccommodationsChanged,
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
   rejectProposal = _rejectProposal,
   revertProposalToDraft = _revertProposalToDraft,
-  listAccommodations,
-  createAccommodation,
-  updateAccommodation,
-  deleteAccommodation,
+  listAccommodations = _listAccommodations,
+  createAccommodation = _createAccommodation,
+  updateAccommodation = _updateAccommodation,
+  deleteAccommodation = _deleteAccommodation,
   listDiscussion = _listDiscussion,
   onAuthError = noopAuthError,
 }: ProposalCardProps) {
@@ -111,6 +117,20 @@ export default function ProposalCard({
   const [rejectError, setRejectError] = useState<string | null>(null)
   const [revertError, setRevertError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [accommodationCollapsed, setAccommodationCollapsed] = useState(false)
+  const [editingAccommodationId, setEditingAccommodationId] = useState<
+    string | null
+  >(null)
+  const [addingAccommodation, setAddingAccommodation] = useState(false)
+  const [accommodationError, setAccommodationError] = useState<string | null>(
+    null
+  )
+  const [deletingAccommodationId, setDeletingAccommodationId] = useState<
+    string | null
+  >(null)
+  const [deletingAccommodationError, setDeletingAccommodationError] = useState<
+    string | null
+  >(null)
 
   useEffect(() => {
     listDiscussion(proposal.$id)
@@ -177,6 +197,56 @@ export default function ProposalCard({
     }
   }
 
+  function handleAccommodationsChanged() {
+    onAccommodationsChanged?.(proposal.$id)
+    listAccommodations(proposal.$id).catch(onAuthError)
+  }
+
+  async function handleAddAccommodation(data: {
+    name: string
+    url?: string
+    cost?: string
+    description?: string
+  }) {
+    setAccommodationError(null)
+    try {
+      await createAccommodation(proposal.$id, userId, data)
+      setAddingAccommodation(false)
+      handleAccommodationsChanged()
+    } catch (err) {
+      setAccommodationError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  async function handleEditAccommodation(
+    accommodationId: string,
+    data: { name?: string; url?: string; cost?: string; description?: string }
+  ) {
+    setAccommodationError(null)
+    try {
+      await updateAccommodation(accommodationId, userId, data)
+      setEditingAccommodationId(null)
+      handleAccommodationsChanged()
+    } catch (err) {
+      setAccommodationError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  async function handleDeleteAccommodation(accommodationId: string) {
+    setDeletingAccommodationId(accommodationId)
+    setDeletingAccommodationError(null)
+    try {
+      await deleteAccommodation(accommodationId, userId)
+      setDeletingAccommodationId(null)
+      handleAccommodationsChanged()
+    } catch (err) {
+      setDeletingAccommodationId(null)
+      setDeletingAccommodationError(
+        err instanceof Error ? err.message : String(err)
+      )
+    }
+  }
+
   if (isEditing) {
     return (
       <div style={styles.card}>
@@ -189,10 +259,6 @@ export default function ProposalCard({
           }}
           onCancel={() => setIsEditing(false)}
           updateProposal={updateProposal}
-          listAccommodations={listAccommodations}
-          createAccommodation={createAccommodation}
-          updateAccommodation={updateAccommodation}
-          deleteAccommodation={deleteAccommodation}
         />
       </div>
     )
@@ -356,37 +422,131 @@ export default function ProposalCard({
           )}
         </div>
 
-        {accommodations.length > 0 && (
-          <div style={styles.accommodationsSection}>
-            <h4 style={styles.accommodationsTitle}>Accommodations</h4>
-            {accommodations.map((acc, i) => (
-              <div key={acc.$id}>
-                {i > 0 && <hr style={styles.accommodationDivider} />}
-                <div style={styles.grid}>
-                  <DetailField
-                    label="Name"
-                    value={acc.url ? undefined : acc.name || '—'}
-                  >
-                    {acc.url && isValidUrl(acc.url) && (
-                      <a
-                        href={sanitizeUrl(acc.url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={styles.accommodationLink}
-                      >
-                        {acc.name || '—'} ↗
-                      </a>
+        <div style={styles.section}>
+          <button
+            type="button"
+            onClick={() => setAccommodationCollapsed((c) => !c)}
+            style={styles.sectionHeader}
+          >
+            <span style={styles.sectionTitle}>Accommodations</span>
+            <span style={styles.collapseIcon}>
+              {accommodationCollapsed ? '+' : '−'}
+            </span>
+          </button>
+          {!accommodationCollapsed && (
+            <>
+              {accommodations.length === 0 && !addingAccommodation && (
+                <p style={styles.noAccommodations}>No accommodations yet.</p>
+              )}
+              {accommodations.map((acc) =>
+                editingAccommodationId === acc.$id ? (
+                  <AccommodationEditForm
+                    key={acc.$id}
+                    initialData={{
+                      name: acc.name,
+                      url: acc.url,
+                      cost: acc.cost,
+                      description: acc.description,
+                    }}
+                    onSave={(data) => handleEditAccommodation(acc.$id, data)}
+                    onCancel={() => {
+                      setEditingAccommodationId(null)
+                      setAccommodationError(null)
+                    }}
+                    error={accommodationError}
+                  />
+                ) : (
+                  <div key={acc.$id}>
+                    {deletingAccommodationError && (
+                      <p style={formStyles.error}>
+                        {deletingAccommodationError}
+                      </p>
                     )}
-                  </DetailField>
-                  <DetailField label="Cost" value={acc.cost} />
-                  <div style={{ gridColumn: '1/-1' }}>
-                    <DetailField label="Description" value={acc.description} />
+                    <div style={styles.accommodationItem}>
+                      <div style={styles.accommodationItemContent}>
+                        <div style={styles.grid}>
+                          <DetailField
+                            label="Name"
+                            value={
+                              acc.url && isValidUrl(acc.url)
+                                ? undefined
+                                : acc.name || '—'
+                            }
+                          >
+                            {acc.url && isValidUrl(acc.url) && (
+                              <a
+                                href={sanitizeUrl(acc.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={styles.accommodationLink}
+                              >
+                                {acc.name || '—'} ↗
+                              </a>
+                            )}
+                          </DetailField>
+                          <DetailField label="Cost" value={acc.cost} />
+                          <div style={{ gridColumn: '1/-1' }}>
+                            <DetailField
+                              label="Description"
+                              value={acc.description}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {canAct && (
+                        <div style={styles.accommodationItemActions}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingAccommodationId(acc.$id)
+                              setAccommodationError(null)
+                            }}
+                            style={styles.accommodationEditButton}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAccommodation(acc.$id)}
+                            disabled={deletingAccommodationId === acc.$id}
+                            style={styles.accommodationDeleteButton}
+                          >
+                            {deletingAccommodationId === acc.$id
+                              ? 'Deleting…'
+                              : 'Delete'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <hr style={styles.accommodationDivider} />
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                )
+              )}
+              {addingAccommodation && (
+                <AccommodationEditForm
+                  onSave={handleAddAccommodation}
+                  onCancel={() => {
+                    setAddingAccommodation(false)
+                    setAccommodationError(null)
+                  }}
+                  error={accommodationError}
+                />
+              )}
+              {canAct && !addingAccommodation && accommodations.length < 5 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingAccommodation(true)
+                    setAccommodationError(null)
+                  }}
+                  style={styles.addAccommodationButton}
+                >
+                  + Add Accommodation
+                </button>
+              )}
+            </>
+          )}
+        </div>
 
         <div style={styles.actions}>
           {canAct && (
@@ -509,6 +669,122 @@ export default function ProposalCard({
   )
 }
 
+function AccommodationEditForm({
+  initialData,
+  onSave,
+  onCancel,
+  error,
+}: {
+  initialData?: { name: string; url: string; cost: string; description: string }
+  onSave: (data: {
+    name: string
+    url?: string
+    cost?: string
+    description?: string
+  }) => void
+  onCancel: () => void
+  error: string | null
+}) {
+  const [name, setName] = useState(initialData?.name ?? '')
+  const [url, setUrl] = useState(initialData?.url ?? '')
+  const [cost, setCost] = useState(initialData?.cost ?? '')
+  const [description, setDescription] = useState(initialData?.description ?? '')
+  const [saving, setSaving] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      await onSave({
+        name,
+        url: url || undefined,
+        cost: cost || undefined,
+        description: description || undefined,
+      })
+    } catch {
+      // onSave handles its own errors
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={accFormStyles.form}>
+      <div style={accFormStyles.grid}>
+        <div style={accFormStyles.field}>
+          <label htmlFor="acc-name" style={accFormStyles.label}>
+            Name
+          </label>
+          <input
+            id="acc-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            style={accFormStyles.input}
+            placeholder="e.g. Hotel Mont Blanc"
+          />
+        </div>
+        <div style={accFormStyles.field}>
+          <label htmlFor="acc-url" style={accFormStyles.label}>
+            URL
+          </label>
+          <input
+            id="acc-url"
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            style={accFormStyles.input}
+            placeholder="https://..."
+          />
+        </div>
+        <div style={accFormStyles.field}>
+          <label htmlFor="acc-cost" style={accFormStyles.label}>
+            Cost
+          </label>
+          <input
+            id="acc-cost"
+            type="text"
+            value={cost}
+            onChange={(e) => setCost(e.target.value)}
+            style={accFormStyles.input}
+            placeholder="e.g. €150/night"
+          />
+        </div>
+        <div style={accFormStyles.field}>
+          <label htmlFor="acc-desc" style={accFormStyles.label}>
+            Description
+          </label>
+          <textarea
+            id="acc-desc"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            style={accFormStyles.textarea}
+            placeholder="Notes about the accommodation"
+          />
+        </div>
+      </div>
+      {error && <p style={formStyles.error}>{error}</p>}
+      <div style={accFormStyles.actions}>
+        <button
+          type="submit"
+          disabled={saving}
+          style={accFormStyles.saveButton}
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          style={accFormStyles.cancelButton}
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  )
+}
+
 function getBadgeStyle(state: Proposal['state']) {
   if (state === 'DRAFT') return styles.badgeDraft
   if (state === 'REJECTED') return styles.badgeRejected
@@ -605,14 +881,65 @@ const styles = {
   accommodationsSection: {
     marginBottom: '20px',
   },
-  accommodationsTitle: {
+  noAccommodations: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.textSecondary,
+    fontStyle: 'italic',
+    margin: '8px 0 0',
+  },
+  accommodationItem: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '12px',
+  },
+  accommodationItemContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  accommodationItemActions: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+    flexShrink: 0,
+  },
+  accommodationEditButton: {
+    padding: '4px 10px',
+    borderRadius: '4px',
+    border: borders.muted,
+    background: 'transparent',
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em',
+  },
+  accommodationDeleteButton: {
+    padding: '4px 10px',
+    borderRadius: '4px',
+    border: '1px solid rgba(255,107,107,0.3)',
+    background: 'transparent',
+    color: colors.error,
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em',
+  },
+  addAccommodationButton: {
+    padding: '8px 16px',
+    borderRadius: '6px',
+    border: '1px solid rgba(59,189,232,0.3)',
+    background: 'transparent',
+    color: colors.accent,
     fontFamily: fonts.body,
     fontSize: '12px',
-    fontWeight: '600' as const,
-    color: colors.textSecondary,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase' as const,
-    marginBottom: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em',
+    width: '100%',
   },
   accommodationLink: {
     color: colors.accent,
@@ -814,5 +1141,87 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '0 4px',
+  },
+} as const
+
+const accFormStyles = {
+  form: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '10px',
+    padding: '14px',
+    background: colors.bgInput,
+    borderRadius: '8px',
+    border: borders.card,
+    marginBottom: '12px',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '10px',
+  },
+  field: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+  },
+  label: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  },
+  input: {
+    height: '36px',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: borders.card,
+    background: colors.bgCard,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    outline: 'none' as const,
+  },
+  textarea: {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: borders.card,
+    background: colors.bgCard,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    outline: 'none' as const,
+    resize: 'vertical' as const,
+    minHeight: '60px',
+    gridColumn: '1/-1',
+  },
+  actions: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+  },
+  saveButton: {
+    padding: '6px 16px',
+    borderRadius: '5px',
+    border: 'none',
+    background: colors.accent,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  cancelButton: {
+    padding: '6px 16px',
+    borderRadius: '5px',
+    border: borders.muted,
+    background: 'transparent',
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    fontWeight: '500',
+    cursor: 'pointer',
   },
 } as const
