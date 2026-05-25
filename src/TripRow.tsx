@@ -38,16 +38,25 @@ export default function TripRow({
 
   return (
     <tr
-      style={{ ...styles.tr, ...(hovered ? styles.trHovered : {}) }}
+      style={{
+        ...styles.tr,
+        ...(hovered ? styles.trHovered : {}),
+        borderLeft: hovered
+          ? '3px solid rgba(59,189,232,0.5)'
+          : '3px solid transparent',
+      }}
       onClick={() => onSelectTrip(trip.$id)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <td style={{ ...styles.td, color: colors.textSecondary }}>
+      <td style={{ ...styles.td, ...(hovered ? styles.tdHovered : {}) }}>
         {trip.description || '—'}
       </td>
-      <td style={{ ...styles.td, color: colors.textSecondary }}>
-        {coordinator?.name || '—'}
+      <td style={{ ...styles.td, ...(hovered ? styles.tdHovered : {}) }}>
+        <span style={styles.cellContent}>
+          {coordinator?.name || '—'}
+          <span style={styles.chevron}>{hovered ? ' ›' : ''}</span>
+        </span>
       </td>
     </tr>
   )
@@ -57,9 +66,10 @@ const styles = {
   tr: {
     borderBottom: '1px solid rgba(100,190,230,0.07)',
     cursor: 'pointer',
+    transition: 'background 0.15s, border-left 0.15s',
   },
   trHovered: {
-    background: 'rgba(59,189,232,0.06)',
+    background: 'rgba(59,189,232,0.08)',
   },
   td: {
     padding: '14px 16px',
@@ -68,5 +78,21 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: '14px',
     lineHeight: '1.5',
+    transition: 'color 0.15s',
+  },
+  tdHovered: {
+    color: colors.textPrimary,
+  },
+  cellContent: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '8px',
+  },
+  chevron: {
+    color: colors.accent,
+    fontSize: '18px',
+    fontWeight: '600',
+    lineHeight: '1',
   },
 } as const
