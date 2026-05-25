@@ -10,6 +10,7 @@ import {
   updateTrip as _updateTrip,
 } from './backend'
 import EditTripDescriptionForm from './EditTripDescriptionForm'
+import NextActions from './NextActions'
 import { borders, colors, fonts, formStyles } from './theme'
 import type {
   Participant,
@@ -19,7 +20,6 @@ import type {
   Trip,
   Vote,
 } from './types.d.ts'
-import { formatDate } from './utils'
 
 interface OverviewProps {
   user: Models.User
@@ -285,84 +285,17 @@ export default function Overview({
         )}
       </section>
 
-      <div style={overviewStyles.nextStepsBanner}>
-        <button
-          type="button"
-          onClick={() => onNavigateToTab('resorts')}
-          style={overviewStyles.nextStepButton}
-        >
-          Browse {resorts.length} resort{resorts.length !== 1 ? 's' : ''} to
-          make a proposal
-        </button>
-        {draftCount > 0 && !activePoll && (
-          <button
-            type="button"
-            onClick={() => onNavigateToTab('proposals')}
-            style={overviewStyles.nextStepButton}
-          >
-            Submit {draftCount} draft proposal{draftCount !== 1 ? 's' : ''} for
-            voting
-          </button>
-        )}
-        {submittedCount > 0 && !activePoll && (
-          <button
-            type="button"
-            onClick={() => onNavigateToTab('proposals')}
-            style={overviewStyles.nextStepButton}
-          >
-            Comment on {submittedCount} submitted proposal
-            {submittedCount !== 1 ? 's' : ''}
-          </button>
-        )}
-        {submittedCount > 0 && !activePoll && isCoordinator && (
-          <button
-            type="button"
-            onClick={() => onNavigateToTab('poll')}
-            style={overviewStyles.nextStepButton}
-          >
-            Create a poll from {submittedCount} proposal
-            {submittedCount !== 1 ? 's' : ''}
-          </button>
-        )}
-        {activePoll && !userVotedInActivePoll && (
-          <button
-            type="button"
-            onClick={() => onNavigateToTab('poll')}
-            style={overviewStyles.nextStepButton}
-          >
-            Vote in the active poll (ends {formatDate(activePoll.endDate)})
-          </button>
-        )}
-        {activePoll && userVotedInActivePoll && (
-          <button
-            type="button"
-            onClick={() => onNavigateToTab('poll')}
-            style={overviewStyles.nextStepButton}
-          >
-            View active poll (ends {formatDate(activePoll.endDate)})
-          </button>
-        )}
-        {approvedCount > 0 && (
-          <button
-            type="button"
-            onClick={() => onNavigateToTab('proposals')}
-            style={overviewStyles.nextStepButton}
-          >
-            View {approvedCount} approved proposal
-            {approvedCount !== 1 ? 's' : ''}
-          </button>
-        )}
-        {closedPollCount > 0 && (
-          <button
-            type="button"
-            onClick={() => onNavigateToTab('poll')}
-            style={overviewStyles.nextStepButton}
-          >
-            Review {closedPollCount} closed poll
-            {closedPollCount !== 1 ? 's' : ''}
-          </button>
-        )}
-      </div>
+      <NextActions
+        resortCount={resorts.length}
+        draftCount={draftCount}
+        submittedCount={submittedCount}
+        approvedCount={approvedCount}
+        closedPollCount={closedPollCount}
+        activePoll={activePoll}
+        userVotedInActivePoll={userVotedInActivePoll}
+        isCoordinator={isCoordinator}
+        onNavigateToTab={onNavigateToTab}
+      />
     </div>
   )
 }
@@ -408,28 +341,7 @@ const overviewStyles = {
     borderRadius: '10px',
     padding: '20px 24px',
   },
-  nextStepsBanner: {
-    display: 'flex',
-    flexWrap: 'wrap' as const,
-    justifyContent: 'center',
-    gap: '12px',
-    padding: '28px 24px',
-    background: 'rgba(59,189,232,0.06)',
-    borderRadius: '10px',
-    marginBottom: '32px',
-  },
-  nextStepButton: {
-    padding: '10px 20px',
-    borderRadius: '7px',
-    border: borders.accent,
-    background: 'transparent',
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    letterSpacing: '0.02em',
-  },
+
   tripRow: {
     display: 'flex',
     alignItems: 'baseline',
