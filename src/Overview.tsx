@@ -1,10 +1,13 @@
 import type { Models } from 'appwrite'
 import { useEffect, useRef, useState } from 'react'
 import {
+  getCoordinatorParticipant as _getCoordinatorParticipant,
   listPolls as _listPolls,
   listProposals as _listProposals,
   listTripParticipants as _listTripParticipants,
+  updateTrip as _updateTrip,
 } from './backend'
+import EditTripDescriptionForm from './EditTripDescriptionForm'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Participant, Poll, Proposal, Resort, Trip } from './types.d.ts'
 import { formatDate } from './utils'
@@ -15,6 +18,7 @@ interface OverviewProps {
   tripId: string
   resorts: Resort[]
   onNavigateToTab: (tab: 'resorts' | 'proposals' | 'poll') => void
+  onTripUpdated?: (trip: Trip) => void
   onAuthError?: (err: unknown) => void
   listTripParticipants?: (
     tripId: string
@@ -24,6 +28,14 @@ interface OverviewProps {
     userId: string
   ) => Promise<{ proposals: Proposal[] }>
   listPolls?: (tripId: string, userId: string) => Promise<{ polls: Poll[] }>
+  getCoordinatorParticipant?: (
+    tripId: string
+  ) => Promise<{ participants: Participant[] }>
+  updateTrip?: (
+    tripId: string,
+    data: Partial<Trip>,
+    participantUserId: string
+  ) => Promise<Trip>
 }
 
 const noopAuthError = () => {}
@@ -34,10 +46,13 @@ export default function Overview({
   tripId,
   resorts,
   onNavigateToTab,
+  onTripUpdated,
   onAuthError = noopAuthError,
   listTripParticipants = _listTripParticipants,
   listProposals = _listProposals,
   listPolls = _listPolls,
+  getCoordinatorParticipant = _getCoordinatorParticipant,
+  updateTrip = _updateTrip,
 }: OverviewProps) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])
@@ -50,6 +65,8 @@ export default function Overview({
   const [pollsError, setPollsError] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
   const [codeCopyError, setCodeCopyError] = useState('')
+  const [isCoordinator, setIsCoordinator] = useState(false)
+  const [editingDescription, setEditingDescription] = useState(false)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -58,6 +75,18 @@ export default function Overview({
       mountedRef.current = false
     }
   }, [])
+
+  useEffect(() => {
+    getCoordinatorParticipant(tripId)
+      .then(({ participants }) => {
+        if (!mountedRef.current) return
+        setIsCoordinator(
+          participants.length > 0 &&
+            participants[0].participantUserId === user.$id
+        )
+      })
+      .catch(() => {})
+  }, [tripId, user.$id, getCoordinatorParticipant])
 
   useEffect(() => {
     if (!tripId) return
@@ -161,31 +190,61 @@ export default function Overview({
       <section style={overviewStyles.section}>
         <h3 style={overviewStyles.sectionHeading}>Trip</h3>
         <div style={overviewStyles.card}>
-          <div style={overviewStyles.tripRow}>
-            <span style={overviewStyles.label}>Description</span>
-            <span style={overviewStyles.value}>{trip.description || '—'}</span>
-          </div>
-          <div style={overviewStyles.tripRow}>
-            <span style={overviewStyles.label}>Invite code</span>
-            <span style={overviewStyles.codeWithCopy}>
-              <span style={overviewStyles.codeValue}>{trip.code}</span>
-              <button
-                type="button"
-                onClick={handleCopyCode}
-                style={overviewStyles.copyButton}
-                title="Copy invite code"
-                aria-label="Copy invite code"
-              >
-                {codeCopied ? '✓' : '⧉'}
-              </button>
-              {codeCopied && (
-                <span style={overviewStyles.copyFeedback}>Copied!</span>
-              )}
-              {codeCopyError && (
-                <span style={overviewStyles.copyFeedback}>{codeCopyError}</span>
-              )}
-            </span>
-          </div>
+          {editingDescription ? (
+            <EditTripDescriptionForm
+              trip={trip}
+              userId={user.$id}
+              onUpdated={(updatedTrip) => {
+                setEditingDescription(false)
+                onTripUpdated?.(updatedTrip)
+              }}
+              onCancel={() => setEditingDescription(false)}
+              updateTrip={updateTrip}
+            />
+          ) : (
+            <>
+              <div style={overviewStyles.tripRow}>
+                <span style={overviewStyles.label}>Description</span>
+                <span style={overviewStyles.value}>
+                  {trip.description || '—'}
+                  {isCoordinator && (
+                    <button
+                      type="button"
+                      onClick={() => setEditingDescription(true)}
+                      style={overviewStyles.editButton}
+                      title="Edit description"
+                      aria-label="Edit description"
+                    >
+                      ✎
+                    </button>
+                  )}
+                </span>
+              </div>
+              <div style={overviewStyles.tripRow}>
+                <span style={overviewStyles.label}>Invite code</span>
+                <span style={overviewStyles.codeWithCopy}>
+                  <span style={overviewStyles.codeValue}>{trip.code}</span>
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    style={overviewStyles.copyButton}
+                    title="Copy invite code"
+                    aria-label="Copy invite code"
+                  >
+                    {codeCopied ? '✓' : '⧉'}
+                  </button>
+                  {codeCopied && (
+                    <span style={overviewStyles.copyFeedback}>Copied!</span>
+                  )}
+                  {codeCopyError && (
+                    <span style={overviewStyles.copyFeedback}>
+                      {codeCopyError}
+                    </span>
+                  )}
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
@@ -429,6 +488,17 @@ const overviewStyles = {
     fontSize: '11px',
     color: colors.textSecondary,
     marginLeft: '4px',
+  },
+  editButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.accent,
+    fontSize: '13px',
+    padding: '0 2px',
+    marginLeft: '6px',
+    lineHeight: 1,
+    opacity: 0.7,
   },
   loading: {
     color: colors.textSecondary,

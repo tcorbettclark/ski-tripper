@@ -11,6 +11,7 @@ import {
   listPolls as _listPolls,
   listResorts as _listResorts,
   listTrips as _listTrips,
+  updateTrip as _updateTrip,
 } from './backend'
 import ErrorBoundary from './ErrorBoundary'
 import Header from './Header'
@@ -56,6 +57,11 @@ interface AppProps {
     data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
   ) => Promise<Preferences>
   listResorts?: () => Promise<{ resorts: Resort[] }>
+  updateTrip?: (
+    tripId: string,
+    data: Partial<Trip>,
+    participantUserId: string
+  ) => Promise<Trip>
 }
 
 const defaultAccountGet = () => _account.get()
@@ -67,6 +73,7 @@ const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
 const defaultListResorts = _listResorts
+const defaultUpdateTrip = _updateTrip
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -81,6 +88,7 @@ export default function App({
   getPreferences = defaultGetPreferences,
   createPreferences = defaultCreatePreferences,
   listResorts = defaultListResorts,
+  updateTrip = defaultUpdateTrip,
 }: AppProps) {
   const { user, checking, sessionExpiredMessage, login, logout, onAuthError } =
     useAuth({ hasSession, accountGet, deleteSession })
@@ -201,6 +209,12 @@ export default function App({
 
   function handleActivePollChange(endDate: string | null) {
     setActivePollEndDate(endDate)
+  }
+
+  function handleTripUpdated(updatedTrip: Trip) {
+    setTrips((prev) =>
+      prev.map((t) => (t.$id === updatedTrip.$id ? updatedTrip : t))
+    )
   }
 
   const selectedTrip = trips.find((t) => t.$id === selectedTripId) || null
@@ -325,7 +339,9 @@ export default function App({
                 onNavigateToTab={(tab) =>
                   setTripDetailTab(tab as TripDetailTab)
                 }
+                onTripUpdated={handleTripUpdated}
                 onAuthError={onAuthError}
+                updateTrip={updateTrip}
               />
             </ErrorBoundary>
           )}
