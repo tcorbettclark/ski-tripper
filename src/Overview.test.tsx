@@ -225,11 +225,10 @@ describe('Overview', () => {
 
   it('shows proposal status counts', async () => {
     await act(async () => {
-      renderOverview()
+      renderOverview({ listPolls: mock(() => Promise.resolve({ polls: [] })) })
     })
     await waitFor(() => {
-      expect(screen.getByText(/1 draft/))
-      expect(screen.getByText(/1 submitted/))
+      expect(screen.getByText(/submit 1 draft proposal for voting/i))
     })
   })
 
@@ -238,24 +237,11 @@ describe('Overview', () => {
       renderOverview()
     })
     await waitFor(() => {
-      expect(screen.getByText(/Active poll/))
-      expect(screen.getByText(/Ends/))
+      expect(screen.getByText(/vote in the active poll/i))
     })
   })
 
-  it('shows resort catalog summary', async () => {
-    await act(async () => {
-      renderOverview()
-    })
-    await waitFor(() => {
-      expect(screen.getByText(/3 resorts available/))
-      expect(screen.getByText(/Canada: 1/))
-      expect(screen.getByText(/France: 1/))
-      expect(screen.getByText(/Switzerland: 1/))
-    })
-  })
-
-  it('shows loading state for participants, proposals, and polls while data loads', async () => {
+  it('shows loading state for participants while data loads', async () => {
     const listTripParticipants = mock(
       () => new Promise<{ participants: Participant[] }>(() => {})
     )
@@ -273,48 +259,42 @@ describe('Overview', () => {
     })
 
     expect(screen.getAllByText(/Loading\.\.\./).length).toBeGreaterThanOrEqual(
-      2
+      1
     )
   })
 
-  it('shows "Loading resorts..." when resorts prop is empty', async () => {
-    await act(async () => {
-      renderOverview({ resorts: [] })
-    })
-    expect(screen.getByText(/Loading resorts\.\.\./)).toBeTruthy()
-  })
-
-  it('navigates to proposals tab when clicking proposals row', async () => {
+  it('navigates to proposals tab when clicking submit drafts', async () => {
     const onNavigateToTab = mock(() => {})
     const eventUser = userEvent.setup()
     await act(async () => {
-      renderOverview({ onNavigateToTab })
+      renderOverview({
+        onNavigateToTab,
+        listPolls: mock(() => Promise.resolve({ polls: [] })),
+      })
     })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /view proposals/i }))
+      expect(screen.getByText(/submit 1 draft proposal for voting/i))
     })
     await eventUser.click(
-      screen.getByRole('button', { name: /view proposals/i })
+      screen.getByText(/submit 1 draft proposal for voting/i)
     )
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals')
   })
 
-  it('navigates to poll tab when clicking active poll row', async () => {
+  it('navigates to poll tab when clicking vote in active poll', async () => {
     const onNavigateToTab = mock(() => {})
     const eventUser = userEvent.setup()
     await act(async () => {
       renderOverview({ onNavigateToTab })
     })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /go to active poll/i }))
+      expect(screen.getByText(/vote in the active poll/i))
     })
-    await eventUser.click(
-      screen.getByRole('button', { name: /go to active poll/i })
-    )
+    await eventUser.click(screen.getByText(/vote in the active poll/i))
     expect(onNavigateToTab).toHaveBeenCalledWith('poll')
   })
 
-  it('navigates to poll tab when clicking closed polls row', async () => {
+  it('navigates to poll tab when clicking closed polls button', async () => {
     const closedPoll: Poll = {
       $id: 'poll-closed',
       $createdAt: '2024-01-01T00:00:00Z',
@@ -336,39 +316,22 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /view closed polls/i }))
+      expect(screen.getByText(/review 1 closed poll/i))
     })
-    await eventUser.click(
-      screen.getByRole('button', { name: /view closed polls/i })
-    )
+    await eventUser.click(screen.getByText(/review 1 closed poll/i))
     expect(onNavigateToTab).toHaveBeenCalledWith('poll')
   })
 
-  it('navigates to resorts tab when clicking resort count', async () => {
+  it('navigates to resorts tab when clicking browse resorts', async () => {
     const onNavigateToTab = mock(() => {})
     const eventUser = userEvent.setup()
     await act(async () => {
       renderOverview({ onNavigateToTab })
     })
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /browse resorts/i }))
+    const browseButton = await screen.findByRole('button', {
+      name: /browse.*resorts/i,
     })
-    await eventUser.click(
-      screen.getByRole('button', { name: /browse resorts/i })
-    )
-    expect(onNavigateToTab).toHaveBeenCalledWith('resorts')
-  })
-
-  it('navigates to resorts tab when clicking country tag', async () => {
-    const onNavigateToTab = mock(() => {})
-    const eventUser = userEvent.setup()
-    await act(async () => {
-      renderOverview({ onNavigateToTab })
-    })
-    await waitFor(() => {
-      expect(screen.getByText(/Canada: 1/))
-    })
-    await eventUser.click(screen.getByText(/Canada: 1/))
+    await eventUser.click(browseButton)
     expect(onNavigateToTab).toHaveBeenCalledWith('resorts')
   })
 
@@ -380,8 +343,11 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/no proposals yet/i))
-      expect(screen.getByText(/browse resorts to create one/i))
+      expect(
+        screen.getByRole('button', {
+          name: /browse.*resorts.*make a proposal/i,
+        })
+      )
     })
   })
 
@@ -392,8 +358,7 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/1 draft proposal/i))
-      expect(screen.getByText(/submit for voting/i))
+      expect(screen.getByText(/submit 1 draft proposal for voting/i))
     })
   })
 
@@ -404,11 +369,11 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/active poll needs your vote/i))
+      expect(screen.getByText(/vote in the active poll/i))
     })
   })
 
-  it('does not show vote prompt when user already voted', async () => {
+  it('shows view active poll when user already voted', async () => {
     const votedVote: Vote = {
       $id: 'vote-1',
       $createdAt: '2024-01-06T00:00:00Z',
@@ -424,7 +389,8 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.queryByText(/active poll needs your vote/i)).toBeNull()
+      expect(screen.queryByText(/vote in the active poll/i)).toBeNull()
+      expect(screen.getByText(/view active poll/i))
     })
   })
 
@@ -441,45 +407,37 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/proposal.*ready.*create a poll/i))
+      expect(screen.getByText(/comment on 1 submitted proposal/i))
+      expect(screen.getByText(/create a poll from/i))
     })
   })
 
-  it('shows next step prompt when all proposals rejected', async () => {
-    const rejectedProposal: Proposal = {
+  it('shows comment on submitted proposals when no active poll', async () => {
+    await act(async () => {
+      renderOverview({
+        listPolls: mock(() => Promise.resolve({ polls: [] })),
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText(/comment on 1 submitted proposal/i))
+    })
+  })
+
+  it('shows approved proposals button', async () => {
+    const approvedProposal: Proposal = {
       ...sampleProposals[0],
-      state: 'REJECTED',
+      state: 'APPROVED',
     }
     await act(async () => {
       renderOverview({
         listProposals: mock(() =>
-          Promise.resolve({ proposals: [rejectedProposal] })
+          Promise.resolve({ proposals: [approvedProposal] })
         ),
         listPolls: mock(() => Promise.resolve({ polls: [] })),
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/proposals were rejected/i))
-    })
-  })
-
-  it('shows "All caught up!" when no next steps apply', async () => {
-    const votedVote: Vote = {
-      $id: 'vote-1',
-      $createdAt: '2024-01-06T00:00:00Z',
-      $updatedAt: '2024-01-06T00:00:00Z',
-      pollId: 'poll-1',
-      voterUserId: 'user-1',
-      proposalIds: ['prop-2'],
-      tokenCounts: [3],
-    } as Vote
-    await act(async () => {
-      renderOverview({
-        listVotes: mock(() => Promise.resolve({ votes: [votedVote] })),
-      })
-    })
-    await waitFor(() => {
-      expect(screen.getByText(/all caught up/i))
+      expect(screen.getByText(/view 1 approved proposal/i))
     })
   })
 
@@ -505,18 +463,7 @@ describe('Overview', () => {
     })
   })
 
-  it('shows error when proposals fetch fails', async () => {
-    await act(async () => {
-      renderOverview({
-        listProposals: mock(() => Promise.reject(new Error('Failed to load'))),
-      })
-    })
-    await waitFor(() => {
-      expect(screen.getByText('Failed to load'))
-    })
-  })
-
-  it('shows "No activity yet" when no proposals or polls', async () => {
+  it('shows only browse resorts when no proposals or polls', async () => {
     await act(async () => {
       renderOverview({
         listProposals: mock(() => Promise.resolve({ proposals: [] })),
@@ -524,11 +471,15 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/no activity yet/i))
+      expect(
+        screen.getByRole('button', {
+          name: /browse.*resorts.*make a proposal/i,
+        })
+      )
     })
   })
 
-  it('shows closed poll count', async () => {
+  it('shows closed poll button', async () => {
     const closedPoll: Poll = {
       $id: 'poll-closed',
       $createdAt: '2024-01-01T00:00:00Z',
@@ -547,7 +498,7 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/closed polls/i))
+      expect(screen.getByText(/review 1 closed poll/i))
     })
   })
 

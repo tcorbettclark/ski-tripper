@@ -21,44 +21,6 @@ import type {
 } from './types.d.ts'
 import { formatDate } from './utils'
 
-function ClickableRow({
-  onClick,
-  label,
-  children,
-  style,
-}: {
-  onClick: () => void
-  label: string
-  children: React.ReactNode
-  style?: React.CSSProperties
-}) {
-  const [hovered, setHovered] = useState(false)
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      aria-label={label}
-      style={{
-        ...overviewStyles.statusRow,
-        cursor: 'pointer',
-        background: hovered ? 'rgba(59,189,232,0.04)' : 'transparent',
-        borderRadius: '6px',
-        margin: '0 -8px',
-        padding: '6px 8px',
-        transition: 'background 0.15s',
-        border: 'none',
-        width: '100%',
-        textAlign: 'left' as const,
-        ...style,
-      }}
-    >
-      {children}
-    </button>
-  )
-}
-
 interface OverviewProps {
   user: Models.User
   trip: Trip
@@ -107,11 +69,7 @@ export default function Overview({
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(true)
-  const [proposalsLoading, setProposalsLoading] = useState(true)
-  const [pollsLoading, setPollsLoading] = useState(true)
   const [participantsError, setParticipantsError] = useState('')
-  const [proposalsError, setProposalsError] = useState('')
-  const [pollsError, setPollsError] = useState('')
   const [userVotedInActivePoll, setUserVotedInActivePoll] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
   const [codeCopyError, setCodeCopyError] = useState('')
@@ -162,8 +120,6 @@ export default function Overview({
   useEffect(() => {
     if (!tripId) return
 
-    setProposalsLoading(true)
-    setProposalsError('')
     listProposals(tripId, user.$id)
       .then((result) => {
         if (!mountedRef.current) return
@@ -171,20 +127,13 @@ export default function Overview({
       })
       .catch((err) => {
         if (!mountedRef.current) return
-        const msg = err instanceof Error ? err.message : String(err)
-        setProposalsError(msg)
         onAuthError(err)
-      })
-      .finally(() => {
-        if (mountedRef.current) setProposalsLoading(false)
       })
   }, [tripId, user.$id, listProposals, onAuthError])
 
   useEffect(() => {
     if (!tripId) return
 
-    setPollsLoading(true)
-    setPollsError('')
     listPolls(tripId, user.$id)
       .then((result) => {
         if (!mountedRef.current) return
@@ -192,12 +141,7 @@ export default function Overview({
       })
       .catch((err) => {
         if (!mountedRef.current) return
-        const msg = err instanceof Error ? err.message : String(err)
-        setPollsError(msg)
         onAuthError(err)
-      })
-      .finally(() => {
-        if (mountedRef.current) setPollsLoading(false)
       })
   }, [tripId, user.$id, listPolls, onAuthError])
 
@@ -220,15 +164,11 @@ export default function Overview({
       })
   }, [activePoll, user.$id, listVotes])
 
-  const draftCount = proposals.filter((p) => p.state === 'DRAFT').length
+  const draftCount = proposals.filter(
+    (p) => p.state === 'DRAFT' && p.proposerUserId === user.$id
+  ).length
   const submittedCount = proposals.filter((p) => p.state === 'SUBMITTED').length
-  const rejectedCount = proposals.filter((p) => p.state === 'REJECTED').length
   const approvedCount = proposals.filter((p) => p.state === 'APPROVED').length
-
-  const countryBreakdown = resorts.reduce<Record<string, number>>((acc, r) => {
-    acc[r.country] = (acc[r.country] || 0) + 1
-    return acc
-  }, {})
 
   function handleCopyCode() {
     if (!trip.code) return
@@ -345,182 +285,84 @@ export default function Overview({
         )}
       </section>
 
-      <section style={overviewStyles.section}>
-        <h3 style={overviewStyles.sectionHeading}>Status</h3>
-        {proposalsLoading && pollsLoading && (
-          <p style={overviewStyles.loading}>Loading...</p>
+      <div style={overviewStyles.nextStepsBanner}>
+        <button
+          type="button"
+          onClick={() => onNavigateToTab('resorts')}
+          style={overviewStyles.nextStepButton}
+        >
+          Browse {resorts.length} resort{resorts.length !== 1 ? 's' : ''} to
+          make a proposal
+        </button>
+        {draftCount > 0 && !activePoll && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('proposals')}
+            style={overviewStyles.nextStepButton}
+          >
+            Submit {draftCount} draft proposal{draftCount !== 1 ? 's' : ''} for
+            voting
+          </button>
         )}
-        {(proposalsError || pollsError) && (
-          <p style={formStyles.error}>{proposalsError || pollsError}</p>
+        {submittedCount > 0 && !activePoll && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('proposals')}
+            style={overviewStyles.nextStepButton}
+          >
+            Comment on {submittedCount} submitted proposal
+            {submittedCount !== 1 ? 's' : ''}
+          </button>
         )}
-        {!proposalsLoading &&
-          !pollsLoading &&
-          !proposalsError &&
-          !pollsError && (
-            <div style={overviewStyles.card}>
-              {proposals.length === 0 && polls.length === 0 ? (
-                <p style={overviewStyles.empty}>No activity yet</p>
-              ) : (
-                <>
-                  {proposals.length > 0 && (
-                    <ClickableRow
-                      onClick={() => onNavigateToTab('proposals')}
-                      label="View proposals"
-                    >
-                      <span style={overviewStyles.label}>Proposals</span>
-                      <div style={overviewStyles.statusCounts}>
-                        {draftCount > 0 && (
-                          <span style={overviewStyles.statusChip}>
-                            {draftCount} draft
-                          </span>
-                        )}
-                        {submittedCount > 0 && (
-                          <span style={overviewStyles.statusChip}>
-                            {submittedCount} submitted
-                          </span>
-                        )}
-                        {rejectedCount > 0 && (
-                          <span style={overviewStyles.statusChip}>
-                            {rejectedCount} rejected
-                          </span>
-                        )}
-                        {approvedCount > 0 && (
-                          <span style={overviewStyles.statusChip}>
-                            {approvedCount} approved
-                          </span>
-                        )}
-                      </div>
-                    </ClickableRow>
-                  )}
-                  {activePoll && (
-                    <ClickableRow
-                      onClick={() => onNavigateToTab('poll')}
-                      label="Go to active poll"
-                    >
-                      <span style={overviewStyles.label}>Active poll</span>
-                      <span style={overviewStyles.value}>
-                        Ends {formatDate(activePoll.endDate)}
-                      </span>
-                    </ClickableRow>
-                  )}
-                  {closedPollCount > 0 && (
-                    <ClickableRow
-                      onClick={() => onNavigateToTab('poll')}
-                      label="View closed polls"
-                    >
-                      <span style={overviewStyles.label}>Closed polls</span>
-                      <span style={overviewStyles.value}>
-                        {closedPollCount}
-                      </span>
-                    </ClickableRow>
-                  )}
-                </>
-              )}
-            </div>
-          )}
-      </section>
-
-      <section style={overviewStyles.section}>
-        <h3 style={overviewStyles.sectionHeading}>Resort Catalog</h3>
-        {resorts.length === 0 ? (
-          <div style={overviewStyles.card}>
-            <p style={overviewStyles.loading}>Loading resorts...</p>
-          </div>
-        ) : (
-          <div style={overviewStyles.card}>
-            <ClickableRow
-              onClick={() => onNavigateToTab('resorts')}
-              label="Browse resorts"
-            >
-              <span style={overviewStyles.resortSummary}>
-                {resorts.length} resorts available
-              </span>
-            </ClickableRow>
-            {Object.keys(countryBreakdown).length > 0 && (
-              <div style={overviewStyles.countryBreakdown}>
-                {Object.entries(countryBreakdown)
-                  .sort(([, a], [, b]) => b - a)
-                  .map(([country, count]) => (
-                    <button
-                      key={country}
-                      type="button"
-                      onClick={() => onNavigateToTab('resorts')}
-                      style={overviewStyles.countryTag}
-                    >
-                      {country}: {count}
-                    </button>
-                  ))}
-              </div>
-            )}
-          </div>
+        {submittedCount > 0 && !activePoll && isCoordinator && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('poll')}
+            style={overviewStyles.nextStepButton}
+          >
+            Create a poll from {submittedCount} proposal
+            {submittedCount !== 1 ? 's' : ''}
+          </button>
         )}
-      </section>
-
-      <section style={overviewStyles.section}>
-        <h3 style={overviewStyles.sectionHeading}>Next Steps</h3>
-        <div style={overviewStyles.card}>
-          {proposals.length === 0 && (
-            <button
-              type="button"
-              onClick={() => onNavigateToTab('resorts')}
-              style={overviewStyles.nextStepButton}
-            >
-              No proposals yet — browse resorts to create one
-            </button>
-          )}
-          {proposals.length > 0 && draftCount > 0 && !activePoll && (
-            <button
-              type="button"
-              onClick={() => onNavigateToTab('proposals')}
-              style={overviewStyles.nextStepButton}
-            >
-              You have {draftCount} draft proposal{draftCount !== 1 ? 's' : ''}{' '}
-              — submit for voting
-            </button>
-          )}
-          {activePoll && !userVotedInActivePoll && (
-            <button
-              type="button"
-              onClick={() => onNavigateToTab('poll')}
-              style={overviewStyles.nextStepButton}
-            >
-              An active poll needs your vote
-            </button>
-          )}
-          {proposals.length > 0 &&
-            rejectedCount > 0 &&
-            draftCount === 0 &&
-            !activePoll && (
-              <button
-                type="button"
-                onClick={() => onNavigateToTab('resorts')}
-                style={overviewStyles.nextStepButton}
-              >
-                Proposals were rejected — browse resorts for new ideas
-              </button>
-            )}
-          {proposals.length > 0 &&
-            submittedCount > 0 &&
-            !activePoll &&
-            isCoordinator && (
-              <button
-                type="button"
-                onClick={() => onNavigateToTab('poll')}
-                style={overviewStyles.nextStepButton}
-              >
-                {submittedCount} proposal{submittedCount !== 1 ? 's' : ''} ready
-                — create a poll
-              </button>
-            )}
-          {!(
-            proposals.length === 0 ||
-            (draftCount > 0 && !activePoll) ||
-            (activePoll && !userVotedInActivePoll) ||
-            (rejectedCount > 0 && draftCount === 0 && !activePoll) ||
-            (submittedCount > 0 && !activePoll && isCoordinator)
-          ) && <p style={overviewStyles.empty}>All caught up!</p>}
-        </div>
-      </section>
+        {activePoll && !userVotedInActivePoll && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('poll')}
+            style={overviewStyles.nextStepButton}
+          >
+            Vote in the active poll (ends {formatDate(activePoll.endDate)})
+          </button>
+        )}
+        {activePoll && userVotedInActivePoll && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('poll')}
+            style={overviewStyles.nextStepButton}
+          >
+            View active poll (ends {formatDate(activePoll.endDate)})
+          </button>
+        )}
+        {approvedCount > 0 && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('proposals')}
+            style={overviewStyles.nextStepButton}
+          >
+            View {approvedCount} approved proposal
+            {approvedCount !== 1 ? 's' : ''}
+          </button>
+        )}
+        {closedPollCount > 0 && (
+          <button
+            type="button"
+            onClick={() => onNavigateToTab('poll')}
+            style={overviewStyles.nextStepButton}
+          >
+            Review {closedPollCount} closed poll
+            {closedPollCount !== 1 ? 's' : ''}
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -565,6 +407,28 @@ const overviewStyles = {
     border: borders.card,
     borderRadius: '10px',
     padding: '20px 24px',
+  },
+  nextStepsBanner: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    justifyContent: 'center',
+    gap: '12px',
+    padding: '28px 24px',
+    background: 'rgba(59,189,232,0.06)',
+    borderRadius: '10px',
+    marginBottom: '32px',
+  },
+  nextStepButton: {
+    padding: '10px 20px',
+    borderRadius: '7px',
+    border: borders.accent,
+    background: 'transparent',
+    color: colors.accent,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.02em',
   },
   tripRow: {
     display: 'flex',
@@ -659,65 +523,5 @@ const overviewStyles = {
     padding: '2px 8px',
     borderRadius: '4px',
     letterSpacing: '0.04em',
-  },
-  statusRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '16px',
-    padding: '6px 0',
-  },
-  statusCounts: {
-    display: 'flex',
-    gap: '8px',
-    flexWrap: 'wrap' as const,
-  },
-  statusChip: {
-    fontFamily: fonts.body,
-    fontSize: '12px',
-    fontWeight: '500',
-    color: colors.textData,
-    background: 'rgba(100,190,230,0.08)',
-    padding: '3px 10px',
-    borderRadius: '4px',
-    letterSpacing: '0.02em',
-  },
-  resortSummary: {
-    fontFamily: fonts.body,
-    fontSize: '15px',
-    color: colors.textPrimary,
-    margin: '0 0 8px',
-  },
-  countryBreakdown: {
-    display: 'flex',
-    flexWrap: 'wrap' as const,
-    gap: '6px',
-    marginTop: '8px',
-  },
-  countryTag: {
-    fontFamily: fonts.body,
-    fontSize: '12px',
-    color: colors.textData,
-    background: 'rgba(100,190,230,0.08)',
-    padding: '3px 10px',
-    borderRadius: '4px',
-    letterSpacing: '0.02em',
-    border: 'none',
-    cursor: 'pointer',
-  },
-  nextStepButton: {
-    display: 'block',
-    width: '100%',
-    padding: '10px 16px',
-    borderRadius: '7px',
-    border: borders.accent,
-    background: 'transparent',
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    letterSpacing: '0.02em',
-    textAlign: 'left' as const,
   },
 } as const
