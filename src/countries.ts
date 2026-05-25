@@ -31,5 +31,5 @@ export const COUNTRIES = Object.keys(COUNTRY_CODES)
 export function getCountryFlagUrl(country: string): string | undefined {
   const code = COUNTRY_CODES[country]
   if (!code) return undefined
-  return `https://flagcdn.com/w20/${code.toLowerCase()}.png`
+  return `/flags/${code.toLowerCase()}.png`
 }

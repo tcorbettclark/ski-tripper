@@ -281,14 +281,13 @@ export default function ProposalCard({
       <div style={styles.card}>
         <div style={styles.header}>
           <span style={styles.headerLeft}>
-            {proposal.country &&
-              getCountryFlagUrl(proposal.country) !== undefined && (
-                <img
-                  src={getCountryFlagUrl(proposal.country)}
-                  alt={proposal.country}
-                  style={styles.flag}
-                />
-              )}
+            {(() => {
+              const flagUrl =
+                proposal.country && getCountryFlagUrl(proposal.country)
+              return flagUrl ? (
+                <img src={flagUrl} alt={proposal.country} style={styles.flag} />
+              ) : null
+            })()}
 
             {proposal.resortName || '—'}
             {proposal.country

@@ -289,7 +289,7 @@ describe('ProposalCard', () => {
 
     const flagImg = screen.getByRole('img', { name: 'France' })
     expect(flagImg).toBeDefined()
-    expect(flagImg.getAttribute('src')).toBe('https://flagcdn.com/w20/fr.png')
+    expect(flagImg.getAttribute('src')).toBe('/flags/fr.png')
   })
 
   it('does not display flag for unsupported countries', () => {
@@ -330,7 +330,7 @@ describe('ProposalCard', () => {
 
     const flagImg = screen.getByRole('img', { name: 'Japan' })
     expect(flagImg).toBeDefined()
-    expect(flagImg.getAttribute('src')).toBe('https://flagcdn.com/w20/jp.png')
+    expect(flagImg.getAttribute('src')).toBe('/flags/jp.png')
   })
 
   it('shows popup when submitting with no accommodations', async () => {

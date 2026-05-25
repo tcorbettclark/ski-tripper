@@ -7,6 +7,7 @@ const port = parseInt(
   10
 )
 const dist = join(import.meta.dir, 'dist')
+const publicDir = join(import.meta.dir, 'public')
 const indexHtml = Bun.file(join(import.meta.dir, 'index.html'))
 
 const mimeTypes = {
@@ -14,17 +15,28 @@ const mimeTypes = {
   '.js': 'application/javascript',
   '.json': 'application/json',
   '.html': 'text/html',
+  '.png': 'image/png',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
 }
 
 Bun.serve({
   port,
   fetch: async (req) => {
     const url = new URL(req.url)
-    const file = Bun.file(join(dist, url.pathname))
-    if (await file.exists()) {
+    const distFile = Bun.file(join(dist, url.pathname))
+    if (await distFile.exists()) {
       const ext = extname(url.pathname)
       const contentType = mimeTypes[ext] || 'application/octet-stream'
-      return new Response(file, {
+      return new Response(distFile, {
+        headers: { 'Content-Type': contentType },
+      })
+    }
+    const publicFile = Bun.file(join(publicDir, url.pathname))
+    if (await publicFile.exists()) {
+      const ext = extname(url.pathname)
+      const contentType = mimeTypes[ext] || 'application/octet-stream'
+      return new Response(publicFile, {
         headers: { 'Content-Type': contentType },
       })
     }
