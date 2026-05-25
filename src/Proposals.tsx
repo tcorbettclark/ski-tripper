@@ -26,6 +26,8 @@ interface ProposalsProps {
   resorts: Resort[]
   /** Pre-selected status tab — allows parent to navigate directly to a proposals sub-state. */
   statusFilter?: StatusFilter
+  /** Called when the user clicks a status tab — lets the parent stay in sync when statusFilter is controlled. */
+  onStatusFilterChange?: (status: StatusFilter) => void
   onRefresh?: () => void
   onAuthError?: (err: unknown) => void
   listProposals?: (
@@ -98,6 +100,7 @@ export default function Proposals({
   tripId,
   resorts,
   statusFilter,
+  onStatusFilterChange,
   onRefresh: _onRefresh,
   onAuthError = noopAuthError,
   listProposals = _listProposals,
@@ -288,6 +291,7 @@ export default function Proposals({
           isCoordinator={isCoordinator}
           accommodations={accommodations}
           statusFilter={statusFilter}
+          onStatusFilterChange={onStatusFilterChange}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
           onSubmitted={handleSubmitted}

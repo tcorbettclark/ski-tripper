@@ -24,6 +24,8 @@ interface ProposalsGridProps {
   accommodations?: Record<string, Accommodation[]>
   /** Controlled status filter — allows parent (e.g. App) to preselect a tab when navigating here. When provided, the internal toggle is synced to this value. */
   statusFilter?: StatusFilter
+  /** Called when the user clicks a status tab — lets the parent stay in sync when statusFilter is controlled. */
+  onStatusFilterChange?: (status: StatusFilter) => void
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
@@ -69,6 +71,7 @@ export default function ProposalsGrid({
   isCoordinator = false,
   accommodations = {},
   statusFilter: controlledStatusFilter,
+  onStatusFilterChange,
   onUpdated,
   onDeleted,
   onSubmitted,
@@ -183,7 +186,10 @@ export default function ProposalsGrid({
             <button
               key={status}
               type="button"
-              onClick={() => setInternalStatusFilter(status)}
+              onClick={() => {
+                setInternalStatusFilter(status)
+                onStatusFilterChange?.(status)
+              }}
               style={
                 statusFilter === status ? styles.tabActive : styles.tabInactive
               }

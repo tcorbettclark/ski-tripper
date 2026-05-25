@@ -377,6 +377,7 @@ export default function App({
                 key={refreshProposalsKey}
                 resorts={resorts}
                 statusFilter={proposalsStatusFilter}
+                onStatusFilterChange={setProposalsStatusFilter}
                 onRefresh={() => setRefreshProposalsKey((k) => k + 1)}
                 onAuthError={onAuthError}
               />
