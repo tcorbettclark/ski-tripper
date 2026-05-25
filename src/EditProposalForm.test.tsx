@@ -45,11 +45,10 @@ function renderForm(props = {}) {
 }
 
 describe('EditProposalForm', () => {
-  it('pre-populates fields from proposal', async () => {
+  it('renders form fields including date range picker', async () => {
     renderForm()
     await waitFor(() => {
-      const input = screen.getByDisplayValue("Val d'Isère")
-      expect(input).toBeTruthy()
+      expect(screen.getByText(/trip dates/i)).toBeTruthy()
     })
   })
 

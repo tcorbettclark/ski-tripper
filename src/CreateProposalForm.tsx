@@ -5,6 +5,7 @@ import {
   createProposal as _createProposal,
 } from './backend'
 import { COUNTRIES } from './countries'
+import DateRangeField from './DateRangeField'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 import type { Resort } from './types.d'
@@ -383,21 +384,12 @@ export default function CreateProposalForm({
         required
         placeholder="e.g. 7.7554"
       />
-      <Field
-        label="Start Date"
-        name="startDate"
-        type="date"
-        value={form.startDate}
-        onChange={handleChange}
-        required
-      />
-      <Field
-        label="End Date"
-        name="endDate"
-        type="date"
-        value={form.endDate}
-        onChange={handleChange}
-        required
+      <DateRangeField
+        startDate={form.startDate}
+        endDate={form.endDate}
+        onChange={(startDate, endDate) =>
+          setForm((f) => ({ ...f, startDate, endDate }))
+        }
       />
       <div style={fieldStyles.default.field}>
         <label htmlFor="description" style={fieldStyles.default.label}>

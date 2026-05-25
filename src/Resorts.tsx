@@ -1,6 +1,7 @@
 import type { Models } from 'appwrite'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
+import DateRangeField from './DateRangeField'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Resort } from './types.d.ts'
 
@@ -582,40 +583,14 @@ function ProposalForm({
           style={resortsStyles.proposalFormInput}
         />
       </div>
-      <div style={resortsStyles.proposalFormRow}>
-        <div style={resortsStyles.proposalFormField}>
-          <label
-            htmlFor="proposal-start-date"
-            style={resortsStyles.proposalFormLabel}
-          >
-            Start Date
-          </label>
-          <input
-            id="proposal-start-date"
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            required
-            style={resortsStyles.proposalFormInput}
-          />
-        </div>
-        <div style={resortsStyles.proposalFormField}>
-          <label
-            htmlFor="proposal-end-date"
-            style={resortsStyles.proposalFormLabel}
-          >
-            End Date
-          </label>
-          <input
-            id="proposal-end-date"
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            required
-            style={resortsStyles.proposalFormInput}
-          />
-        </div>
-      </div>
+      <DateRangeField
+        startDate={startDate}
+        endDate={endDate}
+        onChange={(sd, ed) => {
+          setStartDate(sd)
+          setEndDate(ed)
+        }}
+      />
       <div style={resortsStyles.proposalFormField}>
         <label
           htmlFor="proposal-description"

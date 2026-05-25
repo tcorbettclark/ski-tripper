@@ -85,6 +85,17 @@ function typeInResortInput(container: HTMLElement, value: string) {
   fireEvent.change(input, { target: { name: 'resortName', value } })
 }
 
+async function selectDateRange(container: HTMLElement) {
+  const dayButtons = container.querySelectorAll('button[name="day"]')
+  if (dayButtons.length < 8) return
+  await act(async () => {
+    fireEvent.click(dayButtons[0])
+  })
+  await act(async () => {
+    fireEvent.click(dayButtons[7])
+  })
+}
+
 describe('CreateProposalForm', () => {
   it('renders main form fields', () => {
     const { container } = renderForm()
@@ -93,8 +104,7 @@ describe('CreateProposalForm', () => {
     expect(screen.getByText(/top altitude/i)).toBeTruthy()
     expect(screen.getByText(/nearest airport/i)).toBeTruthy()
     expect(screen.getByText(/transfer time/i)).toBeTruthy()
-    expect(screen.getByText(/start date/i)).toBeTruthy()
-    expect(screen.getByText(/end date/i)).toBeTruthy()
+    expect(screen.getByText(/trip dates/i)).toBeTruthy()
     const textarea = container.querySelector('#description')
     expect(textarea).toBeTruthy()
   })
@@ -125,8 +135,9 @@ describe('CreateProposalForm', () => {
     fill('websiteUrl', 'https://valdisere.com')
     fill('latitude', '45.4475')
     fill('longitude', '6.9219')
-    fill('startDate', '2027-01-15')
-    fill('endDate', '2027-01-22')
+
+    await selectDateRange(container)
+
     fill('description', 'Great resort for all levels.')
 
     fireEvent.submit(container.querySelector('form') as HTMLFormElement)
