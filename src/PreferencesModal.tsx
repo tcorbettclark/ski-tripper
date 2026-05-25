@@ -63,7 +63,7 @@ export default function PreferencesModal({
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div style={styles.panelHeader}>
-          <h3 style={styles.panelTitle}>Preferences</h3>
+          <h3 style={styles.panelTitle}>My preferences</h3>
           <button
             type="button"
             onClick={onClose}
@@ -180,7 +180,7 @@ const styles = {
   },
   panelTitle: {
     fontFamily: fonts.display,
-    fontSize: '18px',
+    fontSize: '30px',
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -197,9 +197,8 @@ const styles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '12px',
-    marginBottom: '24px',
+    marginBottom: '0',
     paddingBottom: '20px',
-    borderBottom: borders.subtle,
   },
   detailRow: {
     display: 'flex',
@@ -232,6 +231,6 @@ const styles = {
     fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
-    alignSelf: 'flex-start',
+    alignSelf: 'flex-end',
   },
 } as const

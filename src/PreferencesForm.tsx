@@ -359,6 +359,7 @@ const styles = {
   actions: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-end' as const,
     gap: '12px',
     marginTop: '8px',
   },
