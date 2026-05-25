@@ -7,6 +7,7 @@ import {
   Send,
   Vote,
 } from 'lucide-react'
+import type { StatusFilter } from './ProposalsGrid'
 import { borders, colors, fonts } from './theme'
 import type { Poll } from './types.d.ts'
 import { formatDate } from './utils'
@@ -14,6 +15,8 @@ import { formatDate } from './utils'
 interface Action {
   label: string
   tab: 'resorts' | 'proposals' | 'poll'
+  /** When navigating to the proposals tab, this pre-selects the DRAFT/SUBMITTED/REJECTED sub-tab. */
+  statusFilter?: StatusFilter
   icon: React.ReactNode
   highlight?: boolean
 }
@@ -27,7 +30,10 @@ interface NextActionsProps {
   activePoll: Poll | undefined
   userVotedInActivePoll: boolean
   isCoordinator: boolean
-  onNavigateToTab: (tab: 'resorts' | 'proposals' | 'poll') => void
+  onNavigateToTab: (
+    tab: 'resorts' | 'proposals' | 'poll',
+    statusFilter?: StatusFilter
+  ) => void
 }
 
 function buildActions(props: NextActionsProps): Action[] {
@@ -43,6 +49,7 @@ function buildActions(props: NextActionsProps): Action[] {
     actions.push({
       label: `Submit ${props.draftCount} draft proposal${props.draftCount !== 1 ? 's' : ''} for voting`,
       tab: 'proposals',
+      statusFilter: 'DRAFT',
       icon: <Send size={16} />,
       highlight: true,
     })
@@ -52,6 +59,7 @@ function buildActions(props: NextActionsProps): Action[] {
     actions.push({
       label: `Comment on ${props.submittedCount} submitted proposal${props.submittedCount !== 1 ? 's' : ''}`,
       tab: 'proposals',
+      statusFilter: 'SUBMITTED',
       icon: <MessageSquare size={16} />,
     })
   }
@@ -117,7 +125,9 @@ export default function NextActions(props: NextActionsProps) {
           <button
             key={action.label}
             type="button"
-            onClick={() => props.onNavigateToTab(action.tab)}
+            onClick={() =>
+              props.onNavigateToTab(action.tab, action.statusFilter)
+            }
             style={{
               ...nextActionsStyles.card,
               ...(action.highlight ? nextActionsStyles.cardHighlight : {}),

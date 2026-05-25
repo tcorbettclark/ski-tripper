@@ -179,4 +179,18 @@ describe('ProposalsGrid', () => {
       )
     ).toBeDefined()
   })
+
+  it('uses controlled statusFilter prop when provided', () => {
+    render(<ProposalsGrid {...defaultProps({ statusFilter: 'SUBMITTED' })} />)
+
+    expect(screen.getByText(/A Resort/)).toBeDefined()
+    expect(screen.queryByText(/Z Resort/)).toBeNull()
+  })
+
+  it('falls back to internal DRAFT default when statusFilter is not provided', () => {
+    render(<ProposalsGrid {...defaultProps()} />)
+
+    expect(screen.getByText(/Z Resort/)).toBeDefined()
+    expect(screen.queryByText(/A Resort/)).toBeNull()
+  })
 })

@@ -26,7 +26,10 @@ interface OverviewProps {
   trip: Trip
   tripId: string
   resorts: Resort[]
-  onNavigateToTab: (tab: 'resorts' | 'proposals' | 'poll') => void
+  onNavigateToTab: (
+    tab: 'resorts' | 'proposals' | 'poll',
+    statusFilter?: 'DRAFT' | 'SUBMITTED' | 'REJECTED'
+  ) => void
   onTripUpdated?: (trip: Trip) => void
   onAuthError?: (err: unknown) => void
   listTripParticipants?: (

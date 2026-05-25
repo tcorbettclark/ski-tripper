@@ -278,7 +278,7 @@ describe('Overview', () => {
     await eventUser.click(
       screen.getByText(/submit 1 draft proposal for voting/i)
     )
-    expect(onNavigateToTab).toHaveBeenCalledWith('proposals')
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT')
   })
 
   it('navigates to poll tab when clicking vote in active poll', async () => {
@@ -291,7 +291,7 @@ describe('Overview', () => {
       expect(screen.getByText(/vote in the active poll/i))
     })
     await eventUser.click(screen.getByText(/vote in the active poll/i))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll')
+    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
   })
 
   it('navigates to poll tab when clicking closed polls button', async () => {
@@ -319,7 +319,7 @@ describe('Overview', () => {
       expect(screen.getByText(/review 1 closed poll/i))
     })
     await eventUser.click(screen.getByText(/review 1 closed poll/i))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll')
+    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
   })
 
   it('navigates to resorts tab when clicking browse resorts', async () => {
@@ -332,7 +332,7 @@ describe('Overview', () => {
       name: /browse.*resorts/i,
     })
     await eventUser.click(browseButton)
-    expect(onNavigateToTab).toHaveBeenCalledWith('resorts')
+    expect(onNavigateToTab).toHaveBeenCalledWith('resorts', undefined)
   })
 
   it('shows next step prompt when no proposals exist', async () => {

@@ -26,7 +26,7 @@ const defaultProps = {
   activePoll: undefined,
   userVotedInActivePoll: false,
   isCoordinator: false,
-  onNavigateToTab: mock(() => {}),
+  onNavigateToTab: mock((_tab: string, _statusFilter?: string) => {}),
 }
 
 function renderNextActions(props = {}) {
@@ -106,6 +106,20 @@ describe('NextActions', () => {
     expect(screen.queryByText(/vote in the active poll/i)).toBeNull()
   })
 
+  it('navigates to proposals tab with SUBMITTED filter from comment action', async () => {
+    const onNavigateToTab = mock(() => {})
+    const eventUser = userEvent.setup()
+    await act(async () => {
+      renderNextActions({ submittedCount: 1, onNavigateToTab })
+    })
+    await eventUser.click(
+      screen.getByRole('button', {
+        name: /comment on 1 submitted proposal/i,
+      })
+    )
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'SUBMITTED')
+  })
+
   it('shows approved proposals button', async () => {
     await act(async () => {
       renderNextActions({ approvedCount: 1 })
@@ -129,7 +143,7 @@ describe('NextActions', () => {
     await eventUser.click(
       screen.getByRole('button', { name: /browse.*resorts/i })
     )
-    expect(onNavigateToTab).toHaveBeenCalledWith('resorts')
+    expect(onNavigateToTab).toHaveBeenCalledWith('resorts', undefined)
   })
 
   it('navigates to proposals tab on click', async () => {
@@ -143,7 +157,7 @@ describe('NextActions', () => {
         name: /submit 1 draft proposal for voting/i,
       })
     )
-    expect(onNavigateToTab).toHaveBeenCalledWith('proposals')
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT')
   })
 
   it('navigates to poll tab on click', async () => {
@@ -155,6 +169,6 @@ describe('NextActions', () => {
     await eventUser.click(
       screen.getByRole('button', { name: /vote in the active poll/i })
     )
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll')
+    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
   })
 })

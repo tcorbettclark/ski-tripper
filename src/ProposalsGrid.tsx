@@ -14,7 +14,7 @@ import ProposalCard from './ProposalCard'
 import { borders, colors, fonts } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
 
-type StatusFilter = 'DRAFT' | 'SUBMITTED' | 'REJECTED'
+export type StatusFilter = 'DRAFT' | 'SUBMITTED' | 'REJECTED'
 
 interface ProposalsGridProps {
   proposals: Proposal[]
@@ -22,6 +22,8 @@ interface ProposalsGridProps {
   userName?: string
   isCoordinator?: boolean
   accommodations?: Record<string, Accommodation[]>
+  /** Controlled status filter — allows parent (e.g. App) to preselect a tab when navigating here. When provided, the internal toggle is synced to this value. */
+  statusFilter?: StatusFilter
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
@@ -66,6 +68,7 @@ export default function ProposalsGrid({
   userName = '',
   isCoordinator = false,
   accommodations = {},
+  statusFilter: controlledStatusFilter,
   onUpdated,
   onDeleted,
   onSubmitted,
@@ -87,7 +90,11 @@ export default function ProposalsGrid({
 }: ProposalsGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('DRAFT')
+  const [internalStatusFilter, setInternalStatusFilter] =
+    useState<StatusFilter>('DRAFT')
+  // When the parent controls statusFilter (e.g. navigating to SUBMITTED from NextActions), use that;
+  // otherwise fall back to the user's own tab selection.
+  const statusFilter = controlledStatusFilter ?? internalStatusFilter
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -176,7 +183,7 @@ export default function ProposalsGrid({
             <button
               key={status}
               type="button"
-              onClick={() => setStatusFilter(status)}
+              onClick={() => setInternalStatusFilter(status)}
               style={
                 statusFilter === status ? styles.tabActive : styles.tabInactive
               }

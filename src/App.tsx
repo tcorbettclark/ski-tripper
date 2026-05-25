@@ -20,6 +20,7 @@ import Poll from './Poll'
 import PreferencesForm from './PreferencesForm'
 import PreferencesModal from './PreferencesModal'
 import Proposals from './Proposals'
+import type { StatusFilter } from './ProposalsGrid'
 import Resorts from './Resorts'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
@@ -95,6 +96,10 @@ export default function App({
   const [page, setPage] = useState<'login' | 'signup'>('login')
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
+  // Lifted from ProposalsGrid so that NextActions can navigate directly to a specific proposals sub-tab.
+  // Without this, navigating to the proposals tab always lands on DRAFT regardless of context.
+  const [proposalsStatusFilter, setProposalsStatusFilter] =
+    useState<StatusFilter>('DRAFT')
   const [trips, setTrips] = useState<Trip[]>([])
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
@@ -194,6 +199,7 @@ export default function App({
     setSelectedTripId(tripId)
     setView('tripDetail')
     setTripDetailTab('overview')
+    setProposalsStatusFilter('DRAFT')
     listPolls(tripId, user.$id).then(({ polls }) => {
       const open = polls.find((p) => p.state === 'OPEN')
       setActivePollEndDate(open?.endDate || null)
@@ -204,6 +210,7 @@ export default function App({
     setView('tripList')
     setSelectedTripId(null)
     setTripDetailTab('overview')
+    setProposalsStatusFilter('DRAFT')
     setActivePollEndDate(null)
   }
 
@@ -307,7 +314,10 @@ export default function App({
         tripName={selectedTrip?.description || selectedTrip?.code || ''}
         tripDetailTab={tripDetailTab}
         onViewAllTrips={handleViewAllTrips}
-        onTripDetailTabChange={(tab) => setTripDetailTab(tab as TripDetailTab)}
+        onTripDetailTabChange={(tab) => {
+          setTripDetailTab(tab as TripDetailTab)
+          if (tab !== 'proposals') setProposalsStatusFilter('DRAFT')
+        }}
         userName={user.name || user.email}
         onLogout={handleLogout}
         logoutError={logoutError}
@@ -336,9 +346,12 @@ export default function App({
                 trip={selectedTrip}
                 tripId={selectedTripId}
                 resorts={resorts}
-                onNavigateToTab={(tab) =>
+                onNavigateToTab={(tab, statusFilter) => {
                   setTripDetailTab(tab as TripDetailTab)
-                }
+                  if (tab === 'proposals' && statusFilter) {
+                    setProposalsStatusFilter(statusFilter)
+                  }
+                }}
                 onTripUpdated={handleTripUpdated}
                 onAuthError={onAuthError}
                 updateTrip={updateTrip}
@@ -363,6 +376,7 @@ export default function App({
                 tripId={selectedTripId}
                 key={refreshProposalsKey}
                 resorts={resorts}
+                statusFilter={proposalsStatusFilter}
                 onRefresh={() => setRefreshProposalsKey((k) => k + 1)}
                 onAuthError={onAuthError}
               />

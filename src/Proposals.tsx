@@ -15,6 +15,7 @@ import {
   updateProposal as _updateProposal,
 } from './backend'
 import CreateProposalForm from './CreateProposalForm'
+import type { StatusFilter } from './ProposalsGrid'
 import ProposalsGrid from './ProposalsGrid'
 import { borders, colors, fonts } from './theme'
 import type { Accommodation, Proposal, Resort } from './types.d.ts'
@@ -23,6 +24,8 @@ interface ProposalsProps {
   user: Models.User
   tripId: string
   resorts: Resort[]
+  /** Pre-selected status tab — allows parent to navigate directly to a proposals sub-state. */
+  statusFilter?: StatusFilter
   onRefresh?: () => void
   onAuthError?: (err: unknown) => void
   listProposals?: (
@@ -94,6 +97,7 @@ export default function Proposals({
   user,
   tripId,
   resorts,
+  statusFilter,
   onRefresh: _onRefresh,
   onAuthError = noopAuthError,
   listProposals = _listProposals,
@@ -283,6 +287,7 @@ export default function Proposals({
           userName={user.name || ''}
           isCoordinator={isCoordinator}
           accommodations={accommodations}
+          statusFilter={statusFilter}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
           onSubmitted={handleSubmitted}
