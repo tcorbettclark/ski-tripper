@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useState } from 'react'
 import PreferencesForm from './PreferencesForm'
 import { borders, colors, fonts } from './theme'
@@ -69,7 +70,7 @@ export default function PreferencesModal({
             style={styles.closeButton}
             aria-label="Close"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
         {display && (
@@ -188,7 +189,6 @@ const styles = {
     background: 'none',
     border: 'none',
     color: colors.textSecondary,
-    fontSize: '18px',
     cursor: 'pointer',
     padding: '4px 8px',
     lineHeight: 1,

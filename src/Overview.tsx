@@ -1,4 +1,5 @@
 import type { Models } from 'appwrite'
+import { Check, Copy, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   getCoordinatorParticipant as _getCoordinatorParticipant,
@@ -215,7 +216,7 @@ export default function Overview({
                       title="Edit description"
                       aria-label="Edit description"
                     >
-                      ✎
+                      <Pencil size={13} />
                     </button>
                   )}
                 </span>
@@ -231,7 +232,7 @@ export default function Overview({
                     title="Copy invite code"
                     aria-label="Copy invite code"
                   >
-                    {codeCopied ? '✓' : '⧉'}
+                    {codeCopied ? <Check size={13} /> : <Copy size={13} />}
                   </button>
                   {codeCopied && (
                     <span style={overviewStyles.copyFeedback}>Copied!</span>
@@ -478,7 +479,6 @@ const overviewStyles = {
     border: 'none',
     cursor: 'pointer',
     color: colors.accent,
-    fontSize: '14px',
     padding: '0 2px',
     lineHeight: 1,
     opacity: 0.7,
@@ -494,7 +494,6 @@ const overviewStyles = {
     border: 'none',
     cursor: 'pointer',
     color: colors.accent,
-    fontSize: '13px',
     padding: '0 2px',
     marginLeft: '6px',
     lineHeight: 1,

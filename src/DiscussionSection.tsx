@@ -1,3 +1,4 @@
+import { Pencil, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   createDiscussionComment as _createDiscussionComment,
@@ -161,23 +162,25 @@ export default function DiscussionSection({
                     <button
                       type="button"
                       onClick={() => {
+                        setDeleteConfirmId(comment.$id)
+                        setDeleteError(null)
+                      }}
+                      style={sectionStyles.deleteButton}
+                      aria-label="Delete"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
                         setEditingId(comment.$id)
                         setEditBody(comment.body)
                         setEditError(null)
                       }}
                       style={sectionStyles.actionButton}
+                      aria-label="Edit"
                     >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteConfirmId(comment.$id)
-                        setDeleteError(null)
-                      }}
-                      style={sectionStyles.actionButton}
-                    >
-                      Delete
+                      <Pencil size={13} />
                     </button>
                   </span>
                 )}
@@ -377,12 +380,20 @@ const sectionStyles = {
   actionButton: {
     background: 'none',
     border: 'none',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '11px',
     cursor: 'pointer',
-    padding: '2px 6px',
-    borderRadius: '3px',
+    color: colors.textSecondary,
+    padding: '0 2px',
+    lineHeight: 1,
+    opacity: 0.7,
+  },
+  deleteButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.error,
+    padding: '0 2px',
+    lineHeight: 1,
+    opacity: 0.7,
   },
   commentBody: {
     fontFamily: fonts.body,

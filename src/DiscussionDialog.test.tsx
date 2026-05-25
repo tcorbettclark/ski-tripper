@@ -153,7 +153,7 @@ describe('DiscussionDialog', () => {
     })
 
     expect(screen.getByText('Discussion — Test Resort')).toBeDefined()
-    const closeButton = screen.getByText('✕').closest('button')!
+    const closeButton = screen.getByRole('button', { name: 'Close' })
     await userEvent.click(closeButton)
     expect(onClose).toHaveBeenCalledTimes(1)
   })

@@ -1,3 +1,4 @@
+import { Pencil, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   createDiscussionComment as _createDiscussionComment,
@@ -141,8 +142,13 @@ export default function DiscussionDialog({
       >
         <div style={styles.header}>
           <h3 style={styles.title}>Discussion — {proposalResortName}</h3>
-          <button type="button" onClick={onClose} style={styles.closeButton}>
-            ✕
+          <button
+            type="button"
+            onClick={onClose}
+            style={styles.closeButton}
+            aria-label="Close"
+          >
+            <X size={16} />
           </button>
         </div>
 
@@ -182,23 +188,25 @@ export default function DiscussionDialog({
                       <button
                         type="button"
                         onClick={() => {
+                          setDeleteConfirmId(comment.$id)
+                          setDeleteError(null)
+                        }}
+                        style={styles.deleteButton}
+                        aria-label="Delete"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
                           setEditingId(comment.$id)
                           setEditBody(comment.body)
                           setEditError(null)
                         }}
                         style={styles.actionButton}
+                        aria-label="Edit"
                       >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDeleteConfirmId(comment.$id)
-                          setDeleteError(null)
-                        }}
-                        style={styles.actionButton}
-                      >
-                        Delete
+                        <Pencil size={13} />
                       </button>
                     </span>
                   )}
@@ -357,10 +365,10 @@ const styles = {
     background: 'none',
     border: 'none',
     color: colors.textSecondary,
-    fontSize: '18px',
     cursor: 'pointer',
     padding: '4px 8px',
     borderRadius: '4px',
+    lineHeight: 1,
   },
   commentList: {
     flex: 1,
@@ -443,12 +451,20 @@ const styles = {
   actionButton: {
     background: 'none',
     border: 'none',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: '11px',
     cursor: 'pointer',
-    padding: '2px 6px',
-    borderRadius: '3px',
+    color: colors.textSecondary,
+    padding: '0 2px',
+    lineHeight: 1,
+    opacity: 0.7,
+  },
+  deleteButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.error,
+    padding: '0 2px',
+    lineHeight: 1,
+    opacity: 0.7,
   },
   commentBody: {
     fontFamily: fonts.body,
