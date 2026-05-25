@@ -32,6 +32,7 @@ export default function Resorts({
   const [proposalError, setProposalError] = useState('')
   const [proposalSaving, setProposalSaving] = useState(false)
   const [proposalSuccess, setProposalSuccess] = useState(false)
+  const [proposalSuccessName, setProposalSuccessName] = useState('')
   const [websiteHovered, setWebsiteHovered] = useState(false)
   const [latLngHovered, setLatLngHovered] = useState(false)
 
@@ -86,6 +87,7 @@ export default function Resorts({
     setShowProposalForm(false)
     setProposalError('')
     setProposalSuccess(false)
+    setProposalSuccessName('')
   }, [])
 
   const handleCloseDetail = useCallback(() => {
@@ -93,12 +95,14 @@ export default function Resorts({
     setShowProposalForm(false)
     setProposalError('')
     setProposalSuccess(false)
+    setProposalSuccessName('')
   }, [])
 
   const handleProposeResort = useCallback(() => {
     setShowProposalForm(true)
     setProposalError('')
     setProposalSuccess(false)
+    setProposalSuccessName('')
   }, [])
 
   const handleSubmitProposal = useCallback(
@@ -140,6 +144,7 @@ export default function Resorts({
             longitude: resort.longitude,
           },
         })
+        setProposalSuccessName(customResortName || resort.resortName)
         setProposalSuccess(true)
       } catch (err: unknown) {
         setProposalError(err instanceof Error ? err.message : String(err))
@@ -346,7 +351,9 @@ export default function Resorts({
           >
             <div style={resortsStyles.detailHeader}>
               <h3 style={resortsStyles.detailTitle}>
-                {selectedResort.resortName}
+                {proposalSuccess
+                  ? `Created proposal for ${proposalSuccessName}`
+                  : selectedResort.resortName}
               </h3>
               <button
                 type="button"
@@ -471,18 +478,26 @@ export default function Resorts({
             )}
 
             {proposalSuccess && (
-              <p style={resortsStyles.successMessage}>
-                Proposal created successfully!
-                {onNavigateToProposals && (
+              <div style={resortsStyles.successPopup}>
+                <div style={resortsStyles.successButtons}>
                   <button
                     type="button"
-                    onClick={onNavigateToProposals}
-                    style={resortsStyles.navButtonSmall}
+                    onClick={handleCloseDetail}
+                    style={resortsStyles.successButtonSecondary}
                   >
-                    View in Proposals
+                    Stay in resorts
                   </button>
-                )}
-              </p>
+                  {onNavigateToProposals && (
+                    <button
+                      type="button"
+                      onClick={onNavigateToProposals}
+                      style={resortsStyles.successButtonPrimary}
+                    >
+                      View in proposals
+                    </button>
+                  )}
+                </div>
+              </div>
             )}
 
             {showProposalForm && !proposalSuccess && (
@@ -880,11 +895,38 @@ const resortsStyles = {
     cursor: 'pointer',
     width: '100%',
   },
-  successMessage: {
+  successPopup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '20px',
+    padding: '24px 0',
+  },
+  successButtons: {
+    display: 'flex',
+    gap: '12px',
+  },
+  successButtonPrimary: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: 'none',
+    background: colors.accent,
+    color: colors.bgPrimary,
     fontFamily: fonts.body,
     fontSize: '14px',
-    color: '#4ade80',
-    margin: '0',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  successButtonSecondary: {
+    padding: '10px 20px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.accent}`,
+    background: 'transparent',
+    color: colors.accent,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    fontWeight: '600',
+    cursor: 'pointer',
   },
   proposalForm: {
     display: 'flex',
