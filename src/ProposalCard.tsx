@@ -147,6 +147,11 @@ export default function ProposalCard({
     addingAccommodation || editingAccommodationId !== null
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
   const canRevertToDraft = isCoordinator && isRejected
+  const hasDiscussionBody = !discussionCollapsed
+  const hasProposalBody = !proposalCollapsed
+  const hasAccommodationsBody = !accommodationCollapsed
+  const hasActions =
+    canAct || canReject || canRevertToDraft || !!rejectError || !!revertError
 
   function initiateSubmit() {
     setSubmitError(null)
@@ -307,7 +312,9 @@ export default function ProposalCard({
           )}
         </div>
 
-        <div style={styles.section}>
+        <div
+          style={hasDiscussionBody ? styles.section : styles.sectionNoBorder}
+        >
           <button
             type="button"
             onClick={() => setDiscussionCollapsed((c) => !c)}
@@ -320,7 +327,7 @@ export default function ProposalCard({
               {discussionCollapsed ? '+' : '−'}
             </span>
           </button>
-          {!discussionCollapsed && (
+          {hasDiscussionBody && (
             <DiscussionSection
               proposalId={proposal.$id}
               userId={userId}
@@ -334,7 +341,7 @@ export default function ProposalCard({
           )}
         </div>
 
-        <div style={styles.section}>
+        <div style={hasProposalBody ? styles.section : styles.sectionNoBorder}>
           <button
             type="button"
             onClick={() => setProposalCollapsed((c) => !c)}
@@ -345,7 +352,7 @@ export default function ProposalCard({
               {proposalCollapsed ? '+' : '−'}
             </span>
           </button>
-          {!proposalCollapsed && (
+          {hasProposalBody && (
             <>
               <div style={styles.grid}>
                 <DetailField
@@ -462,7 +469,11 @@ export default function ProposalCard({
           )}
         </div>
 
-        <div style={styles.section}>
+        <div
+          style={
+            hasAccommodationsBody ? styles.section : styles.sectionNoBorder
+          }
+        >
           <button
             type="button"
             onClick={() => setAccommodationCollapsed((c) => !c)}
@@ -473,7 +484,7 @@ export default function ProposalCard({
               {accommodationCollapsed ? '+' : '−'}
             </span>
           </button>
-          {!accommodationCollapsed && (
+          {hasAccommodationsBody && (
             <>
               {accommodations.length === 0 && !addingAccommodation && (
                 <p style={styles.noAccommodations}>No accommodations yet.</p>
@@ -580,61 +591,63 @@ export default function ProposalCard({
           )}
         </div>
 
-        <div style={styles.actions}>
-          {canAct && (
-            <>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={isAccommodationEditing}
-                style={{
-                  ...styles.deleteButton,
-                  ...(isAccommodationEditing ? styles.buttonDisabled : {}),
-                }}
-              >
-                Delete
-              </button>
-              <div style={styles.actionsRight}>
+        {hasActions && (
+          <div style={styles.actions}>
+            {canAct && (
+              <>
                 <button
                   type="button"
-                  onClick={initiateSubmit}
-                  disabled={submitting || isAccommodationEditing}
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={isAccommodationEditing}
                   style={{
-                    ...styles.submitButton,
-                    ...(submitting || isAccommodationEditing
-                      ? styles.buttonDisabled
-                      : {}),
+                    ...styles.deleteButton,
+                    ...(isAccommodationEditing ? styles.buttonDisabled : {}),
                   }}
                 >
-                  {submitting ? 'Submitting…' : 'Submit'}
+                  Delete
                 </button>
-                {submitError && <p style={formStyles.error}>{submitError}</p>}
-              </div>
-            </>
-          )}
-          {canReject && (
-            <button
-              type="button"
-              onClick={handleReject}
-              disabled={rejecting}
-              style={styles.rejectButton}
-            >
-              {rejecting ? 'Rejecting…' : 'Reject'}
-            </button>
-          )}
-          {rejectError && <p style={formStyles.error}>{rejectError}</p>}
-          {canRevertToDraft && (
-            <button
-              type="button"
-              onClick={handleRevertToDraft}
-              disabled={reverting}
-              style={styles.revertButton}
-            >
-              {reverting ? 'Moving to Draft…' : 'Move back to Draft'}
-            </button>
-          )}
-          {revertError && <p style={formStyles.error}>{revertError}</p>}
-        </div>
+                <div style={styles.actionsRight}>
+                  <button
+                    type="button"
+                    onClick={initiateSubmit}
+                    disabled={submitting || isAccommodationEditing}
+                    style={{
+                      ...styles.submitButton,
+                      ...(submitting || isAccommodationEditing
+                        ? styles.buttonDisabled
+                        : {}),
+                    }}
+                  >
+                    {submitting ? 'Submitting…' : 'Submit'}
+                  </button>
+                  {submitError && <p style={formStyles.error}>{submitError}</p>}
+                </div>
+              </>
+            )}
+            {canReject && (
+              <button
+                type="button"
+                onClick={handleReject}
+                disabled={rejecting}
+                style={styles.rejectButton}
+              >
+                {rejecting ? 'Rejecting…' : 'Reject'}
+              </button>
+            )}
+            {rejectError && <p style={formStyles.error}>{rejectError}</p>}
+            {canRevertToDraft && (
+              <button
+                type="button"
+                onClick={handleRevertToDraft}
+                disabled={reverting}
+                style={styles.revertButton}
+              >
+                {reverting ? 'Moving to Draft…' : 'Move back to Draft'}
+              </button>
+            )}
+            {revertError && <p style={formStyles.error}>{revertError}</p>}
+          </div>
+        )}
       </div>
 
       {showDeleteConfirm && (
@@ -914,6 +927,10 @@ const styles = {
   },
   section: {
     borderTop: borders.subtle,
+    paddingTop: '10px',
+    marginBottom: '10px',
+  },
+  sectionNoBorder: {
     paddingTop: '10px',
     marginBottom: '10px',
   },
