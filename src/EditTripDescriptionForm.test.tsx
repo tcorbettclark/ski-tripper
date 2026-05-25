@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import EditTripDescriptionForm from './EditTripDescriptionForm'
 import type { Trip } from './types.d.ts'
@@ -101,6 +101,8 @@ describe('EditTripDescriptionForm', () => {
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     expect(screen.getByText('Saving…'))
-    resolvePromise!(updatedTrip)
+    await act(async () => {
+      resolvePromise!(updatedTrip)
+    })
   })
 })
