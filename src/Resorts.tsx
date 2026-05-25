@@ -106,7 +106,8 @@ export default function Resorts({
       resort: Resort,
       startDate: string,
       endDate: string,
-      description: string
+      description: string,
+      customResortName?: string
     ) => {
       e.preventDefault()
       if (!tripId) return
@@ -121,7 +122,7 @@ export default function Resorts({
           startDate,
           endDate,
           resortData: {
-            resortName: resort.resortName,
+            resortName: customResortName || resort.resortName,
             country: resort.country,
             region: resort.region,
             topAltitude: resort.topAltitude,
@@ -355,100 +356,107 @@ export default function Resorts({
               </button>
             </div>
 
-            <div style={resortsStyles.detailGrid}>
-              <DetailField label="Country" value={selectedResort.country} />
-              <DetailField label="Region" value={selectedResort.region} />
-              <DetailField
-                label="Piste Km"
-                value={
-                  selectedResort.pisteKm ? String(selectedResort.pisteKm) : ''
-                }
-              />
-              <DetailField
-                label="Altitude Range"
-                value={
-                  selectedResort.bottomAltitude && selectedResort.topAltitude
-                    ? `${selectedResort.bottomAltitude}m–${selectedResort.topAltitude}m`
-                    : ''
-                }
-              />
-              <DetailField
-                label="Nearest Airport"
-                value={selectedResort.nearestAirport}
-              />
-              <DetailField
-                label="Transfer Time"
-                value={selectedResort.transferTime}
-              />
-              <DetailField
-                label="Difficulty"
-                value={selectedResort.difficulty}
-              />
-              <DetailField
-                label="Lift Count"
-                value={
-                  selectedResort.liftCount
-                    ? String(selectedResort.liftCount)
-                    : ''
-                }
-              />
-              <DetailField
-                label="Snow Reliability"
-                value={selectedResort.snowReliability}
-              />
-              <DetailField
-                label="Ski Season"
-                value={selectedResort.skiSeasonMonths}
-              />
-              <DetailField label="Latitude/longitude">
-                {selectedResort.latitude || selectedResort.longitude ? (
-                  <a
-                    href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      ...resortsStyles.websiteLinkInline,
-                      color: colors.accent,
-                      textDecoration: latLngHovered ? 'underline' : 'none',
-                    }}
-                    onMouseEnter={() => setLatLngHovered(true)}
-                    onMouseLeave={() => setLatLngHovered(false)}
-                  >
-                    {selectedResort.latitude}, {selectedResort.longitude}
-                  </a>
-                ) : (
-                  '—'
-                )}
-              </DetailField>
-              {selectedResort.websiteUrl && (
-                <DetailField label="Website">
-                  <a
-                    href={selectedResort.websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      ...resortsStyles.websiteLinkInline,
-                      textDecoration: websiteHovered ? 'underline' : 'none',
-                    }}
-                    aria-label="Visit website"
-                    onMouseEnter={() => setWebsiteHovered(true)}
-                    onMouseLeave={() => setWebsiteHovered(false)}
-                  >
-                    {selectedResort.websiteUrl}
-                  </a>
-                </DetailField>
-              )}
-            </div>
+            {!showProposalForm && !proposalSuccess && (
+              <>
+                <div style={resortsStyles.detailGrid}>
+                  <DetailField label="Country" value={selectedResort.country} />
+                  <DetailField label="Region" value={selectedResort.region} />
+                  <DetailField
+                    label="Piste Km"
+                    value={
+                      selectedResort.pisteKm
+                        ? String(selectedResort.pisteKm)
+                        : ''
+                    }
+                  />
+                  <DetailField
+                    label="Altitude Range"
+                    value={
+                      selectedResort.bottomAltitude &&
+                      selectedResort.topAltitude
+                        ? `${selectedResort.bottomAltitude}m–${selectedResort.topAltitude}m`
+                        : ''
+                    }
+                  />
+                  <DetailField
+                    label="Nearest Airport"
+                    value={selectedResort.nearestAirport}
+                  />
+                  <DetailField
+                    label="Transfer Time"
+                    value={selectedResort.transferTime}
+                  />
+                  <DetailField
+                    label="Difficulty"
+                    value={selectedResort.difficulty}
+                  />
+                  <DetailField
+                    label="Lift Count"
+                    value={
+                      selectedResort.liftCount
+                        ? String(selectedResort.liftCount)
+                        : ''
+                    }
+                  />
+                  <DetailField
+                    label="Snow Reliability"
+                    value={selectedResort.snowReliability}
+                  />
+                  <DetailField
+                    label="Ski Season"
+                    value={selectedResort.skiSeasonMonths}
+                  />
+                  <DetailField label="Latitude/longitude">
+                    {selectedResort.latitude || selectedResort.longitude ? (
+                      <a
+                        href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          ...resortsStyles.websiteLinkInline,
+                          color: colors.accent,
+                          textDecoration: latLngHovered ? 'underline' : 'none',
+                        }}
+                        onMouseEnter={() => setLatLngHovered(true)}
+                        onMouseLeave={() => setLatLngHovered(false)}
+                      >
+                        {selectedResort.latitude}, {selectedResort.longitude}
+                      </a>
+                    ) : (
+                      '—'
+                    )}
+                  </DetailField>
+                  {selectedResort.websiteUrl && (
+                    <DetailField label="Website">
+                      <a
+                        href={selectedResort.websiteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          ...resortsStyles.websiteLinkInline,
+                          textDecoration: websiteHovered ? 'underline' : 'none',
+                        }}
+                        aria-label="Visit website"
+                        onMouseEnter={() => setWebsiteHovered(true)}
+                        onMouseLeave={() => setWebsiteHovered(false)}
+                      >
+                        {selectedResort.websiteUrl}
+                      </a>
+                    </DetailField>
+                  )}
+                </div>
 
-            {selectedResort.description && (
-              <div style={resortsStyles.detailDescriptionSection}>
-                <span style={resortsStyles.detailDescriptionLabel}>
-                  Description
-                </span>
-                <p style={resortsStyles.detailDescriptionText}>
-                  {selectedResort.description}
-                </p>
-              </div>
+                {selectedResort.description && (
+                  <div style={resortsStyles.detailDescriptionSection}>
+                    <span style={resortsStyles.detailDescriptionLabel}>
+                      Description
+                    </span>
+                    <p style={resortsStyles.detailDescriptionText}>
+                      {selectedResort.description}
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
             {!showProposalForm && !proposalSuccess && (
@@ -526,7 +534,8 @@ interface ProposalFormProps {
     resort: Resort,
     startDate: string,
     endDate: string,
-    description: string
+    description: string,
+    customResortName?: string
   ) => Promise<void>
   onCancel: () => void
   onAuthError?: (err: unknown) => void
@@ -541,17 +550,38 @@ function ProposalForm({
   onSubmit,
   onCancel,
 }: ProposalFormProps) {
+  const [resortName, setResortName] = useState(resort.resortName)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [description, setDescription] = useState(resort.description || '')
 
   return (
     <form
-      onSubmit={(e) => onSubmit(e, resort, startDate, endDate, description)}
+      onSubmit={(e) =>
+        onSubmit(e, resort, startDate, endDate, description, resortName)
+      }
       style={resortsStyles.proposalForm}
     >
-      <h4 style={resortsStyles.proposalFormTitle}>Create Proposal</h4>
-      <p style={resortsStyles.proposalFormSubtitle}>For {resort.resortName}</p>
+      <p style={resortsStyles.proposalFormSubtitle}>
+        {resort.country}
+        {resort.region ? `, ${resort.region}` : ''}
+      </p>
+      <div style={{ ...resortsStyles.proposalFormField, marginTop: '16px' }}>
+        <label
+          htmlFor="proposal-resort-name"
+          style={resortsStyles.proposalFormLabel}
+        >
+          Proposal name (e.g. the resort name)
+        </label>
+        <input
+          id="proposal-resort-name"
+          type="text"
+          value={resortName}
+          onChange={(e) => setResortName(e.target.value)}
+          required
+          style={resortsStyles.proposalFormInput}
+        />
+      </div>
       <div style={resortsStyles.proposalFormRow}>
         <div style={resortsStyles.proposalFormField}>
           <label
@@ -599,6 +629,7 @@ function ProposalForm({
           onChange={(e) => setDescription(e.target.value)}
           style={resortsStyles.proposalFormTextarea}
           placeholder="Describe the trip idea..."
+          rows={12}
         />
       </div>
       {error && <p style={formStyles.error}>{error}</p>}
@@ -784,7 +815,7 @@ const resortsStyles = {
     padding: '28px',
     maxWidth: '560px',
     width: '100%',
-    maxHeight: '80vh',
+    maxHeight: '95vh',
     overflowY: 'auto' as const,
     margin: '16px',
   },
@@ -884,11 +915,6 @@ const resortsStyles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '14px',
-    marginTop: '16px',
-    padding: '16px',
-    background: colors.bgInput,
-    borderRadius: '8px',
-    border: borders.card,
   },
   proposalFormTitle: {
     fontFamily: fonts.display,
@@ -901,7 +927,7 @@ const resortsStyles = {
     fontFamily: fonts.body,
     fontSize: '13px',
     color: colors.textSecondary,
-    margin: '-8px 0 0',
+    margin: '-12px 0 0',
   },
   proposalFormRow: {
     display: 'flex',
@@ -941,11 +967,12 @@ const resortsStyles = {
     fontSize: '14px',
     outline: 'none',
     resize: 'vertical' as const,
-    minHeight: '60px',
   },
   proposalFormActions: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-end' as const,
     gap: '12px',
+    marginTop: '8px',
   },
 } as const
