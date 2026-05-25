@@ -1,8 +1,7 @@
 import { sanitizeUrl } from '@braintree/sanitize-url'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
-import adjectives from 'threewords/data/adjectives.json'
-import nouns from 'threewords/data/nouns.json'
+import { adjectives, nouns } from './words'
 
 dayjs.extend(relativeTime)
 
