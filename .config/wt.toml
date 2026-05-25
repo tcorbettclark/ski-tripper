@@ -11,7 +11,6 @@ merge-and-continue = "wt merge --no-commit --no-squash --no-remove && wt step co
 
 # Can be used from any worktree.
 sync-all-from-main = "wt step for-each -- sh -c 'git rebase main && wt step copy-from-main --yes'"
-push-main = "wt switch main && git push"
 
 # Use from within a worktree to copy e.g. .env files to/from main.
 copy-to-main = "wt step copy-ignored --from {{ branch }} --to {{ default_branch }} --force"
