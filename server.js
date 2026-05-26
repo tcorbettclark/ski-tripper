@@ -10,6 +10,38 @@ const dist = join(import.meta.dir, 'dist')
 const publicDir = join(import.meta.dir, 'public')
 const indexHtml = Bun.file(join(import.meta.dir, 'index.html'))
 
+const keyPath = join(import.meta.dir, 'localhost-key.pem')
+const certPath = join(import.meta.dir, 'localhost.pem')
+
+async function ensureCertificates() {
+  const [keyExists, certExists] = await Promise.all([
+    Bun.file(keyPath).exists(),
+    Bun.file(certPath).exists(),
+  ])
+  if (keyExists && certExists) return
+
+  const proc = Bun.spawn(
+    [
+      'mkcert',
+      '-key-file',
+      keyPath,
+      '-cert-file',
+      certPath,
+      'localhost',
+      'localhost.dev',
+    ],
+    {
+      stderr: 'inherit',
+    }
+  )
+  const exitCode = await proc.exited
+  if (exitCode !== 0) {
+    throw new Error(`mkcert failed with exit code ${exitCode}`)
+  }
+}
+
+await ensureCertificates()
+
 const mimeTypes = {
   '.css': 'text/css',
   '.js': 'application/javascript',
@@ -22,6 +54,10 @@ const mimeTypes = {
 
 Bun.serve({
   port,
+  tls: {
+    key: Bun.file(keyPath),
+    cert: Bun.file(certPath),
+  },
   fetch: async (req) => {
     const url = new URL(req.url)
     const distFile = Bun.file(join(dist, url.pathname))
@@ -50,4 +86,4 @@ Bun.serve({
   },
 })
 
-console.log(`Dev server running at http://localhost:${port}`)
+console.log(`Dev server running at https://localhost:${port}`)

@@ -9,3 +9,5 @@ dist-test
 .DS_Store
 .playwright-cli
 .env.app-explorer.md
+localhost-key.pem
+localhost.pem
