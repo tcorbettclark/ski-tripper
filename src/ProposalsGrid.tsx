@@ -93,6 +93,7 @@ export default function ProposalsGrid({
 }: ProposalsGridProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [myProposalsOnly, setMyProposalsOnly] = useState(false)
   const [internalStatusFilter, setInternalStatusFilter] =
     useState<StatusFilter>('DRAFT')
   // When the parent controls statusFilter (e.g. navigating to SUBMITTED from NextActions), use that;
@@ -109,6 +110,10 @@ export default function ProposalsGrid({
   const searchFilteredProposals = useMemo(() => {
     let result = proposals
 
+    if (myProposalsOnly) {
+      result = result.filter((p) => p.proposerUserId === userId)
+    }
+
     if (debouncedQuery) {
       const query = debouncedQuery.toLowerCase().trim()
       result = result.filter(
@@ -122,7 +127,7 @@ export default function ProposalsGrid({
     }
 
     return result
-  }, [proposals, debouncedQuery])
+  }, [proposals, debouncedQuery, myProposalsOnly, userId])
 
   const filteredProposals = useMemo(() => {
     const result = searchFilteredProposals
@@ -137,6 +142,8 @@ export default function ProposalsGrid({
 
   const isSearching = debouncedQuery.length > 0
 
+  const isFiltered = isSearching || myProposalsOnly
+
   const tabCounts = useMemo(() => {
     const filtered = {
       DRAFT: searchFilteredProposals.filter((p) => p.state === 'DRAFT').length,
@@ -150,7 +157,7 @@ export default function ProposalsGrid({
       SUBMITTED: proposals.filter((p) => p.state === 'SUBMITTED').length,
       REJECTED: proposals.filter((p) => p.state === 'REJECTED').length,
     }
-    if (isSearching) {
+    if (isFiltered) {
       return {
         DRAFT: { filtered: filtered.DRAFT, total: total.DRAFT },
         SUBMITTED: { filtered: filtered.SUBMITTED, total: total.SUBMITTED },
@@ -162,7 +169,7 @@ export default function ProposalsGrid({
       SUBMITTED: { filtered: total.SUBMITTED, total: total.SUBMITTED },
       REJECTED: { filtered: total.REJECTED, total: total.REJECTED },
     }
-  }, [proposals, searchFilteredProposals, isSearching])
+  }, [proposals, searchFilteredProposals, isFiltered])
 
   if (proposals.length === 0) {
     return <p style={styles.empty}>{emptyMessage}</p>
@@ -178,6 +185,28 @@ export default function ProposalsGrid({
           onChange={(e) => setSearchQuery(e.target.value)}
           style={styles.searchInput}
         />
+        <label style={styles.myProposalsLabel}>
+          <span style={styles.myProposalsLabelText}>My proposals</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={myProposalsOnly}
+            onClick={() => setMyProposalsOnly((v) => !v)}
+            style={
+              myProposalsOnly
+                ? styles.myProposalsTrackActive
+                : styles.myProposalsTrack
+            }
+          >
+            <span
+              style={
+                myProposalsOnly
+                  ? styles.myProposalsThumbActive
+                  : styles.myProposalsThumb
+              }
+            />
+          </button>
+        </label>
       </div>
 
       <div style={styles.tabs}>
@@ -195,7 +224,7 @@ export default function ProposalsGrid({
               }
             >
               {status} (
-              {isSearching
+              {isFiltered
                 ? `${tabCounts[status].filtered}/${tabCounts[status].total}`
                 : tabCounts[status].total}
               )
@@ -251,8 +280,8 @@ const styles = {
     flexWrap: 'wrap' as const,
   },
   searchInput: {
-    flex: '1 1 280px',
-    minWidth: '200px',
+    flex: '1 1 200px',
+    minWidth: '160px',
     padding: '10px 16px',
     borderRadius: '8px',
     border: borders.card,
@@ -261,6 +290,62 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: '14px',
     outline: 'none',
+  },
+  myProposalsLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    whiteSpace: 'nowrap' as const,
+  },
+  myProposalsLabelText: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  myProposalsTrack: {
+    position: 'relative' as const,
+    display: 'inline-block',
+    width: '36px',
+    height: '20px',
+    borderRadius: '10px',
+    border: 'none',
+    background: colors.textSecondary,
+    cursor: 'pointer',
+    padding: 0,
+    transition: 'background 0.2s',
+  },
+  myProposalsTrackActive: {
+    position: 'relative' as const,
+    display: 'inline-block',
+    width: '36px',
+    height: '20px',
+    borderRadius: '10px',
+    border: 'none',
+    background: colors.accent,
+    cursor: 'pointer',
+    padding: 0,
+    transition: 'background 0.2s',
+  },
+  myProposalsThumb: {
+    position: 'absolute' as const,
+    top: '2px',
+    left: '2px',
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    background: colors.bgPrimary,
+    transition: 'left 0.2s',
+  },
+  myProposalsThumbActive: {
+    position: 'absolute' as const,
+    top: '2px',
+    left: '18px',
+    width: '16px',
+    height: '16px',
+    borderRadius: '50%',
+    background: '#fff',
+    transition: 'left 0.2s',
   },
   tabs: {
     display: 'flex',

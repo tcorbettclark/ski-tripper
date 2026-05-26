@@ -193,4 +193,86 @@ describe('ProposalsGrid', () => {
     expect(screen.getByText(/Z Resort/)).toBeDefined()
     expect(screen.queryByText(/A Resort/)).toBeNull()
   })
+
+  it('renders the My proposals toggle', () => {
+    render(<ProposalsGrid {...defaultProps()} />)
+
+    expect(screen.getByRole('switch', { name: 'My proposals' })).toBeDefined()
+  })
+
+  it('filters to only my proposals when toggle is active', async () => {
+    const allDrafts: Proposal[] = proposals.map((p) => ({
+      ...p,
+      state: 'DRAFT' as const,
+    }))
+    const user = userEvent.setup()
+    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+
+    expect(screen.getByText(/Z Resort/)).toBeDefined()
+    expect(screen.getByText(/A Resort/)).toBeDefined()
+
+    await user.click(screen.getByRole('switch', { name: 'My proposals' }))
+
+    expect(screen.getByText(/Z Resort/)).toBeDefined()
+    expect(screen.queryByText(/A Resort/)).toBeNull()
+  })
+
+  it('shows all proposals again when My proposals toggle is deactivated', async () => {
+    const allDrafts: Proposal[] = proposals.map((p) => ({
+      ...p,
+      state: 'DRAFT' as const,
+    }))
+    const user = userEvent.setup()
+    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+
+    await user.click(screen.getByRole('switch', { name: 'My proposals' }))
+    expect(screen.queryByText(/A Resort/)).toBeNull()
+
+    await user.click(screen.getByRole('switch', { name: 'My proposals' }))
+    expect(screen.getByText(/A Resort/)).toBeDefined()
+  })
+
+  it('combines My proposals filter with search', async () => {
+    const allDrafts: Proposal[] = proposals.map((p) => ({
+      ...p,
+      state: 'DRAFT' as const,
+    }))
+    const user = userEvent.setup()
+    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+
+    await user.click(screen.getByRole('switch', { name: 'My proposals' }))
+
+    const searchInput = screen.getByPlaceholderText('Search proposals…')
+    await user.type(searchInput, 'Z')
+
+    expect(screen.getByText(/Z Resort/)).toBeDefined()
+    expect(screen.queryByText(/A Resort/)).toBeNull()
+  })
+
+  it('combines My proposals filter with status tabs', async () => {
+    const user = userEvent.setup()
+    render(<ProposalsGrid {...defaultProps()} />)
+
+    await user.click(screen.getByRole('switch', { name: 'My proposals' }))
+    expect(screen.getByText(/Z Resort/)).toBeDefined()
+
+    await user.click(screen.getByRole('button', { name: /^SUBMITTED/ }))
+    expect(screen.queryByText(/A Resort/)).toBeNull()
+    expect(screen.queryByText(/Z Resort/)).toBeNull()
+  })
+
+  it('shows filtered/total counts when My proposals toggle is active', async () => {
+    const allDrafts: Proposal[] = proposals.map((p) => ({
+      ...p,
+      state: 'DRAFT' as const,
+    }))
+    const user = userEvent.setup()
+    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+
+    expect(screen.getByRole('button', { name: 'DRAFT (2)' })).toBeDefined()
+
+    await user.click(screen.getByRole('switch', { name: 'My proposals' }))
+
+    expect(screen.getByRole('button', { name: 'DRAFT (1/2)' })).toBeDefined()
+  })
 })
