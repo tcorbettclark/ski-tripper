@@ -53,8 +53,8 @@ If any fail, fix issues first before committing.
 
 ## Appwrite
 
-- Frontend env vars: `PUBLIC_APPWRITE_*` (exposed to browser)
-- Admin env vars: `APPWRITE_API_KEY` (server-side only)
+- Frontend env vars exposed to the browser have the `PUBLIC_` prefix.
+- Server-side admin env vars have no `PUBLIC_` prefix, e.g. `APPWRITE_API_KEY`
 - Never import Appwrite client directly in components — use helpers from `src/backend.ts`
 
 ## Testing
