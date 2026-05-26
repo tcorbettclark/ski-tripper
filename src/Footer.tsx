@@ -54,7 +54,6 @@ export default function Footer() {
       </a>
       <span style={footerStyles.separator}>·</span>
       <span style={footerStyles.text}>v{VERSION}</span>
-      <span style={footerStyles.separator}>·</span>
       <span style={footerStyles.warning}>
         <AlertTriangle size={14} />
         Pre-release software — not yet ready for use!
@@ -104,6 +103,8 @@ const footerStyles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
+    position: 'absolute' as const,
+    right: '16px',
   },
   separator: {
     color: colors.textSecondary,
