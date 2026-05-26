@@ -2,6 +2,7 @@ import { ID, type Models } from 'appwrite'
 import { useState } from 'react'
 import { account as _account } from './backend'
 import Field from './Field'
+import InfoBanner from './InfoBanner'
 import { authStyles, formStyles } from './theme'
 
 interface AuthFormProps {
@@ -85,9 +86,8 @@ export default function AuthForm({
 
   return (
     <div style={{ ...authStyles.container, flexDirection: 'column' }}>
-      <div style={bannerStyles}>Work in progress - not live!</div>
+      <p style={authStyles.eyebrow}>⛷ Ski Tripper</p>
       <div style={authStyles.card}>
-        <p style={authStyles.eyebrow}>⛷ Ski Tripper</p>
         {sessionExpiredMessage && (
           <p style={formStyles.error}>{sessionExpiredMessage}</p>
         )}
@@ -155,19 +155,7 @@ export default function AuthForm({
           </button>
         </p>
       </div>
+      <InfoBanner />
     </div>
   )
 }
-
-const bannerStyles = {
-  background: '#f59e0b',
-  color: '#1a1a1a',
-  fontWeight: '700',
-  fontSize: '14px',
-  textAlign: 'center',
-  padding: '12px 24px',
-  borderRadius: '12px',
-  marginBottom: '20px',
-  maxWidth: '420px',
-  width: '100%',
-} as const

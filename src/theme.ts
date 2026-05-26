@@ -86,12 +86,15 @@ export const authStyles = {
   },
   eyebrow: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: '22px',
     fontWeight: '500',
-    letterSpacing: '0.14em',
+    letterSpacing: '0.45em',
     color: colors.accent,
     textTransform: 'uppercase',
     marginBottom: '14px',
+    textAlign: 'center' as const,
+    width: '100%',
+    maxWidth: '420px',
   },
   title: {
     fontFamily: fonts.display,
