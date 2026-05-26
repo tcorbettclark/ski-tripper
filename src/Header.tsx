@@ -123,7 +123,7 @@ export default function Header({
                 const cd = formatCountdown(activePollEndDate)
                 return cd === 'Ended' ? 'Poll ended' : `Poll closing in ${cd}`
               })()
-            : 'Polls'}
+            : 'Voting'}
         </button>
       </nav>
       <div style={headerStyles.userGroup}>

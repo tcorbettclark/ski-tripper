@@ -214,7 +214,7 @@ export default function Poll({
   return (
     <div style={styles.container}>
       <div style={styles.toolbar}>
-        <h2 style={styles.heading}>Poll</h2>
+        <h2 style={styles.heading}>Voting</h2>
       </div>
 
       {pollsLoading && <p style={styles.message}>Loading poll…</p>}

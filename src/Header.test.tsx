@@ -38,24 +38,24 @@ describe('Header', () => {
     expect(screen.getByText(/Poll closing in \d+h \d+m/))
   })
 
-  it('shows "Polls" when activePollEndDate is null', () => {
+  it('shows "Voting" when activePollEndDate is null', () => {
     render(<Header {...defaultProps} activePollEndDate={null} />)
-    expect(screen.getByText('Polls'))
+    expect(screen.getByText('Voting'))
     expect(screen.queryByText(/Poll closing in/)).toBeNull()
   })
 
-  it('shows "Polls" when activePollEndDate is not provided', () => {
+  it('shows "Voting" when activePollEndDate is not provided', () => {
     render(<Header {...defaultProps} />)
-    expect(screen.getByText('Polls'))
+    expect(screen.getByText('Voting'))
     expect(screen.queryByText(/Poll closing in/)).toBeNull()
   })
 
-  it('does not render "Polls" or countdown in tripList view', () => {
+  it('does not render "Voting" or countdown in tripList view', () => {
     const future = dayjs().add(2, 'day').toISOString()
     render(
       <Header {...defaultProps} view="tripList" activePollEndDate={future} />
     )
-    expect(screen.queryByText('Polls')).toBeNull()
+    expect(screen.queryByText('Voting')).toBeNull()
     expect(screen.queryByText(/Poll closing in/)).toBeNull()
   })
 
