@@ -109,12 +109,18 @@ export default function App({
   updateTrip = defaultUpdateTrip,
   updateRecovery = defaultUpdateRecovery,
 }: AppProps) {
-  const { user, checking, sessionExpiredMessage, login, logout, onAuthError } =
-    useAuth({ hasSession, accountGet, deleteSession })
+  const {
+    user,
+    checking,
+    sessionExpiredMessage,
+    login,
+    logout,
+    onAuthError,
+    refreshUser,
+  } = useAuth({ hasSession, accountGet, deleteSession })
   const [page, setPage] = useState<'login' | 'signup' | 'forgotPassword'>(
     'login'
   )
-  const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
   const [resetPassword, setResetPassword] = useState<{
     userId: string
     secret: string
@@ -153,9 +159,10 @@ export default function App({
     updateEmailVerification(verifyUserId, verifySecret)
       .then(() => {
         window.history.replaceState({}, '', window.location.pathname)
+        refreshUser()
       })
       .catch(() => {})
-  }, [updateEmailVerification])
+  }, [updateEmailVerification, refreshUser])
 
   const loadTrips = useCallback(
     (userId: string) => {
@@ -273,17 +280,6 @@ export default function App({
   if (checking) return null
 
   if (!user) {
-    if (verifyEmail) {
-      return (
-        <EmailVerifyScreen
-          email={verifyEmail}
-          onBackToLogin={() => {
-            setVerifyEmail(null)
-            setPage('login')
-          }}
-        />
-      )
-    }
     if (resetPassword) {
       return (
         <ResetPasswordForm
@@ -305,13 +301,24 @@ export default function App({
       <AuthForm
         mode={page as 'login' | 'signup'}
         onSuccess={login}
-        onNeedsVerification={(email) => setVerifyEmail(email)}
         onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
         onForgotPassword={() => setPage('forgotPassword')}
         sessionExpiredMessage={
           passwordResetSuccess
             ? 'Password reset successful. Please sign in with your new password.'
             : sessionExpiredMessage
+        }
+      />
+    )
+  }
+
+  if (!user.emailVerification) {
+    return (
+      <EmailVerifyScreen
+        email={user.email}
+        onBackToLogin={handleLogout}
+        createEmailVerification={(url: string) =>
+          _account.createVerification(url)
         }
       />
     )

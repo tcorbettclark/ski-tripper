@@ -116,6 +116,13 @@ export default function useAuth(options?: {
     }
   }, [clearTimers])
 
+  const refreshUser = useCallback(() => {
+    return accountGetRef
+      .current()
+      .then(setUser)
+      .catch(() => setUser(null))
+  }, [])
+
   const login = useCallback(
     (session: Models.Session, loggedInUser: Models.User) => {
       setUser(loggedInUser)
@@ -141,5 +148,6 @@ export default function useAuth(options?: {
     autoLogout,
     onAuthError,
     setSessionExpiredMessage,
+    refreshUser,
   }
 }

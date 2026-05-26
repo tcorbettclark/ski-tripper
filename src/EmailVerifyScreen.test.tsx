@@ -10,6 +10,7 @@ function renderEmailVerifyScreen(props = {}) {
     <EmailVerifyScreen
       email="test@example.com"
       onBackToLogin={noop}
+      createEmailVerification={() => Promise.resolve()}
       {...props}
     />
   )
@@ -19,6 +20,11 @@ describe('EmailVerifyScreen', () => {
   it('shows verify your email heading', () => {
     renderEmailVerifyScreen()
     expect(screen.getByRole('heading', { name: /verify your email/i }))
+  })
+
+  it('does not show the Ski Tripper eyebrow', () => {
+    renderEmailVerifyScreen()
+    expect(screen.queryByText(/ski tripper/i)).toBeNull()
   })
 
   it('displays the email address', () => {
@@ -77,12 +83,12 @@ describe('EmailVerifyScreen', () => {
     })
   })
 
-  it('calls onBackToLogin when back to sign in is clicked', async () => {
+  it('calls onBackToLogin when sign out is clicked', async () => {
     const user = userEvent.setup()
     const handleBack = mock(() => {})
     renderEmailVerifyScreen({ onBackToLogin: handleBack })
 
-    await user.click(screen.getByRole('button', { name: /back to sign in/i }))
+    await user.click(screen.getByRole('button', { name: /back to sign-in/i }))
     expect(handleBack).toHaveBeenCalledTimes(1)
   })
 })

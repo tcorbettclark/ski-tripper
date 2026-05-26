@@ -1,17 +1,16 @@
 import { useState } from 'react'
-import { account as _account } from './backend'
 import { authStyles, formStyles } from './theme'
 
 interface EmailVerifyScreenProps {
   email: string
   onBackToLogin: () => void
-  createEmailVerification?: (url: string) => Promise<unknown>
+  createEmailVerification: (url: string) => Promise<unknown>
 }
 
 export default function EmailVerifyScreen({
   email,
   onBackToLogin,
-  createEmailVerification = (url) => _account.createVerification(url),
+  createEmailVerification,
 }: EmailVerifyScreenProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,11 +33,11 @@ export default function EmailVerifyScreen({
   return (
     <div style={{ ...authStyles.container, flexDirection: 'column' }}>
       <div style={authStyles.card}>
-        <p style={authStyles.eyebrow}>⛷ Ski Tripper</p>
         <h1 style={authStyles.title}>Verify your email</h1>
-        <p style={verifyStyles.message}>
-          We sent a verification link to <strong>{email}</strong>. Check your
-          inbox and click the link to activate your account.
+        <p style={verifyStyles.message}>We sent a verification link to</p>
+        <p style={verifyStyles.email}>{email}</p>
+        <p style={verifyStyles.followUp}>
+          Check your inbox and click the link to activate your account.
         </p>
         {error && <p style={formStyles.error}>{error}</p>}
         {resent && (
@@ -64,7 +63,7 @@ export default function EmailVerifyScreen({
             onClick={onBackToLogin}
             style={authStyles.switchLink}
           >
-            Back to sign in
+            Back to sign-in
           </button>
         </p>
       </div>
@@ -73,7 +72,22 @@ export default function EmailVerifyScreen({
 }
 
 const verifyStyles = {
+  email: {
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '15px',
+    fontWeight: 'bold',
+    color: '#e0f0ff',
+    textAlign: 'center' as const,
+    margin: '8px 0',
+  } as const,
   message: {
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: '14px',
+    color: '#6a94ae',
+    lineHeight: '1.6',
+    margin: '0',
+  } as const,
+  followUp: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
     color: '#6a94ae',
