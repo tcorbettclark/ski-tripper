@@ -85,13 +85,3 @@ export default function ResetPasswordForm({
     </div>
   )
 }
-
-const resetStyles = {
-  message: {
-    fontFamily: "'DM Sans', sans-serif",
-    fontSize: '14px',
-    color: '#6a94ae',
-    lineHeight: '1.6',
-    margin: '0 0 24px 0',
-  } as const,
-}
