@@ -82,6 +82,7 @@ export default function ProposalCard({
   userId,
   userName = '',
   isCoordinator = false,
+  previewMode = false,
   accommodations = [],
   onUpdated,
   onDeleted,
@@ -283,7 +284,7 @@ export default function ProposalCard({
 
   return (
     <>
-      <div style={styles.card}>
+      <div style={previewMode ? styles.previewCard : styles.card}>
         <div style={styles.header}>
           <span style={styles.headerLeft}>
             {(() => {
@@ -312,47 +313,57 @@ export default function ProposalCard({
           )}
         </div>
 
-        <div
-          style={hasDiscussionBody ? styles.section : styles.sectionNoBorder}
-        >
-          <button
-            type="button"
-            onClick={() => setDiscussionCollapsed((c) => !c)}
-            style={styles.sectionHeader}
+        {!previewMode && (
+          <div
+            style={hasDiscussionBody ? styles.section : styles.sectionNoBorder}
           >
-            <span style={styles.sectionTitle}>
-              Discussion {discussionCount > 0 && `(${discussionCount})`}
-            </span>
-            <span style={styles.collapseIcon}>
-              {discussionCollapsed ? '+' : '−'}
-            </span>
-          </button>
-          {hasDiscussionBody && (
-            <DiscussionSection
-              proposalId={proposal.$id}
-              userId={userId}
-              userName={userName}
-              onCommentsChanged={() => {
-                listDiscussion(proposal.$id)
-                  .then((rows) => setDiscussionCount(rows.length))
-                  .catch(onAuthError)
-              }}
-            />
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={() => setDiscussionCollapsed((c) => !c)}
+              style={styles.sectionHeader}
+            >
+              <span style={styles.sectionTitle}>
+                Discussion {discussionCount > 0 && `(${discussionCount})`}
+              </span>
+              <span style={styles.collapseIcon}>
+                {discussionCollapsed ? '+' : '−'}
+              </span>
+            </button>
+            {hasDiscussionBody && (
+              <DiscussionSection
+                proposalId={proposal.$id}
+                userId={userId}
+                userName={userName}
+                onCommentsChanged={() => {
+                  listDiscussion(proposal.$id)
+                    .then((rows) => setDiscussionCount(rows.length))
+                    .catch(onAuthError)
+                }}
+              />
+            )}
+          </div>
+        )}
 
-        <div style={hasProposalBody ? styles.section : styles.sectionNoBorder}>
-          <button
-            type="button"
-            onClick={() => setProposalCollapsed((c) => !c)}
-            style={styles.sectionHeader}
-          >
-            <span style={styles.sectionTitle}>Proposal</span>
-            <span style={styles.collapseIcon}>
-              {proposalCollapsed ? '+' : '−'}
-            </span>
-          </button>
-          {hasProposalBody && (
+        <div
+          style={
+            previewMode || hasProposalBody
+              ? styles.section
+              : styles.sectionNoBorder
+          }
+        >
+          {!previewMode && (
+            <button
+              type="button"
+              onClick={() => setProposalCollapsed((c) => !c)}
+              style={styles.sectionHeader}
+            >
+              <span style={styles.sectionTitle}>Proposal</span>
+              <span style={styles.collapseIcon}>
+                {proposalCollapsed ? '+' : '−'}
+              </span>
+            </button>
+          )}
+          {(previewMode || hasProposalBody) && (
             <>
               <div style={styles.grid}>
                 <DetailField
@@ -469,129 +480,135 @@ export default function ProposalCard({
           )}
         </div>
 
-        <div
-          style={
-            hasAccommodationsBody ? styles.section : styles.sectionNoBorder
-          }
-        >
-          <button
-            type="button"
-            onClick={() => setAccommodationCollapsed((c) => !c)}
-            style={styles.sectionHeader}
+        {!previewMode && (
+          <div
+            style={
+              hasAccommodationsBody ? styles.section : styles.sectionNoBorder
+            }
           >
-            <span style={styles.sectionTitle}>Accommodations</span>
-            <span style={styles.collapseIcon}>
-              {accommodationCollapsed ? '+' : '−'}
-            </span>
-          </button>
-          {hasAccommodationsBody && (
-            <>
-              {accommodations.length === 0 && !addingAccommodation && (
-                <p style={styles.noAccommodations}>No accommodations yet.</p>
-              )}
-              {accommodations.map((acc, index) =>
-                editingAccommodationId === acc.$id ? (
-                  <AccommodationEditForm
-                    key={acc.$id}
-                    initialData={{
-                      name: acc.name,
-                      url: acc.url,
-                      cost: acc.cost,
-                      description: acc.description,
-                    }}
-                    onSave={(data) => handleEditAccommodation(acc.$id, data)}
-                    onCancel={() => {
-                      setEditingAccommodationId(null)
-                      setAccommodationError(null)
-                      setDeletingAccommodationError(null)
-                    }}
-                    onDelete={() => handleDeleteAccommodation(acc.$id)}
-                    deleting={deletingAccommodationId === acc.$id}
-                    deleteError={deletingAccommodationError}
-                    error={accommodationError}
-                  />
-                ) : (
-                  <div key={acc.$id}>
-                    <div style={styles.accommodationItem}>
-                      <div style={styles.accommodationItemContent}>
-                        <div style={styles.grid}>
-                          <DetailField
-                            label="Name"
-                            value={
-                              acc.url && isValidUrl(acc.url)
-                                ? undefined
-                                : acc.name || '—'
-                            }
-                          >
-                            {acc.url && isValidUrl(acc.url) && (
-                              <a
-                                href={sanitizeUrl(acc.url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={styles.accommodationLink}
-                              >
-                                {acc.name || '—'}
-                              </a>
-                            )}
-                          </DetailField>
-                          <DetailField label="Cost" value={acc.cost} />
-                          <div style={{ gridColumn: '1/-1', maxWidth: '75%' }}>
+            <button
+              type="button"
+              onClick={() => setAccommodationCollapsed((c) => !c)}
+              style={styles.sectionHeader}
+            >
+              <span style={styles.sectionTitle}>Accommodations</span>
+              <span style={styles.collapseIcon}>
+                {accommodationCollapsed ? '+' : '−'}
+              </span>
+            </button>
+            {hasAccommodationsBody && (
+              <>
+                {accommodations.length === 0 && !addingAccommodation && (
+                  <p style={styles.noAccommodations}>No accommodations yet.</p>
+                )}
+                {accommodations.map((acc, index) =>
+                  editingAccommodationId === acc.$id ? (
+                    <AccommodationEditForm
+                      key={acc.$id}
+                      initialData={{
+                        name: acc.name,
+                        url: acc.url,
+                        cost: acc.cost,
+                        description: acc.description,
+                      }}
+                      onSave={(data) => handleEditAccommodation(acc.$id, data)}
+                      onCancel={() => {
+                        setEditingAccommodationId(null)
+                        setAccommodationError(null)
+                        setDeletingAccommodationError(null)
+                      }}
+                      onDelete={() => handleDeleteAccommodation(acc.$id)}
+                      deleting={deletingAccommodationId === acc.$id}
+                      deleteError={deletingAccommodationError}
+                      error={accommodationError}
+                    />
+                  ) : (
+                    <div key={acc.$id}>
+                      <div style={styles.accommodationItem}>
+                        <div style={styles.accommodationItemContent}>
+                          <div style={styles.grid}>
                             <DetailField
-                              label="Description"
-                              value={acc.description}
-                            />
+                              label="Name"
+                              value={
+                                acc.url && isValidUrl(acc.url)
+                                  ? undefined
+                                  : acc.name || '—'
+                              }
+                            >
+                              {acc.url && isValidUrl(acc.url) && (
+                                <a
+                                  href={sanitizeUrl(acc.url)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={styles.accommodationLink}
+                                >
+                                  {acc.name || '—'}
+                                </a>
+                              )}
+                            </DetailField>
+                            <DetailField label="Cost" value={acc.cost} />
+                            <div
+                              style={{ gridColumn: '1/-1', maxWidth: '75%' }}
+                            >
+                              <DetailField
+                                label="Description"
+                                value={acc.description}
+                              />
+                            </div>
                           </div>
                         </div>
+                        {canAct && (
+                          <div style={styles.accommodationItemActions}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingAccommodationId(acc.$id)
+                                setAccommodationError(null)
+                              }}
+                              style={styles.accommodationEditButton}
+                              aria-label={`Edit accommodation ${acc.name}`}
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      {canAct && (
-                        <div style={styles.accommodationItemActions}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingAccommodationId(acc.$id)
-                              setAccommodationError(null)
-                            }}
-                            style={styles.accommodationEditButton}
-                            aria-label={`Edit accommodation ${acc.name}`}
-                          >
-                            Edit
-                          </button>
-                        </div>
+                      {(isDraft || index < accommodations.length - 1) && (
+                        <hr style={styles.accommodationDivider} />
                       )}
                     </div>
-                    {(isDraft || index < accommodations.length - 1) && (
-                      <hr style={styles.accommodationDivider} />
-                    )}
-                  </div>
-                )
-              )}
-              {addingAccommodation && (
-                <AccommodationEditForm
-                  onSave={handleAddAccommodation}
-                  onCancel={() => {
-                    setAddingAccommodation(false)
-                    setAccommodationError(null)
-                  }}
-                  error={accommodationError}
-                />
-              )}
-              {canAct && !addingAccommodation && accommodations.length < 5 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAddingAccommodation(true)
-                    setAccommodationError(null)
-                  }}
-                  style={styles.addAccommodationButton}
-                >
-                  + Add Accommodation
-                </button>
-              )}
-            </>
-          )}
-        </div>
+                  )
+                )}
+                {addingAccommodation && (
+                  <AccommodationEditForm
+                    onSave={handleAddAccommodation}
+                    onCancel={() => {
+                      setAddingAccommodation(false)
+                      setAccommodationError(null)
+                    }}
+                    error={accommodationError}
+                  />
+                )}
+                {canAct &&
+                  !addingAccommodation &&
+                  accommodations.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddingAccommodation(true)
+                        setAccommodationError(null)
+                      }}
+                      style={styles.addAccommodationButton}
+                    >
+                      + Add Accommodation
+                    </button>
+                  )}
+              </>
+            )}
+          </div>
+        )}
 
-        {hasActions && (
+        {!previewMode && hasActions && (
           <div style={styles.actions}>
             {canAct && (
               <>
@@ -885,6 +902,10 @@ const styles = {
     border: borders.card,
     borderRadius: '14px',
     padding: '24px',
+  },
+  previewCard: {
+    background: colors.bgCard,
+    padding: '0',
   },
   header: {
     marginBottom: '0',

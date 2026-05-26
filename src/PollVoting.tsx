@@ -165,7 +165,7 @@ function ProposalRow({
     const spaceRight = window.innerWidth - x
     const spaceBelow = window.innerHeight - y
     setPopupPosition({
-      x: spaceRight < 315 ? x - 315 : x + 10,
+      x: spaceRight < 630 ? x - 630 : x + 10,
       y: spaceBelow < 375 ? y - 10 : y + 20,
     })
     setShowPopup(true)
@@ -397,8 +397,8 @@ const popupStyles = {
     border: borders.card,
     borderRadius: '14px',
     padding: '20px 24px',
-    maxWidth: '400px',
-    width: '90%',
+    maxWidth: '800px',
+    width: '800px',
     maxHeight: '70vh',
     overflow: 'auto',
     boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
