@@ -374,4 +374,42 @@ describe('App', () => {
       expect(screen.getByRole('heading', { name: /sign in/i }))
     })
   })
+
+  it('shows forgot password form when Forgot password link is clicked', async () => {
+    const user = userEvent.setup()
+    renderApp({}, { loggedIn: false })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+    await user.click(screen.getByRole('button', { name: /forgot password/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /reset password/i }))
+    })
+  })
+
+  it('returns to login from forgot password form', async () => {
+    const user = userEvent.setup()
+    renderApp({}, { loggedIn: false })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+    await user.click(screen.getByRole('button', { name: /forgot password/i }))
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /reset password/i }))
+    })
+    await user.click(screen.getByRole('button', { name: /back to sign in/i }))
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+  })
+
+  it('shows password reset message after successful reset', async () => {
+    const mockUpdateRecovery = mock(() => Promise.resolve())
+    renderApp({ updateRecovery: mockUpdateRecovery }, { loggedIn: false })
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+  })
 })

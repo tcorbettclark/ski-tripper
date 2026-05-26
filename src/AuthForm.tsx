@@ -10,6 +10,7 @@ interface AuthFormProps {
   onSuccess: (session: Models.Session, user: Models.User) => void
   onNeedsVerification: (email: string) => void
   onSwitchMode: () => void
+  onForgotPassword?: () => void
   accountCreate?: (
     id: string,
     email: string,
@@ -32,6 +33,7 @@ export default function AuthForm({
   onSuccess,
   onNeedsVerification,
   onSwitchMode,
+  onForgotPassword,
   accountCreate = (id, email, password, name) =>
     _account.create(id, email, password, name),
   createEmailPasswordSession = (email, password) =>
@@ -129,6 +131,17 @@ export default function AuthForm({
             placeholder="••••••••"
             variant="auth"
           />
+          {!isSignup && onForgotPassword && (
+            <div style={{ textAlign: 'right', marginTop: '-12px' }}>
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                style={{ ...authStyles.switchLink, fontSize: '12px' }}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
           {error && <p style={formStyles.error}>{error}</p>}
           <button
             type="submit"

@@ -142,6 +142,36 @@ describe('AuthForm', () => {
       expect(handleSwitch).toHaveBeenCalledTimes(1)
     })
 
+    it('calls onForgotPassword when the Forgot password link is clicked', async () => {
+      const user = userEvent.setup()
+      const handleForgotPassword = mock(() => {})
+      renderAuthForm({
+        mode: 'login',
+        onForgotPassword: handleForgotPassword,
+      })
+
+      await user.click(screen.getByRole('button', { name: /forgot password/i }))
+      expect(handleForgotPassword).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not show Forgot password link when onForgotPassword is not provided', () => {
+      renderAuthForm({ mode: 'login' })
+      expect(
+        screen.queryByRole('button', { name: /forgot password/i })
+      ).toBeNull()
+    })
+
+    it('does not show Forgot password link in signup mode', () => {
+      const handleForgotPassword = mock(() => {})
+      renderAuthForm({
+        mode: 'signup',
+        onForgotPassword: handleForgotPassword,
+      })
+      expect(
+        screen.queryByRole('button', { name: /forgot password/i })
+      ).toBeNull()
+    })
+
     it('disables the submit button while signing in', async () => {
       let resolveSession: ((value: unknown) => void) | undefined
       const user = userEvent.setup()

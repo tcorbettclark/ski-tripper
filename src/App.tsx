@@ -15,6 +15,7 @@ import {
 } from './backend'
 import EmailVerifyScreen from './EmailVerifyScreen'
 import ErrorBoundary from './ErrorBoundary'
+import ForgotPasswordForm from './ForgotPasswordForm'
 import Header from './Header'
 import Overview from './Overview'
 import Poll from './Poll'
@@ -22,6 +23,7 @@ import PreferencesForm from './PreferencesForm'
 import PreferencesModal from './PreferencesModal'
 import Proposals from './Proposals'
 import type { StatusFilter } from './ProposalsGrid'
+import ResetPasswordForm from './ResetPasswordForm'
 import Resorts from './Resorts'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
@@ -65,6 +67,11 @@ interface AppProps {
     data: Partial<Trip>,
     participantUserId: string
   ) => Promise<Trip>
+  updateRecovery?: (
+    userId: string,
+    secret: string,
+    password: string
+  ) => Promise<unknown>
 }
 
 const defaultAccountGet = () => _account.get()
@@ -79,6 +86,11 @@ const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
 const defaultListResorts = _listResorts
 const defaultUpdateTrip = _updateTrip
+const defaultUpdateRecovery = (
+  userId: string,
+  secret: string,
+  password: string
+) => _account.updateRecovery(userId, secret, password)
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -95,11 +107,19 @@ export default function App({
   createPreferences = defaultCreatePreferences,
   listResorts = defaultListResorts,
   updateTrip = defaultUpdateTrip,
+  updateRecovery = defaultUpdateRecovery,
 }: AppProps) {
   const { user, checking, sessionExpiredMessage, login, logout, onAuthError } =
     useAuth({ hasSession, accountGet, deleteSession })
-  const [page, setPage] = useState<'login' | 'signup'>('login')
+  const [page, setPage] = useState<'login' | 'signup' | 'forgotPassword'>(
+    'login'
+  )
   const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
+  const [resetPassword, setResetPassword] = useState<{
+    userId: string
+    secret: string
+  } | null>(null)
+  const [passwordResetSuccess, setPasswordResetSuccess] = useState(false)
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
   // Lifted from ProposalsGrid so that NextActions can navigate directly to a specific proposals sub-tab.
@@ -124,6 +144,12 @@ export default function App({
     const verifyUserId = params.get('userId')
     const verifySecret = params.get('secret')
     if (!verifyUserId || !verifySecret) return
+    if (window.location.pathname === '/reset-password') {
+      setResetPassword({ userId: verifyUserId, secret: verifySecret })
+      setPasswordResetSuccess(false)
+      window.history.replaceState({}, '', window.location.pathname)
+      return
+    }
     updateEmailVerification(verifyUserId, verifySecret)
       .then(() => {
         window.history.replaceState({}, '', window.location.pathname)
@@ -258,13 +284,35 @@ export default function App({
         />
       )
     }
+    if (resetPassword) {
+      return (
+        <ResetPasswordForm
+          userId={resetPassword.userId}
+          secret={resetPassword.secret}
+          onSuccess={() => {
+            setResetPassword(null)
+            setPasswordResetSuccess(true)
+            setPage('login')
+          }}
+          updateRecovery={updateRecovery}
+        />
+      )
+    }
+    if (page === 'forgotPassword') {
+      return <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
+    }
     return (
       <AuthForm
-        mode={page}
+        mode={page as 'login' | 'signup'}
         onSuccess={login}
         onNeedsVerification={(email) => setVerifyEmail(email)}
         onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
-        sessionExpiredMessage={sessionExpiredMessage}
+        onForgotPassword={() => setPage('forgotPassword')}
+        sessionExpiredMessage={
+          passwordResetSuccess
+            ? 'Password reset successful. Please sign in with your new password.'
+            : sessionExpiredMessage
+        }
       />
     )
   }
