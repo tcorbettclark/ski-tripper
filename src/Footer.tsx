@@ -1,4 +1,4 @@
-import { Bug } from 'lucide-react'
+import { AlertTriangle, Bug } from 'lucide-react'
 import packageJson from '../package.json' with { type: 'json' }
 import { colors, fonts } from './theme'
 
@@ -10,6 +10,7 @@ const AUTHOR_URL = 'https://www.corbettclark.com'
 export default function Footer() {
   return (
     <footer style={footerStyles.bar}>
+      <span style={footerStyles.separator}>·</span>
       <span style={footerStyles.text}>
         Built by{' '}
         <a
@@ -53,6 +54,11 @@ export default function Footer() {
       </a>
       <span style={footerStyles.separator}>·</span>
       <span style={footerStyles.text}>v{VERSION}</span>
+      <span style={footerStyles.separator}>·</span>
+      <span style={footerStyles.warning}>
+        <AlertTriangle size={14} />
+        Pre-release software — not yet ready for use!
+      </span>
     </footer>
   )
 }
@@ -86,6 +92,18 @@ const footerStyles = {
     textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
+  },
+  warning: {
+    background: colors.error,
+    color: colors.bgPrimary,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    fontWeight: '600',
+    padding: '4px 10px',
+    borderRadius: '4px',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
   },
   separator: {
     color: colors.textSecondary,
