@@ -57,11 +57,24 @@ export default function AuthForm({
         await accountCreate(generateId(), email, password, name)
         const session = await createEmailPasswordSession(email, password)
         const user = await accountGet()
+        try {
+          if (navigator.credentials?.store) {
+            const credential = new PasswordCredential({
+              id: email,
+              name,
+              password,
+            })
+            await navigator.credentials.store(credential)
+          }
+        } catch {
+          // Credential Management API not supported or blocked
+        }
         if (!user.emailVerification) {
           const baseUrl = window.location.origin
           await createEmailVerification(`${baseUrl}/verify`)
         }
         onSuccess(session, user)
+        window.location.reload()
       } else {
         const session = await createEmailPasswordSession(email, password)
         const user = await accountGet()
@@ -111,7 +124,7 @@ export default function AuthForm({
             label="Email"
             name="email"
             type="email"
-            autoComplete="email"
+            autoComplete={isSignup ? 'email' : 'username'}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -122,7 +135,7 @@ export default function AuthForm({
             label="Password"
             name="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete={isSignup ? 'new-password' : 'current-password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required={isSignup}
