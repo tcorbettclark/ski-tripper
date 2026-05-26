@@ -1,12 +1,16 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ForgotPasswordForm from './ForgotPasswordForm'
 
 const noop = () => {}
 
 function renderForgotPasswordForm(props = {}) {
-  return render(<ForgotPasswordForm onBackToLogin={noop} {...props} />)
+  let result: ReturnType<typeof render>
+  act(() => {
+    result = render(<ForgotPasswordForm onBackToLogin={noop} {...props} />)
+  })
+  return result!
 }
 
 describe('ForgotPasswordForm', () => {
@@ -115,6 +119,8 @@ describe('ForgotPasswordForm', () => {
         }) as HTMLButtonElement
       ).disabled
     ).toBe(true)
-    resolveRecovery?.(undefined)
+    await act(async () => {
+      resolveRecovery?.(undefined)
+    })
   })
 })
