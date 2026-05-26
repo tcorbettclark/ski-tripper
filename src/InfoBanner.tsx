@@ -6,7 +6,7 @@ const defaultSlides = [
   'Signup with your email, set your skiing preferences, and create or join a trip via a simple three-word code.',
   'Browse hundreds of resorts from an AI-enriched catalogue, packed with detail.',
   'Create proposals with dates and descriptions, discuss with comments, then submit for voting.',
-  'The trip coordinator runs multiple rounds of voting to arrive at a consensus.',
+  'The Trip Coordinator runs multiple rounds of voting to arrive at a consensus.',
   'Have your say by allocating your "chips" amongst the submitted proposals.',
   'Guided "what next?" prompts stop you getting lost.',
 ]
@@ -17,7 +17,7 @@ interface InfoBannerProps {
 }
 
 export default function InfoBanner({
-  intervalMs = 3000,
+  intervalMs = 4000,
   slides = defaultSlides,
 }: InfoBannerProps) {
   const [active, setActive] = useState(0)
