@@ -95,7 +95,7 @@ describe('Resorts', () => {
 
   it('renders heading and filters', () => {
     render(<Resorts {...defaultProps()} />)
-    expect(screen.getByText('Resorts')).toBeTruthy()
+    expect(screen.getByText('Resorts Catalog')).toBeTruthy()
     expect(screen.getByPlaceholderText('Search resorts...')).toBeTruthy()
     expect(screen.getByDisplayValue('All Countries')).toBeTruthy()
     expect(screen.getByDisplayValue('All Regions')).toBeTruthy()

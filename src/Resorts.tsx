@@ -166,7 +166,7 @@ export default function Resorts({
     return (
       <div style={resortsStyles.container}>
         <div style={resortsStyles.toolbar}>
-          <h2 style={resortsStyles.heading}>Resorts</h2>
+          <h2 style={resortsStyles.heading}>Resorts Catalog</h2>
         </div>
         <p style={resortsStyles.loading}>Loading resorts...</p>
       </div>
@@ -210,7 +210,7 @@ export default function Resorts({
   return (
     <div style={resortsStyles.container}>
       <div style={resortsStyles.toolbar}>
-        <h2 style={resortsStyles.heading}>Resorts</h2>
+        <h2 style={resortsStyles.heading}>Resorts Catalog</h2>
       </div>
 
       <div style={resortsStyles.controlsRow}>
