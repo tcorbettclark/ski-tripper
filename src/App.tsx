@@ -15,6 +15,7 @@ import {
 } from './backend'
 import EmailVerifyScreen from './EmailVerifyScreen'
 import ErrorBoundary from './ErrorBoundary'
+import Footer from './Footer'
 import ForgotPasswordForm from './ForgotPasswordForm'
 import Header from './Header'
 import Overview from './Overview'
@@ -282,33 +283,44 @@ export default function App({
   if (!user) {
     if (resetPassword) {
       return (
-        <ResetPasswordForm
-          userId={resetPassword.userId}
-          secret={resetPassword.secret}
-          onSuccess={() => {
-            setResetPassword(null)
-            setPasswordResetSuccess(true)
-            setPage('login')
-          }}
-          updateRecovery={updateRecovery}
-        />
+        <>
+          <ResetPasswordForm
+            userId={resetPassword.userId}
+            secret={resetPassword.secret}
+            onSuccess={() => {
+              setResetPassword(null)
+              setPasswordResetSuccess(true)
+              setPage('login')
+            }}
+            updateRecovery={updateRecovery}
+          />
+          <Footer />
+        </>
       )
     }
     if (page === 'forgotPassword') {
-      return <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
+      return (
+        <>
+          <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
+          <Footer />
+        </>
+      )
     }
     return (
-      <AuthForm
-        mode={page as 'login' | 'signup'}
-        onSuccess={login}
-        onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
-        onForgotPassword={() => setPage('forgotPassword')}
-        sessionExpiredMessage={
-          passwordResetSuccess
-            ? 'Password reset successful. Please sign in with your new password.'
-            : sessionExpiredMessage
-        }
-      />
+      <>
+        <AuthForm
+          mode={page as 'login' | 'signup'}
+          onSuccess={login}
+          onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
+          onForgotPassword={() => setPage('forgotPassword')}
+          sessionExpiredMessage={
+            passwordResetSuccess
+              ? 'Password reset successful. Please sign in with your new password.'
+              : sessionExpiredMessage
+          }
+        />
+        <Footer />
+      </>
     )
   }
 
@@ -489,6 +501,7 @@ export default function App({
         onSaved={(prefs) => setPreferences(prefs)}
         createPreferences={createPreferences}
       />
+      <Footer />
     </div>
   )
 }

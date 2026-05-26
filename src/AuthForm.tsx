@@ -76,7 +76,18 @@ export default function AuthForm({
 
   return (
     <div style={{ ...authStyles.container, flexDirection: 'column' }}>
-      <p style={authStyles.eyebrow}>⛷ Ski Tripper</p>
+      <p
+        style={{
+          ...authStyles.brandName,
+          fontSize: '24px',
+          marginBottom: '14px',
+          textAlign: 'center',
+          width: '100%',
+          maxWidth: '420px',
+        }}
+      >
+        ⛷ Ski Tripper
+      </p>
       <div style={authStyles.card}>
         {sessionExpiredMessage && (
           <p style={formStyles.error}>{sessionExpiredMessage}</p>

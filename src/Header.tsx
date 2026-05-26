@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { borders, colors, fonts, formStyles } from './theme'
+import { authStyles, borders, colors, fonts, formStyles } from './theme'
 import { formatCountdown } from './utils'
 
 interface HeaderProps {
@@ -41,7 +41,9 @@ export default function Header({
   if (view === 'tripList') {
     return (
       <header style={headerStyles.bar}>
-        <span style={headerStyles.wordmark}>⛷ Ski Tripper</span>
+        <span style={{ ...authStyles.brandName, fontSize: '22px' }}>
+          ⛷ Ski Tripper
+        </span>
         <div style={headerStyles.userGroup}>
           <span style={headerStyles.name}>{userName}</span>
           {onOpenPreferences && (
@@ -160,13 +162,6 @@ const headerStyles = {
     top: 0,
     zIndex: 100,
     gap: '12px',
-  },
-  wordmark: {
-    fontFamily: fonts.display,
-    fontSize: '22px',
-    fontWeight: '600',
-    color: colors.accent,
-    letterSpacing: '0.02em',
   },
   backButton: {
     background: 'none',

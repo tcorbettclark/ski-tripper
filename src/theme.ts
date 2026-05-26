@@ -84,17 +84,13 @@ export const authStyles = {
     border: borders.card,
     boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,189,232,0.04)',
   },
-  eyebrow: {
+  brandName: {
     fontFamily: fonts.body,
-    fontSize: '22px',
+    fontSize: '12px',
     fontWeight: '500',
     letterSpacing: '0.45em',
     color: colors.accent,
-    textTransform: 'uppercase',
-    marginBottom: '14px',
-    textAlign: 'center' as const,
-    width: '100%',
-    maxWidth: '420px',
+    textTransform: 'uppercase' as const,
   },
   title: {
     fontFamily: fonts.display,
