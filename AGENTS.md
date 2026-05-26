@@ -2,9 +2,15 @@
 
 ## General
 
-Agree simple "done criteria" up-front.
+Transform tasks into verifiable success criteria.
 
-Long-term quality over speed. Small steps compound into big and sustainable progress.
+Use TDD unless trivial.
+
+Before making changes:
+- State assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
 Keep changes small and focussed:
 - One logical change per commit
@@ -12,7 +18,7 @@ Keep changes small and focussed:
 - Prefer multiple small commits over one large commit
 - Run ALL feedback loops after each change, not at the end
 
-Before committing, check "done criteria" satisfiedand run ALL feedback loops:
+## Feedback Loops
 
 | Task                   | Command                               |
 | ---------------------- | ------------------------------------- |
@@ -24,28 +30,26 @@ Without a file path, these commands run on the entire project.
 
 If any fail, fix issues first before committing.
 
-## Package Manager
-
-Use **Bun**: `bun install`, `bun run dev`, `bun run build`, `bun run test`
-
-## Code Search
-
-Use the semble MCP to search code.
-
 ## Code Style
 
 - TypeScript with strict mode
-- Error handling: React ErrorBoundary only catches synchronous render-phase errors, so async event handlers **must** catch errors and show an inline actionable message. Use `try/catch/finally` — reset loading states in `finally`, set error state in `catch`. Display errors using `formStyles.error` from `src/theme.ts`. Never swallow errors silently (`.catch(() => {})`).
 - Styles as `const [name]Styles` objects at bottom of file
 - Shared styles in `src/theme.ts`
-- Use camelCase for names (NOT PascalCase)
+- Use PascalCase for React components and camelCase for all other names.
 
 ## Components
 
 - One component per file, filename matches component name, default export only
-- Functional components with hooks only
 - No Context API, Redux, Zustand — data flows via callback props (`onCreated`, etc.)
-- Async event handlers must catch errors and display inline messages — ErrorBoundary cannot catch async errors
+- Do not add server-side rendering or API routes
+
+## Error Handling 
+
+- Throw errors instead of `console.error`
+- React ErrorBoundary only catches synchronous render-phase errors, so async event handlers **must** catch errors and show an inline actionable message.
+- Use `try/catch/finally` — reset loading states in `finally`, set error state in `catch`.
+- Display errors using `formStyles.error` from `src/theme.ts`.
+- Never swallow errors silently (`.catch(() => {})`).
 
 ## Appwrite
 
@@ -60,12 +64,4 @@ Use the semble MCP to search code.
 - `import { describe, it, expect, mock } from 'bun:test'`
 - Use built-in Bun test matchers (`toBeNull`, `toHaveAttribute`, etc.)
 - happy-dom globals in `src/test-setup.ts`
-- `render()` is async and must be awaited in asynchronous tests. For components with async `useEffect` that sets state, wrap `render()` in `act()` to flush React's update queue before `waitFor`. Without this, `waitFor` polls repeatedly waiting for state to settle (slow tests).
-
-## DO NOT
-
-- Use CSS files/modules
-- Use external state management (Redux, Zustand, etc.)
-- Add server-side rendering or API routes
-- Import Appwrite client directly in components
-- Use `console.error` — throw errors instead
+- Wrap render() in act() for components with async effects.
