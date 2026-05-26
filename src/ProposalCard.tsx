@@ -911,7 +911,7 @@ const styles = {
     marginBottom: '0',
     paddingBottom: '20px',
     display: 'flex',
-    alignItems: 'baseline',
+    alignItems: 'flex-start',
     gap: '12px',
   },
   headerLeft: {
