@@ -4,10 +4,17 @@ import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import AuthForm from './AuthForm'
 
-const defaultUser: Models.User = {
+const verifiedUser: Models.User = {
   $id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
+  emailVerification: true,
+} as Models.User
+const unverifiedUser: Models.User = {
+  $id: 'user-2',
+  name: 'Unverified User',
+  email: 'unverified@example.com',
+  emailVerification: false,
 } as Models.User
 const defaultSession: Models.Session = {
   $id: 'session-1',
@@ -21,9 +28,11 @@ function renderAuthForm(props = {}) {
     <AuthForm
       mode="login"
       onSuccess={noop}
+      onNeedsVerification={noop}
       onSwitchMode={noop}
       createEmailPasswordSession={() => Promise.resolve({} as Models.Session)}
-      accountGet={() => Promise.resolve(defaultUser)}
+      deleteSession={() => Promise.resolve()}
+      accountGet={() => Promise.resolve(verifiedUser)}
       {...props}
     />
   )
@@ -67,7 +76,37 @@ describe('AuthForm', () => {
           'alice@example.com',
           'secret123'
         )
-        expect(handleSuccess).toHaveBeenCalledWith(defaultSession, defaultUser)
+        expect(handleSuccess).toHaveBeenCalledWith(defaultSession, verifiedUser)
+      })
+    })
+
+    it('calls onNeedsVerification when user is unverified on login', async () => {
+      const user = userEvent.setup()
+      const mockDeleteSession = mock(() => Promise.resolve())
+      const handleNeedsVerification = mock(() => {})
+      const { container } = renderAuthForm({
+        mode: 'login',
+        createEmailPasswordSession: () => Promise.resolve(defaultSession),
+        accountGet: () => Promise.resolve(unverifiedUser),
+        deleteSession: mockDeleteSession,
+        onNeedsVerification: handleNeedsVerification,
+      })
+
+      await user.type(
+        container.querySelector('[type="email"]')!,
+        'unverified@example.com'
+      )
+      await user.type(
+        container.querySelector('[type="password"]')!,
+        'secret123'
+      )
+      await user.click(screen.getByRole('button', { name: /^sign in$/i }))
+
+      await waitFor(() => {
+        expect(mockDeleteSession).toHaveBeenCalled()
+        expect(handleNeedsVerification).toHaveBeenCalledWith(
+          'unverified@example.com'
+        )
       })
     })
 
@@ -132,7 +171,6 @@ describe('AuthForm', () => {
         ).disabled
       ).toBe(true)
 
-      // Settle the pending promise so cleanup doesn't trigger act() warnings
       await act(async () => {
         resolveSession?.(undefined)
       })
@@ -152,16 +190,21 @@ describe('AuthForm', () => {
       expect(container.querySelector('[type="password"]'))
     })
 
-    it('calls accountCreate, createEmailPasswordSession, and onSuccess on submit', async () => {
+    it('calls accountCreate, createEmailVerification, deleteSession, and onNeedsVerification when unverified', async () => {
       const user = userEvent.setup()
-      const mockCreate = mock(() => Promise.resolve())
+      const mockCreate = mock(() => Promise.resolve(unverifiedUser))
       const mockSession = mock(() => Promise.resolve(defaultSession))
-      const handleSuccess = mock(() => {})
+      const mockCreateVerification = mock(() => Promise.resolve())
+      const mockDeleteSession = mock(() => Promise.resolve())
+      const handleNeedsVerification = mock(() => {})
       const { container } = renderAuthForm({
         mode: 'signup',
         accountCreate: mockCreate,
         createEmailPasswordSession: mockSession,
-        onSuccess: handleSuccess,
+        createEmailVerification: mockCreateVerification,
+        deleteSession: mockDeleteSession,
+        onNeedsVerification: handleNeedsVerification,
+        accountGet: () => Promise.resolve(unverifiedUser),
         generateId: () => 'generated-id',
       })
 
@@ -187,7 +230,50 @@ describe('AuthForm', () => {
           'alice@example.com',
           'password123'
         )
-        expect(handleSuccess).toHaveBeenCalledWith(defaultSession, defaultUser)
+        expect(mockCreateVerification).toHaveBeenCalled()
+        expect(mockDeleteSession).toHaveBeenCalled()
+        expect(handleNeedsVerification).toHaveBeenCalledWith(
+          'alice@example.com'
+        )
+      })
+    })
+
+    it('calls onSuccess when user is already verified after signup', async () => {
+      const user = userEvent.setup()
+      const mockCreate = mock(() => Promise.resolve(verifiedUser))
+      const mockSession = mock(() => Promise.resolve(defaultSession))
+      const mockCreateVerification = mock(() => Promise.resolve())
+      const mockDeleteSession = mock(() => Promise.resolve())
+      const handleSuccess = mock(() => {})
+      const handleNeedsVerification = mock(() => {})
+      const { container } = renderAuthForm({
+        mode: 'signup',
+        accountCreate: mockCreate,
+        createEmailPasswordSession: mockSession,
+        createEmailVerification: mockCreateVerification,
+        deleteSession: mockDeleteSession,
+        onSuccess: handleSuccess,
+        onNeedsVerification: handleNeedsVerification,
+        accountGet: () => Promise.resolve(verifiedUser),
+        generateId: () => 'generated-id',
+      })
+
+      await user.type(container.querySelector('[type="text"]')!, 'Alice')
+      await user.type(
+        container.querySelector('[type="email"]')!,
+        'alice@example.com'
+      )
+      await user.type(
+        container.querySelector('[type="password"]')!,
+        'password123'
+      )
+      await user.click(screen.getByRole('button', { name: /sign up$/i }))
+
+      await waitFor(() => {
+        expect(mockCreateVerification).not.toHaveBeenCalled()
+        expect(mockDeleteSession).not.toHaveBeenCalled()
+        expect(handleNeedsVerification).not.toHaveBeenCalled()
+        expect(handleSuccess).toHaveBeenCalledWith(defaultSession, verifiedUser)
       })
     })
 

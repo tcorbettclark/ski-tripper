@@ -10,6 +10,7 @@ const defaultUser: Models.User = {
   $id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
+  emailVerification: true,
 } as Models.User
 
 const defaultPreferences: Preferences = {

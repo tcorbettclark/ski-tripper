@@ -13,6 +13,7 @@ import {
   listTrips as _listTrips,
   updateTrip as _updateTrip,
 } from './backend'
+import EmailVerifyScreen from './EmailVerifyScreen'
 import ErrorBoundary from './ErrorBoundary'
 import Header from './Header'
 import Overview from './Overview'
@@ -36,6 +37,7 @@ interface AppProps {
   hasSession?: () => boolean
   accountGet?: () => Promise<Models.User>
   deleteSession?: () => Promise<unknown>
+  updateEmailVerification?: (userId: string, secret: string) => Promise<unknown>
   listTrips?: (userId: string) => Promise<ListTripsResult>
   listParticipatedTrips?: (userId: string) => Promise<{
     trips: Trip[]
@@ -67,6 +69,8 @@ interface AppProps {
 
 const defaultAccountGet = () => _account.get()
 const defaultDeleteSession = () => _account.deleteSession('current')
+const defaultUpdateEmailVerification = (userId: string, secret: string) =>
+  _account.updateVerification(userId, secret)
 const defaultListTrips = _listTrips
 const defaultListParticipatedTrips = _listParticipatedTrips
 const defaultListPolls = _listPolls
@@ -82,6 +86,7 @@ export default function App({
   hasSession = _hasSession,
   accountGet = defaultAccountGet,
   deleteSession = defaultDeleteSession,
+  updateEmailVerification = defaultUpdateEmailVerification,
   listTrips = defaultListTrips,
   listParticipatedTrips = defaultListParticipatedTrips,
   listPolls = defaultListPolls,
@@ -94,6 +99,7 @@ export default function App({
   const { user, checking, sessionExpiredMessage, login, logout, onAuthError } =
     useAuth({ hasSession, accountGet, deleteSession })
   const [page, setPage] = useState<'login' | 'signup'>('login')
+  const [verifyEmail, setVerifyEmail] = useState<string | null>(null)
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
   // Lifted from ProposalsGrid so that NextActions can navigate directly to a specific proposals sub-tab.
@@ -112,6 +118,18 @@ export default function App({
   )
   const [resorts, setResorts] = useState<Resort[]>([])
   const autoSelectedRef = useRef(false)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const verifyUserId = params.get('userId')
+    const verifySecret = params.get('secret')
+    if (!verifyUserId || !verifySecret) return
+    updateEmailVerification(verifyUserId, verifySecret)
+      .then(() => {
+        window.history.replaceState({}, '', window.location.pathname)
+      })
+      .catch(() => {})
+  }, [updateEmailVerification])
 
   const loadTrips = useCallback(
     (userId: string) => {
@@ -229,10 +247,22 @@ export default function App({
   if (checking) return null
 
   if (!user) {
+    if (verifyEmail) {
+      return (
+        <EmailVerifyScreen
+          email={verifyEmail}
+          onBackToLogin={() => {
+            setVerifyEmail(null)
+            setPage('login')
+          }}
+        />
+      )
+    }
     return (
       <AuthForm
         mode={page}
         onSuccess={login}
+        onNeedsVerification={(email) => setVerifyEmail(email)}
         onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
         sessionExpiredMessage={sessionExpiredMessage}
       />

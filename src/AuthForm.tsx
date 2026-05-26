@@ -7,6 +7,7 @@ import { authStyles, formStyles } from './theme'
 interface AuthFormProps {
   mode?: 'login' | 'signup'
   onSuccess: (session: Models.Session, user: Models.User) => void
+  onNeedsVerification: (email: string) => void
   onSwitchMode: () => void
   accountCreate?: (
     id: string,
@@ -18,6 +19,8 @@ interface AuthFormProps {
     email: string,
     password: string
   ) => Promise<Models.Session>
+  createEmailVerification?: (url: string) => Promise<unknown>
+  deleteSession?: () => Promise<unknown>
   accountGet?: () => Promise<Models.User>
   generateId?: () => string
   sessionExpiredMessage?: string | null
@@ -26,11 +29,14 @@ interface AuthFormProps {
 export default function AuthForm({
   mode = 'login',
   onSuccess,
+  onNeedsVerification,
   onSwitchMode,
   accountCreate = (id, email, password, name) =>
     _account.create(id, email, password, name),
   createEmailPasswordSession = (email, password) =>
     _account.createEmailPasswordSession(email, password),
+  createEmailVerification = (url) => _account.createVerification(url),
+  deleteSession = () => _account.deleteSession('current'),
   accountGet = () => _account.get(),
   generateId = () => ID.unique(),
   sessionExpiredMessage = null,
@@ -50,10 +56,26 @@ export default function AuthForm({
     try {
       if (isSignup) {
         await accountCreate(generateId(), email, password, name)
+        const session = await createEmailPasswordSession(email, password)
+        const user = await accountGet()
+        if (!user.emailVerification) {
+          const baseUrl = window.location.origin
+          await createEmailVerification(`${baseUrl}/verify`)
+          await deleteSession()
+          onNeedsVerification(email)
+          return
+        }
+        onSuccess(session, user)
+      } else {
+        const session = await createEmailPasswordSession(email, password)
+        const user = await accountGet()
+        if (!user.emailVerification) {
+          await deleteSession()
+          onNeedsVerification(email)
+          return
+        }
+        onSuccess(session, user)
       }
-      const session = await createEmailPasswordSession(email, password)
-      const user = await accountGet()
-      onSuccess(session, user)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {
