@@ -1,8 +1,7 @@
 import { describe, expect, it, vi } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { Compass, Snowflake } from 'lucide-react'
-import InfoBanner from './InfoBanner'
+import InfoBanner, { FADE_DURATION_MS } from './InfoBanner'
 
 const testSlides = [
   { icon: Snowflake, text: 'First slide' },
@@ -17,10 +16,14 @@ describe('InfoBanner', () => {
     expect(screen.getByText('First slide'))
   })
 
-  it('renders a dot button for each slide', () => {
-    render(<InfoBanner intervalMs={60000} slides={testSlides} />)
-    const buttons = screen.getAllByRole('button')
-    expect(buttons.length).toBe(testSlides.length)
+  it('renders a dot span for each slide', () => {
+    const { container } = render(
+      <InfoBanner intervalMs={60000} slides={testSlides} />
+    )
+    const dots = container.querySelectorAll<HTMLSpanElement>(
+      '[style*="border-radius: 50%"]'
+    )
+    expect(dots.length).toBe(testSlides.length)
   })
 
   it('renders newlines in slide text', () => {
@@ -32,7 +35,7 @@ describe('InfoBanner', () => {
     expect(paragraph.style.whiteSpace).toBe('pre-line')
   })
 
-  it('advances to the next slide after the interval', () => {
+  it('advances to the next slide after the interval and fade', () => {
     vi.useFakeTimers()
     render(<InfoBanner intervalMs={4000} slides={testSlides} />)
 
@@ -40,6 +43,10 @@ describe('InfoBanner', () => {
 
     act(() => {
       vi.advanceTimersByTime(4000)
+    })
+
+    act(() => {
+      vi.advanceTimersByTime(FADE_DURATION_MS)
     })
 
     expect(screen.getByText('Second slide'))
@@ -55,6 +62,9 @@ describe('InfoBanner', () => {
       act(() => {
         vi.advanceTimersByTime(4000)
       })
+      act(() => {
+        vi.advanceTimersByTime(FADE_DURATION_MS)
+      })
     }
 
     expect(screen.getByText('First slide'))
@@ -62,16 +72,25 @@ describe('InfoBanner', () => {
     vi.useRealTimers()
   })
 
-  it('switches to a specific slide when a dot is clicked', async () => {
-    const user = userEvent.setup()
-    render(<InfoBanner intervalMs={60000} slides={testSlides} />)
+  it('fades out before advancing and fades in after', () => {
+    vi.useFakeTimers()
+    render(<InfoBanner intervalMs={4000} slides={testSlides} />)
 
-    expect(screen.getByText('First slide'))
+    act(() => {
+      vi.advanceTimersByTime(4000)
+    })
 
-    const buttons = screen.getAllByRole('button')
-    await user.click(buttons[2])
+    const wrapper = screen.getByText('First slide').parentElement!
+    expect(wrapper.style.opacity).toBe('0')
 
-    expect(screen.getByText(/With a newline/i))
+    act(() => {
+      vi.advanceTimersByTime(FADE_DURATION_MS)
+    })
+
+    expect(wrapper.style.opacity).toBe('1')
+    expect(screen.getByText('Second slide'))
+
+    vi.useRealTimers()
   })
 
   it('pauses auto-advance on mouse enter and resumes on mouse leave', () => {
@@ -83,7 +102,9 @@ describe('InfoBanner', () => {
 
     expect(screen.getByText('First slide'))
 
-    fireEvent.mouseEnter(section)
+    act(() => {
+      fireEvent.mouseEnter(section)
+    })
 
     act(() => {
       vi.advanceTimersByTime(8000)
@@ -95,6 +116,9 @@ describe('InfoBanner', () => {
 
     act(() => {
       vi.advanceTimersByTime(4000)
+    })
+    act(() => {
+      vi.advanceTimersByTime(FADE_DURATION_MS)
     })
 
     expect(screen.getByText('Second slide'))
@@ -110,10 +134,14 @@ describe('InfoBanner', () => {
 
     expect(container.textContent).not.toContain('\u25AE\u25AE')
 
-    fireEvent.mouseEnter(section)
+    act(() => {
+      fireEvent.mouseEnter(section)
+    })
     expect(container.textContent).toContain('\u25AE\u25AE')
 
-    fireEvent.mouseLeave(section)
+    act(() => {
+      fireEvent.mouseLeave(section)
+    })
     expect(container.textContent).not.toContain('\u25AE\u25AE')
   })
 })

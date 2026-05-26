@@ -8,7 +8,7 @@ import {
   ThumbsUp,
   UserPlus,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { colors, fonts } from './theme'
 
 const slideColors = [
@@ -59,20 +59,33 @@ interface InfoBannerProps {
   slides?: Slide[]
 }
 
+export const FADE_DURATION_MS = 300
+
 export default function InfoBanner({
   intervalMs = 4000,
   slides = defaultSlides,
 }: InfoBannerProps) {
   const [active, setActive] = useState(0)
+  const [visible, setVisible] = useState(true)
   const [paused, setPaused] = useState(false)
+  const advancingRef = useRef(false)
+
+  const advance = useCallback(() => {
+    if (advancingRef.current) return
+    advancingRef.current = true
+    setVisible(false)
+    setTimeout(() => {
+      setActive((i) => (i + 1) % slides.length)
+      setVisible(true)
+      advancingRef.current = false
+    }, FADE_DURATION_MS)
+  }, [slides.length])
 
   useEffect(() => {
     if (paused) return
-    const id = setInterval(() => {
-      setActive((i) => (i + 1) % slides.length)
-    }, intervalMs)
+    const id = setInterval(advance, intervalMs)
     return () => clearInterval(id)
-  }, [intervalMs, paused, slides.length])
+  }, [intervalMs, paused, advance])
 
   return (
     <section
@@ -86,26 +99,32 @@ export default function InfoBanner({
         const color = slideColors[active % slideColors.length]
         return <Icon size={20} color={color} style={bannerStyles.icon} />
       })()}
-      <p
+      <div
         style={{
-          ...bannerStyles.text,
-          color: slideColors[active % slideColors.length],
-          whiteSpace: 'pre-line' as const,
+          ...bannerStyles.textWrap,
+          opacity: visible ? 1 : 0,
+          transition: `opacity ${FADE_DURATION_MS}ms ease-in-out`,
         }}
       >
-        {slides[active].text}
-      </p>
+        <p
+          style={{
+            ...bannerStyles.text,
+            color: slideColors[active % slideColors.length],
+            whiteSpace: 'pre-line' as const,
+          }}
+        >
+          {slides[active].text}
+        </p>
+      </div>
       <div style={bannerStyles.dots}>
-        {slides.map((slide, i) => (
-          <button
-            key={slide.text}
-            type="button"
-            onClick={() => setActive(i)}
-            aria-label={`Slide ${i + 1}`}
+        {slides.map((_, i) => (
+          <span
+            // biome-ignore lint/suspicious/noArrayIndexKey: dots are visual indicators for a static list
+            key={i}
             style={
               i === active
                 ? {
-                    ...bannerStyles.dotActive,
+                    ...bannerStyles.dot,
                     background: slideColors[i % slideColors.length],
                   }
                 : bannerStyles.dot
@@ -130,12 +149,14 @@ const bannerStyles = {
     textAlign: 'center' as const,
     position: 'relative' as const,
   },
+  textWrap: {
+    minHeight: '60px',
+  },
   text: {
     fontFamily: fonts.body,
     fontSize: '13px',
     lineHeight: '1.5',
     margin: '4px auto 12px auto',
-    minHeight: '60px',
     width: '80%',
   },
   icon: {
@@ -152,18 +173,6 @@ const bannerStyles = {
     borderRadius: '50%',
     background: 'rgba(100,190,230,0.25)',
     display: 'inline-block',
-    padding: '0',
-    border: 'none',
-    cursor: 'pointer',
-  },
-  dotActive: {
-    width: '6px',
-    height: '6px',
-    borderRadius: '50%',
-    display: 'inline-block',
-    padding: '0',
-    border: 'none',
-    cursor: 'pointer',
   },
   pauseIcon: {
     position: 'absolute' as const,
