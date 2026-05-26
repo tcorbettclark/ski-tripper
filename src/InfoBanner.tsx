@@ -1,19 +1,62 @@
+import {
+  CircleDot,
+  Compass,
+  FileText,
+  type LucideIcon,
+  Mountain,
+  Snowflake,
+  ThumbsUp,
+  UserPlus,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { colors, fonts } from './theme'
 
-const defaultSlides = [
-  'A collaborative ski trip planning application\nCut down on the chaos!',
-  'Signup with your email, set your skiing preferences, and create or join a trip via a simple three-word code.',
-  'Browse hundreds of resorts from an AI-enriched catalogue, packed with detail.',
-  'Create proposals with dates and descriptions, discuss with comments, then submit for voting.',
-  'The Trip Coordinator runs multiple rounds of voting to arrive at a consensus.',
-  'Have your say by allocating your "chips" amongst the submitted proposals.',
-  'Guided "what next?" prompts stop you getting lost.',
+const slideColors = [
+  '#3bbde8',
+  '#5ecfcf',
+  '#8be28a',
+  '#e2c94a',
+  '#e89a3b',
+  '#e26a7b',
+  '#b08be2',
 ]
+
+const defaultSlides = [
+  {
+    icon: Snowflake,
+    text: 'A collaborative ski trip planning application\nCut down on the chaos!',
+  },
+  {
+    icon: UserPlus,
+    text: 'Signup with your email, set your skiing preferences, and create or join a trip via a simple three-word code.',
+  },
+  {
+    icon: Mountain,
+    text: 'Browse hundreds of resorts from an AI-enriched catalogue, packed with detail.',
+  },
+  {
+    icon: FileText,
+    text: 'Create proposals with dates and descriptions, discuss with comments, then submit for voting.',
+  },
+  {
+    icon: ThumbsUp,
+    text: 'The Trip Coordinator runs multiple rounds of voting to arrive at a consensus.',
+  },
+  {
+    icon: CircleDot,
+    text: 'Have your say by allocating your "chips" amongst the submitted proposals.',
+  },
+  { icon: Compass, text: 'Guided "what next?" prompts stop you getting lost.' },
+]
+
+interface Slide {
+  icon: LucideIcon
+  text: string
+}
 
 interface InfoBannerProps {
   intervalMs?: number
-  slides?: string[]
+  slides?: Slide[]
 }
 
 export default function InfoBanner({
@@ -38,17 +81,35 @@ export default function InfoBanner({
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <p style={{ ...bannerStyles.text, whiteSpace: 'pre-line' as const }}>
-        {slides[active]}
+      {(() => {
+        const Icon = slides[active].icon
+        const color = slideColors[active % slideColors.length]
+        return <Icon size={20} color={color} style={bannerStyles.icon} />
+      })()}
+      <p
+        style={{
+          ...bannerStyles.text,
+          color: slideColors[active % slideColors.length],
+          whiteSpace: 'pre-line' as const,
+        }}
+      >
+        {slides[active].text}
       </p>
       <div style={bannerStyles.dots}>
-        {slides.map((text, i) => (
+        {slides.map((slide, i) => (
           <button
-            key={text}
+            key={slide.text}
             type="button"
             onClick={() => setActive(i)}
             aria-label={`Slide ${i + 1}`}
-            style={i === active ? bannerStyles.dotActive : bannerStyles.dot}
+            style={
+              i === active
+                ? {
+                    ...bannerStyles.dotActive,
+                    background: slideColors[i % slideColors.length],
+                  }
+                : bannerStyles.dot
+            }
           />
         ))}
         {paused && (
@@ -73,10 +134,12 @@ const bannerStyles = {
     fontFamily: fonts.body,
     fontSize: '13px',
     lineHeight: '1.5',
-    color: colors.textSecondary,
-    margin: '0 auto 12px auto',
+    margin: '4px auto 12px auto',
     minHeight: '60px',
     width: '80%',
+  },
+  icon: {
+    margin: '0 auto',
   },
   dots: {
     display: 'flex',
@@ -97,7 +160,6 @@ const bannerStyles = {
     width: '6px',
     height: '6px',
     borderRadius: '50%',
-    background: colors.accent,
     display: 'inline-block',
     padding: '0',
     border: 'none',

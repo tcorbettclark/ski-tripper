@@ -1,13 +1,14 @@
 import { describe, expect, it, vi } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { Compass, Snowflake } from 'lucide-react'
 import InfoBanner from './InfoBanner'
 
 const testSlides = [
-  'First slide',
-  'Second slide',
-  'Third slide\nWith a newline',
-  'Fourth slide',
+  { icon: Snowflake, text: 'First slide' },
+  { icon: Compass, text: 'Second slide' },
+  { icon: Snowflake, text: 'Third slide\nWith a newline' },
+  { icon: Compass, text: 'Fourth slide' },
 ]
 
 describe('InfoBanner', () => {
@@ -23,7 +24,7 @@ describe('InfoBanner', () => {
   })
 
   it('renders newlines in slide text', () => {
-    const newlineSlides = ['Hello\nWorld']
+    const newlineSlides = [{ icon: Snowflake, text: 'Hello\nWorld' }]
     render(<InfoBanner intervalMs={60000} slides={newlineSlides} />)
     const paragraph = screen.getByText((_content, element) => {
       return element?.tagName === 'P' && element.textContent === 'Hello\nWorld'
