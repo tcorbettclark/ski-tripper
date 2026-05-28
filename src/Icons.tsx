@@ -204,3 +204,33 @@ export function GuesthouseIcon({ size = 14, color, dim }: IconProps) {
     </EmojiIcon>
   )
 }
+
+export function HamburgerIcon({ size = 14 }: { size?: number }) {
+  return (
+    <span
+      role="img"
+      aria-label="Menu"
+      style={{ fontSize: size, lineHeight: 1 }}
+    >
+      ☰️
+    </span>
+  )
+}
+
+export function BrandTitle({
+  fontSize,
+  style,
+}: {
+  fontSize: string | number
+  style?: React.CSSProperties
+}) {
+  return (
+    <span
+      role="img"
+      aria-label="Ski Tripper"
+      style={{ fontSize, lineHeight: 1, fontVariantEmoji: 'text', ...style }}
+    >
+      ⛷︎ SKI TRIPPER
+    </span>
+  )
+}

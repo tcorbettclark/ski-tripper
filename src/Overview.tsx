@@ -11,7 +11,6 @@ import {
   updateTrip as _updateTrip,
 } from './backend'
 import EditTripDescriptionForm from './EditTripDescriptionForm'
-import NextActions from './NextActions'
 import {
   BlackSlopeIcon,
   BlueSlopeIcon,
@@ -24,7 +23,8 @@ import {
   RedSlopeIcon,
   SkiIcon,
   SnowboardIcon,
-} from './PrefIcons'
+} from './Icons'
+import NextActions from './NextActions'
 import { borders, colors, fonts, formStyles } from './theme'
 import type {
   Participant,

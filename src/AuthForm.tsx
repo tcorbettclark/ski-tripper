@@ -2,6 +2,7 @@ import { ID, type Models } from 'appwrite'
 import { useState } from 'react'
 import { account as _account } from './backend'
 import Field from './Field'
+import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
 import { authStyles, formStyles } from './theme'
 
@@ -92,14 +93,13 @@ export default function AuthForm({
       <p
         style={{
           ...authStyles.brandName,
-          fontSize: '24px',
           marginBottom: '14px',
           textAlign: 'center',
           width: '100%',
           maxWidth: '420px',
         }}
       >
-        ⛷ Ski Tripper
+        <BrandTitle fontSize="24px" />
       </p>
       <div style={authStyles.card}>
         {sessionExpiredMessage && (

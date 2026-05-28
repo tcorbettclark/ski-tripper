@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { BrandTitle, HamburgerIcon } from './Icons'
 import { authStyles, borders, colors, fonts, formStyles } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
 import { formatCountdown } from './utils'
@@ -289,7 +290,7 @@ export default function Header({
     return (
       <header style={headerStyles.bar}>
         <span style={{ ...authStyles.brandName, fontSize: '22px' }}>
-          ⛷ Ski Tripper
+          <BrandTitle fontSize="22px" />
         </span>
         {isSmall ? (
           <>
@@ -302,7 +303,9 @@ export default function Header({
                 aria-label="Open menu"
                 aria-expanded={mobileMenuOpen}
               >
-                <span style={headerStyles.hamburgerIcon}>☰</span>
+                <span style={headerStyles.hamburgerIcon}>
+                  <HamburgerIcon />
+                </span>
               </button>
             </div>
             {mobileMenuOpen && (
@@ -355,7 +358,7 @@ export default function Header({
     return (
       <header style={headerStyles.bar}>
         <span style={{ ...authStyles.brandName, fontSize: '18px' }}>
-          ⛷ Ski Tripper
+          <BrandTitle fontSize="18px" />
         </span>
         <div style={headerStyles.mobileRight}>
           <span style={headerStyles.userNameSmall}>{userName}</span>
