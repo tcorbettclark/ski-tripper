@@ -438,7 +438,7 @@ export default function Overview({
 
       <div style={overviewStyles.metaLine}>
         <span style={overviewStyles.hint}>
-          Code to share with friends so they can join the trip:
+          Code to share with friends so they can join this trip:
         </span>
         <span style={overviewStyles.codeWithCopy}>
           <span style={overviewStyles.codeValue}>{trip.code}</span>
