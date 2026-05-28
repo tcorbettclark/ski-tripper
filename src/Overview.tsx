@@ -378,6 +378,16 @@ export default function Overview({
     'aspect',
   ] as const
 
+  const colWidths: Record<string, string> = {
+    name: '100px',
+    ski: '48px',
+    diff: '54px',
+    piste: '48px',
+    accom: '68px',
+    time: '170px',
+    aspect: '90px',
+  }
+
   const sortedParticipants = [...participants].sort((a, b) => {
     if (a.role === 'coordinator' && b.role !== 'coordinator') return -1
     if (a.role !== 'coordinator' && b.role === 'coordinator') return 1
@@ -492,18 +502,23 @@ export default function Overview({
                   const isCurrentUser =
                     p.participantUserId === user.$id && !!onOpenPreferences
                   const isHovered = hoveredRowId === p.$id && isCurrentUser
-                  const hoverBg = isHovered
-                    ? overviewStyles.gridCellHoverBg
-                    : undefined
                   return (
-                    <div key={p.$id} style={overviewStyles.gridRow}>
+                    <div
+                      key={p.$id}
+                      style={{
+                        ...overviewStyles.gridRow,
+                        ...(isHovered
+                          ? overviewStyles.gridRowHoverBg
+                          : undefined),
+                      }}
+                    >
                       {isCurrentUser ? (
                         <button
                           type="button"
                           style={{
-                            ...overviewStyles.nameCell,
-                            ...hoverBg,
                             ...overviewStyles.nameCellClickable,
+                            flex: '0 0 auto',
+                            minWidth: colWidths.name,
                           }}
                           onClick={onOpenPreferences}
                           onKeyDown={(e) => {
@@ -517,7 +532,13 @@ export default function Overview({
                           </span>
                         </button>
                       ) : (
-                        <span style={overviewStyles.nameCell}>
+                        <span
+                          style={{
+                            ...overviewStyles.nameCell,
+                            flex: '0 0 auto',
+                            minWidth: colWidths.name,
+                          }}
+                        >
                           <span style={overviewStyles.participantName}>
                             {p.participantUserName}
                           </span>
@@ -526,16 +547,17 @@ export default function Overview({
                       {prefColumns.map((col) => {
                         const clickable = isCurrentUser
                         const Tag = clickable ? 'button' : 'span'
+                        const baseStyle = clickable
+                          ? overviewStyles.gridCellClickable
+                          : overviewStyles.gridCell
                         return (
                           <Tag
                             key={col}
                             type={clickable ? 'button' : undefined}
                             style={{
-                              ...overviewStyles.gridCell,
-                              ...hoverBg,
-                              ...(clickable
-                                ? overviewStyles.gridCellClickable
-                                : undefined),
+                              ...baseStyle,
+                              flex: '0 0 auto',
+                              minWidth: colWidths[col],
                             }}
                             onClick={clickable ? onOpenPreferences : undefined}
                             onMouseEnter={
@@ -579,7 +601,7 @@ export default function Overview({
 
 const overviewStyles = {
   container: {
-    padding: '40px 48px',
+    padding: '40px 24px',
     maxWidth: '960px',
     margin: '0 auto',
     fontFamily: fonts.body,
@@ -618,6 +640,8 @@ const overviewStyles = {
     border: borders.card,
     borderRadius: '10px',
     padding: '20px 24px',
+    overflow: 'hidden' as const,
+    minWidth: 0,
   },
 
   codeValue: {
@@ -691,15 +715,22 @@ const overviewStyles = {
     margin: 0,
   },
   participantGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'auto auto auto auto auto auto 1fr',
-    gap: '0 28px',
-    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: 0,
+    minWidth: 0,
+    overflow: 'hidden' as const,
   },
   gridRow: {
-    display: 'contents' as const,
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    alignItems: 'center',
+    gap: '0 20px',
+    padding: '10px 0',
+    borderBottom: borders.subtle,
+    minWidth: 0,
   },
-  gridCellHoverBg: {
+  gridRowHoverBg: {
     background: `${colors.accent}0a`,
   },
   nameCellClickable: {
@@ -710,6 +741,9 @@ const overviewStyles = {
     font: 'inherit',
     color: 'inherit',
     textAlign: 'left' as const,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
   },
   gridCellClickable: {
     cursor: 'pointer',
@@ -718,20 +752,19 @@ const overviewStyles = {
     padding: 0,
     font: 'inherit',
     color: 'inherit',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nameCell: {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
-    padding: '8px 0',
-    borderBottom: borders.subtle,
   },
   gridCell: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '8px 0',
-    borderBottom: borders.subtle,
   },
   cellEmpty: {
     fontFamily: fonts.body,
