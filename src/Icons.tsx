@@ -228,7 +228,13 @@ export function BrandTitle({
     <span
       role="img"
       aria-label="Ski Tripper"
-      style={{ fontSize, lineHeight: 1, fontVariantEmoji: 'text', ...style }}
+      style={{
+        fontSize,
+        lineHeight: 1,
+        fontVariantEmoji: 'text',
+        letterSpacing: '0.5em',
+        ...style,
+      }}
     >
       ⛷︎ SKI TRIPPER
     </span>
