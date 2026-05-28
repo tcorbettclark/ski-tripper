@@ -1,5 +1,3 @@
-import { colors } from './theme'
-
 interface IconProps {
   size?: number
   color?: string
@@ -60,7 +58,9 @@ export function BlackSlopeIcon({
     >
       <polygon
         points="8,1 15,8 8,15 1,8"
-        fill={dim ? dimColor : (color ?? colors.textPrimary)}
+        fill={dim ? dimColor : (color ?? '#404040')}
+        stroke={dim ? 'none' : '#edf6fc'}
+        strokeWidth="1.5"
       />
     </svg>
   )
@@ -68,7 +68,7 @@ export function BlackSlopeIcon({
 
 export function RedSlopeIcon({
   size = 12,
-  color = '#e07050',
+  color = '#c40000',
   dim,
 }: Omit<IconProps, 'color'> & { color?: string; dim?: boolean }) {
   return (
@@ -93,7 +93,7 @@ export function RedSlopeIcon({
 
 export function BlueSlopeIcon({
   size = 12,
-  color = '#5090d0',
+  color = '#0055a4',
   dim,
 }: Omit<IconProps, 'color'> & { color?: string; dim?: boolean }) {
   return (
@@ -110,7 +110,7 @@ export function BlueSlopeIcon({
 }
 
 export function OnPisteIcon({ size = 14, color, dim }: IconProps) {
-  const c = dim ? dimColor : (color ?? '#3bbde8')
+  const c = dim ? dimColor : (color ?? '#d4a017')
   return (
     <svg
       width={size}
