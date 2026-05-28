@@ -27,9 +27,9 @@ const skiSnowboardOptions = ['Ski', 'Snowboard']
 const difficultyOptions = ['Black', 'Red', 'Blue']
 const pisteOptions = ['On-Piste', 'Off-Piste']
 const accommodationOptions = [
-  'Chalet',
   '5-star hotel with spa etc',
   '4-star or below hotel',
+  'Chalet',
   'Pension/guesthouse',
 ]
 const timeLabels = ['Slopes', 'Eating', 'Après', 'Hotel Chill']

@@ -3,6 +3,7 @@ import { Check, Copy, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   getCoordinatorParticipant as _getCoordinatorParticipant,
+  getPreferences as _getPreferences,
   listPolls as _listPolls,
   listProposals as _listProposals,
   listTripParticipants as _listTripParticipants,
@@ -11,15 +12,40 @@ import {
 } from './backend'
 import EditTripDescriptionForm from './EditTripDescriptionForm'
 import NextActions from './NextActions'
+import {
+  BlackSlopeIcon,
+  BlueSlopeIcon,
+  ChaletIcon,
+  FiveStarHotelIcon,
+  GuesthouseIcon,
+  HotelIcon,
+  OffPisteIcon,
+  OnPisteIcon,
+  RedSlopeIcon,
+  SkiIcon,
+  SnowboardIcon,
+} from './PrefIcons'
 import { borders, colors, fonts, formStyles } from './theme'
 import type {
   Participant,
   Poll,
+  Preferences,
   Proposal,
   Resort,
   Trip,
   Vote,
 } from './types.d.ts'
+
+function parseJsonArray(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value
+  try {
+    const parsed = JSON.parse(value)
+    if (Array.isArray(parsed)) return parsed
+  } catch {
+    // fallthrough
+  }
+  return []
+}
 
 interface OverviewProps {
   user: Models.User
@@ -49,6 +75,7 @@ interface OverviewProps {
     data: Partial<Trip>,
     participantUserId: string
   ) => Promise<Trip>
+  getPreferences?: (userId: string) => Promise<Preferences | null>
 }
 
 const noopAuthError = () => {}
@@ -67,8 +94,12 @@ export default function Overview({
   listVotes = _listVotes,
   getCoordinatorParticipant = _getCoordinatorParticipant,
   updateTrip = _updateTrip,
+  getPreferences = _getPreferences,
 }: OverviewProps) {
   const [participants, setParticipants] = useState<Participant[]>([])
+  const [preferencesMap, setPreferencesMap] = useState<
+    Record<string, Preferences | null>
+  >({})
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
   const [participantsLoading, setParticipantsLoading] = useState(true)
@@ -119,6 +150,30 @@ export default function Overview({
         if (mountedRef.current) setParticipantsLoading(false)
       })
   }, [tripId, listTripParticipants, onAuthError])
+
+  useEffect(() => {
+    if (participants.length === 0) return
+    let cancelled = false
+    Promise.all(
+      participants.map((p) =>
+        getPreferences(p.participantUserId).then(
+          (prefs) => [p.participantUserId, prefs] as const
+        )
+      )
+    )
+      .then((results) => {
+        if (!mountedRef.current || cancelled) return
+        const map: Record<string, Preferences | null> = {}
+        for (const [userId, prefs] of results) {
+          map[userId] = prefs
+        }
+        setPreferencesMap(map)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [participants, getPreferences])
 
   useEffect(() => {
     if (!tripId) return
@@ -172,6 +227,173 @@ export default function Overview({
   ).length
   const submittedCount = proposals.filter((p) => p.state === 'SUBMITTED').length
   const approvedCount = proposals.filter((p) => p.state === 'APPROVED').length
+
+  function renderPreferenceCell(
+    prefs: Preferences | null | undefined,
+    column: string
+  ) {
+    if (!prefs) return <span style={overviewStyles.cellEmpty}>—</span>
+
+    if (column === 'ski') {
+      const ski = parseJsonArray(prefs.skiSnowboard)
+      const tip = ski.length > 0 ? ski.join(', ') : 'Not set'
+      return (
+        <span
+          title={tip}
+          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
+        >
+          <SkiIcon dim={!ski.includes('Ski')} />
+          <SnowboardIcon dim={!ski.includes('Snowboard')} />
+        </span>
+      )
+    }
+
+    if (column === 'diff') {
+      const diff = parseJsonArray(prefs.difficulty)
+      const order: Record<string, number> = { Black: 0, Red: 1, Blue: 2 }
+      const sortedDiff = [...diff].sort(
+        (a, b) => (order[a] ?? 3) - (order[b] ?? 3)
+      )
+      const tip = sortedDiff.length > 0 ? sortedDiff.join('/') : 'Not set'
+      const sorted = Object.keys(order).sort((a, b) => order[a] - order[b])
+      return (
+        <span
+          title={tip}
+          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
+        >
+          {sorted.map((d) => (
+            <span key={d}>
+              {d === 'Black' && (
+                <BlackSlopeIcon dim={!diff.includes('Black')} />
+              )}
+              {d === 'Red' && <RedSlopeIcon dim={!diff.includes('Red')} />}
+              {d === 'Blue' && <BlueSlopeIcon dim={!diff.includes('Blue')} />}
+            </span>
+          ))}
+        </span>
+      )
+    }
+
+    if (column === 'piste') {
+      const piste = parseJsonArray(prefs.piste)
+      const tip = piste.length > 0 ? piste.join(', ') : 'Not set'
+      return (
+        <span
+          title={tip}
+          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
+        >
+          <OnPisteIcon dim={!piste.includes('On-Piste')} />
+          <OffPisteIcon dim={!piste.includes('Off-Piste')} />
+        </span>
+      )
+    }
+
+    if (column === 'accom') {
+      const accom = parseJsonArray(prefs.accommodation)
+      const tip = accom.length > 0 ? accom.join(', ') : 'Not set'
+      return (
+        <span
+          title={tip}
+          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
+        >
+          <FiveStarHotelIcon
+            dim={!accom.includes('5-star hotel with spa etc')}
+          />
+          <HotelIcon dim={!accom.includes('4-star or below hotel')} />
+          <ChaletIcon dim={!accom.includes('Chalet')} />
+          <GuesthouseIcon dim={!accom.includes('Pension/guesthouse')} />
+        </span>
+      )
+    }
+
+    if (column === 'time') {
+      const timeSegments = [
+        {
+          key: 'slopes',
+          label: 'Slopes',
+          value: prefs.timeSlopes,
+          color: '#3bbde8',
+        },
+        {
+          key: 'eating',
+          label: 'Eating',
+          value: prefs.timeEating,
+          color: '#f0a050',
+        },
+        {
+          key: 'apres',
+          label: 'Après',
+          value: prefs.timeApres,
+          color: '#c070d0',
+        },
+        {
+          key: 'hotel',
+          label: 'Hotel',
+          value: prefs.timeHotel,
+          color: '#7090d0',
+        },
+      ]
+      if (!timeSegments.some((s) => s.value > 0))
+        return <span style={overviewStyles.cellEmpty}>—</span>
+      const tip = timeSegments
+        .filter((s) => s.value > 0)
+        .map((s) => `${s.label} ${s.value}%`)
+        .join(' · ')
+      return (
+        <span title={tip}>
+          <span style={overviewStyles.timeMeters}>
+            {timeSegments.map((seg) => (
+              <span
+                key={seg.key}
+                style={overviewStyles.timeMeter}
+                title={`${seg.label} ${seg.value}%`}
+              >
+                {seg.label}
+                <span style={overviewStyles.timeMeterTrack}>
+                  <span
+                    style={{
+                      ...overviewStyles.timeMeterFill,
+                      width: `${seg.value}%`,
+                      background: seg.color,
+                    }}
+                  />
+                </span>
+              </span>
+            ))}
+          </span>
+        </span>
+      )
+    }
+
+    if (column === 'aspect') {
+      if (!prefs.mostImportantAspect)
+        return <span style={overviewStyles.cellEmpty}>—</span>
+      return (
+        <span title={prefs.mostImportantAspect}>
+          <span style={overviewStyles.cellAspectLabel}>
+            {prefs.mostImportantAspect}
+          </span>
+        </span>
+      )
+    }
+
+    return null
+  }
+
+  const prefColumns = [
+    'ski',
+    'diff',
+    'piste',
+    'accom',
+    'time',
+    'aspect',
+  ] as const
+
+  const sortedParticipants = [...participants].sort((a, b) => {
+    if (a.role === 'coordinator' && b.role !== 'coordinator') return -1
+    if (a.role !== 'coordinator' && b.role === 'coordinator') return 1
+    return 0
+  })
 
   function handleCopyCode() {
     if (!trip.code) return
@@ -271,17 +493,24 @@ export default function Overview({
             {participants.length === 0 ? (
               <p style={overviewStyles.empty}>No participants</p>
             ) : (
-              <div style={overviewStyles.participantList}>
-                {participants.map((p) => (
-                  <div key={p.$id} style={overviewStyles.participantRow}>
-                    <span style={overviewStyles.participantName}>
-                      {p.participantUserName}
-                    </span>
-                    {p.role === 'coordinator' && (
-                      <span style={overviewStyles.badge}>Coordinator</span>
-                    )}
-                  </div>
-                ))}
+              <div style={overviewStyles.participantGrid}>
+                {sortedParticipants.map((p) => {
+                  const prefs = preferencesMap[p.participantUserId]
+                  return (
+                    <div key={p.$id} style={overviewStyles.gridRow}>
+                      <span style={overviewStyles.nameCell}>
+                        <span style={overviewStyles.participantName}>
+                          {p.participantUserName}
+                        </span>
+                      </span>
+                      {prefColumns.map((col) => (
+                        <span key={col} style={overviewStyles.gridCell}>
+                          {renderPreferenceCell(prefs, col)}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -414,29 +643,67 @@ const overviewStyles = {
     fontSize: '14px',
     margin: 0,
   },
-  participantList: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '8px',
+  participantGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'auto auto auto auto auto auto 1fr',
+    gap: '0 28px',
+    alignItems: 'center',
   },
-  participantRow: {
+  gridRow: {
+    display: 'contents' as const,
+  },
+  nameCell: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
+    gap: '6px',
+    padding: '8px 0',
+    borderBottom: borders.subtle,
+  },
+  gridCell: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '8px 0',
+    borderBottom: borders.subtle,
+  },
+  cellEmpty: {
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    color: 'rgba(100,190,230,0.2)',
+  },
+  cellAspectLabel: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    color: colors.textData,
   },
   participantName: {
     fontFamily: fonts.body,
     fontSize: '15px',
     color: colors.textPrimary,
   },
-  badge: {
+  timeMeters: {
+    display: 'inline-flex',
+    gap: '6px',
+  },
+  timeMeter: {
+    display: 'inline-flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '2px',
     fontFamily: fonts.body,
-    fontSize: '11px',
-    fontWeight: '600',
-    color: colors.accent,
-    background: 'rgba(59,189,232,0.12)',
-    padding: '2px 8px',
-    borderRadius: '4px',
-    letterSpacing: '0.04em',
+    fontSize: '10px',
+    color: colors.textSecondary,
+  },
+  timeMeterTrack: {
+    width: '36px',
+    height: '3px',
+    borderRadius: '2px',
+    background: 'rgba(100,190,230,0.1)',
+    overflow: 'hidden',
+  },
+  timeMeterFill: {
+    display: 'block',
+    height: '100%',
+    borderRadius: '2px',
   },
 } as const

@@ -6,6 +6,7 @@ import Overview from './Overview'
 import type {
   Participant,
   Poll,
+  Preferences,
   Proposal,
   Resort,
   Trip,
@@ -184,6 +185,38 @@ const sampleResorts: Resort[] = [
   },
 ]
 
+const samplePreferencesAlice: Preferences = {
+  $id: 'prefs-1',
+  $createdAt: '2024-01-01T00:00:00Z',
+  $updatedAt: '2024-01-01T00:00:00Z',
+  userId: 'user-1',
+  skiSnowboard: '["Ski"]',
+  difficulty: '["Red","Black"]',
+  piste: '["On-Piste","Off-Piste"]',
+  timeSlopes: 60,
+  timeEating: 20,
+  timeApres: 15,
+  timeHotel: 5,
+  accommodation: '["Chalet"]',
+  mostImportantAspect: 'Snow quality',
+}
+
+const samplePreferencesBob: Preferences = {
+  $id: 'prefs-2',
+  $createdAt: '2024-01-01T00:00:00Z',
+  $updatedAt: '2024-01-01T00:00:00Z',
+  userId: 'user-2',
+  skiSnowboard: '["Snowboard"]',
+  difficulty: '["Blue"]',
+  piste: '["On-Piste"]',
+  timeSlopes: 40,
+  timeEating: 30,
+  timeApres: 20,
+  timeHotel: 10,
+  accommodation: '["Hotel"]',
+  mostImportantAspect: '',
+}
+
 function renderOverview(props = {}) {
   const defaults = {
     user,
@@ -197,6 +230,11 @@ function renderOverview(props = {}) {
     listProposals: mock(() => Promise.resolve({ proposals: sampleProposals })),
     listPolls: mock(() => Promise.resolve({ polls: samplePolls })),
     listVotes: mock(() => Promise.resolve({ votes: [] })),
+    getPreferences: mock((userId: string) => {
+      if (userId === 'user-1') return Promise.resolve(samplePreferencesAlice)
+      if (userId === 'user-2') return Promise.resolve(samplePreferencesBob)
+      return Promise.resolve(null)
+    }),
   }
   return render(<Overview {...defaults} {...props} />)
 }
@@ -219,7 +257,78 @@ describe('Overview', () => {
     await waitFor(() => {
       expect(screen.getByText('Alice'))
       expect(screen.getByText('Bob'))
-      expect(screen.getByText('Coordinator'))
+    })
+  })
+
+  it('shows coordinator at the top of the list', async () => {
+    await act(async () => {
+      renderOverview()
+    })
+    await waitFor(() => {
+      const participantElements = screen.getAllByText(/Alice|Bob/)
+      const first = participantElements.find((el) => el.textContent === 'Alice')
+      const second = participantElements.find((el) => el.textContent === 'Bob')
+      expect(first!.compareDocumentPosition(second!)).toBe(4)
+    })
+  })
+
+  it('shows participant preferences as icon tags with hover tips', async () => {
+    await act(async () => {
+      renderOverview()
+    })
+    await waitFor(() => {
+      expect(screen.getByTitle('Ski')).toBeTruthy()
+      expect(screen.getByTitle('Black/Red')).toBeTruthy()
+      expect(screen.getByTitle('Snowboard')).toBeTruthy()
+      expect(screen.getByTitle('Blue')).toBeTruthy()
+    })
+  })
+
+  it('shows time allocation as VU meter bars for every category', async () => {
+    await act(async () => {
+      renderOverview()
+    })
+    await waitFor(() => {
+      expect(screen.getByTitle('Slopes 60%')).toBeTruthy()
+      expect(screen.getByTitle('Eating 20%')).toBeTruthy()
+      expect(screen.getByTitle('Après 15%')).toBeTruthy()
+      expect(screen.getByTitle('Hotel 5%')).toBeTruthy()
+      expect(screen.getByTitle('Slopes 40%')).toBeTruthy()
+      expect(screen.getByTitle('Hotel 10%')).toBeTruthy()
+    })
+  })
+
+  it('shows most important aspect with snowflake icon and label', async () => {
+    await act(async () => {
+      renderOverview()
+    })
+    await waitFor(() => {
+      expect(screen.getByTitle('Snow quality')).toBeTruthy()
+      expect(screen.getByText('Snow quality')).toBeTruthy()
+    })
+  })
+
+  it('handles participants with no preferences', async () => {
+    const participantNoPrefs: Participant = {
+      $id: 'part-3',
+      $createdAt: '2024-01-01T00:00:00Z',
+      $updatedAt: '2024-01-01T00:00:00Z',
+      participantUserId: 'user-3',
+      participantUserName: 'Charlie',
+      tripId: 'trip-1',
+      role: 'participant',
+    }
+    await act(async () => {
+      renderOverview({
+        listTripParticipants: mock(() =>
+          Promise.resolve({
+            participants: [...sampleParticipants, participantNoPrefs],
+          })
+        ),
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Charlie')).toBeTruthy()
     })
   })
 
