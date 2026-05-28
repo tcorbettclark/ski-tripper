@@ -103,10 +103,10 @@ describe('App', () => {
     expect(mockAccountGet).not.toHaveBeenCalled()
   })
 
-  it('shows the Sign Out button when authenticated', async () => {
+  it('shows the user menu when authenticated', async () => {
     renderApp()
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /sign out/i }))
+      expect(screen.getByRole('button', { name: /test user/i }))
     })
   })
 
@@ -160,9 +160,13 @@ describe('App', () => {
     renderApp({ deleteSession: mockDelete })
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /sign out/i }))
+      expect(screen.getByRole('button', { name: /test user/i }))
     })
-    await user.click(screen.getByRole('button', { name: /sign out/i }))
+    await user.click(screen.getByRole('button', { name: /test user/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Sign Out'))
+    })
+    await user.click(screen.getByText('Sign Out'))
 
     await waitFor(() => {
       expect(mockDelete).toHaveBeenCalledTimes(1)
@@ -279,9 +283,13 @@ describe('App', () => {
       deleteSession: () => Promise.reject(new Error('Logout failed')),
     })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /sign out/i }))
+      expect(screen.getByRole('button', { name: /test user/i }))
     })
-    await user.click(screen.getByRole('button', { name: /sign out/i }))
+    await user.click(screen.getByRole('button', { name: /test user/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Sign Out'))
+    })
+    await user.click(screen.getByText('Sign Out'))
     await screen.findByText('Logout failed')
   })
 
@@ -332,16 +340,20 @@ describe('App', () => {
     })
   })
 
-  it('opens preferences modal from header gear icon', async () => {
+  it('opens preferences modal from user menu', async () => {
     const ue = userEvent.setup()
     await act(async () => {
       renderApp()
     })
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /preferences/i }))
+      expect(screen.getByRole('button', { name: /test user/i }))
     })
-    await ue.click(screen.getByRole('button', { name: /preferences/i }))
+    await ue.click(screen.getByRole('button', { name: /test user/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Preferences'))
+    })
+    await ue.click(screen.getByText('Preferences'))
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /preferences/i }))
@@ -353,11 +365,14 @@ describe('App', () => {
     const mockDelete = mock(() => Promise.resolve())
     renderApp({ deleteSession: mockDelete })
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /sign out/i }))
+      expect(screen.getByRole('button', { name: /test user/i }))
     })
 
-    // Simulate a 401 being raised during some API call by invoking logout
-    await user.click(screen.getByRole('button', { name: /sign out/i }))
+    await user.click(screen.getByRole('button', { name: /test user/i }))
+    await waitFor(() => {
+      expect(screen.getByText('Sign Out'))
+    })
+    await user.click(screen.getByText('Sign Out'))
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /sign in/i }))

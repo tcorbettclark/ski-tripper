@@ -14,6 +14,83 @@ interface HeaderProps {
   activePollEndDate?: string | null
 }
 
+function UserMenu({
+  userName,
+  onLogout,
+  logoutError,
+  onOpenPreferences,
+}: {
+  userName: string
+  onLogout: () => void
+  logoutError?: string | null
+  onOpenPreferences?: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (logoutError) setOpen(true)
+  }, [logoutError])
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  return (
+    <div style={headerStyles.userMenuWrapper} ref={menuRef}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={headerStyles.userMenuTrigger}
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <span>{userName}</span>
+        <span style={headerStyles.triangle}>{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div style={headerStyles.userMenuDropdown} role="menu">
+          {onOpenPreferences && (
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false)
+                onOpenPreferences()
+              }}
+              style={headerStyles.userMenuItem}
+              role="menuitem"
+            >
+              Preferences
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              onLogout()
+            }}
+            style={headerStyles.userMenuItem}
+            role="menuitem"
+          >
+            Sign Out
+          </button>
+          {logoutError && (
+            <p style={{ ...formStyles.error, padding: '8px 16px' }}>
+              {logoutError}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Header({
   view,
   tripDetailTab,
@@ -36,29 +113,23 @@ export default function Header({
       }
     }
   }, [activePollEndDate])
+
+  const userMenu = (
+    <UserMenu
+      userName={userName}
+      onLogout={onLogout}
+      logoutError={logoutError}
+      onOpenPreferences={onOpenPreferences}
+    />
+  )
+
   if (view === 'tripList') {
     return (
       <header style={headerStyles.bar}>
         <span style={{ ...authStyles.brandName, fontSize: '22px' }}>
           ⛷ Ski Tripper
         </span>
-        <div style={headerStyles.userGroup}>
-          <span style={headerStyles.name}>{userName}</span>
-          {onOpenPreferences && (
-            <button
-              type="button"
-              onClick={onOpenPreferences}
-              style={headerStyles.iconButton}
-              aria-label="Preferences"
-            >
-              ⚙
-            </button>
-          )}
-          {logoutError && <p style={formStyles.error}>{logoutError}</p>}
-          <button type="button" onClick={onLogout} style={headerStyles.button}>
-            Sign Out
-          </button>
-        </div>
+        {userMenu}
       </header>
     )
   }
@@ -125,23 +196,7 @@ export default function Header({
             : 'Voting'}
         </button>
       </nav>
-      <div style={headerStyles.userGroup}>
-        <span style={headerStyles.name}>{userName}</span>
-        {onOpenPreferences && (
-          <button
-            type="button"
-            onClick={onOpenPreferences}
-            style={headerStyles.iconButton}
-            aria-label="Preferences"
-          >
-            ⚙
-          </button>
-        )}
-        {logoutError && <p style={formStyles.error}>{logoutError}</p>}
-        <button type="button" onClick={onLogout} style={headerStyles.button}>
-          Sign Out
-        </button>
-      </div>
+      {userMenu}
     </header>
   )
 }
@@ -210,40 +265,52 @@ const headerStyles = {
     cursor: 'pointer',
     letterSpacing: '0.02em',
   },
-  userGroup: {
+  userMenuWrapper: {
+    position: 'relative' as const,
+  },
+  userMenuTrigger: {
     display: 'flex',
     alignItems: 'center',
-    gap: '20px',
-  },
-  name: {
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    color: colors.textSecondary,
-    letterSpacing: '0.02em',
-  },
-  button: {
-    padding: '7px 18px',
-    borderRadius: '6px',
-    border: borders.accent,
-    background: 'transparent',
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    letterSpacing: '0.02em',
-  },
-  iconButton: {
+    gap: '4px',
     background: 'none',
     border: 'none',
     color: colors.textSecondary,
-    fontSize: '18px',
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    letterSpacing: '0.02em',
     cursor: 'pointer',
-    padding: '4px 8px',
-    lineHeight: 1,
+    padding: '6px 8px',
+    borderRadius: '6px',
     transition: 'color 0.15s',
-    ':hover': {
-      color: colors.accent,
-    },
+  },
+  triangle: {
+    fontSize: '10px',
+    lineHeight: 1,
+  },
+  userMenuDropdown: {
+    position: 'absolute' as const,
+    right: 0,
+    top: '100%',
+    marginTop: '4px',
+    background: colors.bgCard,
+    border: borders.card,
+    borderRadius: '8px',
+    padding: '4px 0',
+    minWidth: '140px',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    zIndex: 200,
+  },
+  userMenuItem: {
+    display: 'block',
+    width: '100%',
+    padding: '8px 16px',
+    border: 'none',
+    background: 'none',
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+    letterSpacing: '0.02em',
   },
 } as const

@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import Header from './Header'
 import { dayjs } from './utils'
 
@@ -62,5 +63,33 @@ describe('Header', () => {
     const nearFuture = dayjs().add(30, 'second').toISOString()
     render(<Header {...defaultProps} activePollEndDate={nearFuture} />)
     expect(screen.getByText(/Poll closing in \d+m \d+s/))
+  })
+
+  it('shows user name in menu trigger', () => {
+    render(<Header {...defaultProps} />)
+    expect(screen.getByText('Alice'))
+  })
+
+  it('opens user menu on click and shows Sign Out', async () => {
+    const user = userEvent.setup()
+    render(<Header {...defaultProps} />)
+    const trigger = screen.getByRole('button', { name: /alice/i })
+    expect(screen.queryByText('Sign Out')).toBeNull()
+    await user.click(trigger)
+    expect(screen.getByText('Sign Out'))
+  })
+
+  it('shows Preferences in menu when onOpenPreferences provided', async () => {
+    const user = userEvent.setup()
+    render(<Header {...defaultProps} onOpenPreferences={mock(() => {})} />)
+    await user.click(screen.getByRole('button', { name: /alice/i }))
+    expect(screen.getByText('Preferences'))
+  })
+
+  it('does not show Preferences when onOpenPreferences not provided', async () => {
+    const user = userEvent.setup()
+    render(<Header {...defaultProps} />)
+    await user.click(screen.getByRole('button', { name: /alice/i }))
+    expect(screen.queryByText('Preferences')).toBeNull()
   })
 })
