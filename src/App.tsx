@@ -457,6 +457,7 @@ export default function App({
                 onAuthError={onAuthError}
                 updateTrip={updateTrip}
                 preferencesUpdated={preferencesUpdated}
+                onOpenPreferences={() => setShowPreferencesModal(true)}
               />
             </ErrorBoundary>
           )}

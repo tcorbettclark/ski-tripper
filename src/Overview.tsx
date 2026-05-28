@@ -67,6 +67,7 @@ interface OverviewProps {
   ) => Promise<Trip>
   getPreferences?: (userId: string) => Promise<Preferences | null>
   preferencesUpdated?: { userId: string; preferences: Preferences } | null
+  onOpenPreferences?: () => void
 }
 
 const noopAuthError = () => {}
@@ -87,6 +88,7 @@ export default function Overview({
   updateTrip = _updateTrip,
   getPreferences = _getPreferences,
   preferencesUpdated,
+  onOpenPreferences,
 }: OverviewProps) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [preferencesMap, setPreferencesMap] = useState<
@@ -101,6 +103,7 @@ export default function Overview({
   const [codeCopyError, setCodeCopyError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [editingDescription, setEditingDescription] = useState(false)
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -486,18 +489,70 @@ export default function Overview({
               <div style={overviewStyles.participantGrid}>
                 {sortedParticipants.map((p) => {
                   const prefs = preferencesMap[p.participantUserId]
+                  const isCurrentUser =
+                    p.participantUserId === user.$id && !!onOpenPreferences
+                  const isHovered = hoveredRowId === p.$id && isCurrentUser
+                  const hoverBg = isHovered
+                    ? overviewStyles.gridCellHoverBg
+                    : undefined
                   return (
                     <div key={p.$id} style={overviewStyles.gridRow}>
-                      <span style={overviewStyles.nameCell}>
-                        <span style={overviewStyles.participantName}>
-                          {p.participantUserName}
+                      {isCurrentUser ? (
+                        <button
+                          type="button"
+                          style={{
+                            ...overviewStyles.nameCell,
+                            ...hoverBg,
+                            ...overviewStyles.nameCellClickable,
+                          }}
+                          onClick={onOpenPreferences}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') onOpenPreferences()
+                          }}
+                          onMouseEnter={() => setHoveredRowId(p.$id)}
+                          onMouseLeave={() => setHoveredRowId(null)}
+                        >
+                          <span style={overviewStyles.participantName}>
+                            {p.participantUserName}
+                          </span>
+                        </button>
+                      ) : (
+                        <span style={overviewStyles.nameCell}>
+                          <span style={overviewStyles.participantName}>
+                            {p.participantUserName}
+                          </span>
                         </span>
-                      </span>
-                      {prefColumns.map((col) => (
-                        <span key={col} style={overviewStyles.gridCell}>
-                          {renderPreferenceCell(prefs, col)}
-                        </span>
-                      ))}
+                      )}
+                      {prefColumns.map((col) => {
+                        const clickable = isCurrentUser
+                        const Tag = clickable ? 'button' : 'span'
+                        return (
+                          <Tag
+                            key={col}
+                            type={clickable ? 'button' : undefined}
+                            style={{
+                              ...overviewStyles.gridCell,
+                              ...hoverBg,
+                              ...(clickable
+                                ? overviewStyles.gridCellClickable
+                                : undefined),
+                            }}
+                            onClick={clickable ? onOpenPreferences : undefined}
+                            onMouseEnter={
+                              clickable
+                                ? () => setHoveredRowId(p.$id)
+                                : undefined
+                            }
+                            onMouseLeave={
+                              clickable
+                                ? () => setHoveredRowId(null)
+                                : undefined
+                            }
+                          >
+                            {renderPreferenceCell(prefs, col)}
+                          </Tag>
+                        )
+                      })}
                     </div>
                   )
                 })}
@@ -643,6 +698,26 @@ const overviewStyles = {
   },
   gridRow: {
     display: 'contents' as const,
+  },
+  gridCellHoverBg: {
+    background: `${colors.accent}0a`,
+  },
+  nameCellClickable: {
+    cursor: 'pointer',
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    font: 'inherit',
+    color: 'inherit',
+    textAlign: 'left' as const,
+  },
+  gridCellClickable: {
+    cursor: 'pointer',
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    font: 'inherit',
+    color: 'inherit',
   },
   nameCell: {
     display: 'flex',
