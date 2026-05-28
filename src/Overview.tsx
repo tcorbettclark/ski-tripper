@@ -66,6 +66,7 @@ interface OverviewProps {
     participantUserId: string
   ) => Promise<Trip>
   getPreferences?: (userId: string) => Promise<Preferences | null>
+  preferencesUpdated?: { userId: string; preferences: Preferences } | null
 }
 
 const noopAuthError = () => {}
@@ -85,6 +86,7 @@ export default function Overview({
   getCoordinatorParticipant = _getCoordinatorParticipant,
   updateTrip = _updateTrip,
   getPreferences = _getPreferences,
+  preferencesUpdated,
 }: OverviewProps) {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [preferencesMap, setPreferencesMap] = useState<
@@ -160,6 +162,14 @@ export default function Overview({
       })
       .catch(() => {})
   }, [participants, getPreferences])
+
+  useEffect(() => {
+    if (!preferencesUpdated) return
+    setPreferencesMap((prev) => ({
+      ...prev,
+      [preferencesUpdated.userId]: preferencesUpdated.preferences,
+    }))
+  }, [preferencesUpdated])
 
   useEffect(() => {
     if (!tripId) return

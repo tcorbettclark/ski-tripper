@@ -138,6 +138,10 @@ export default function App({
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [preferences, setPreferences] = useState<Preferences | null>(null)
+  const [preferencesUpdated, setPreferencesUpdated] = useState<{
+    userId: string
+    preferences: Preferences
+  } | null>(null)
   const [checkingPreferences, setCheckingPreferences] = useState(false)
   const [showPreferencesModal, setShowPreferencesModal] = useState(false)
   const [activePollEndDate, setActivePollEndDate] = useState<string | null>(
@@ -452,6 +456,7 @@ export default function App({
                 onTripUpdated={handleTripUpdated}
                 onAuthError={onAuthError}
                 updateTrip={updateTrip}
+                preferencesUpdated={preferencesUpdated}
               />
             </ErrorBoundary>
           )}
@@ -498,7 +503,10 @@ export default function App({
         initial={preferences}
         open={showPreferencesModal}
         onClose={() => setShowPreferencesModal(false)}
-        onSaved={(prefs) => setPreferences(prefs)}
+        onSaved={(prefs) => {
+          setPreferences(prefs)
+          setPreferencesUpdated({ userId: user.$id, preferences: prefs })
+        }}
         createPreferences={createPreferences}
       />
       <Footer />

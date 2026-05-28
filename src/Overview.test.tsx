@@ -646,4 +646,76 @@ describe('Overview', () => {
       expect(screen.getByText('Failed to copy'))
     })
   })
+
+  it('updates displayed preferences when onPreferencesUpdated is called', async () => {
+    const { rerender } = render(
+      <Overview
+        {...{
+          user,
+          trip: sampleTrip,
+          tripId: 'trip-1',
+          resorts: sampleResorts,
+          onNavigateToTab: mock(() => {}),
+          listTripParticipants: mock(() =>
+            Promise.resolve({ participants: sampleParticipants })
+          ),
+          listProposals: mock(() =>
+            Promise.resolve({ proposals: sampleProposals })
+          ),
+          listPolls: mock(() => Promise.resolve({ polls: samplePolls })),
+          listVotes: mock(() => Promise.resolve({ votes: [] })),
+          getPreferences: mock((userId: string) => {
+            if (userId === 'user-1')
+              return Promise.resolve(samplePreferencesAlice)
+            if (userId === 'user-2')
+              return Promise.resolve(samplePreferencesBob)
+            return Promise.resolve(null)
+          }),
+        }}
+      />
+    )
+    await waitFor(() => {
+      expect(screen.getByTitle('Snow quality')).toBeTruthy()
+    })
+
+    const updatedPrefs: Preferences = {
+      ...samplePreferencesAlice,
+      skiSnowboard: '["Snowboard"]',
+      mostImportantAspect: 'Powder',
+    }
+
+    await act(async () => {
+      rerender(
+        <Overview
+          {...{
+            user,
+            trip: sampleTrip,
+            tripId: 'trip-1',
+            resorts: sampleResorts,
+            onNavigateToTab: mock(() => {}),
+            listTripParticipants: mock(() =>
+              Promise.resolve({ participants: sampleParticipants })
+            ),
+            listProposals: mock(() =>
+              Promise.resolve({ proposals: sampleProposals })
+            ),
+            listPolls: mock(() => Promise.resolve({ polls: samplePolls })),
+            listVotes: mock(() => Promise.resolve({ votes: [] })),
+            getPreferences: mock((userId: string) => {
+              if (userId === 'user-1') return Promise.resolve(updatedPrefs)
+              if (userId === 'user-2')
+                return Promise.resolve(samplePreferencesBob)
+              return Promise.resolve(null)
+            }),
+            preferencesUpdated: { userId: 'user-1', preferences: updatedPrefs },
+          }}
+        />
+      )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByTitle('Powder')).toBeTruthy()
+      expect(screen.queryByTitle('Snow quality')).toBeNull()
+    })
+  })
 })
