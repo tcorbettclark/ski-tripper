@@ -5,7 +5,6 @@ import { dayjs } from './utils'
 
 const defaultProps = {
   view: 'tripDetail',
-  tripName: 'Test Trip',
   tripDetailTab: 'proposals',
   onViewAllTrips: mock(() => {}),
   onTripDetailTabChange: mock(() => {}),

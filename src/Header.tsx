@@ -4,7 +4,6 @@ import { formatCountdown } from './utils'
 
 interface HeaderProps {
   view: string
-  tripName: string
   tripDetailTab: string
   onViewAllTrips: () => void
   onTripDetailTabChange: (tab: string) => void
@@ -17,7 +16,6 @@ interface HeaderProps {
 
 export default function Header({
   view,
-  tripName,
   tripDetailTab,
   onViewAllTrips,
   onTripDetailTabChange,
@@ -75,7 +73,6 @@ export default function Header({
         >
           ← My Trips
         </button>
-        <span style={headerStyles.tripName}>{tripName}</span>
       </div>
       <nav style={headerStyles.centerTabs}>
         <button
@@ -174,13 +171,6 @@ const headerStyles = {
     borderRadius: '6px',
     transition: 'background 0.15s',
     whiteSpace: 'nowrap' as const,
-  },
-  tripName: {
-    fontFamily: fonts.display,
-    fontSize: '20px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    letterSpacing: '0.01em',
   },
   subTabs: {
     display: 'flex',

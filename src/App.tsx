@@ -412,7 +412,6 @@ export default function App({
     >
       <Header
         view={view}
-        tripName={selectedTrip?.description || selectedTrip?.code || ''}
         tripDetailTab={tripDetailTab}
         onViewAllTrips={handleViewAllTrips}
         onTripDetailTabChange={(tab) => {

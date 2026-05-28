@@ -402,84 +402,76 @@ export default function Overview({
   return (
     <div style={overviewStyles.container}>
       <div style={overviewStyles.toolbar}>
-        <h2 style={overviewStyles.heading}>Overview</h2>
+        <h2 style={overviewStyles.heading}>
+          {trip.description || '—'}
+          {isCoordinator && !editingDescription && (
+            <button
+              type="button"
+              onClick={() => setEditingDescription(true)}
+              style={overviewStyles.editButton}
+              title="Edit description"
+              aria-label="Edit description"
+            >
+              <Pencil size={16} />
+            </button>
+          )}
+        </h2>
       </div>
 
-      <section style={overviewStyles.section}>
-        <h3 style={overviewStyles.sectionHeading}>Trip</h3>
+      {editingDescription && (
         <div style={overviewStyles.card}>
-          {editingDescription ? (
-            <EditTripDescriptionForm
-              trip={trip}
-              userId={user.$id}
-              onUpdated={(updatedTrip) => {
-                setEditingDescription(false)
-                onTripUpdated?.(updatedTrip)
-              }}
-              onCancel={() => setEditingDescription(false)}
-              updateTrip={updateTrip}
-            />
-          ) : (
-            <>
-              <div style={overviewStyles.tripRow}>
-                <span style={overviewStyles.label}>Description</span>
-                <span style={overviewStyles.value}>
-                  {trip.description || '—'}
-                  {isCoordinator && (
-                    <button
-                      type="button"
-                      onClick={() => setEditingDescription(true)}
-                      style={overviewStyles.editButton}
-                      title="Edit description"
-                      aria-label="Edit description"
-                    >
-                      <Pencil size={13} />
-                    </button>
-                  )}
-                </span>
-              </div>
-              <div style={overviewStyles.tripRow}>
-                <span style={overviewStyles.label}>Invite code</span>
-                <span style={overviewStyles.codeWithCopy}>
-                  <span style={overviewStyles.codeValue}>{trip.code}</span>
-                  <button
-                    type="button"
-                    onClick={handleCopyCode}
-                    style={overviewStyles.copyButton}
-                    title="Copy invite code"
-                    aria-label="Copy invite code"
-                  >
-                    {codeCopied ? <Check size={13} /> : <Copy size={13} />}
-                  </button>
-                  {codeCopied && (
-                    <span style={overviewStyles.copyFeedback}>Copied!</span>
-                  )}
-                  {codeCopyError && (
-                    <span style={overviewStyles.copyFeedback}>
-                      {codeCopyError}
-                    </span>
-                  )}
-                </span>
-              </div>
-              {participants
-                .filter((p) => p.role === 'coordinator')
-                .map((c, i) => (
-                  <div key={c.$id} style={overviewStyles.tripRow}>
-                    <span style={overviewStyles.label}>
-                      {i === 0 ? 'Coordinator' : ''}
-                    </span>
-                    <span style={overviewStyles.value}>
-                      {c.participantUserName}
-                    </span>
-                  </div>
-                ))}
-            </>
-          )}
+          <EditTripDescriptionForm
+            trip={trip}
+            userId={user.$id}
+            onUpdated={(updatedTrip) => {
+              setEditingDescription(false)
+              onTripUpdated?.(updatedTrip)
+            }}
+            onCancel={() => setEditingDescription(false)}
+            updateTrip={updateTrip}
+          />
         </div>
-      </section>
+      )}
+
+      <div style={overviewStyles.metaLine}>
+        <span style={overviewStyles.hint}>
+          Code to share with friends so they can join the trip:
+        </span>
+        <span style={overviewStyles.codeWithCopy}>
+          <span style={overviewStyles.codeValue}>{trip.code}</span>
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            style={overviewStyles.copyButton}
+            title="Copy invite code"
+            aria-label="Copy invite code"
+          >
+            {codeCopied ? <Check size={13} /> : <Copy size={13} />}
+          </button>
+          {codeCopied && (
+            <span style={overviewStyles.copyFeedback}>Copied!</span>
+          )}
+          {codeCopyError && (
+            <span style={overviewStyles.copyFeedback}>{codeCopyError}</span>
+          )}
+        </span>
+      </div>
+      {participants.filter((p) => p.role === 'coordinator').length > 0 && (
+        <div style={overviewStyles.metaLine}>
+          <span style={overviewStyles.coordinatorLabel}>
+            Person to blame when it all goes wrong:
+          </span>
+          <span style={overviewStyles.coordinatorNames}>
+            {participants
+              .filter((p) => p.role === 'coordinator')
+              .map((c) => c.participantUserName)
+              .join(', ')}
+          </span>
+        </div>
+      )}
 
       <section style={overviewStyles.section}>
-        <h3 style={overviewStyles.sectionHeading}>Participant Preferences</h3>
+        <h3 style={overviewStyles.sectionHeading}>Our Preferences</h3>
         {participantsLoading && (
           <p style={overviewStyles.loading}>Loading...</p>
         )}
@@ -554,6 +546,7 @@ const overviewStyles = {
     letterSpacing: '-0.01em',
   },
   section: {
+    marginTop: '48px',
     marginBottom: '32px',
   },
   sectionHeading: {
@@ -572,29 +565,9 @@ const overviewStyles = {
     padding: '20px 24px',
   },
 
-  tripRow: {
-    display: 'flex',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: '16px',
-    padding: '6px 0',
-  },
-  label: {
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    color: colors.textSecondary,
-    letterSpacing: '0.02em',
-    flexShrink: 0,
-  },
-  value: {
-    fontFamily: fonts.body,
-    fontSize: '15px',
-    color: colors.textPrimary,
-    textAlign: 'right' as const,
-  },
   codeValue: {
     fontFamily: fonts.mono,
-    fontSize: '14px',
+    fontSize: '13px',
     color: colors.accent,
     letterSpacing: '0.04em',
   },
@@ -602,7 +575,28 @@ const overviewStyles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '6px',
-    justifyContent: 'flex-end',
+  },
+  metaLine: {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    alignItems: 'baseline',
+    gap: '6px',
+    marginBottom: '12px',
+  },
+  hint: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.textSecondary,
+  },
+  coordinatorLabel: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.textSecondary,
+  },
+  coordinatorNames: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.textPrimary,
   },
   copyButton: {
     background: 'none',

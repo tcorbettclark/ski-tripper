@@ -167,6 +167,7 @@ export default function NextActions(props: NextActionsProps) {
 
 const nextActionsStyles = {
   container: {
+    marginTop: '48px',
     marginBottom: '32px',
   },
   header: {
