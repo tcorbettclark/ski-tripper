@@ -255,7 +255,7 @@ describe('Overview', () => {
       renderOverview()
     })
     await waitFor(() => {
-      expect(screen.getByText('Alice'))
+      expect(screen.getAllByText('Alice').length).toBeGreaterThan(0)
       expect(screen.getByText('Bob'))
     })
   })

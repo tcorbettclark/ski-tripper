@@ -475,6 +475,18 @@ export default function Overview({
                   )}
                 </span>
               </div>
+              {participants
+                .filter((p) => p.role === 'coordinator')
+                .map((c, i) => (
+                  <div key={c.$id} style={overviewStyles.tripRow}>
+                    <span style={overviewStyles.label}>
+                      {i === 0 ? 'Coordinator' : ''}
+                    </span>
+                    <span style={overviewStyles.value}>
+                      {c.participantUserName}
+                    </span>
+                  </div>
+                ))}
             </>
           )}
         </div>
