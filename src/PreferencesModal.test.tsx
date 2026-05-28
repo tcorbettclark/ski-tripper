@@ -36,7 +36,7 @@ describe('PreferencesModal', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('renders read-only preferences when open', async () => {
+  it('renders edit form directly when open with existing preferences', async () => {
     await act(async () => {
       render(
         <PreferencesModal
@@ -49,28 +49,6 @@ describe('PreferencesModal', () => {
       )
     })
     expect(screen.queryByRole('dialog')).not.toBeNull()
-    expect(
-      screen.queryByText(/Slopes 20%, Eating 20%, Après 20%, Hotel Chill 40%/i)
-    ).not.toBeNull()
-    expect(screen.getByRole('button', { name: /edit/i })).toBeDefined()
-    expect(screen.queryByDisplayValue('Good snow')).toBeNull()
-  })
-
-  it('shows edit form when Edit button is clicked', async () => {
-    const ue = userEvent.setup()
-    await act(async () => {
-      render(
-        <PreferencesModal
-          userId="user-1"
-          initial={defaultPreferences}
-          open
-          onClose={mock(() => {})}
-          onSaved={mock(() => {})}
-        />
-      )
-    })
-    expect(screen.queryByText('Update Preferences')).toBeNull()
-    await ue.click(screen.getByRole('button', { name: /edit/i }))
     expect(screen.queryByText('Update Preferences')).not.toBeNull()
     expect(screen.getByDisplayValue('Good snow')).toBeDefined()
   })
@@ -115,8 +93,6 @@ describe('PreferencesModal', () => {
         />
       )
     })
-
-    await ue.click(screen.getByRole('button', { name: /edit/i }))
 
     const input = screen.getByPlaceholderText(/great après-ski scene/i)
     await ue.clear(input)

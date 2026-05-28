@@ -34,11 +34,8 @@ export default function PreferencesModal({
   const [savedPreferences, setSavedPreferences] = useState<Preferences | null>(
     initial
   )
-  const [editing, setEditing] = useState(false)
 
   if (!open) return null
-
-  const display = savedPreferences ?? initial
 
   return (
     <div
@@ -48,11 +45,7 @@ export default function PreferencesModal({
       onClick={onClose}
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
-          if (editing) {
-            setEditing(false)
-          } else {
-            onClose()
-          }
+          onClose()
         }
       }}
     >
@@ -73,76 +66,18 @@ export default function PreferencesModal({
             <X size={16} />
           </button>
         </div>
-        {display && (
-          <div style={styles.readOnly}>
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Ski / Snowboard</span>
-              <span style={styles.detailValue}>
-                {display.skiSnowboard
-                  ? JSON.parse(display.skiSnowboard).join(', ')
-                  : '—'}
-              </span>
-            </div>
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Difficulty</span>
-              <span style={styles.detailValue}>
-                {display.difficulty
-                  ? JSON.parse(display.difficulty).join(', ')
-                  : '—'}
-              </span>
-            </div>
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Piste</span>
-              <span style={styles.detailValue}>
-                {display.piste ? JSON.parse(display.piste).join(', ') : '—'}
-              </span>
-            </div>
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Time Allocation</span>
-              <span style={styles.detailValue}>
-                Slopes {display.timeSlopes}%, Eating {display.timeEating}%,
-                Après {display.timeApres}%, Hotel Chill {display.timeHotel}%
-              </span>
-            </div>
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Accommodation</span>
-              <span style={styles.detailValue}>
-                {display.accommodation
-                  ? JSON.parse(display.accommodation).join(', ')
-                  : '—'}
-              </span>
-            </div>
-            <div style={styles.detailRow}>
-              <span style={styles.detailLabel}>Most Important</span>
-              <span style={styles.detailValue}>
-                {display.mostImportantAspect || '—'}
-              </span>
-            </div>
-            {!editing && (
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                style={styles.editButton}
-              >
-                Edit
-              </button>
-            )}
-          </div>
-        )}
-        {editing && (
-          <PreferencesForm
-            userId={userId}
-            initial={savedPreferences ?? initial}
-            onSaved={(prefs) => {
-              setSavedPreferences(prefs)
-              setEditing(false)
-              onSaved(prefs)
-            }}
-            onCancel={() => setEditing(false)}
-            createPreferences={createPreferences}
-            updatePreferences={updatePreferences}
-          />
-        )}
+        <PreferencesForm
+          userId={userId}
+          initial={savedPreferences ?? initial}
+          onSaved={(prefs) => {
+            setSavedPreferences(prefs)
+            onSaved(prefs)
+            onClose()
+          }}
+          onCancel={onClose}
+          createPreferences={createPreferences}
+          updatePreferences={updatePreferences}
+        />
       </div>
     </div>
   )
@@ -192,45 +127,5 @@ const styles = {
     cursor: 'pointer',
     padding: '4px 8px',
     lineHeight: 1,
-  },
-  readOnly: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '12px',
-    marginBottom: '0',
-    paddingBottom: '20px',
-  },
-  detailRow: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '12px',
-  },
-  detailLabel: {
-    fontFamily: fonts.body,
-    fontSize: '11px',
-    fontWeight: '500',
-    color: colors.textSecondary,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-    minWidth: '130px',
-  },
-  detailValue: {
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    color: colors.textData,
-    lineHeight: '1.4',
-  },
-  editButton: {
-    marginTop: '4px',
-    padding: '8px 20px',
-    borderRadius: '7px',
-    border: 'none',
-    background: colors.accent,
-    color: colors.bgPrimary,
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    alignSelf: 'flex-end',
   },
 } as const
