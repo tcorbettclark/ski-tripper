@@ -425,17 +425,18 @@ export default function App({
         activePollEndDate={activePollEndDate}
       />
 
-      {view === 'tripList' && (
-        <ErrorBoundary>
-          <Trips
-            user={user}
-            trips={trips}
-            onSelectTrip={handleSelectTrip}
-            onJoinedTrip={handleJoinedTrip}
-            getCoordinatorParticipant={getCoordinatorParticipant}
-          />
-        </ErrorBoundary>
-      )}
+      {view === 'tripList' &&
+        !(trips.length === 1 && !autoSelectedRef.current) && (
+          <ErrorBoundary>
+            <Trips
+              user={user}
+              trips={trips}
+              onSelectTrip={handleSelectTrip}
+              onJoinedTrip={handleJoinedTrip}
+              getCoordinatorParticipant={getCoordinatorParticipant}
+            />
+          </ErrorBoundary>
+        )}
 
       {view === 'tripDetail' && selectedTripId && selectedTrip && (
         <>
