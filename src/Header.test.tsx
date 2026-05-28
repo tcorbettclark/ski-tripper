@@ -92,4 +92,94 @@ describe('Header', () => {
     await user.click(screen.getByRole('button', { name: /alice/i }))
     expect(screen.queryByText('Preferences')).toBeNull()
   })
+
+  it('shows hamburger button on small screens in tripList view', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      value: 400,
+      configurable: true,
+    })
+    window.dispatchEvent(new Event('resize'))
+    render(<Header {...defaultProps} view="tripList" />)
+    expect(screen.getByRole('button', { name: /open menu/i }))
+  })
+
+  it('shows hamburger button on small screens in tripDetail view', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      value: 400,
+      configurable: true,
+    })
+    window.dispatchEvent(new Event('resize'))
+    render(<Header {...defaultProps} />)
+    expect(screen.getByRole('button', { name: /open menu/i }))
+  })
+
+  it('opens mobile menu with nav tabs on small screens', async () => {
+    const user = userEvent.setup()
+    Object.defineProperty(window, 'innerWidth', {
+      value: 400,
+      configurable: true,
+    })
+    window.dispatchEvent(new Event('resize'))
+    render(<Header {...defaultProps} />)
+    expect(screen.queryByText('Overview')).toBeNull()
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
+    expect(screen.getByText('Overview'))
+    expect(screen.getByText('Resorts'))
+    expect(screen.getByText('Proposals'))
+    expect(screen.getByText('Sign Out'))
+  })
+
+  it('mobile menu includes My Trips back link', async () => {
+    const user = userEvent.setup()
+    Object.defineProperty(window, 'innerWidth', {
+      value: 400,
+      configurable: true,
+    })
+    window.dispatchEvent(new Event('resize'))
+    render(<Header {...defaultProps} />)
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
+    expect(screen.getByText(/← My Trips/))
+  })
+
+  it('mobile menu calls onTripDetailTabChange when tab clicked', async () => {
+    const user = userEvent.setup()
+    const onTabChange = mock(() => {})
+    Object.defineProperty(window, 'innerWidth', {
+      value: 400,
+      configurable: true,
+    })
+    window.dispatchEvent(new Event('resize'))
+    render(<Header {...defaultProps} onTripDetailTabChange={onTabChange} />)
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
+    await user.click(screen.getByText('Resorts'))
+    expect(onTabChange).toHaveBeenCalledWith('resorts')
+  })
+
+  it('shows Preferences in mobile menu when onOpenPreferences provided', async () => {
+    const user = userEvent.setup()
+    Object.defineProperty(window, 'innerWidth', {
+      value: 400,
+      configurable: true,
+    })
+    window.dispatchEvent(new Event('resize'))
+    render(
+      <Header
+        {...defaultProps}
+        view="tripList"
+        onOpenPreferences={mock(() => {})}
+      />
+    )
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
+    expect(screen.getByRole('menuitem', { name: /preferences/i }))
+  })
+
+  it('shows user name next to hamburger on small screens', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      value: 400,
+      configurable: true,
+    })
+    window.dispatchEvent(new Event('resize'))
+    render(<Header {...defaultProps} view="tripList" />)
+    expect(screen.getByText('Alice'))
+  })
 })

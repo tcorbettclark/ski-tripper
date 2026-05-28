@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { authStyles, borders, colors, fonts, formStyles } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { formatCountdown } from './utils'
 
 interface HeaderProps {
@@ -91,6 +92,168 @@ function UserMenu({
   )
 }
 
+function NavTabs({
+  tripDetailTab,
+  onTripDetailTabChange,
+  activePollEndDate,
+}: {
+  tripDetailTab: string
+  onTripDetailTabChange: (tab: string) => void
+  activePollEndDate?: string | null
+}) {
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'resorts', label: 'Resorts' },
+    { id: 'proposals', label: 'Proposals' },
+    {
+      id: 'poll',
+      label: activePollEndDate
+        ? (() => {
+            const cd = formatCountdown(activePollEndDate)
+            return cd === 'Ended' ? 'Poll ended' : `Poll closing in ${cd}`
+          })()
+        : 'Voting',
+    },
+  ]
+
+  return (
+    <nav style={headerStyles.centerTabs}>
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          onClick={() => onTripDetailTabChange(tab.id)}
+          style={
+            tripDetailTab === tab.id
+              ? headerStyles.subTabActive
+              : headerStyles.subTab
+          }
+        >
+          {tab.label}
+        </button>
+      ))}
+    </nav>
+  )
+}
+
+function MobileMenu({
+  open,
+  onClose,
+  tripDetailTab,
+  onTripDetailTabChange,
+  onLogout,
+  logoutError,
+  onOpenPreferences,
+  activePollEndDate,
+  onViewAllTrips,
+}: {
+  open: boolean
+  onClose: () => void
+  tripDetailTab: string
+  onTripDetailTabChange: (tab: string) => void
+  onLogout: () => void
+  logoutError?: string | null
+  onOpenPreferences?: () => void
+  activePollEndDate?: string | null
+  onViewAllTrips: () => void
+}) {
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open, onClose])
+
+  if (!open) return null
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'resorts', label: 'Resorts' },
+    { id: 'proposals', label: 'Proposals' },
+    {
+      id: 'poll',
+      label: activePollEndDate
+        ? (() => {
+            const cd = formatCountdown(activePollEndDate)
+            return cd === 'Ended' ? 'Poll ended' : `Poll closing in ${cd}`
+          })()
+        : 'Voting',
+    },
+  ]
+
+  return (
+    <div style={headerStyles.mobileMenuOverlay} ref={menuRef} role="menu">
+      <button
+        type="button"
+        onClick={() => {
+          onClose()
+          onViewAllTrips()
+        }}
+        style={headerStyles.mobileMenuItem}
+        role="menuitem"
+      >
+        ← My Trips
+      </button>
+      <div style={headerStyles.mobileMenuDivider} />
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          onClick={() => {
+            onTripDetailTabChange(tab.id)
+            onClose()
+          }}
+          style={{
+            ...headerStyles.mobileMenuItem,
+            ...(tripDetailTab === tab.id
+              ? { color: colors.accent, fontWeight: '600' as const }
+              : {}),
+          }}
+          role="menuitem"
+        >
+          {tab.label}
+        </button>
+      ))}
+      <div style={headerStyles.mobileMenuDivider} />
+      {onOpenPreferences && (
+        <button
+          type="button"
+          onClick={() => {
+            onClose()
+            onOpenPreferences()
+          }}
+          style={headerStyles.mobileMenuItem}
+          role="menuitem"
+        >
+          Preferences
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => {
+          onClose()
+          onLogout()
+        }}
+        style={headerStyles.mobileMenuItem}
+        role="menuitem"
+      >
+        Sign Out
+      </button>
+      {logoutError && (
+        <p style={{ ...formStyles.error, padding: '12px 20px' }}>
+          {logoutError}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function Header({
   view,
   tripDetailTab,
@@ -102,17 +265,124 @@ export default function Header({
   onOpenPreferences,
   activePollEndDate,
 }: HeaderProps) {
-  const [_now, setNow] = useState(Date.now())
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [_now, _setNow] = useState(Date.now())
+  const _intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const isSmall = useIsSmallScreen()
+  const prevIsSmallRef = useRef(isSmall)
 
   useEffect(() => {
     if (activePollEndDate) {
-      intervalRef.current = setInterval(() => setNow(Date.now()), 1000)
+      _intervalRef.current = setInterval(() => _setNow(Date.now()), 1000)
       return () => {
-        if (intervalRef.current) clearInterval(intervalRef.current)
+        if (_intervalRef.current) clearInterval(_intervalRef.current)
       }
     }
   }, [activePollEndDate])
+
+  if (prevIsSmallRef.current !== isSmall) {
+    prevIsSmallRef.current = isSmall
+    setMobileMenuOpen(false)
+  }
+
+  if (view === 'tripList') {
+    return (
+      <header style={headerStyles.bar}>
+        <span style={{ ...authStyles.brandName, fontSize: '22px' }}>
+          ⛷ Ski Tripper
+        </span>
+        {isSmall ? (
+          <>
+            <div style={headerStyles.mobileRight}>
+              <span style={headerStyles.userNameSmall}>{userName}</span>
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen((o) => !o)}
+                style={headerStyles.hamburgerButton}
+                aria-label="Open menu"
+                aria-expanded={mobileMenuOpen}
+              >
+                <span style={headerStyles.hamburgerIcon}>☰</span>
+              </button>
+            </div>
+            {mobileMenuOpen && (
+              <div style={headerStyles.mobileMenuOverlay} role="menu">
+                {onOpenPreferences && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      onOpenPreferences()
+                    }}
+                    style={headerStyles.mobileMenuItem}
+                    role="menuitem"
+                  >
+                    Preferences
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    onLogout()
+                  }}
+                  style={headerStyles.mobileMenuItem}
+                  role="menuitem"
+                >
+                  Sign Out
+                </button>
+                {logoutError && (
+                  <p style={{ ...formStyles.error, padding: '12px 20px' }}>
+                    {logoutError}
+                  </p>
+                )}
+              </div>
+            )}
+          </>
+        ) : (
+          <UserMenu
+            userName={userName}
+            onLogout={onLogout}
+            logoutError={logoutError}
+            onOpenPreferences={onOpenPreferences}
+          />
+        )}
+      </header>
+    )
+  }
+
+  if (isSmall) {
+    return (
+      <header style={headerStyles.bar}>
+        <span style={{ ...authStyles.brandName, fontSize: '18px' }}>
+          ⛷ Ski Tripper
+        </span>
+        <div style={headerStyles.mobileRight}>
+          <span style={headerStyles.userNameSmall}>{userName}</span>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            style={headerStyles.hamburgerButton}
+            aria-label="Open menu"
+            aria-expanded={mobileMenuOpen}
+          >
+            <span style={headerStyles.hamburgerIcon}>☰</span>
+          </button>
+        </div>
+        <MobileMenu
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          tripDetailTab={tripDetailTab}
+          onTripDetailTabChange={onTripDetailTabChange}
+          onLogout={onLogout}
+          logoutError={logoutError}
+          onOpenPreferences={onOpenPreferences}
+          activePollEndDate={activePollEndDate}
+          onViewAllTrips={onViewAllTrips}
+        />
+      </header>
+    )
+  }
 
   const userMenu = (
     <UserMenu
@@ -122,17 +392,6 @@ export default function Header({
       onOpenPreferences={onOpenPreferences}
     />
   )
-
-  if (view === 'tripList') {
-    return (
-      <header style={headerStyles.bar}>
-        <span style={{ ...authStyles.brandName, fontSize: '22px' }}>
-          ⛷ Ski Tripper
-        </span>
-        {userMenu}
-      </header>
-    )
-  }
 
   return (
     <header style={headerStyles.bar}>
@@ -145,57 +404,11 @@ export default function Header({
           ← My Trips
         </button>
       </div>
-      <nav style={headerStyles.centerTabs}>
-        <button
-          type="button"
-          onClick={() => onTripDetailTabChange('overview')}
-          style={
-            tripDetailTab === 'overview'
-              ? headerStyles.subTabActive
-              : headerStyles.subTab
-          }
-        >
-          Overview
-        </button>
-        <button
-          type="button"
-          onClick={() => onTripDetailTabChange('resorts')}
-          style={
-            tripDetailTab === 'resorts'
-              ? headerStyles.subTabActive
-              : headerStyles.subTab
-          }
-        >
-          Resorts
-        </button>
-        <button
-          type="button"
-          onClick={() => onTripDetailTabChange('proposals')}
-          style={
-            tripDetailTab === 'proposals'
-              ? headerStyles.subTabActive
-              : headerStyles.subTab
-          }
-        >
-          Proposals
-        </button>
-        <button
-          type="button"
-          onClick={() => onTripDetailTabChange('poll')}
-          style={
-            tripDetailTab === 'poll'
-              ? headerStyles.subTabActive
-              : headerStyles.subTab
-          }
-        >
-          {activePollEndDate
-            ? (() => {
-                const cd = formatCountdown(activePollEndDate)
-                return cd === 'Ended' ? 'Poll ended' : `Poll closing in ${cd}`
-              })()
-            : 'Voting'}
-        </button>
-      </nav>
+      <NavTabs
+        tripDetailTab={tripDetailTab}
+        onTripDetailTabChange={onTripDetailTabChange}
+        activePollEndDate={activePollEndDate}
+      />
       {userMenu}
     </header>
   )
@@ -206,7 +419,7 @@ const headerStyles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '0 48px',
+    padding: '0 16px',
     height: '64px',
     borderBottom: borders.subtle,
     background: 'rgba(7,17,31,0.98)',
@@ -226,11 +439,6 @@ const headerStyles = {
     borderRadius: '6px',
     transition: 'background 0.15s',
     whiteSpace: 'nowrap' as const,
-  },
-  subTabs: {
-    display: 'flex',
-    gap: '4px',
-    marginLeft: 'auto',
   },
   leftControls: {
     display: 'flex',
@@ -312,5 +520,58 @@ const headerStyles = {
     cursor: 'pointer',
     textAlign: 'left' as const,
     letterSpacing: '0.02em',
+  },
+  mobileRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  userNameSmall: {
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '12px',
+    letterSpacing: '0.02em',
+  },
+  hamburgerButton: {
+    background: 'none',
+    border: 'none',
+    color: colors.textSecondary,
+    cursor: 'pointer',
+    padding: '6px',
+    borderRadius: '6px',
+    fontSize: '20px',
+    lineHeight: 1,
+  },
+  hamburgerIcon: {
+    display: 'block',
+  },
+  mobileMenuOverlay: {
+    position: 'absolute' as const,
+    top: '64px',
+    left: 0,
+    right: 0,
+    background: colors.bgCard,
+    borderBottom: borders.subtle,
+    padding: '4px 0',
+    zIndex: 200,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+  },
+  mobileMenuItem: {
+    display: 'block',
+    width: '100%',
+    padding: '12px 20px',
+    border: 'none',
+    background: 'none',
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    cursor: 'pointer',
+    textAlign: 'left' as const,
+    letterSpacing: '0.02em',
+  },
+  mobileMenuDivider: {
+    height: '1px',
+    background: borders.subtle,
+    margin: '4px 16px',
   },
 } as const
