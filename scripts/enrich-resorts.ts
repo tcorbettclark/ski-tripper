@@ -16,12 +16,14 @@ const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
 const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 const DEFAULT_MODEL = 'kimi-k2.6:cloud'
 
-const adminClient = new NodeClient()
-  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
-  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
-  .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
+function initAppwrite() {
+  const adminClient = new NodeClient()
+    .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
+    .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
+    .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
 
-const adminTablesDb = new NodeTablesDB(adminClient)
+  return new NodeTablesDB(adminClient)
+}
 
 const ollama = new Ollama({
   host: 'https://ollama.com',
@@ -363,7 +365,9 @@ interface UnenrichedResort {
   region: string
 }
 
-async function listUnenrichedResorts(): Promise<UnenrichedResort[]> {
+async function listUnenrichedResorts(
+  adminTablesDb: NodeTablesDB
+): Promise<UnenrichedResort[]> {
   console.log(
     '[listUnenrichedResorts] Fetching un-enriched resorts from database...'
   )
@@ -487,6 +491,7 @@ async function confirmEnrichedData(
 }
 
 async function writeEnrichedResort(
+  adminTablesDb: NodeTablesDB,
   resortId: string,
   data: EnrichData
 ): Promise<void> {
@@ -519,11 +524,61 @@ async function writeEnrichedResort(
   )
 }
 
-async function enrich(options: { model?: string }) {
+async function enrich(options: {
+  model?: string
+  resort?: string
+  region?: string
+  country?: string
+  output?: string
+}) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
 
+  if (options.resort) {
+    if (!options.region && !options.country) {
+      console.error(
+        '[enrich] --region or --country is required when using --resort'
+      )
+      process.exit(1)
+    }
+
+    const resortName = options.resort
+    const country = options.country ?? options.region!
+
+    console.log(
+      `[enrich] Standalone mode: enriching "${resortName}" (${country})`
+    )
+    console.log(`[enrich] Using model: ${model}\n`)
+
+    const data = await enrichResort(resortName, country, model)
+    if (!data) {
+      console.error(`[enrich] Failed to enrich "${resortName}".`)
+      process.exit(1)
+    }
+
+    if (options.output) {
+      const outputData = {
+        resortName,
+        country,
+        region: options.region,
+        ...data,
+      }
+      await Bun.write(options.output, JSON.stringify(outputData, null, 2))
+      console.log(`[enrich] Written to ${options.output}`)
+    } else {
+      displayEnrichedData(
+        { $id: '', resortName, country, region: options.region ?? '' },
+        data
+      )
+      console.log(`\n${JSON.stringify(data, null, 2)}`)
+    }
+
+    return
+  }
+
+  const adminTablesDb = initAppwrite()
+
   console.log('[enrich] Fetching un-enriched resorts from database...')
-  const resorts = await listUnenrichedResorts()
+  const resorts = await listUnenrichedResorts(adminTablesDb)
 
   if (resorts.length === 0) {
     console.log('[enrich] No un-enriched resorts found. Nothing to do.')
@@ -562,7 +617,7 @@ async function enrich(options: { model?: string }) {
     autoAccept = result.autoAcceptRest
 
     if (result.accepted) {
-      await writeEnrichedResort(resort.$id, result.data)
+      await writeEnrichedResort(adminTablesDb, resort.$id, result.data)
       enriched++
       console.log(`  [enrich] Written to database (enriched: true).`)
     } else {
@@ -588,6 +643,22 @@ program
   .option(
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
+  )
+  .option(
+    '--resort <name>',
+    'Resort name for standalone mode (skips Appwrite database)'
+  )
+  .option(
+    '--region <region>',
+    'Region for standalone mode (used as country if --country not set)'
+  )
+  .option(
+    '--country <country>',
+    'Country for standalone mode (overrides --region as country)'
+  )
+  .option(
+    '--output <path>',
+    'Write enriched JSON to a file instead of stdout (standalone mode only)'
   )
   .action(enrich)
 
