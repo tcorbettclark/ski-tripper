@@ -7,47 +7,56 @@ interface IconProps {
 const dimColor = 'rgba(100,190,230,0.14)'
 const dimOpacity = 0.2
 
-export function SkiIcon({ size = 14, color, dim }: IconProps) {
+function emojiStyle(size: number, color: string, dim: boolean | undefined) {
+  return {
+    fontSize: size,
+    lineHeight: 1,
+    color: dim ? dimColor : color,
+    filter: dim ? 'grayscale(1)' : undefined,
+    opacity: dim ? dimOpacity : undefined,
+  }
+}
+
+function EmojiIcon({
+  size = 14,
+  color,
+  dim,
+  label,
+  children,
+}: IconProps & { label: string; children: string }) {
   return (
     <span
       role="img"
-      aria-label="Ski"
-      style={{
-        fontSize: size,
-        lineHeight: 1,
-        color: dim ? dimColor : (color ?? '#3bbde8'),
-        filter: dim ? 'grayscale(1)' : undefined,
-        opacity: dim ? dimOpacity : undefined,
-      }}
+      aria-label={label}
+      style={emojiStyle(size, color ?? '#3bbde8', dim)}
     >
-      ⛷️
+      {children}
     </span>
+  )
+}
+
+export function SkiIcon({ size = 14, color, dim }: IconProps) {
+  return (
+    <EmojiIcon size={size} color={color ?? '#3bbde8'} dim={dim} label="Ski">
+      ⛷️
+    </EmojiIcon>
   )
 }
 
 export function SnowboardIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <span
-      role="img"
-      aria-label="Snowboard"
-      style={{
-        fontSize: size,
-        lineHeight: 1,
-        color: dim ? dimColor : (color ?? '#f0a050'),
-        filter: dim ? 'grayscale(1)' : undefined,
-        opacity: dim ? dimOpacity : undefined,
-      }}
+    <EmojiIcon
+      size={size}
+      color={color ?? '#f0a050'}
+      dim={dim}
+      label="Snowboard"
     >
       🏂
-    </span>
+    </EmojiIcon>
   )
 }
 
-export function BlackSlopeIcon({
-  size = 12,
-  color,
-  dim,
-}: Omit<IconProps, 'color'> & { color?: string; dim?: boolean }) {
+export function BlackSlopeIcon({ size = 12, color, dim }: IconProps) {
   return (
     <svg
       width={size}
@@ -66,11 +75,7 @@ export function BlackSlopeIcon({
   )
 }
 
-export function RedSlopeIcon({
-  size = 12,
-  color = '#c40000',
-  dim,
-}: Omit<IconProps, 'color'> & { color?: string; dim?: boolean }) {
+export function RedSlopeIcon({ size = 12, color = '#c40000', dim }: IconProps) {
   return (
     <svg
       width={size}
@@ -95,7 +100,7 @@ export function BlueSlopeIcon({
   size = 12,
   color = '#0055a4',
   dim,
-}: Omit<IconProps, 'color'> & { color?: string; dim?: boolean }) {
+}: IconProps) {
   return (
     <svg
       width={size}
@@ -160,90 +165,42 @@ export function OffPisteIcon({ size = 14, color, dim }: IconProps) {
 
 export function FiveStarHotelIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <span
-      role="img"
-      aria-label="5-star hotel"
-      style={{
-        fontSize: size,
-        lineHeight: 1,
-        color: dim ? dimColor : (color ?? '#e0a040'),
-        filter: dim ? 'grayscale(1)' : undefined,
-        opacity: dim ? dimOpacity : undefined,
-      }}
+    <EmojiIcon
+      size={size}
+      color={color ?? '#e0a040'}
+      dim={dim}
+      label="5-star hotel"
     >
       🏛️
-    </span>
+    </EmojiIcon>
   )
 }
 
 export function HotelIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <span
-      role="img"
-      aria-label="Hotel"
-      style={{
-        fontSize: size,
-        lineHeight: 1,
-        color: dim ? dimColor : (color ?? '#50b080'),
-        filter: dim ? 'grayscale(1)' : undefined,
-        opacity: dim ? dimOpacity : undefined,
-      }}
-    >
+    <EmojiIcon size={size} color={color ?? '#50b080'} dim={dim} label="Hotel">
       🏨
-    </span>
+    </EmojiIcon>
   )
 }
 
 export function ChaletIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <span
-      role="img"
-      aria-label="Chalet"
-      style={{
-        fontSize: size,
-        lineHeight: 1,
-        color: dim ? dimColor : (color ?? '#7090d0'),
-        filter: dim ? 'grayscale(1)' : undefined,
-        opacity: dim ? dimOpacity : undefined,
-      }}
-    >
+    <EmojiIcon size={size} color={color ?? '#7090d0'} dim={dim} label="Chalet">
       🏡
-    </span>
+    </EmojiIcon>
   )
 }
 
 export function GuesthouseIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <span
-      role="img"
-      aria-label="Guesthouse"
-      style={{
-        fontSize: size,
-        lineHeight: 1,
-        color: dim ? dimColor : (color ?? '#a08860'),
-        filter: dim ? 'grayscale(1)' : undefined,
-        opacity: dim ? dimOpacity : undefined,
-      }}
+    <EmojiIcon
+      size={size}
+      color={color ?? '#a08860'}
+      dim={dim}
+      label="Guesthouse"
     >
       🛏️
-    </span>
-  )
-}
-
-export function SnowflakeIcon({ size = 14, color, dim }: IconProps) {
-  return (
-    <span
-      role="img"
-      aria-label="Snow quality"
-      style={{
-        fontSize: size,
-        lineHeight: 1,
-        color: dim ? dimColor : (color ?? '#b0d8f0'),
-        filter: dim ? 'grayscale(1)' : undefined,
-        opacity: dim ? dimOpacity : undefined,
-      }}
-    >
-      ❄️
-    </span>
+    </EmojiIcon>
   )
 }

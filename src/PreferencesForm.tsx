@@ -5,6 +5,18 @@ import {
 } from './backend'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Preferences } from './types.d'
+import { parseJsonArray } from './utils'
+
+const skiSnowboardOptions = ['Ski', 'Snowboard']
+const difficultyOptions = ['Black', 'Red', 'Blue']
+const pisteOptions = ['On-Piste', 'Off-Piste']
+const accommodationOptions = [
+  '5-star hotel with spa etc',
+  '4-star or below hotel',
+  'Chalet',
+  'Pension/guesthouse',
+]
+const timeLabels = ['Slopes', 'Eating', 'Après', 'Hotel Chill']
 
 interface PreferencesFormProps {
   userId: string
@@ -21,28 +33,6 @@ interface PreferencesFormProps {
       Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
     >
   ) => Promise<Preferences>
-}
-
-const skiSnowboardOptions = ['Ski', 'Snowboard']
-const difficultyOptions = ['Black', 'Red', 'Blue']
-const pisteOptions = ['On-Piste', 'Off-Piste']
-const accommodationOptions = [
-  '5-star hotel with spa etc',
-  '4-star or below hotel',
-  'Chalet',
-  'Pension/guesthouse',
-]
-const timeLabels = ['Slopes', 'Eating', 'Après', 'Hotel Chill']
-
-function parseJsonArray(value: string | string[]): string[] {
-  if (Array.isArray(value)) return value
-  try {
-    const parsed = JSON.parse(value)
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    // fallthrough
-  }
-  return []
 }
 
 export default function PreferencesForm({

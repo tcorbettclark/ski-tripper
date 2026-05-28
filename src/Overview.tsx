@@ -35,17 +35,7 @@ import type {
   Trip,
   Vote,
 } from './types.d.ts'
-
-function parseJsonArray(value: string | string[]): string[] {
-  if (Array.isArray(value)) return value
-  try {
-    const parsed = JSON.parse(value)
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    // fallthrough
-  }
-  return []
-}
+import { parseJsonArray } from './utils'
 
 interface OverviewProps {
   user: Models.User
@@ -153,7 +143,6 @@ export default function Overview({
 
   useEffect(() => {
     if (participants.length === 0) return
-    let cancelled = false
     Promise.all(
       participants.map((p) =>
         getPreferences(p.participantUserId).then(
@@ -162,7 +151,7 @@ export default function Overview({
       )
     )
       .then((results) => {
-        if (!mountedRef.current || cancelled) return
+        if (!mountedRef.current) return
         const map: Record<string, Preferences | null> = {}
         for (const [userId, prefs] of results) {
           map[userId] = prefs
@@ -170,9 +159,6 @@ export default function Overview({
         setPreferencesMap(map)
       })
       .catch(() => {})
-    return () => {
-      cancelled = true
-    }
   }, [participants, getPreferences])
 
   useEffect(() => {
@@ -238,10 +224,7 @@ export default function Overview({
       const ski = parseJsonArray(prefs.skiSnowboard)
       const tip = ski.length > 0 ? ski.join(', ') : 'Not set'
       return (
-        <span
-          title={tip}
-          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
-        >
+        <span title={tip} style={overviewStyles.iconRow}>
           <SkiIcon dim={!ski.includes('Ski')} />
           <SnowboardIcon dim={!ski.includes('Snowboard')} />
         </span>
@@ -250,26 +233,25 @@ export default function Overview({
 
     if (column === 'diff') {
       const diff = parseJsonArray(prefs.difficulty)
-      const order: Record<string, number> = { Black: 0, Red: 1, Blue: 2 }
-      const sortedDiff = [...diff].sort(
-        (a, b) => (order[a] ?? 3) - (order[b] ?? 3)
+      const slopeOrder: Record<string, number> = { Black: 0, Red: 1, Blue: 2 }
+      const slopeIcons: Record<string, typeof BlackSlopeIcon> = {
+        Black: BlackSlopeIcon,
+        Red: RedSlopeIcon,
+        Blue: BlueSlopeIcon,
+      }
+      const tip =
+        [...diff]
+          .sort((a, b) => (slopeOrder[a] ?? 3) - (slopeOrder[b] ?? 3))
+          .join('/') || 'Not set'
+      const sorted = Object.keys(slopeOrder).sort(
+        (a, b) => slopeOrder[a] - slopeOrder[b]
       )
-      const tip = sortedDiff.length > 0 ? sortedDiff.join('/') : 'Not set'
-      const sorted = Object.keys(order).sort((a, b) => order[a] - order[b])
       return (
-        <span
-          title={tip}
-          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
-        >
-          {sorted.map((d) => (
-            <span key={d}>
-              {d === 'Black' && (
-                <BlackSlopeIcon dim={!diff.includes('Black')} />
-              )}
-              {d === 'Red' && <RedSlopeIcon dim={!diff.includes('Red')} />}
-              {d === 'Blue' && <BlueSlopeIcon dim={!diff.includes('Blue')} />}
-            </span>
-          ))}
+        <span title={tip} style={overviewStyles.iconRow}>
+          {sorted.map((d) => {
+            const Icon = slopeIcons[d]
+            return <Icon key={d} dim={!diff.includes(d)} />
+          })}
         </span>
       )
     }
@@ -278,10 +260,7 @@ export default function Overview({
       const piste = parseJsonArray(prefs.piste)
       const tip = piste.length > 0 ? piste.join(', ') : 'Not set'
       return (
-        <span
-          title={tip}
-          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
-        >
+        <span title={tip} style={overviewStyles.iconRow}>
           <OnPisteIcon dim={!piste.includes('On-Piste')} />
           <OffPisteIcon dim={!piste.includes('Off-Piste')} />
         </span>
@@ -292,10 +271,7 @@ export default function Overview({
       const accom = parseJsonArray(prefs.accommodation)
       const tip = accom.length > 0 ? accom.join(', ') : 'Not set'
       return (
-        <span
-          title={tip}
-          style={{ display: 'inline-flex', gap: '2px', alignItems: 'center' }}
-        >
+        <span title={tip} style={overviewStyles.iconRow}>
           <FiveStarHotelIcon
             dim={!accom.includes('5-star hotel with spa etc')}
           />
@@ -682,6 +658,11 @@ const overviewStyles = {
     fontFamily: fonts.body,
     fontSize: '12px',
     color: 'rgba(100,190,230,0.2)',
+  },
+  iconRow: {
+    display: 'inline-flex',
+    gap: '2px',
+    alignItems: 'center',
   },
   cellAspectLabel: {
     fontFamily: fonts.body,

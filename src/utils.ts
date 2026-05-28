@@ -52,6 +52,17 @@ export function formatCountdown(endDate: string) {
   return `${minutes}m ${seconds}s`
 }
 
+export function parseJsonArray(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value
+  try {
+    const parsed = JSON.parse(value)
+    if (Array.isArray(parsed)) return parsed
+  } catch {
+    // fallthrough
+  }
+  return []
+}
+
 export function formatRelativeTime(iso: string) {
   const date = dayjs(iso)
   const diffDays = dayjs().diff(date, 'day')
