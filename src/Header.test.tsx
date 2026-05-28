@@ -1,8 +1,14 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Header from './Header'
 import { dayjs } from './utils'
+
+let isSmallScreen = false
+
+mock.module('./useIsSmallScreen', () => ({
+  default: () => isSmallScreen,
+}))
 
 const defaultProps = {
   view: 'tripDetail',
@@ -14,6 +20,10 @@ const defaultProps = {
 }
 
 describe('Header', () => {
+  beforeEach(() => {
+    isSmallScreen = false
+  })
+
   it('renders countdown when activePollEndDate is provided', () => {
     const future = dayjs().add(2, 'day').toISOString()
     render(<Header {...defaultProps} activePollEndDate={future} />)
@@ -93,93 +103,64 @@ describe('Header', () => {
     expect(screen.queryByText('Preferences')).toBeNull()
   })
 
-  it('shows hamburger button on small screens in tripList view', () => {
-    Object.defineProperty(window, 'innerWidth', {
-      value: 400,
-      configurable: true,
+  describe('on small screens', () => {
+    beforeEach(() => {
+      isSmallScreen = true
     })
-    window.dispatchEvent(new Event('resize'))
-    render(<Header {...defaultProps} view="tripList" />)
-    expect(screen.getByRole('button', { name: /open menu/i }))
-  })
 
-  it('shows hamburger button on small screens in tripDetail view', () => {
-    Object.defineProperty(window, 'innerWidth', {
-      value: 400,
-      configurable: true,
+    it('shows hamburger button on tripList view', () => {
+      render(<Header {...defaultProps} view="tripList" />)
+      expect(screen.getByRole('button', { name: /open menu/i }))
     })
-    window.dispatchEvent(new Event('resize'))
-    render(<Header {...defaultProps} />)
-    expect(screen.getByRole('button', { name: /open menu/i }))
-  })
 
-  it('opens mobile menu with nav tabs on small screens', async () => {
-    const user = userEvent.setup()
-    Object.defineProperty(window, 'innerWidth', {
-      value: 400,
-      configurable: true,
+    it('shows hamburger button on tripDetail view', () => {
+      render(<Header {...defaultProps} />)
+      expect(screen.getByRole('button', { name: /open menu/i }))
     })
-    window.dispatchEvent(new Event('resize'))
-    render(<Header {...defaultProps} />)
-    expect(screen.queryByText('Overview')).toBeNull()
-    await user.click(screen.getByRole('button', { name: /open menu/i }))
-    expect(screen.getByText('Overview'))
-    expect(screen.getByText('Resorts'))
-    expect(screen.getByText('Proposals'))
-    expect(screen.getByText('Sign Out'))
-  })
 
-  it('mobile menu includes My Trips back link', async () => {
-    const user = userEvent.setup()
-    Object.defineProperty(window, 'innerWidth', {
-      value: 400,
-      configurable: true,
+    it('opens mobile menu with nav tabs', async () => {
+      const user = userEvent.setup()
+      render(<Header {...defaultProps} />)
+      expect(screen.queryByText('Overview')).toBeNull()
+      await user.click(screen.getByRole('button', { name: /open menu/i }))
+      expect(screen.getByText('Overview'))
+      expect(screen.getByText('Resorts'))
+      expect(screen.getByText('Proposals'))
+      expect(screen.getByText('Sign Out'))
     })
-    window.dispatchEvent(new Event('resize'))
-    render(<Header {...defaultProps} />)
-    await user.click(screen.getByRole('button', { name: /open menu/i }))
-    expect(screen.getByText(/← My Trips/))
-  })
 
-  it('mobile menu calls onTripDetailTabChange when tab clicked', async () => {
-    const user = userEvent.setup()
-    const onTabChange = mock(() => {})
-    Object.defineProperty(window, 'innerWidth', {
-      value: 400,
-      configurable: true,
+    it('mobile menu includes My Trips back link', async () => {
+      const user = userEvent.setup()
+      render(<Header {...defaultProps} />)
+      await user.click(screen.getByRole('button', { name: /open menu/i }))
+      expect(screen.getByText(/← My Trips/))
     })
-    window.dispatchEvent(new Event('resize'))
-    render(<Header {...defaultProps} onTripDetailTabChange={onTabChange} />)
-    await user.click(screen.getByRole('button', { name: /open menu/i }))
-    await user.click(screen.getByText('Resorts'))
-    expect(onTabChange).toHaveBeenCalledWith('resorts')
-  })
 
-  it('shows Preferences in mobile menu when onOpenPreferences provided', async () => {
-    const user = userEvent.setup()
-    Object.defineProperty(window, 'innerWidth', {
-      value: 400,
-      configurable: true,
+    it('mobile menu calls onTripDetailTabChange when tab clicked', async () => {
+      const user = userEvent.setup()
+      const onTabChange = mock(() => {})
+      render(<Header {...defaultProps} onTripDetailTabChange={onTabChange} />)
+      await user.click(screen.getByRole('button', { name: /open menu/i }))
+      await user.click(screen.getByText('Resorts'))
+      expect(onTabChange).toHaveBeenCalledWith('resorts')
     })
-    window.dispatchEvent(new Event('resize'))
-    render(
-      <Header
-        {...defaultProps}
-        view="tripList"
-        onOpenPreferences={mock(() => {})}
-      />
-    )
-    await user.click(screen.getByRole('button', { name: /open menu/i }))
-    expect(screen.getByRole('menuitem', { name: /preferences/i }))
-  })
 
-  it('shows user name next to hamburger on small screens', () => {
-    Object.defineProperty(window, 'innerWidth', {
-      value: 400,
-      configurable: true,
+    it('shows Preferences in mobile menu when onOpenPreferences provided', async () => {
+      const user = userEvent.setup()
+      render(
+        <Header
+          {...defaultProps}
+          view="tripList"
+          onOpenPreferences={mock(() => {})}
+        />
+      )
+      await user.click(screen.getByRole('button', { name: /open menu/i }))
+      expect(screen.getByRole('menuitem', { name: /preferences/i }))
     })
-    window.dispatchEvent(new Event('resize'))
-    render(<Header {...defaultProps} view="tripList" />)
-    expect(screen.getByText('Alice'))
+
+    it('shows user name next to hamburger', () => {
+      render(<Header {...defaultProps} view="tripList" />)
+      expect(screen.getByText('Alice'))
+    })
   })
 })

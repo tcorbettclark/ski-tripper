@@ -1,10 +1,16 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import App from './App'
 import type { Preferences, Trip } from './types.d.ts'
 import { dayjs } from './utils'
+
+let isSmallScreen = false
+
+mock.module('./useIsSmallScreen', () => ({
+  default: () => isSmallScreen,
+}))
 
 const defaultUser: Models.User = {
   $id: 'user-1',
@@ -80,6 +86,10 @@ function renderAppWithTrip(props = {}, { loggedIn = true } = {}) {
 }
 
 describe('App', () => {
+  beforeEach(() => {
+    isSmallScreen = false
+  })
+
   it('shows the login form when not authenticated', async () => {
     renderApp({}, { loggedIn: false })
     await waitFor(() => {
@@ -425,6 +435,39 @@ describe('App', () => {
     renderApp({ updateRecovery: mockUpdateRecovery }, { loggedIn: false })
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+  })
+
+  describe('on small screens', () => {
+    beforeEach(() => {
+      isSmallScreen = true
+    })
+
+    it('shows hamburger menu instead of user name button on trip list', async () => {
+      renderApp()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /open menu/i })).toBeDefined()
+      })
+      expect(screen.queryByRole('button', { name: /test user/i })).toBeNull()
+    })
+
+    it('shows user name text beside hamburger on trip list', async () => {
+      renderApp()
+      await waitFor(() => {
+        expect(screen.getByText('Test User')).toBeDefined()
+      })
+    })
+
+    it('opens mobile menu and shows sign out option', async () => {
+      const ue = userEvent.setup()
+      renderApp()
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /open menu/i })).toBeDefined()
+      })
+      await ue.click(screen.getByRole('button', { name: /open menu/i }))
+      await waitFor(() => {
+        expect(screen.getByText('Sign Out')).toBeDefined()
+      })
     })
   })
 })

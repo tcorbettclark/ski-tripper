@@ -65,3 +65,4 @@ If any fail, fix issues first before committing.
 - Use built-in Bun test matchers (`toBeNull`, `toHaveAttribute`, etc.)
 - happy-dom globals in `src/test-setup.ts`
 - Wrap render() in act() for components with async effects.
+- Test responsive behaviour by mocking `src/useIsSmallScreen.ts` (never set window innerWidth property as fragile).
