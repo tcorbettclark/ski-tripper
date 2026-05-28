@@ -479,7 +479,7 @@ export default function Overview({
       </section>
 
       <section style={overviewStyles.section}>
-        <h3 style={overviewStyles.sectionHeading}>Participants</h3>
+        <h3 style={overviewStyles.sectionHeading}>Participant Preferences</h3>
         {participantsLoading && (
           <p style={overviewStyles.loading}>Loading...</p>
         )}
