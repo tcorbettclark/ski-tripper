@@ -24,15 +24,15 @@ const slideColors = [
 const defaultSlides = [
   {
     icon: Snowflake,
-    text: 'A collaborative ski trip planning application\nCut down on the chaos!',
+    text: 'A collaborative ski trip planning application.\nCut down on the chaos!',
   },
   {
     icon: UserPlus,
-    text: 'Signup with your email, set your skiing preferences, and create or join a trip via a simple three-word code.',
+    text: 'Signup with your email, set your skiing/snowboarding holiday preferences, and create or join a trip via a simple three-word code.',
   },
   {
     icon: Mountain,
-    text: 'Browse hundreds of resorts from an AI-enriched catalogue, packed with detail.',
+    text: 'Browse thousands of resorts from an AI-enriched catalogue, packed with detail.',
   },
   {
     icon: FileText,
@@ -40,7 +40,7 @@ const defaultSlides = [
   },
   {
     icon: ThumbsUp,
-    text: 'The Trip Coordinator runs multiple rounds of voting to arrive at a consensus.',
+    text: 'The trip Coordinator runs multiple rounds of voting to arrive at a consensus.',
   },
   {
     icon: CircleDot,

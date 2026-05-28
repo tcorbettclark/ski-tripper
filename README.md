@@ -9,7 +9,7 @@ Dead simple onboarding:
   - set your personal skiing preferences once (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group sees what kind of trip everyone wants.
   - one person (who becomes the "coordinator") creates a trip and asks friends to join via a simple three-word code.
 
-Browse hundreds of resorts in one place:
+Browse thousands of resorts in one place:
   - use a fast, searchable, filterable database packed with detail: piste km, altitude range, snow reliability, transfer times, difficulty levels, and more.
   - view as a map or list (PENDING)
 
