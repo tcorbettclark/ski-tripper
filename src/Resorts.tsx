@@ -27,7 +27,7 @@ export default function Resorts({
   const [countryFilter, setCountryFilter] = useState('')
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
-  const [suitableForFilter, setSuitableForFilter] = useState<string[]>([])
+  const [suitableForFilter, setSuitableForFilter] = useState('')
   const [selectedResort, setSelectedResort] = useState<Resort | null>(null)
   const [showProposalForm, setShowProposalForm] = useState(false)
   const [proposalError, setProposalError] = useState('')
@@ -80,10 +80,8 @@ export default function Resorts({
       result = result.filter((r) => r.pisteKm >= minPisteKm)
     }
 
-    if (suitableForFilter.length > 0) {
-      result = result.filter((r) =>
-        suitableForFilter.every((level) => r.suitableFor?.includes(level))
-      )
+    if (suitableForFilter) {
+      result = result.filter((r) => r.suitableFor?.includes(suitableForFilter))
     }
 
     return result
@@ -175,7 +173,7 @@ export default function Resorts({
     setCountryFilter('')
     setRegionFilter('')
     setMinPisteKm(0)
-    setSuitableForFilter([])
+    setSuitableForFilter('')
   }, [])
 
   if (resorts.length === 0) {
@@ -232,7 +230,7 @@ export default function Resorts({
     countryFilter ||
     regionFilter ||
     minPisteKm > 0 ||
-    suitableForFilter.length > 0
+    suitableForFilter
 
   return (
     <div style={resortsStyles.container}>
@@ -272,6 +270,18 @@ export default function Resorts({
             </option>
           ))}
         </select>
+        <select
+          value={suitableForFilter}
+          onChange={(e) => setSuitableForFilter(e.target.value)}
+          style={resortsStyles.filterSelect}
+        >
+          <option value="">All Levels</option>
+          {SUITABILITY_LEVELS.map((level) => (
+            <option key={level} value={level}>
+              {level.charAt(0).toUpperCase() + level.slice(1)}
+            </option>
+          ))}
+        </select>
         <div style={resortsStyles.sliderGroup}>
           <label
             htmlFor="min-piste-km-slider"
@@ -289,24 +299,6 @@ export default function Resorts({
             onChange={(e) => setMinPisteKm(Number(e.target.value))}
             style={resortsStyles.slider}
           />
-        </div>
-        <div style={resortsStyles.checkboxGroup}>
-          {SUITABILITY_LEVELS.map((level) => (
-            <label key={level} style={resortsStyles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={suitableForFilter.includes(level)}
-                onChange={(e) => {
-                  setSuitableForFilter((prev) =>
-                    e.target.checked
-                      ? [...prev, level]
-                      : prev.filter((l) => l !== level)
-                  )
-                }}
-              />
-              {level.charAt(0).toUpperCase() + level.slice(1)}
-            </label>
-          ))}
         </div>
         <button
           type="button"
@@ -793,20 +785,6 @@ const resortsStyles = {
   slider: {
     width: '140px',
     accentColor: colors.accent,
-  },
-  checkboxGroup: {
-    display: 'flex',
-    gap: '8px',
-    alignItems: 'center',
-  },
-  checkboxLabel: {
-    fontFamily: fonts.body,
-    fontSize: '13px',
-    color: colors.textPrimary,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '3px',
-    cursor: 'pointer',
   },
   clearButton: {
     padding: '10px 16px',

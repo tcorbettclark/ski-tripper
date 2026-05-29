@@ -220,7 +220,7 @@ export default function App({
       return
     }
     listResorts()
-      .then((result) => setResorts(result.resorts))
+      .then((result) => setResorts(result.resorts.filter((r) => r.enriched)))
       .catch(() => {})
   }, [selectedTripId, listResorts])
 

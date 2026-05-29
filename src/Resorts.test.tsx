@@ -102,6 +102,7 @@ describe('Resorts', () => {
     expect(screen.getByPlaceholderText('Search resorts...')).toBeTruthy()
     expect(screen.getByDisplayValue('All Countries')).toBeTruthy()
     expect(screen.getByDisplayValue('All Regions')).toBeTruthy()
+    expect(screen.getByDisplayValue('All Levels')).toBeTruthy()
   })
 
   it('shows result count', () => {
@@ -181,5 +182,32 @@ describe('Resorts', () => {
     await waitFor(() => {
       expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
     })
+  })
+
+  it('filters resorts by suitability level', async () => {
+    const eventUser = userEvent.setup()
+    render(<Resorts {...defaultProps()} />)
+
+    const levelSelect = screen.getByDisplayValue('All Levels')
+    await eventUser.selectOptions(levelSelect, 'advanced')
+
+    await waitFor(() => {
+      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('displays all resorts passed as props', () => {
+    const extraResort: Resort = {
+      ...sampleResorts[0],
+      $id: 'resort-4',
+      resortName: 'ExtraResort',
+      country: 'Japan',
+      region: 'Hokkaido',
+      pisteKm: 50,
+      suitableFor: ['beginner'],
+    }
+    const fourResorts = [...sampleResorts, extraResort]
+    render(<Resorts {...defaultProps({ resorts: fourResorts })} />)
+    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
   })
 })
