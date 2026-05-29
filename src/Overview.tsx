@@ -472,7 +472,7 @@ export default function Overview({
       {participants.filter((p) => p.role === 'coordinator').length > 0 && (
         <div style={overviewStyles.metaLine}>
           <span style={overviewStyles.coordinatorLabel}>
-            Person to blame when it all goes wrong:
+            Trip coordinator(s) drive the process:
           </span>
           <span style={overviewStyles.coordinatorNames}>
             {participants
