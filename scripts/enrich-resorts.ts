@@ -16,6 +16,16 @@ const DEFAULT_MODEL = 'kimi-k2.6:cloud'
 const EXA_NUM_RESULTS = 7
 const EXA_MAX_CHARS = 8000 as const
 
+const SOURCE_WEBSITES = [
+  'skiresort.info',
+  'onthesnow.com',
+  'snow-forecast.com',
+  'skimuggle.com',
+  'piste-map.com',
+  'weski.com',
+  'en.wikipedia.org',
+] as const
+
 const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
   `Official website and ski area information for ${resortName} ski resort in ${country}, including piste maps, lift status, altitude, and resort facilities`
 
@@ -171,7 +181,8 @@ interface Coordinates {
 
 async function fetchCoordinates(
   resortName: string,
-  country: string
+  country: string,
+  includeDomains?: readonly string[]
 ): Promise<Coordinates | null> {
   log('info', 'enrich', 'Fetching coordinates from Exa...', 1)
   try {
@@ -179,6 +190,7 @@ async function fetchCoordinates(
       type: 'deep-lite',
       numResults: 3,
       useAutoprompt: true,
+      includeDomains: includeDomains ? [...includeDomains] : undefined,
       contents: { text: { maxCharacters: 2000 } },
       outputSchema: COORDS_SCHEMA,
     })
@@ -205,6 +217,7 @@ async function fetchCoordinates(
       type: 'auto',
       numResults: 3,
       useAutoprompt: true,
+      includeDomains: includeDomains ? [...includeDomains] : undefined,
       contents: {
         text: { maxCharacters: 2000 },
         highlights: {
@@ -366,24 +379,36 @@ function logEnrichData(
 async function enrichResort(
   resortName: string,
   country: string,
-  model: string
+  model: string,
+  includeDomains?: readonly string[]
 ): Promise<{ data: EnrichData; coords: Coordinates | null } | null> {
   const responseCodec = jsonCodec(enrichSchema)
 
   log('info', 'enrich', `Enriching "${resortName}" via Exa+LLM`)
 
-  const coords = await fetchCoordinates(resortName, country)
+  const coords = await fetchCoordinates(resortName, country, includeDomains)
 
   log('info', 'enrich', 'Fetching source text from Exa...', 1)
   const results = await exa.search(EXA_SEARCH_QUERY(resortName, country), {
     type: 'auto',
     numResults: EXA_NUM_RESULTS,
     useAutoprompt: true,
+    includeDomains: includeDomains ? [...includeDomains] : undefined,
     contents: {
       text: { maxCharacters: EXA_MAX_CHARS },
       highlights: true,
     },
   })
+
+  if (includeDomains) {
+    const domains = [
+      ...new Set(results.results.map((r) => new URL(r.url).hostname)),
+    ]
+    log('info', 'enrich', `Domains used: ${domains.join(', ')}`, 1)
+    for (const r of results.results) {
+      log('info', 'enrich', `  ${r.url}`, 2)
+    }
+  }
 
   const sourceText = results.results
     .filter((r) => r.text)
@@ -654,8 +679,10 @@ async function enrich(options: {
   region?: string
   country?: string
   output?: string
+  sources?: boolean
 }) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
+  const includeDomains = options.sources ? SOURCE_WEBSITES : undefined
 
   if (options.resort) {
     if (!options.region && !options.country) {
@@ -680,8 +707,16 @@ async function enrich(options: {
       `Resort: "${resortName}", Country: "${country}"${options.region ? `, Region: "${options.region}"` : ''}`
     )
     log('info', 'enrich', `Model: ${model}`)
+    if (includeDomains) {
+      log('info', 'enrich', `Sources: ${includeDomains.join(', ')}`)
+    }
 
-    const result = await enrichResort(resortName, country, model)
+    const result = await enrichResort(
+      resortName,
+      country,
+      model,
+      includeDomains
+    )
     if (!result) {
       log('error', 'enrich', `Failed to enrich "${resortName}".`)
       process.exit(1)
@@ -719,6 +754,9 @@ async function enrich(options: {
   log('info', 'enrich', `Mode: ${ANSI_BOLD}database${ANSI_RESET} (Appwrite)`)
   log('info', 'enrich', `Database: ${DATABASE_ID}, Table: ${RESORTS_TABLE_ID}`)
   log('info', 'enrich', `Model: ${model}`)
+  if (includeDomains) {
+    log('info', 'enrich', `Sources: ${includeDomains.join(', ')}`)
+  }
 
   const resorts = await listUnenrichedResorts(adminTablesDb)
 
@@ -755,7 +793,12 @@ async function enrich(options: {
       `[${i + 1}/${resorts.length}] Enriching ${resort.resortName} (${resort.country})...`
     )
 
-    const result = await enrichResort(resort.resortName, resort.country, model)
+    const result = await enrichResort(
+      resort.resortName,
+      resort.country,
+      model,
+      includeDomains
+    )
     if (!result) {
       log(
         'warn',
@@ -825,6 +868,10 @@ program
   .option(
     '--output <path>',
     'Write enriched JSON to a file instead of stdout (standalone mode only)'
+  )
+  .option(
+    '--sources',
+    'Restrict Exa searches to known ski info websites via includeDomains'
   )
   .action(enrich)
 

@@ -211,7 +211,8 @@ function jsonCodec<T extends z.core.$ZodType>(schema: T) {
 
 async function executeWebSearch(
   query: string,
-  exclude?: readonly string[]
+  exclude?: readonly string[],
+  includeDomains?: readonly string[]
 ): Promise<string> {
   const excludeClause =
     exclude && exclude.length > 0 ? ` -${exclude.slice(0, 20).join(' -')}` : ''
@@ -221,11 +222,22 @@ async function executeWebSearch(
     type: 'auto',
     numResults: EXA_NUM_RESULTS,
     useAutoprompt: true,
+    includeDomains: includeDomains ? [...includeDomains] : undefined,
     contents: {
       text: { maxCharacters: EXA_MAX_CHARS },
       highlights: { maxCharacters: EXA_HIGHLIGHT_CHARS },
     },
   })
+
+  if (includeDomains) {
+    const domains = [
+      ...new Set(results.results.map((r) => new URL(r.url).hostname)),
+    ]
+    log('info', 'exa', `Domains used: ${domains.join(', ')}`, 1)
+    for (const r of results.results) {
+      log('info', 'exa', `  ${r.url}`, 2)
+    }
+  }
 
   const snippets = results.results
     .filter((r) => r.text || r.highlights)
@@ -245,7 +257,8 @@ async function callLLM(
   prompt: string,
   model: string,
   maxRetries = LLM_MAX_RETRIES,
-  exclude?: readonly string[]
+  exclude?: readonly string[],
+  includeDomains?: readonly string[]
 ): Promise<Candidate[]> {
   log('info', 'llm', `Calling model ${model} (max ${maxRetries} retries)...`)
   log('info', 'llm', `Prompt: ${prompt.slice(0, 200)}...`, 1)
@@ -333,7 +346,11 @@ async function callLLM(
             const fnArgs = tc.arguments as { query?: string }
 
             if (tc.name === 'web_search' && fnArgs.query) {
-              const searchResult = await executeWebSearch(fnArgs.query, exclude)
+              const searchResult = await executeWebSearch(
+                fnArgs.query,
+                exclude,
+                includeDomains
+              )
               messages.push({
                 role: 'tool',
                 content: searchResult,
@@ -671,6 +688,7 @@ async function seed(options: {
   const batches = Number.parseInt(options.batches, 10)
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
   const sources = options.sources ? SOURCE_WEBSITES : undefined
+  const includeDomains = options.sources ? SOURCE_WEBSITES : undefined
 
   if (!REGIONS.includes(region as (typeof REGIONS)[number])) {
     log(
@@ -707,6 +725,9 @@ async function seed(options: {
     `Up to ${batches} batch(es) (model: ${model}), stopping early if no new resorts found`,
     1
   )
+  if (includeDomains) {
+    log('info', 'seed', `Sources: ${includeDomains.join(', ')}`, 1)
+  }
 
   const allCandidates: Candidate[] = []
   const seenCandidateNames = new Set<string>()
@@ -725,7 +746,8 @@ async function seed(options: {
       prompt,
       model,
       LLM_MAX_RETRIES,
-      existingResorts
+      existingResorts,
+      includeDomains
     )
 
     if (batchCandidates.length === 0) {
