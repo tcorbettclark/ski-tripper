@@ -1,32 +1,74 @@
 #!/usr/bin/env bun
 
 import * as readline from 'node:readline/promises'
+import { aiJsonSafeParse } from 'ai-json-safe-parse'
 import { Command } from 'commander'
+import type { SearchResponse } from 'exa-js'
 import Exa from 'exa-js'
-import {
-  Client as NodeClient,
-  TablesDB as NodeTablesDB,
-  Query,
-} from 'node-appwrite'
+import { Client, Query, TablesDB } from 'node-appwrite'
 import { Ollama } from 'ollama'
 import * as z from 'zod'
 import type { JSONSchema } from 'zod/v4/core'
 
+const OLLAMA_HOST = 'https://ollama.com'
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
 const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 const DEFAULT_MODEL = 'kimi-k2.6:cloud'
 
+const ANSI_RESET = '\x1b[0m'
+const ANSI_DIM = '\x1b[2m'
+const ANSI_BOLD = '\x1b[1m'
+const ANSI_CYAN = '\x1b[36m'
+const ANSI_GREEN = '\x1b[32m'
+const ANSI_YELLOW = '\x1b[33m'
+const ANSI_RED = '\x1b[31m'
+
+type LogLevel = 'info' | 'success' | 'warn' | 'error'
+
+const LEVEL_STYLES: Record<LogLevel, { color: string; prefix: string }> = {
+  info: { color: ANSI_CYAN, prefix: 'i' },
+  success: { color: ANSI_GREEN, prefix: '\u2713' },
+  warn: { color: ANSI_YELLOW, prefix: '!' },
+  error: { color: ANSI_RED, prefix: '\u2717' },
+}
+
+function log(level: LogLevel, tag: string, message: string, indent = 0): void {
+  const { color, prefix } = LEVEL_STYLES[level]
+  const pad = '  '.repeat(indent)
+  const tagStr = `${ANSI_BOLD}[${tag}]${ANSI_RESET}`
+  const prefixStr = `${color}${prefix}${ANSI_RESET}`
+  const output = `${pad}${prefixStr} ${tagStr} ${message}`
+  if (level === 'error') {
+    console.error(output)
+  } else {
+    console.log(output)
+  }
+}
+
+function logSummary(label: string, value: string, indent = 0) {
+  const pad = '  '.repeat(indent)
+  console.log(
+    `${pad}${ANSI_DIM}${label.padEnd(16)}${ANSI_RESET} ${ANSI_BOLD}${value}${ANSI_RESET}`
+  )
+}
+
 function initAppwrite() {
-  const adminClient = new NodeClient()
+  log(
+    'info',
+    'appwrite',
+    `Connecting to ${process.env.PUBLIC_APPWRITE_ENDPOINT} (project: ${process.env.PUBLIC_APPWRITE_PROJECT_ID})`
+  )
+  const adminClient = new Client()
     .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
     .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
     .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
 
-  return new NodeTablesDB(adminClient)
+  log('success', 'appwrite', 'Client initialized')
+  return new TablesDB(adminClient)
 }
 
 const ollama = new Ollama({
-  host: 'https://ollama.com',
+  host: OLLAMA_HOST,
   headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
 })
 
@@ -52,8 +94,11 @@ const webSearchTool = {
 }
 
 async function executeWebSearch(query: string): Promise<string> {
-  console.log(`[executeWebSearch] Searching for: "${query}"`)
-  const results = await exa.search(query, {
+  log('info', 'search', `Querying Exa for: "${query}"`)
+  const results: SearchResponse<{
+    text: { maxCharacters: 3000 }
+    highlights: { maxCharacters: 500 }
+  }> = await exa.search(query, {
     type: 'auto',
     numResults: 3,
     contents: {
@@ -67,13 +112,24 @@ async function executeWebSearch(query: string): Promise<string> {
     .map((r) => {
       const parts: string[] = []
       if (r.title) parts.push(`Title: ${r.title}`)
+      if (r.url) parts.push(`URL: ${r.url}`)
       if (r.text) parts.push(r.text)
       if (r.highlights) parts.push(r.highlights.join(' ... '))
       return parts.join('\n')
     })
 
-  console.log(
-    `[executeWebSearch] Got ${results.results.length} result(s) for: "${query}"`
+  for (const r of results.results) {
+    log(
+      'info',
+      'search',
+      `"${r.title ?? '(no title)'}" - ${r.url ?? '(no url)'}`,
+      1
+    )
+  }
+  log(
+    'success',
+    'search',
+    `${results.results.length} result(s) for: "${query}"`
   )
   return snippets.join('\n\n---\n\n')
 }
@@ -112,7 +168,11 @@ const enrichSchema = z.object({
     .enum(['high', 'medium', 'low'])
     .describe('Snow reliability rating'),
   skiSeasonMonths: z.string().describe('Typical ski season, e.g. "Dec-Apr"'),
-  websiteUrl: z.string().describe('Official resort website URL'),
+  websiteUrl: z
+    .string()
+    .describe(
+      'URL of the resort\'s official website for ski season visits, e.g. "https://www.zermatt.ch/en/skiing"'
+    ),
 })
 
 type EnrichData = z.infer<typeof enrichSchema>
@@ -120,20 +180,17 @@ type EnrichData = z.infer<typeof enrichSchema>
 function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   return z.codec(z.string(), schema, {
     decode: (jsonString, ctx) => {
-      try {
-        return JSON.parse(jsonString)
-      } catch (err) {
-        if (err instanceof SyntaxError) {
-          ctx.issues.push({
-            code: 'invalid_format',
-            format: 'json',
-            input: jsonString,
-            message: err.message,
-          })
-          return z.NEVER
-        }
-        throw err
+      const parsed = aiJsonSafeParse<Record<string, unknown>>(jsonString)
+      if (parsed === null) {
+        ctx.issues.push({
+          code: 'invalid_format',
+          format: 'json',
+          input: jsonString,
+          message: 'Failed to extract valid JSON from LLM response',
+        })
+        return z.NEVER as never
       }
+      return parsed as never
     },
     encode: (value) => JSON.stringify(value),
   })
@@ -202,7 +259,8 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
       },
       websiteUrl: {
         type: 'string',
-        description: 'Official resort website URL',
+        description:
+          'URL of the most informative website for ski season visits, e.g. "https://www.zermatt.ch/en/skiing"',
       },
     },
     required: [
@@ -221,6 +279,23 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
       'websiteUrl',
     ],
   }
+}
+
+function logEnrichData(data: EnrichData, indent = 0) {
+  logSummary('Coordinates', `${data.latitude}, ${data.longitude}`, indent)
+  logSummary(
+    'Altitude',
+    `${data.bottomAltitude}m - ${data.topAltitude}m`,
+    indent
+  )
+  logSummary('Airport', `${data.nearestAirport} (${data.transferTime})`, indent)
+  logSummary('Piste', `${data.pisteKm} km`, indent)
+  logSummary('Lifts', `${data.liftCount}`, indent)
+  logSummary('Difficulty', data.difficulty, indent)
+  logSummary('Snow', data.snowReliability, indent)
+  logSummary('Season', data.skiSeasonMonths, indent)
+  logSummary('Website', data.websiteUrl, indent)
+  logSummary('Description', data.description, indent)
 }
 
 async function enrichResort(
@@ -245,7 +320,7 @@ async function enrichResort(
 - liftCount: number of lifts (integer)
 - snowReliability: one of "high", "medium", "low"
 - skiSeasonMonths: typical season (e.g. "Dec-Apr")
-- websiteUrl: official resort website URL
+- websiteUrl: URL of the resort's official website for ski season visits
 
 Be accurate and specific. Use real data. Search the web if you are not certain about any facts.
 
@@ -253,8 +328,10 @@ Do not include any additional text or explanations. Return valid JSON only.`
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(
-        `  [enrichResort] Attempt ${attempt}/${maxRetries} for "${resortName}"`
+      log(
+        'info',
+        'enrich',
+        `Attempt ${attempt}/${maxRetries} for "${resortName}" (model: ${model})`
       )
       const messages: Array<{
         role: 'system' | 'user' | 'assistant' | 'tool'
@@ -271,7 +348,12 @@ Do not include any additional text or explanations. Return valid JSON only.`
       let finalContent = ''
 
       for (let round = 0; round < 5; round++) {
-        console.log(`  [enrichResort] LLM round ${round + 1}/5`)
+        log(
+          'info',
+          'enrich',
+          `LLM round ${round + 1}/5 (messages: ${messages.length})`,
+          1
+        )
         const response = await ollama.chat({
           stream: false as const,
           model,
@@ -283,8 +365,14 @@ Do not include any additional text or explanations. Return valid JSON only.`
           response.message.tool_calls &&
           response.message.tool_calls.length > 0
         ) {
-          console.log(
-            `  [enrichResort] LLM requested ${response.message.tool_calls.length} tool call(s)`
+          const toolNames = response.message.tool_calls
+            .map((tc) => tc.function.name)
+            .join(', ')
+          log(
+            'info',
+            'enrich',
+            `LLM requested ${response.message.tool_calls.length} tool call(s): ${toolNames}`,
+            1
           )
           messages.push({
             role: 'assistant',
@@ -296,8 +384,19 @@ Do not include any additional text or explanations. Return valid JSON only.`
             const fnArgs = toolCall.function.arguments as { query?: string }
 
             if (fnName === 'web_search' && fnArgs.query) {
-              console.log(`  [enrichResort] [web_search] ${fnArgs.query}`)
+              log(
+                'info',
+                'enrich',
+                `Executing web_search: "${fnArgs.query}"`,
+                2
+              )
               const searchResult = await executeWebSearch(fnArgs.query)
+              log(
+                'success',
+                'enrich',
+                `web_search returned ${searchResult.length} chars`,
+                2
+              )
               messages.push({
                 role: 'tool',
                 content: searchResult,
@@ -310,45 +409,218 @@ Do not include any additional text or explanations. Return valid JSON only.`
         }
 
         finalContent = response.message.content
-        console.log(
-          `  [enrichResort] LLM returned final response (${finalContent.length} chars)`
+        log(
+          'success',
+          'enrich',
+          `LLM returned final response (${finalContent.length} chars)`,
+          1
         )
         break
       }
 
       if (!finalContent) {
-        console.error(
-          `  [enrichResort] No final content received after tool call rounds`
+        log(
+          'error',
+          'enrich',
+          'No final content received after tool call rounds',
+          1
         )
         throw new Error('LLM returned empty response after tool calls')
       }
 
-      console.log(
-        `  [enrichResort] Parsing enriched data for "${resortName}"...`
+      log(
+        'info',
+        'enrich',
+        `Parsing JSON response (${finalContent.length} chars)...`,
+        1
       )
       const result = responseCodec.decode(finalContent, {
         reportInput: true,
       })
 
       if (!result) {
-        console.error(
-          `  [enrichResort] Failed to parse enriched data, raw response: ${finalContent.slice(0, 300)}`
+        log(
+          'error',
+          'enrich',
+          `Failed to parse JSON, raw response: ${finalContent.slice(0, 300)}`,
+          1
         )
         throw new Error('LLM returned empty or invalid response')
       }
 
-      console.log(
-        `  [enrichResort] Successfully parsed enriched data for "${resortName}"`
+      log(
+        'success',
+        'enrich',
+        `Successfully parsed enriched data for "${resortName}"`,
+        1
       )
       return result
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(
-        `  [enrichResort] Attempt ${attempt}/${maxRetries} failed: ${message}`
+      log(
+        'error',
+        'enrich',
+        `Attempt ${attempt}/${maxRetries} failed: ${message}`,
+        1
       )
       if (attempt === maxRetries) {
-        console.error(
-          `  [enrichResort] Max retries reached for "${resortName}", skipping.`
+        log(
+          'error',
+          'enrich',
+          `Max retries reached for "${resortName}", skipping.`,
+          1
+        )
+        return null
+      }
+    }
+  }
+
+  return null
+}
+
+async function enrichResortViaExa(
+  resortName: string,
+  country: string,
+  model: string,
+  maxRetries = 3
+): Promise<EnrichData | null> {
+  const responseCodec = jsonCodec(enrichSchema)
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      log(
+        'info',
+        'enrich-exa-llm',
+        `Attempt ${attempt}/${maxRetries} for "${resortName}" via Exa+LLM`
+      )
+
+      log('info', 'enrich-exa-llm', 'Fetching source text from Exa...', 1)
+      const results: SearchResponse<{ text: { maxCharacters: 5000 } }> =
+        await exa.search(
+          `"${resortName}" ${country} ski resort statistics altitude piste lifts airport`,
+          {
+            type: 'auto',
+            numResults: 5,
+            contents: { text: { maxCharacters: 5000 } },
+          }
+        )
+
+      const sourceText = results.results
+        .filter((r) => r.text)
+        .map((r) => `## ${r.title ?? 'Untitled'}\n${r.text}`)
+        .join('\n\n')
+
+      if (!sourceText) {
+        log('error', 'enrich-exa-llm', 'No source text found', 1)
+        throw new Error('No source text found from Exa')
+      }
+
+      log(
+        'success',
+        'enrich-exa-llm',
+        `Got ${sourceText.length} chars of source text from ${results.results.length} results`,
+        1
+      )
+
+      const systemPrompt = `You are a ski resort data extractor. Given source text from web searches, extract factual data about the ski resort into a JSON object matching this schema:
+
+${JSON.stringify(buildJsonSchema(), null, 2)}
+
+Rules:
+- Extract only information that is explicitly stated in the source text
+- If a value is not found in the text, use reasonable defaults but never make up specific numbers
+- For altitude, the topAltitude must be HIGHER than the bottomAltitude
+- Return valid JSON only, no explanatory text`
+
+      const userPrompt = `Extract ski resort data for "${resortName}" in ${country} from the following source text:
+
+${sourceText}`
+
+      log('info', 'enrich-exa-llm', 'Streaming LLM extraction...', 1)
+      const stream = await ollama.chat({
+        stream: true,
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+      })
+      log('info', 'enrich-exa-llm', 'Stream created, reading chunks...', 1)
+
+      let content = ''
+      let thinking = ''
+      let isThinking = true
+      for await (const chunk of stream) {
+        const thinkPart = (chunk.message as unknown as Record<string, unknown>)
+          .thinking
+        if (typeof thinkPart === 'string' && thinkPart) {
+          thinking += thinkPart
+          process.stdout.write(`${ANSI_DIM}${thinkPart}${ANSI_RESET}`)
+        }
+        if (chunk.message.content) {
+          if (isThinking) {
+            isThinking = false
+            console.log()
+            log(
+              'info',
+              'enrich-exa-llm',
+              `Model thought for ${thinking.length} chars`,
+              1
+            )
+          }
+          content += chunk.message.content
+          process.stdout.write(chunk.message.content)
+        }
+      }
+      console.log()
+      if (!content) {
+        log(
+          'error',
+          'enrich-exa-llm',
+          'LLM returned empty content after thinking',
+          1
+        )
+        throw new Error('LLM returned empty content')
+      }
+      log(
+        'info',
+        'enrich-exa-llm',
+        `LLM response received (${content.length} chars)`,
+        1
+      )
+
+      const result = responseCodec.decode(content, { reportInput: true })
+      if (!result) {
+        log(
+          'error',
+          'enrich-exa-llm',
+          `Failed to parse LLM response: ${content.slice(0, 300)}`,
+          1
+        )
+        throw new Error('Failed to parse LLM response as valid enrichment data')
+      }
+
+      log(
+        'success',
+        'enrich-exa-llm',
+        `Successfully enriched "${resortName}" via Exa+LLM`,
+        1
+      )
+      return result
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      log(
+        'error',
+        'enrich-exa-llm',
+        `Attempt ${attempt}/${maxRetries} failed: ${message}`,
+        1
+      )
+      if (attempt === maxRetries) {
+        log(
+          'error',
+          'enrich-exa-llm',
+          `Max retries reached for "${resortName}", skipping.`,
+          1
         )
         return null
       }
@@ -366,11 +638,9 @@ interface UnenrichedResort {
 }
 
 async function listUnenrichedResorts(
-  adminTablesDb: NodeTablesDB
+  adminTablesDb: TablesDB
 ): Promise<UnenrichedResort[]> {
-  console.log(
-    '[listUnenrichedResorts] Fetching un-enriched resorts from database...'
-  )
+  log('info', 'appwrite', 'Fetching un-enriched resorts from database...')
   const resorts: UnenrichedResort[] = []
   let offset = 0
   const limit = 100
@@ -393,32 +663,29 @@ async function listUnenrichedResorts(
         region: r.region as string,
       })
     }
-    console.log(
-      `[listUnenrichedResorts] Fetched ${rows.length} rows (total so far: ${resorts.length})`
+    log(
+      'info',
+      'appwrite',
+      `Fetched ${rows.length} rows (total so far: ${resorts.length})`,
+      1
     )
     if (rows.length < limit) break
     offset += limit
   }
-  console.log(
-    `[listUnenrichedResorts] Total un-enriched resorts: ${resorts.length}`
-  )
+  log('success', 'appwrite', `Total un-enriched resorts: ${resorts.length}`)
   return resorts
 }
 
 function displayEnrichedData(resort: UnenrichedResort, data: EnrichData) {
-  console.log(`\n  ${resort.resortName} (${resort.country}, ${resort.region})`)
-  console.log(`  Description:    ${data.description.slice(0, 100)}...`)
-  console.log(`  Coordinates:    ${data.latitude}, ${data.longitude}`)
+  console.log()
+  const location = resort.region
+    ? `${resort.country}, ${resort.region}`
+    : resort.country
   console.log(
-    `  Altitude:       ${data.bottomAltitude}m - ${data.topAltitude}m`
+    `  ${ANSI_BOLD}${resort.resortName}${ANSI_RESET} ${ANSI_DIM}(${location})${ANSI_RESET}`
   )
-  console.log(`  Nearest airport:${data.nearestAirport} (${data.transferTime})`)
-  console.log(`  Piste:          ${data.pisteKm} km`)
-  console.log(`  Difficulty:     ${data.difficulty}`)
-  console.log(`  Lifts:          ${data.liftCount}`)
-  console.log(`  Snow:           ${data.snowReliability}`)
-  console.log(`  Season:         ${data.skiSeasonMonths}`)
-  console.log(`  Website:        ${data.websiteUrl}`)
+  console.log()
+  logEnrichData(data, 2)
 }
 
 async function confirmEnrichedData(
@@ -446,7 +713,7 @@ async function confirmEnrichedData(
     }
 
     if (trimmed === 'auto') {
-      console.log('  Auto-accepting all remaining resorts.')
+      log('info', 'enrich', 'Auto-accepting all remaining resorts.', 1)
       return { accepted: true, data, autoAcceptRest: true }
     }
 
@@ -455,7 +722,7 @@ async function confirmEnrichedData(
     }
 
     if (trimmed === 'quit') {
-      console.log('  Stopping enrichment.')
+      log('warn', 'enrich', 'Stopping enrichment.', 1)
       return { accepted: false, data, autoAcceptRest: false }
     }
 
@@ -476,7 +743,12 @@ async function confirmEnrichedData(
           if (parsed.success) {
             ;(modified[field] as typeof parsed.data) = parsed.data
           } else {
-            console.log(`      Invalid value, keeping original.`)
+            log(
+              'warn',
+              'enrich',
+              `Invalid value for ${field}, keeping original.`,
+              3
+            )
           }
         }
       }
@@ -491,12 +763,15 @@ async function confirmEnrichedData(
 }
 
 async function writeEnrichedResort(
-  adminTablesDb: NodeTablesDB,
+  adminTablesDb: TablesDB,
   resortId: string,
   data: EnrichData
 ): Promise<void> {
-  console.log(
-    `  [writeEnrichedResort] Writing enriched data for resort ${resortId}...`
+  log(
+    'info',
+    'appwrite',
+    `Writing enriched data for resort ${resortId} to database...`,
+    1
   )
   await adminTablesDb.updateRow({
     databaseId: DATABASE_ID,
@@ -519,9 +794,7 @@ async function writeEnrichedResort(
       enriched: true,
     },
   })
-  console.log(
-    `  [writeEnrichedResort] Successfully wrote enriched data for resort ${resortId}`
-  )
+  log('success', 'appwrite', `Wrote enriched data for resort ${resortId}`, 1)
 }
 
 async function enrich(options: {
@@ -530,28 +803,43 @@ async function enrich(options: {
   region?: string
   country?: string
   output?: string
+  exa?: boolean
 }) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
 
   if (options.resort) {
     if (!options.region && !options.country) {
-      console.error(
-        '[enrich] --region or --country is required when using --resort'
+      log(
+        'error',
+        'enrich',
+        '--region or --country is required when using --resort'
       )
       process.exit(1)
     }
 
     const resortName = options.resort
     const country = options.country ?? options.region!
-
-    console.log(
-      `[enrich] Standalone mode: enriching "${resortName}" (${country})`
+    log(
+      'info',
+      'enrich',
+      `Mode: ${ANSI_BOLD}standalone${ANSI_RESET} (no Appwrite database)`
     )
-    console.log(`[enrich] Using model: ${model}\n`)
+    log(
+      'info',
+      'enrich',
+      `Resort: "${resortName}", Country: "${country}"${options.region ? `, Region: "${options.region}"` : ''}`
+    )
+    log(
+      'info',
+      'enrich',
+      `Model: ${model}${options.exa ? ' (using Exa search + LLM)' : ''}`
+    )
 
-    const data = await enrichResort(resortName, country, model)
+    const data = options.exa
+      ? await enrichResortViaExa(resortName, country, model)
+      : await enrichResort(resortName, country, model)
     if (!data) {
-      console.error(`[enrich] Failed to enrich "${resortName}".`)
+      log('error', 'enrich', `Failed to enrich "${resortName}".`)
       process.exit(1)
     }
 
@@ -562,31 +850,41 @@ async function enrich(options: {
         region: options.region,
         ...data,
       }
+      log('info', 'enrich', `Writing enriched JSON to ${options.output}`)
       await Bun.write(options.output, JSON.stringify(outputData, null, 2))
-      console.log(`[enrich] Written to ${options.output}`)
+      log(
+        'success',
+        'enrich',
+        `Written ${JSON.stringify(outputData).length} bytes to ${options.output}`
+      )
     } else {
       displayEnrichedData(
         { $id: '', resortName, country, region: options.region ?? '' },
         data
       )
-      console.log(`\n${JSON.stringify(data, null, 2)}`)
     }
 
+    log('success', 'enrich', 'Done.')
     return
   }
 
   const adminTablesDb = initAppwrite()
+  log('info', 'enrich', `Mode: ${ANSI_BOLD}database${ANSI_RESET} (Appwrite)`)
+  log('info', 'enrich', `Database: ${DATABASE_ID}, Table: ${RESORTS_TABLE_ID}`)
+  log('info', 'enrich', `Model: ${model}`)
 
-  console.log('[enrich] Fetching un-enriched resorts from database...')
   const resorts = await listUnenrichedResorts(adminTablesDb)
 
   if (resorts.length === 0) {
-    console.log('[enrich] No un-enriched resorts found. Nothing to do.')
+    log('warn', 'enrich', 'No un-enriched resorts found. Nothing to do.')
     process.exit(0)
   }
 
-  console.log(`[enrich] Found ${resorts.length} un-enriched resort(s).`)
-  console.log(`[enrich] Using model: ${model}\n`)
+  log(
+    'info',
+    'enrich',
+    `Found ${resorts.length} un-enriched resort(s): ${resorts.map((r) => `${r.resortName} (${r.country})`).join(', ')}`
+  )
 
   let enriched = 0
   let skipped = 0
@@ -595,20 +893,31 @@ async function enrich(options: {
 
   for (let i = 0; i < resorts.length; i++) {
     if (stopRequested) {
-      console.log(
-        `\n[enrich] Stopped. Skipped ${resorts.length - i} remaining resort(s).`
+      log(
+        'warn',
+        'enrich',
+        `Stopped. Skipped ${resorts.length - i} remaining resort(s).`
       )
       break
     }
 
     const resort = resorts[i]
-    console.log(
-      `\n[enrich] [${i + 1}/${resorts.length}] Enriching ${resort.resortName} (${resort.country})...`
+    log(
+      'info',
+      'enrich',
+      `[${i + 1}/${resorts.length}] Enriching ${resort.resortName} (${resort.country})...`
     )
 
-    const data = await enrichResort(resort.resortName, resort.country, model)
+    const data = options.exa
+      ? await enrichResortViaExa(resort.resortName, resort.country, model)
+      : await enrichResort(resort.resortName, resort.country, model)
     if (!data) {
-      console.log(`  [enrich] Failed to enrich ${resort.resortName}, skipping.`)
+      log(
+        'warn',
+        'enrich',
+        `Failed to enrich ${resort.resortName}, skipping.`,
+        1
+      )
       skipped++
       continue
     }
@@ -619,18 +928,20 @@ async function enrich(options: {
     if (result.accepted) {
       await writeEnrichedResort(adminTablesDb, resort.$id, result.data)
       enriched++
-      console.log(`  [enrich] Written to database (enriched: true).`)
+      log('success', 'enrich', 'Written to database (enriched: true).', 1)
     } else {
       if (result.data === data && !autoAccept) {
         stopRequested = true
       }
       skipped++
-      console.log(`  [enrich] Skipped ${resort.resortName}.`)
+      log('warn', 'enrich', `Skipped ${resort.resortName}.`, 1)
     }
   }
 
-  console.log(
-    `\n[enrich] Done. Enriched: ${enriched}, Skipped: ${skipped}, Total: ${resorts.length}`
+  log(
+    'success',
+    'enrich',
+    `Done. Enriched: ${enriched}, Skipped: ${skipped}, Total: ${resorts.length}`
   )
 }
 
@@ -659,6 +970,10 @@ program
   .option(
     '--output <path>',
     'Write enriched JSON to a file instead of stdout (standalone mode only)'
+  )
+  .option(
+    '--exa',
+    'Use Exa text search + LLM extraction instead of LLM with tool-calling'
   )
   .action(enrich)
 

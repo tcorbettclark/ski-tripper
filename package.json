@@ -41,6 +41,7 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
+    "ai-json-safe-parse": "^0.3.0",
     "appwrite": "^25.2.0",
     "dayjs": "^1.11.21",
     "exa-js": "^2.13.0",
