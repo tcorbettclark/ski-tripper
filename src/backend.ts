@@ -19,7 +19,7 @@ import type {
   Trip,
   Vote,
 } from './types.d'
-import { dayjs, isValidUrl, randomThreeWords } from './utils'
+import { dayjs, isValidUrl, parseJsonArray, randomThreeWords } from './utils'
 
 export function hasSession(): boolean {
   const projectId = process.env.PUBLIC_APPWRITE_PROJECT_ID as string
@@ -1310,6 +1310,10 @@ export async function listResorts(
       queries: [Query.orderAsc('resortName'), Query.limit(5000)],
     })
   )
+  for (const resort of resorts) {
+    resort.suitableFor = parseJsonArray(resort.suitableFor as unknown as string)
+    resort.websites = parseJsonArray(resort.websites as unknown as string)
+  }
   return { resorts }
 }
 
