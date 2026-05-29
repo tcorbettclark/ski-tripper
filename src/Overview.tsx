@@ -103,7 +103,7 @@ export default function Overview({
   const [codeCopyError, setCodeCopyError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [editingDescription, setEditingDescription] = useState(false)
-  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null)
+
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -497,84 +497,59 @@ export default function Overview({
               <p style={overviewStyles.empty}>No participants</p>
             ) : (
               <div style={overviewStyles.participantGrid}>
+                <style>{`.participant-grid-row-clickable:hover { background: ${colors.bgInput}; cursor: pointer; }`}</style>
                 {sortedParticipants.map((p) => {
                   const prefs = preferencesMap[p.participantUserId]
                   const isCurrentUser =
                     p.participantUserId === user.$id && !!onOpenPreferences
-                  const isHovered = hoveredRowId === p.$id && isCurrentUser
                   return (
+                    // biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally
                     <div
                       key={p.$id}
-                      style={{
-                        ...overviewStyles.gridRow,
-                        ...(isHovered
-                          ? overviewStyles.gridRowHoverBg
-                          : undefined),
-                      }}
+                      className={
+                        isCurrentUser
+                          ? 'participant-grid-row-clickable'
+                          : undefined
+                      }
+                      style={overviewStyles.gridRow}
+                      onClick={isCurrentUser ? onOpenPreferences : undefined}
+                      onKeyDown={
+                        isCurrentUser
+                          ? (e) => {
+                              if (e.key === 'Enter') onOpenPreferences()
+                            }
+                          : undefined
+                      }
+                      tabIndex={isCurrentUser ? 0 : undefined}
+                      role={isCurrentUser ? 'button' : undefined}
                     >
-                      {isCurrentUser ? (
-                        <button
-                          type="button"
-                          style={{
-                            ...overviewStyles.nameCellClickable,
-                            flex: '0 0 auto',
-                            minWidth: colWidths.name,
-                          }}
-                          onClick={onOpenPreferences}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') onOpenPreferences()
-                          }}
-                          onMouseEnter={() => setHoveredRowId(p.$id)}
-                          onMouseLeave={() => setHoveredRowId(null)}
-                        >
-                          <span style={overviewStyles.participantName}>
-                            {p.participantUserName}
-                          </span>
-                        </button>
-                      ) : (
-                        <span
-                          style={{
-                            ...overviewStyles.nameCell,
-                            flex: '0 0 auto',
-                            minWidth: colWidths.name,
-                          }}
-                        >
-                          <span style={overviewStyles.participantName}>
-                            {p.participantUserName}
-                          </span>
+                      <span
+                        style={{
+                          ...(isCurrentUser
+                            ? overviewStyles.nameCellClickable
+                            : overviewStyles.nameCell),
+                          flex: '0 0 auto',
+                          minWidth: colWidths.name,
+                        }}
+                      >
+                        <span style={overviewStyles.participantName}>
+                          {p.participantUserName}
                         </span>
-                      )}
-                      {prefColumns.map((col) => {
-                        const clickable = isCurrentUser
-                        const Tag = clickable ? 'button' : 'span'
-                        const baseStyle = clickable
-                          ? overviewStyles.gridCellClickable
-                          : overviewStyles.gridCell
-                        return (
-                          <Tag
-                            key={col}
-                            type={clickable ? 'button' : undefined}
-                            style={{
-                              ...baseStyle,
-                              flex: '0 0 auto',
-                              minWidth: colWidths[col],
-                            }}
-                            onClick={clickable ? onOpenPreferences : undefined}
-                            onMouseEnter={
-                              clickable
-                                ? () => setHoveredRowId(p.$id)
-                                : undefined
-                            }
-                            onMouseLeave={
-                              clickable
-                                ? () => setHoveredRowId(null)
-                                : undefined
-                            }
-                          >
-                            {renderPreferenceCell(prefs, col)}
-                          </Tag>
-                        )
-                      })}
+                      </span>
+                      {prefColumns.map((col) => (
+                        <span
+                          key={col}
+                          style={{
+                            ...(isCurrentUser
+                              ? overviewStyles.nameCellClickable
+                              : overviewStyles.gridCell),
+                            flex: '0 0 auto',
+                            minWidth: colWidths[col],
+                          }}
+                        >
+                          {renderPreferenceCell(prefs, col)}
+                        </span>
+                      ))}
                     </div>
                   )
                 })}
@@ -730,9 +705,7 @@ const overviewStyles = {
     borderBottom: borders.subtle,
     minWidth: 0,
   },
-  gridRowHoverBg: {
-    background: `${colors.accent}0a`,
-  },
+
   nameCellClickable: {
     cursor: 'pointer',
     background: 'none',
