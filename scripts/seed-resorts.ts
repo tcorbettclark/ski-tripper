@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import * as readline from 'node:readline/promises'
+import { aiJsonSafeParse } from 'ai-json-safe-parse'
 import { Command } from 'commander'
 import Exa from 'exa-js'
 import {
@@ -17,22 +18,35 @@ import { REGIONS } from '../src/regions'
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
 const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 const DEFAULT_MODEL = 'kimi-k2.6:cloud'
+const OLLAMA_HOST = 'https://ollama.com'
+const EXA_NUM_RESULTS = 3
+const EXA_MAX_CHARS = 3000 as const
+const EXA_HIGHLIGHT_CHARS = 500 as const
+const LLM_MAX_RETRIES = 3
+const LLM_MAX_TOOL_ROUNDS = 5
 
-const adminClient = new NodeClient()
-  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
-  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
-  .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
+const LLM_CANDIDATE_SYSTEM_PROMPT = (jsonSchema: JSONSchema.JSONSchema) =>
+  `You are a ski resort expert. Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only include real, well-known ski resorts. Be accurate about which country each resort is in. Use the web_search tool to look up any information you are not completely certain about.`
 
-const adminTablesDb = new NodeTablesDB(adminClient)
+const LLM_CANDIDATE_USER_PROMPT = (count: number, region: string) =>
+  `List ${count} well-known ski resorts in the "${region}" region. Include the resort name and the country it is in. Return results as JSON without any introductory text.`
 
-const ollama = new Ollama({
-  host: 'https://ollama.com',
-  headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
-})
+const LLM_DEDUPE_SYSTEM_PROMPT = (jsonSchema: JSONSchema.JSONSchema) =>
+  `Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only flag clear duplicates where the same resort has a different spelling or name variant.`
 
-const exa = new Exa(process.env.EXA_API_KEY as string)
+const LLM_DEDUPE_USER_PROMPT = (
+  existingNames: string[],
+  candidateNames: string[]
+) =>
+  `Given these existing ski resorts in the database:
+${existingNames.join(', ')}
 
-const webSearchTool = {
+And these candidate resorts to add:
+${candidateNames.join(', ')}
+
+Which candidates are duplicates of existing resorts? Consider alternate spellings, abbreviations, and common name variations (e.g., "St. Anton" = "Sankt Anton", "Val d'Isere" = "Val d'Isère"). Only flag clear duplicates, not merely resorts in the same area. Only return valid JSON.`
+
+const WEB_SEARCH_TOOL_DEFINITION = {
   type: 'function' as const,
   function: {
     name: 'web_search',
@@ -51,32 +65,98 @@ const webSearchTool = {
   },
 }
 
-async function executeWebSearch(query: string): Promise<string> {
-  console.log(`[executeWebSearch] Searching for: "${query}"`)
-  const results = await exa.search(query, {
-    type: 'auto',
-    numResults: 3,
-    contents: {
-      text: { maxCharacters: 3000 },
-      highlights: { maxCharacters: 500 },
+const CANDIDATE_JSON_SCHEMA: JSONSchema.JSONSchema = {
+  type: 'object',
+  properties: {
+    resorts: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          resortName: {
+            type: 'string',
+            description: 'The commonly known name of the ski resort',
+          },
+          country: {
+            type: 'string',
+            description: 'The country where the resort is located',
+          },
+        },
+        required: ['resortName', 'country'],
+      },
     },
-  })
-
-  const snippets = results.results
-    .filter((r) => r.text || r.highlights)
-    .map((r) => {
-      const parts: string[] = []
-      if (r.title) parts.push(`Title: ${r.title}`)
-      if (r.text) parts.push(r.text)
-      if (r.highlights) parts.push(r.highlights.join(' ... '))
-      return parts.join('\n')
-    })
-
-  console.log(
-    `[executeWebSearch] Got ${results.results.length} result(s) for: "${query}"`
-  )
-  return snippets.join('\n\n---\n\n')
+  },
+  required: ['resorts'],
 }
+
+const DEDUPE_JSON_SCHEMA: JSONSchema.JSONSchema = {
+  type: 'object',
+  properties: {
+    duplicates: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          candidate: {
+            type: 'string',
+            description:
+              'The resortName from the candidates list that is a duplicate',
+          },
+          reason: {
+            type: 'string',
+            description: 'Brief explanation of why it is a duplicate',
+          },
+        },
+        required: ['candidate', 'reason'],
+      },
+    },
+  },
+  required: ['duplicates'],
+}
+
+const ANSI_RESET = '\x1b[0m'
+const ANSI_DIM = '\x1b[2m'
+const ANSI_BOLD = '\x1b[1m'
+const ANSI_CYAN = '\x1b[36m'
+const ANSI_GREEN = '\x1b[32m'
+const ANSI_YELLOW = '\x1b[33m'
+const ANSI_RED = '\x1b[31m'
+
+type LogLevel = 'info' | 'success' | 'warn' | 'error'
+
+const LEVEL_STYLES: Record<LogLevel, { color: string; prefix: string }> = {
+  info: { color: ANSI_CYAN, prefix: 'i' },
+  success: { color: ANSI_GREEN, prefix: '\u2713' },
+  warn: { color: ANSI_YELLOW, prefix: '!' },
+  error: { color: ANSI_RED, prefix: '\u2717' },
+}
+
+function log(level: LogLevel, tag: string, message: string, indent = 0): void {
+  const { color, prefix } = LEVEL_STYLES[level]
+  const pad = '  '.repeat(indent)
+  const tagStr = `${ANSI_BOLD}[${tag}]${ANSI_RESET}`
+  const prefixStr = `${color}${prefix}${ANSI_RESET}`
+  const output = `${pad}${prefixStr} ${tagStr} ${message}`
+  if (level === 'error') {
+    console.error(output)
+  } else {
+    console.log(output)
+  }
+}
+
+const adminClient = new NodeClient()
+  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
+  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
+  .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
+
+const adminTablesDb = new NodeTablesDB(adminClient)
+
+const ollama = new Ollama({
+  host: OLLAMA_HOST,
+  headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
+})
+
+const exa = new Exa(process.env.EXA_API_KEY as string)
 
 const candidateSchema = z.object({
   resorts: z.array(
@@ -94,60 +174,60 @@ type Candidate = z.infer<typeof candidateSchema>['resorts'][number]
 function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   return z.codec(z.string(), schema, {
     decode: (jsonString, ctx) => {
-      try {
-        return JSON.parse(jsonString)
-      } catch (err) {
-        if (err instanceof SyntaxError) {
-          ctx.issues.push({
-            code: 'invalid_format',
-            format: 'json',
-            input: jsonString,
-            message: err.message,
-          })
-          return z.NEVER
-        }
-        throw err
+      const parsed = aiJsonSafeParse<Record<string, unknown>>(jsonString)
+      if (parsed === null) {
+        ctx.issues.push({
+          code: 'invalid_format',
+          format: 'json',
+          input: jsonString,
+          message: 'Failed to extract valid JSON from LLM response',
+        })
+        return z.NEVER as never
       }
+      return parsed as never
     },
     encode: (value) => JSON.stringify(value),
   })
 }
 
+async function executeWebSearch(query: string): Promise<string> {
+  log('info', 'exa', `Searching for: "${query}"`, 1)
+  const results = await exa.search(query, {
+    type: 'auto',
+    numResults: EXA_NUM_RESULTS,
+    useAutoprompt: true,
+    contents: {
+      text: { maxCharacters: EXA_MAX_CHARS },
+      highlights: { maxCharacters: EXA_HIGHLIGHT_CHARS },
+    },
+  })
+
+  const snippets = results.results
+    .filter((r) => r.text || r.highlights)
+    .map((r) => {
+      const parts: string[] = []
+      if (r.title) parts.push(`Title: ${r.title}`)
+      if (r.text) parts.push(r.text)
+      if (r.highlights) parts.push(r.highlights.join(' ... '))
+      return parts.join('\n')
+    })
+
+  log('success', 'exa', `Got ${results.results.length} result(s)`, 1)
+  return snippets.join('\n\n---\n\n')
+}
+
 async function callLLM(
   prompt: string,
   model: string,
-  maxRetries = 3
+  maxRetries = LLM_MAX_RETRIES
 ): Promise<Candidate[]> {
-  console.log(`[callLLM] Calling model ${model} (max ${maxRetries} retries)...`)
-  console.log(`[callLLM] Prompt: ${prompt.slice(0, 200)}...`)
+  log('info', 'llm', `Calling model ${model} (max ${maxRetries} retries)...`)
+  log('info', 'llm', `Prompt: ${prompt.slice(0, 200)}...`, 1)
   const responseCodec = jsonCodec(candidateSchema)
-  const jsonSchema: JSONSchema.JSONSchema = {
-    type: 'object',
-    properties: {
-      resorts: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            resortName: {
-              type: 'string',
-              description: 'The commonly known name of the ski resort',
-            },
-            country: {
-              type: 'string',
-              description: 'The country where the resort is located',
-            },
-          },
-          required: ['resortName', 'country'],
-        },
-      },
-    },
-    required: ['resorts'],
-  }
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`[callLLM] Attempt ${attempt}/${maxRetries}`)
+      log('info', 'llm', `Attempt ${attempt}/${maxRetries}`, 1)
       const messages: Array<{
         role: 'system' | 'user' | 'assistant' | 'tool'
         content: string
@@ -155,28 +235,31 @@ async function callLLM(
       }> = [
         {
           role: 'system',
-          content: `You are a ski resort expert. Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only include real, well-known ski resorts. Be accurate about which country each resort is in. Use the web_search tool to look up any information you are not completely certain about.`,
+          content: LLM_CANDIDATE_SYSTEM_PROMPT(CANDIDATE_JSON_SCHEMA),
         },
         { role: 'user', content: prompt },
       ]
 
       let finalContent = ''
 
-      for (let round = 0; round < 5; round++) {
-        console.log(`[callLLM] LLM round ${round + 1}/5`)
+      for (let round = 0; round < LLM_MAX_TOOL_ROUNDS; round++) {
+        log('info', 'llm', `Tool round ${round + 1}/${LLM_MAX_TOOL_ROUNDS}`, 2)
         const response = await ollama.chat({
           stream: false as const,
           model,
           messages,
-          tools: [webSearchTool],
+          tools: [WEB_SEARCH_TOOL_DEFINITION],
         })
 
         if (
           response.message.tool_calls &&
           response.message.tool_calls.length > 0
         ) {
-          console.log(
-            `[callLLM] LLM requested ${response.message.tool_calls.length} tool call(s)`
+          log(
+            'info',
+            'llm',
+            `LLM requested ${response.message.tool_calls.length} tool call(s)`,
+            2
           )
           messages.push({
             role: 'assistant',
@@ -188,7 +271,6 @@ async function callLLM(
             const fnArgs = toolCall.function.arguments as { query?: string }
 
             if (fnName === 'web_search' && fnArgs.query) {
-              console.log(`[callLLM] [web_search] ${fnArgs.query}`)
               const searchResult = await executeWebSearch(fnArgs.query)
               messages.push({
                 role: 'tool',
@@ -202,15 +284,21 @@ async function callLLM(
         }
 
         finalContent = response.message.content
-        console.log(
-          `[callLLM] LLM returned final response (${finalContent.length} chars)`
+        log(
+          'info',
+          'llm',
+          `LLM returned final response (${finalContent.length} chars)`,
+          2
         )
         break
       }
 
       if (!finalContent) {
-        console.error(
-          `[callLLM] No final content received after tool call rounds`
+        log(
+          'error',
+          'llm',
+          'No final content received after tool call rounds',
+          2
         )
         throw new Error('LLM returned empty response after tool calls')
       }
@@ -220,23 +308,32 @@ async function callLLM(
       })
 
       if (!result) {
-        console.error(
-          `[callLLM] Attempt ${attempt}: decode returned null/falsy, raw response: ${finalContent.slice(0, 300)}`
+        log(
+          'error',
+          'llm',
+          `Attempt ${attempt}: decode returned null, raw: ${finalContent.slice(0, 300)}`,
+          2
         )
         throw new Error('LLM returned empty or invalid response')
       }
 
-      console.log(
-        `[callLLM] Successfully parsed ${result.resorts.length} candidate(s)`
+      log(
+        'success',
+        'llm',
+        `Successfully parsed ${result.resorts.length} candidate(s)`,
+        1
       )
       return result.resorts
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(
-        `[callLLM] Attempt ${attempt}/${maxRetries} failed: ${message}`
+      log(
+        'error',
+        'llm',
+        `Attempt ${attempt}/${maxRetries} failed: ${message}`,
+        1
       )
       if (attempt === maxRetries) {
-        console.error('[callLLM] Max retries reached, skipping this batch.')
+        log('error', 'llm', 'Max retries reached, skipping this batch.')
         return []
       }
     }
@@ -246,9 +343,7 @@ async function callLLM(
 }
 
 async function listAllResortNames(): Promise<string[]> {
-  console.log(
-    '[listAllResortNames] Fetching existing resort names from database...'
-  )
+  log('info', 'appwrite', 'Fetching existing resort names from database...')
   const names: string[] = []
   let offset = 0
   const limit = 100
@@ -261,13 +356,16 @@ async function listAllResortNames(): Promise<string[]> {
     for (const row of rows) {
       names.push((row as Record<string, unknown>).resortName as string)
     }
-    console.log(
-      `[listAllResortNames] Fetched ${rows.length} rows (total so far: ${names.length})`
+    log(
+      'info',
+      'appwrite',
+      `Fetched ${rows.length} rows (total: ${names.length})`,
+      1
     )
     if (rows.length < limit) break
     offset += limit
   }
-  console.log(`[listAllResortNames] Total existing resorts: ${names.length}`)
+  log('success', 'appwrite', `Total existing resorts: ${names.length}`)
   return names
 }
 
@@ -276,12 +374,17 @@ async function deduplicateWithLLM(
   existingNames: string[],
   model: string
 ): Promise<Candidate[]> {
-  console.log(
-    `[deduplicateWithLLM] Starting deduplication: ${candidates.length} candidates against ${existingNames.length} existing resorts`
+  log(
+    'info',
+    'dedup',
+    `Deduplicating ${candidates.length} candidates against ${existingNames.length} existing resorts`
   )
   if (existingNames.length === 0 || candidates.length === 0) {
-    console.log(
-      '[deduplicateWithLLM] Skipping deduplication (no existing resorts or no candidates)'
+    log(
+      'info',
+      'dedup',
+      'Skipping deduplication (no existing resorts or no candidates)',
+      1
     )
     return candidates
   }
@@ -290,20 +393,21 @@ async function deduplicateWithLLM(
 
   const afterExact = candidates.filter((c) => {
     if (existingLower.has(c.resortName.toLowerCase())) {
-      console.log(
-        `[deduplicateWithLLM] Exact duplicate removed: ${c.resortName}`
-      )
+      log('info', 'dedup', `Exact duplicate removed: ${c.resortName}`, 1)
       return false
     }
     return true
   })
 
-  console.log(
-    `[deduplicateWithLLM] After exact dedup: ${afterExact.length} candidates remain (removed ${candidates.length - afterExact.length})`
+  log(
+    'success',
+    'dedup',
+    `After exact dedup: ${afterExact.length} remain (removed ${candidates.length - afterExact.length})`,
+    1
   )
 
   if (afterExact.length === 0) {
-    console.log('[deduplicateWithLLM] No candidates remain after exact dedup')
+    log('warn', 'dedup', 'No candidates remain after exact dedup', 1)
     return afterExact
   }
 
@@ -317,42 +421,13 @@ async function deduplicateWithLLM(
   })
 
   const dedupeCodec = jsonCodec(dedupeSchema)
-  const jsonSchema: JSONSchema.JSONSchema = {
-    type: 'object',
-    properties: {
-      duplicates: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            candidate: {
-              type: 'string',
-              description:
-                'The resortName from the candidates list that is a duplicate',
-            },
-            reason: {
-              type: 'string',
-              description: 'Brief explanation of why it is a duplicate',
-            },
-          },
-          required: ['candidate', 'reason'],
-        },
-      },
-    },
-    required: ['duplicates'],
-  }
 
-  const prompt = `Given these existing ski resorts in the database:
-${existingNames.join(', ')}
-
-And these candidate resorts to add:
-${afterExact.map((c) => c.resortName).join(', ')}
-
-Which candidates are duplicates of existing resorts? Consider alternate spellings, abbreviations, and common name variations (e.g., "St. Anton" = "Sankt Anton", "Val d'Isere" = "Val d'Isère"). Only flag clear duplicates, not merely resorts in the same area. Only return valid JSON.`
-
-  console.log(
-    `[deduplicateWithLLM] Calling LLM for fuzzy deduplication with ${afterExact.length} candidates...`
+  const prompt = LLM_DEDUPE_USER_PROMPT(
+    existingNames,
+    afterExact.map((c) => c.resortName)
   )
+
+  log('info', 'dedup', 'Calling LLM for fuzzy deduplication...', 1)
   try {
     const response = await ollama.chat({
       stream: false as const,
@@ -360,7 +435,7 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
       messages: [
         {
           role: 'system',
-          content: `Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only flag clear duplicates where the same resort has a different spelling or name variant.`,
+          content: LLM_DEDUPE_SYSTEM_PROMPT(DEDUPE_JSON_SCHEMA),
         },
         { role: 'user', content: prompt },
       ],
@@ -371,8 +446,11 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
     })
 
     if (!result) {
-      console.log(
-        '[deduplicateWithLLM] LLM dedup decode returned null, keeping all candidates'
+      log(
+        'warn',
+        'dedup',
+        'LLM dedup decode returned null, keeping all candidates',
+        1
       )
       return afterExact
     }
@@ -382,22 +460,31 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
     const removed = afterExact.filter((c) => duplicateNames.has(c.resortName))
 
     if (removed.length > 0) {
-      console.log(
-        `[deduplicateWithLLM] LLM identified ${removed.length} fuzzy duplicate(s):`
+      log(
+        'info',
+        'dedup',
+        `LLM identified ${removed.length} fuzzy duplicate(s):`,
+        1
       )
       for (const d of result.duplicates) {
-        console.log(`[deduplicateWithLLM]   - ${d.candidate}: ${d.reason}`)
+        log('info', 'dedup', `${d.candidate}: ${d.reason}`, 2)
       }
     }
 
-    console.log(
-      `[deduplicateWithLLM] After fuzzy dedup: ${kept.length} candidates remain`
+    log(
+      'success',
+      'dedup',
+      `After fuzzy dedup: ${kept.length} candidates remain`,
+      1
     )
     return kept
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error(
-      `[deduplicateWithLLM] Deduplication LLM call failed: ${message}. Keeping all candidates.`
+    log(
+      'error',
+      'dedup',
+      `Deduplication LLM call failed: ${message}. Keeping all candidates.`,
+      1
     )
     return afterExact
   }
@@ -405,14 +492,18 @@ Which candidates are duplicates of existing resorts? Consider alternate spelling
 
 async function confirmWithUser(candidates: Candidate[]): Promise<Candidate[]> {
   if (candidates.length === 0) {
-    console.log('No candidates to review.')
+    log('warn', 'seed', 'No candidates to review.')
     return []
   }
 
-  console.log('\nProposed resorts to add:')
+  console.log()
+  console.log(`  ${ANSI_BOLD}Proposed resorts to add:${ANSI_RESET}`)
   for (const [i, c] of candidates.entries()) {
-    console.log(`  ${i + 1}. ${c.resortName} (${c.country})`)
+    console.log(
+      `  ${ANSI_CYAN}${i + 1}.${ANSI_RESET} ${ANSI_BOLD}${c.resortName}${ANSI_RESET} ${ANSI_DIM}(${c.country})${ANSI_RESET}`
+    )
   }
+  console.log()
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -420,7 +511,7 @@ async function confirmWithUser(candidates: Candidate[]): Promise<Candidate[]> {
   })
 
   try {
-    const answer = await rl.question('\nAccept all? (y/n/remove): ')
+    const answer = await rl.question('  Accept all? (y/n/remove): ')
     const trimmed = answer.trim().toLowerCase()
 
     if (trimmed === 'y' || trimmed === '') {
@@ -450,13 +541,18 @@ async function writeResorts(
   candidates: Candidate[],
   region: string
 ): Promise<void> {
-  console.log(
-    `[writeResorts] Writing ${candidates.length} resort(s) to database (region: ${region})...`
+  log(
+    'info',
+    'appwrite',
+    `Writing ${candidates.length} resort(s) (region: ${region})...`
   )
   let created = 0
   for (const candidate of candidates) {
-    console.log(
-      `[writeResorts] Creating: ${candidate.resortName} (${candidate.country}) [region=${region}]`
+    log(
+      'info',
+      'appwrite',
+      `Creating: ${candidate.resortName} (${candidate.country}) [region=${region}]`,
+      1
     )
     await adminTablesDb.createRow({
       databaseId: DATABASE_ID,
@@ -470,12 +566,17 @@ async function writeResorts(
       },
     })
     created++
-    console.log(
-      `[writeResorts] Created: ${candidate.resortName} (${candidate.country}) [enriched=false]`
+    log(
+      'success',
+      'appwrite',
+      `Created: ${candidate.resortName} (${candidate.country}) [enriched=false]`,
+      1
     )
   }
-  console.log(
-    `[writeResorts] Done. Created ${created}/${candidates.length} resort(s).`
+  log(
+    'success',
+    'appwrite',
+    `Done. Created ${created}/${candidates.length} resort(s).`
   )
 }
 
@@ -483,59 +584,105 @@ async function seed(options: {
   region: string
   count: string
   model?: string
+  dryRun?: boolean
 }) {
   const region = options.region
   const count = Number.parseInt(options.count, 10)
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
 
   if (!REGIONS.includes(region as (typeof REGIONS)[number])) {
-    console.error(
+    log(
+      'error',
+      'seed',
       `Unknown region "${region}". Valid regions:\n${REGIONS.map((r) => `  - ${r}`).join('\n')}`
     )
     process.exit(1)
   }
 
   if (Number.isNaN(count) || count < 1) {
-    console.error(
+    log(
+      'error',
+      'seed',
       `Invalid count "${options.count}". Must be a positive integer.`
     )
     process.exit(1)
   }
 
-  console.log(`[seed] Seeding resorts for region: ${region}`)
-  console.log(
-    `[seed] Requesting ${count} candidate(s) from LLM (model: ${model})...\n`
+  const dryRun = options.dryRun ?? false
+
+  if (dryRun) {
+    log(
+      'info',
+      'seed',
+      `${ANSI_BOLD}Dry run mode${ANSI_RESET} (no database reads or writes)`
+    )
+  }
+
+  log('info', 'seed', `Seeding resorts for region: ${region}`)
+  log(
+    'info',
+    'seed',
+    `Requesting ${count} candidate(s) from LLM (model: ${model})`,
+    1
   )
 
-  const prompt = `List ${count} well-known ski resorts in the "${region}" region. Include the resort name and the country it is in. Return results as JSON without any introductory text.`
+  const prompt = LLM_CANDIDATE_USER_PROMPT(count, region)
 
   const candidates = await callLLM(prompt, model)
   if (candidates.length === 0) {
-    console.error('[seed] No candidates returned from LLM. Aborting.')
+    log('error', 'seed', 'No candidates returned from LLM. Aborting.')
     process.exit(1)
   }
 
-  console.log(`[seed] LLM returned ${candidates.length} candidate(s):\n`)
+  console.log()
+  log('success', 'seed', `LLM returned ${candidates.length} candidate(s):`)
   for (const c of candidates) {
-    console.log(`  - ${c.resortName} (${c.country})`)
+    log('info', 'seed', `${c.resortName} (${c.country})`, 1)
   }
 
-  const existingNames = await listAllResortNames()
-  console.log(
-    `[seed] Found ${existingNames.length} existing resort(s) in database.`
-  )
+  const existingNames = dryRun ? [] : await listAllResortNames()
+  if (!dryRun) {
+    log(
+      'info',
+      'seed',
+      `Found ${existingNames.length} existing resort(s) in database.`,
+      1
+    )
+  }
 
   const afterDedup = await deduplicateWithLLM(candidates, existingNames, model)
-  console.log(`\n[seed] After deduplication: ${afterDedup.length} candidate(s)`)
+  log(
+    'success',
+    'seed',
+    `After deduplication: ${afterDedup.length} candidate(s)`
+  )
 
-  const confirmed = await confirmWithUser(afterDedup)
+  const confirmed = dryRun ? afterDedup : await confirmWithUser(afterDedup)
   if (confirmed.length === 0) {
-    console.log('[seed] No resorts confirmed. Aborting.')
+    log('warn', 'seed', 'No resorts confirmed. Aborting.')
     process.exit(0)
   }
 
-  console.log(`\n[seed] Writing ${confirmed.length} resort(s) to database...`)
-  await writeResorts(confirmed, region)
+  console.log()
+  if (dryRun) {
+    log(
+      'info',
+      'seed',
+      `${confirmed.length} resort(s) would be written (region: ${region}):`
+    )
+    for (const c of confirmed) {
+      log(
+        'info',
+        'seed',
+        `${c.resortName} (${c.country}) [region=${region}, enriched=false]`,
+        1
+      )
+    }
+    log('success', 'seed', 'Dry run complete. No resorts written to database.')
+  } else {
+    log('info', 'seed', `Writing ${confirmed.length} resort(s) to database...`)
+    await writeResorts(confirmed, region)
+  }
 }
 
 const program = new Command()
@@ -557,6 +704,10 @@ program
   .option(
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
+  )
+  .option(
+    '--dry-run',
+    'Run interactively without reading from or writing to the database'
   )
   .action(seed)
 
