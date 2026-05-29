@@ -221,9 +221,7 @@ export default function Resorts({
       case 'region':
         return resort.region
       case 'suitableFor':
-        return resort.suitableFor
-          ? resort.suitableFor.map((l) => l.charAt(0).toUpperCase()).join(' · ')
-          : ''
+        return ''
       case 'pisteKm':
         return resort.pisteKm ? String(resort.pisteKm) : ''
       case 'altitudeRange':
@@ -373,9 +371,26 @@ export default function Resorts({
                   }}
                   tabIndex={col.key === 'resortName' ? 0 : -1}
                 >
-                  {col.key === 'resortName'
-                    ? resort.resortName
-                    : getCellValue(resort, col.key)}
+                  {col.key === 'resortName' ? (
+                    resort.resortName
+                  ) : col.key === 'suitableFor' && resort.suitableFor ? (
+                    <span style={resortsStyles.levelBadges}>
+                      {resort.suitableFor.map((level) => (
+                        <span
+                          key={level}
+                          style={{
+                            ...resortsStyles.levelBadge,
+                            background: SUITABILITY_COLORS[level],
+                            color: '#fff',
+                          }}
+                        >
+                          {level.charAt(0).toUpperCase()}
+                        </span>
+                      ))}
+                    </span>
+                  ) : (
+                    getCellValue(resort, col.key)
+                  )}
                 </td>
               ))}
             </>
@@ -909,6 +924,23 @@ const resortsStyles = {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     maxWidth: '200px',
+  },
+  levelBadges: {
+    display: 'inline-flex',
+    gap: '4px',
+    alignItems: 'center',
+  },
+  levelBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center' as const,
+    width: '22px',
+    height: '22px',
+    borderRadius: '11px',
+    fontSize: '11px',
+    fontFamily: fonts.body,
+    fontWeight: '600',
+    lineHeight: 1,
   },
   overlay: {
     position: 'fixed' as const,
