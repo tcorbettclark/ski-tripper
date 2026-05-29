@@ -81,10 +81,7 @@ describe('ProposalCard', () => {
     expect(screen.getByText('High')).toBeDefined()
     expect(screen.getByText('Dec-Apr')).toBeDefined()
     expect(
-      screen.getByText((content) => content.includes('45.9163'))
-    ).toBeDefined()
-    expect(
-      screen.getByText((content) => content.includes('7.7554'))
+      screen.getByRole('link', { name: 'Open in Google Maps' })
     ).toBeDefined()
   })
 

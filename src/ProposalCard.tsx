@@ -1,3 +1,4 @@
+import { MapPin } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import {
   createAccommodation as _createAccommodation,
@@ -107,7 +108,6 @@ export default function ProposalCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [discussionCollapsed, setDiscussionCollapsed] = useState(true)
   const [discussionCount, setDiscussionCount] = useState(0)
-  const [latLngHovered, setLatLngHovered] = useState(false)
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
   const [proposalCollapsed, setProposalCollapsed] = useState(false)
 
@@ -302,6 +302,17 @@ export default function ProposalCard({
               : proposal.region
                 ? ` in ${proposal.region}`
                 : ''}
+            {proposal.latitude && proposal.longitude && (
+              <a
+                href={`https://www.google.com/maps?q=${proposal.latitude},${proposal.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={styles.mapPinLink}
+                aria-label="Open in Google Maps"
+              >
+                <MapPin size={16} />
+              </a>
+            )}
           </span>
           {proposal.proposerUserName && (
             <span style={styles.headerRight}>
@@ -424,26 +435,6 @@ export default function ProposalCard({
                   label="Transfer Time"
                   value={proposal.transferTime}
                 />
-                <DetailField label="Latitude/longitude">
-                  {proposal.latitude || proposal.longitude ? (
-                    <a
-                      href={`https://www.google.com/maps?q=${proposal.latitude},${proposal.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        ...styles.websiteLinkInline,
-                        color: colors.accent,
-                        textDecoration: latLngHovered ? 'underline' : 'none',
-                      }}
-                      onMouseEnter={() => setLatLngHovered(true)}
-                      onMouseLeave={() => setLatLngHovered(false)}
-                    >
-                      {proposal.latitude}, {proposal.longitude}
-                    </a>
-                  ) : (
-                    '—'
-                  )}
-                </DetailField>
                 {proposal.websites && proposal.websites.length > 0 && (
                   <DetailField label="Websites">
                     <div
@@ -968,6 +959,14 @@ const styles = {
     color: colors.textPrimary,
     marginLeft: 'auto',
     fontStyle: 'italic',
+  },
+  mapPinLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    color: colors.accent,
+    textDecoration: 'none',
+    marginLeft: '4px',
+    verticalAlign: 'middle',
   },
   websiteLinkInline: {
     fontFamily: fonts.body,

@@ -1,4 +1,5 @@
 import type { Models } from 'appwrite'
+import { MapPin } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import { getCountryFlagUrl } from './countries'
@@ -50,7 +51,6 @@ export default function Resorts({
   const [proposalSuccess, setProposalSuccess] = useState(false)
   const [proposalSuccessName, setProposalSuccessName] = useState('')
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
-  const [latLngHovered, setLatLngHovered] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -402,9 +402,24 @@ export default function Resorts({
           >
             <div style={resortsStyles.detailHeader}>
               <h3 style={resortsStyles.detailTitle}>
-                {proposalSuccess
-                  ? `Created proposal for ${proposalSuccessName}`
-                  : selectedResort.resortName}
+                {proposalSuccess ? (
+                  `Created proposal for ${proposalSuccessName}`
+                ) : (
+                  <>
+                    {selectedResort.resortName}
+                    {selectedResort.latitude && selectedResort.longitude && (
+                      <a
+                        href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={resortsStyles.mapPinLink}
+                        aria-label="Open in Google Maps"
+                      >
+                        <MapPin size={16} />
+                      </a>
+                    )}
+                  </>
+                )}
               </h3>
               <button
                 type="button"
@@ -526,26 +541,6 @@ export default function Resorts({
                     label="Transfer Time"
                     value={selectedResort.transferTime}
                   />
-                  <DetailField label="Latitude/longitude">
-                    {selectedResort.latitude || selectedResort.longitude ? (
-                      <a
-                        href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          ...resortsStyles.websiteLinkInline,
-                          color: colors.accent,
-                          textDecoration: latLngHovered ? 'underline' : 'none',
-                        }}
-                        onMouseEnter={() => setLatLngHovered(true)}
-                        onMouseLeave={() => setLatLngHovered(false)}
-                      >
-                        {selectedResort.latitude}, {selectedResort.longitude}
-                      </a>
-                    ) : (
-                      '—'
-                    )}
-                  </DetailField>
                   {selectedResort.websites &&
                     selectedResort.websites.length > 0 && (
                       <DetailField label="Websites">
@@ -956,6 +951,15 @@ const resortsStyles = {
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  mapPinLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    color: colors.accent,
+    textDecoration: 'none',
   },
   detailCloseButton: {
     background: 'none',
