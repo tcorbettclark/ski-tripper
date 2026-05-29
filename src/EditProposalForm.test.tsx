@@ -121,6 +121,34 @@ describe('EditProposalForm', () => {
     })
   })
 
+  it('shows date validation error when submitting without dates', async () => {
+    const updateProposal = mock(() =>
+      Promise.resolve({ $id: 'p-1', resortName: 'Updated' })
+    )
+    const proposalWithoutDates: Proposal = {
+      ...sampleProposal,
+      startDate: '',
+      endDate: '',
+    }
+    renderForm({ proposal: proposalWithoutDates, updateProposal })
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()
+    })
+
+    const form = document.querySelector('form')!
+    await act(async () => {
+      form.dispatchEvent(
+        new Event('submit', { bubbles: true, cancelable: true })
+      )
+    })
+
+    expect(
+      screen.getByText('Please select both a start and end date')
+    ).toBeTruthy()
+    expect(updateProposal).not.toHaveBeenCalled()
+  })
+
   it('shows error message when updateProposal rejects', async () => {
     const updateProposal = mock(() =>
       Promise.reject(new Error('Update failed'))

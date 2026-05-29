@@ -88,13 +88,18 @@ function typeInResortInput(container: HTMLElement, value: string) {
 }
 
 async function selectDateRange(container: HTMLElement) {
-  const dayButtons = container.querySelectorAll('button[name="day"]')
-  if (dayButtons.length < 8) return
+  const dayCells = container.querySelectorAll('[data-day]')
+  const enabledDays = Array.from(dayCells).filter(
+    (cell) => !cell.hasAttribute('data-disabled')
+  )
+  if (enabledDays.length < 2) return
+  const startCell = enabledDays[0]
+  const endCell = enabledDays[6]
   await act(async () => {
-    fireEvent.click(dayButtons[0])
+    fireEvent.click(startCell.querySelector('button')!)
   })
   await act(async () => {
-    fireEvent.click(dayButtons[7])
+    fireEvent.click(endCell.querySelector('button')!)
   })
 }
 
@@ -172,6 +177,28 @@ describe('CreateProposalForm', () => {
       onDismiss,
     })
 
+    function fill(name: string, value: string) {
+      const el = container.querySelector(`[name="${name}"]`)
+      fireEvent.change(el!, { target: { name, value } })
+    }
+
+    fill('resortName', "Val d'Isère")
+    fill('country', 'France')
+    fill('region', 'Alps')
+    fill('summitAltitude', '3330')
+    fill('baseAltitude', '1850')
+    fill('nearestAirport', 'GVA')
+    fill('transferTime', '1h 30m')
+    fill('pisteKm', '300')
+    fill('liftCount', '80')
+    fill('snowReliability', 'high')
+    fill('skiSeasonMonths', 'Dec-Apr')
+    fill('websites', 'https://valdisere.com')
+    fill('latitude', '45.4475')
+    fill('longitude', '6.9219')
+    fill('description', 'Great resort.')
+    await selectDateRange(container)
+
     fireEvent.submit(container.querySelector('form')!)
 
     await waitFor(() => {
@@ -186,6 +213,28 @@ describe('CreateProposalForm', () => {
     )
     const onDismiss = mock(() => {})
     const { container } = renderForm({ createProposal, onDismiss })
+
+    function fill(name: string, value: string) {
+      const el = container.querySelector(`[name="${name}"]`)
+      fireEvent.change(el!, { target: { name, value } })
+    }
+
+    fill('resortName', "Val d'Isère")
+    fill('country', 'France')
+    fill('region', 'Alps')
+    fill('summitAltitude', '3330')
+    fill('baseAltitude', '1850')
+    fill('nearestAirport', 'GVA')
+    fill('transferTime', '1h 30m')
+    fill('pisteKm', '300')
+    fill('liftCount', '80')
+    fill('snowReliability', 'high')
+    fill('skiSeasonMonths', 'Dec-Apr')
+    fill('websites', 'https://valdisere.com')
+    fill('latitude', '45.4475')
+    fill('longitude', '6.9219')
+    fill('description', 'Great resort.')
+    await selectDateRange(container)
 
     fireEvent.submit(container.querySelector('form')!)
 
@@ -213,6 +262,28 @@ describe('CreateProposalForm', () => {
     )
     const { container } = renderForm({ createProposal })
 
+    function fill(name: string, value: string) {
+      const el = container.querySelector(`[name="${name}"]`)
+      fireEvent.change(el!, { target: { name, value } })
+    }
+
+    fill('resortName', "Val d'Isère")
+    fill('country', 'France')
+    fill('region', 'Alps')
+    fill('summitAltitude', '3330')
+    fill('baseAltitude', '1850')
+    fill('nearestAirport', 'GVA')
+    fill('transferTime', '1h 30m')
+    fill('pisteKm', '300')
+    fill('liftCount', '80')
+    fill('snowReliability', 'high')
+    fill('skiSeasonMonths', 'Dec-Apr')
+    fill('websites', 'https://valdisere.com')
+    fill('latitude', '45.4475')
+    fill('longitude', '6.9219')
+    fill('description', 'Great resort.')
+    await selectDateRange(container)
+
     fireEvent.submit(container.querySelector('form')!)
 
     await waitFor(() => {
@@ -222,6 +293,41 @@ describe('CreateProposalForm', () => {
     await act(async () => {
       resolvePromise?.({ $id: 'p-1' })
     })
+  })
+
+  it('shows date validation error when submitting without dates', async () => {
+    const createProposal = mock(() =>
+      Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })
+    )
+    const { container } = renderForm({ createProposal })
+
+    function fill(name: string, value: string) {
+      const el = container.querySelector(`[name="${name}"]`)
+      fireEvent.change(el!, { target: { name, value } })
+    }
+
+    fill('resortName', "Val d'Isère")
+    fill('country', 'France')
+    fill('region', 'Alps')
+    fill('summitAltitude', '3330')
+    fill('baseAltitude', '1850')
+    fill('nearestAirport', 'GVA')
+    fill('transferTime', '1h 30m')
+    fill('pisteKm', '300')
+    fill('liftCount', '80')
+    fill('snowReliability', 'high')
+    fill('skiSeasonMonths', 'Dec-Apr')
+    fill('websites', 'https://valdisere.com')
+    fill('latitude', '45.4475')
+    fill('longitude', '6.9219')
+    fill('description', 'Great resort.')
+
+    fireEvent.submit(container.querySelector('form')!)
+
+    expect(
+      screen.getByText('Please select both a start and end date')
+    ).toBeTruthy()
+    expect(createProposal).not.toHaveBeenCalled()
   })
 
   describe('resort autocomplete', () => {

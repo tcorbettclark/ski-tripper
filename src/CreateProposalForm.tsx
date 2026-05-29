@@ -117,6 +117,7 @@ export default function CreateProposalForm({
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [dateError, setDateError] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const suggestionsRef = useRef<HTMLDivElement>(null)
@@ -178,6 +179,11 @@ export default function CreateProposalForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!form.startDate || !form.endDate) {
+      setDateError('Please select both a start and end date')
+      return
+    }
+    setDateError('')
     setSaving(true)
     try {
       const userAccount = await accountGet()
@@ -435,9 +441,11 @@ export default function CreateProposalForm({
       <DateRangeField
         startDate={form.startDate}
         endDate={form.endDate}
-        onChange={(startDate, endDate) =>
+        onChange={(startDate, endDate) => {
           setForm((f) => ({ ...f, startDate, endDate }))
-        }
+          if (startDate && endDate) setDateError('')
+        }}
+        error={dateError}
       />
       <div style={fieldStyles.default.field}>
         <label htmlFor="description" style={fieldStyles.default.label}>

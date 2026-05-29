@@ -685,12 +685,19 @@ function ProposalForm({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [description, setDescription] = useState(resort.description || '')
+  const [dateError, setDateError] = useState('')
 
   return (
     <form
-      onSubmit={(e) =>
+      onSubmit={(e) => {
+        if (!startDate || !endDate) {
+          e.preventDefault()
+          setDateError('Please select both a start and end date')
+          return
+        }
+        setDateError('')
         onSubmit(e, resort, startDate, endDate, description, resortName)
-      }
+      }}
       style={resortsStyles.proposalForm}
     >
       <p style={resortsStyles.proposalFormSubtitle}>
@@ -719,7 +726,9 @@ function ProposalForm({
         onChange={(sd, ed) => {
           setStartDate(sd)
           setEndDate(ed)
+          if (sd && ed) setDateError('')
         }}
+        error={dateError}
       />
       <div style={resortsStyles.proposalFormField}>
         <label

@@ -51,6 +51,7 @@ export default function EditProposalForm({
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [dateError, setDateError] = useState('')
 
   function handleChange(
     e: React.ChangeEvent<
@@ -63,6 +64,11 @@ export default function EditProposalForm({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (!form.startDate || !form.endDate) {
+      setDateError('Please select both a start and end date')
+      return
+    }
+    setDateError('')
     setSaving(true)
     try {
       const updatedProposal = await updateProposal(proposal.$id, userId, {
@@ -256,9 +262,11 @@ export default function EditProposalForm({
       <DateRangeField
         startDate={form.startDate}
         endDate={form.endDate}
-        onChange={(startDate, endDate) =>
+        onChange={(startDate, endDate) => {
           setForm((f) => ({ ...f, startDate, endDate }))
-        }
+          if (startDate && endDate) setDateError('')
+        }}
+        error={dateError}
       />
       <div style={fieldStyles.default.field}>
         <label htmlFor="description" style={fieldStyles.default.label}>
