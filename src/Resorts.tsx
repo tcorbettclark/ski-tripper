@@ -34,7 +34,7 @@ export default function Resorts({
   const [proposalSaving, setProposalSaving] = useState(false)
   const [proposalSuccess, setProposalSuccess] = useState(false)
   const [proposalSuccessName, setProposalSuccessName] = useState('')
-  const [websiteHovered, setWebsiteHovered] = useState(false)
+  const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
   const [latLngHovered, setLatLngHovered] = useState(false)
 
   useEffect(() => {
@@ -482,19 +482,26 @@ export default function Resorts({
                           <span key={url}>
                             {i > 0 && ', '}
                             <a
-                              href={url}
+                              href={
+                                url.startsWith('http') ? url : `https://${url}`
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               style={{
                                 ...resortsStyles.websiteLinkInline,
-                                textDecoration: websiteHovered
-                                  ? 'underline'
-                                  : 'none',
+                                textDecoration:
+                                  hoveredWebsite === url ? 'underline' : 'none',
                               }}
-                              onMouseEnter={() => setWebsiteHovered(true)}
-                              onMouseLeave={() => setWebsiteHovered(false)}
+                              onMouseEnter={() => setHoveredWebsite(url)}
+                              onMouseLeave={() => setHoveredWebsite(null)}
                             >
-                              {new URL(url).hostname}
+                              {
+                                new URL(
+                                  url.startsWith('http')
+                                    ? url
+                                    : `https://${url}`
+                                ).hostname
+                              }
                             </a>
                           </span>
                         ))}
