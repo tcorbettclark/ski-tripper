@@ -320,12 +320,14 @@ export default function Resorts({
       </div>
 
       <div style={resortsStyles.tableContainer}>
+        <style>{`.resorts-table tr:hover td { background: ${colors.bgInput}; cursor: pointer; }`}</style>
         <TableVirtuoso
           data={filteredResorts}
           components={{
             Table: ({ style, ...props }) => (
               <table
                 {...props}
+                className="resorts-table"
                 style={{ ...style, width: '100%', borderCollapse: 'collapse' }}
               />
             ),
@@ -350,7 +352,6 @@ export default function Resorts({
                   style={{
                     ...resortsStyles.td,
                     width: col.width,
-                    cursor: 'pointer',
                   }}
                   onClick={() => handleRowClick(resort)}
                   onKeyDown={(e) => {
