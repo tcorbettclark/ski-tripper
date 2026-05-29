@@ -17,10 +17,10 @@ const EXA_NUM_RESULTS = 7
 const EXA_MAX_CHARS = 8000 as const
 
 const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
-  `Here is detailed information about the "${resortName}" ski resort in ${country}, including altitude, piste length, lift count, nearest airport, transfer time, and useful websites:`
+  `Official website and ski area information for ${resortName} ski resort in ${country}, including piste maps, lift status, altitude, and resort facilities`
 
 const EXA_COORDS_QUERY = (resortName: string, country: string) =>
-  `The geographic coordinates of the "${resortName}" ski resort in ${country}:`
+  `Location and geographic coordinates of ${resortName} ski resort in ${country}`
 
 const COORDS_SCHEMA: DeepObjectOutputSchema = {
   type: 'object',
