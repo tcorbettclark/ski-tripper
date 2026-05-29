@@ -19,17 +19,36 @@ const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
 const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 const DEFAULT_MODEL = 'kimi-k2.6:cloud'
 const OLLAMA_HOST = 'https://ollama.com'
+const SOURCE_WEBSITES = [
+  'skiresort.info',
+  'onthesnow.com',
+  'snow-forecast.com',
+  'skimuggle.com',
+  'piste-map.com',
+  'weski.com',
+  'en.wikipedia.org/wiki/List_of_ski_areas_and_resorts_in_Europe',
+] as const
+
 const EXA_NUM_RESULTS = 3
-const EXA_MAX_CHARS = 3000 as const
+const EXA_MAX_CHARS = 10000 as const
 const EXA_HIGHLIGHT_CHARS = 500 as const
 const LLM_MAX_RETRIES = 3
 const LLM_MAX_TOOL_ROUNDS = 5
 
 const LLM_CANDIDATE_SYSTEM_PROMPT = (jsonSchema: JSONSchema.JSONSchema) =>
-  `You are a ski resort expert. Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only include real, well-known ski resorts. Be accurate about which country each resort is in. Use the web_search tool to look up any information you are not completely certain about.`
+  `You are a ski resort expert. Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only include real ski resorts. Be accurate about which country each resort is in. Use the web_search tool to look up any information you are not completely certain about.`
 
-const LLM_CANDIDATE_USER_PROMPT = (count: number, region: string) =>
-  `List ${count} well-known ski resorts in the "${region}" region. Include the resort name and the country it is in. Return results as JSON without any introductory text.`
+const LLM_CANDIDATE_USER_PROMPT = (
+  region: string,
+  sources?: readonly string[],
+  existingResorts?: readonly string[]
+) => {
+  const excludeClause =
+    existingResorts && existingResorts.length > 0
+      ? ` Do NOT include any of these already-listed resorts: ${existingResorts.join(', ')}.`
+      : ''
+  return `List all the ski resorts you can find in the "${region}" region, from major well-known resorts to smaller lesser-known ones. Do not throw any resorts away. By repeated requests I am aiming for an exhaustive list of resorts. Include the resort name and the country it is in.${sources ? ` Use the web_search tool to consult these sites for comprehensive resort lists: ${sources.join(', ')}.` : ''}${excludeClause} Return results as JSON without any introductory text.`
+}
 
 const LLM_DEDUPE_SYSTEM_PROMPT = (jsonSchema: JSONSchema.JSONSchema) =>
   `Return results as raw JSON matching this schema: ${JSON.stringify(jsonSchema)}. Only flag clear duplicates where the same resort has a different spelling or name variant.`
@@ -190,8 +209,14 @@ function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   })
 }
 
-async function executeWebSearch(query: string): Promise<string> {
-  log('info', 'exa', `Searching for: "${query}"`, 1)
+async function executeWebSearch(
+  query: string,
+  exclude?: readonly string[]
+): Promise<string> {
+  const excludeClause =
+    exclude && exclude.length > 0 ? ` -${exclude.slice(0, 20).join(' -')}` : ''
+  const fullQuery = `${query}${excludeClause}`
+  log('info', 'exa', `Searching for: "${fullQuery}"`, 1)
   const results = await exa.search(query, {
     type: 'auto',
     numResults: EXA_NUM_RESULTS,
@@ -219,7 +244,8 @@ async function executeWebSearch(query: string): Promise<string> {
 async function callLLM(
   prompt: string,
   model: string,
-  maxRetries = LLM_MAX_RETRIES
+  maxRetries = LLM_MAX_RETRIES,
+  exclude?: readonly string[]
 ): Promise<Candidate[]> {
   log('info', 'llm', `Calling model ${model} (max ${maxRetries} retries)...`)
   log('info', 'llm', `Prompt: ${prompt.slice(0, 200)}...`, 1)
@@ -244,38 +270,74 @@ async function callLLM(
 
       for (let round = 0; round < LLM_MAX_TOOL_ROUNDS; round++) {
         log('info', 'llm', `Tool round ${round + 1}/${LLM_MAX_TOOL_ROUNDS}`, 2)
-        const response = await ollama.chat({
-          stream: false as const,
+        const stream = await ollama.chat({
+          stream: true,
           model,
           messages,
           tools: [WEB_SEARCH_TOOL_DEFINITION],
         })
 
-        if (
-          response.message.tool_calls &&
-          response.message.tool_calls.length > 0
-        ) {
+        let content = ''
+        let thinking = ''
+        let isThinking = true
+        const toolCalls: Array<{
+          name: string
+          arguments: Record<string, unknown>
+        }> = []
+
+        for await (const chunk of stream) {
+          const thinkPart = (
+            chunk.message as unknown as Record<string, unknown>
+          ).thinking
+          if (typeof thinkPart === 'string' && thinkPart) {
+            thinking += thinkPart
+            process.stdout.write(`${ANSI_DIM}${thinkPart}${ANSI_RESET}`)
+          }
+          if (chunk.message.content) {
+            if (isThinking) {
+              isThinking = false
+              console.log()
+              log(
+                'info',
+                'llm',
+                `Model thought for ${thinking.length} chars`,
+                2
+              )
+            }
+            content += chunk.message.content
+          }
+          if (chunk.message.tool_calls) {
+            for (const tc of chunk.message.tool_calls) {
+              toolCalls.push({
+                name: tc.function.name,
+                arguments: tc.function.arguments as Record<string, unknown>,
+              })
+            }
+          }
+        }
+        console.log()
+
+        if (toolCalls.length > 0) {
           log(
             'info',
             'llm',
-            `LLM requested ${response.message.tool_calls.length} tool call(s)`,
+            `LLM requested ${toolCalls.length} tool call(s)`,
             2
           )
           messages.push({
             role: 'assistant',
-            content: response.message.content ?? '',
+            content,
           })
 
-          for (const toolCall of response.message.tool_calls) {
-            const fnName = toolCall.function.name
-            const fnArgs = toolCall.function.arguments as { query?: string }
+          for (const tc of toolCalls) {
+            const fnArgs = tc.arguments as { query?: string }
 
-            if (fnName === 'web_search' && fnArgs.query) {
-              const searchResult = await executeWebSearch(fnArgs.query)
+            if (tc.name === 'web_search' && fnArgs.query) {
+              const searchResult = await executeWebSearch(fnArgs.query, exclude)
               messages.push({
                 role: 'tool',
                 content: searchResult,
-                tool_name: fnName,
+                tool_name: tc.name,
               })
             }
           }
@@ -283,7 +345,7 @@ async function callLLM(
           continue
         }
 
-        finalContent = response.message.content
+        finalContent = content
         log(
           'info',
           'llm',
@@ -311,9 +373,10 @@ async function callLLM(
         log(
           'error',
           'llm',
-          `Attempt ${attempt}: decode returned null, raw: ${finalContent.slice(0, 300)}`,
+          `Attempt ${attempt}: failed to parse LLM response as JSON. Full response:`,
           2
         )
+        log('error', 'llm', finalContent, 2)
         throw new Error('LLM returned empty or invalid response')
       }
 
@@ -429,8 +492,8 @@ async function deduplicateWithLLM(
 
   log('info', 'dedup', 'Calling LLM for fuzzy deduplication...', 1)
   try {
-    const response = await ollama.chat({
-      stream: false as const,
+    const stream = await ollama.chat({
+      stream: true,
       model,
       messages: [
         {
@@ -441,7 +504,29 @@ async function deduplicateWithLLM(
       ],
     })
 
-    const result = dedupeCodec.decode(response.message.content, {
+    let content = ''
+    let thinking = ''
+    let isThinking = true
+
+    for await (const chunk of stream) {
+      const thinkPart = (chunk.message as unknown as Record<string, unknown>)
+        .thinking
+      if (typeof thinkPart === 'string' && thinkPart) {
+        thinking += thinkPart
+        process.stdout.write(`${ANSI_DIM}${thinkPart}${ANSI_RESET}`)
+      }
+      if (chunk.message.content) {
+        if (isThinking) {
+          isThinking = false
+          console.log()
+          log('info', 'dedup', `Model thought for ${thinking.length} chars`, 2)
+        }
+        content += chunk.message.content
+      }
+    }
+    console.log()
+
+    const result = dedupeCodec.decode(content, {
       reportInput: true,
     })
 
@@ -449,9 +534,10 @@ async function deduplicateWithLLM(
       log(
         'warn',
         'dedup',
-        'LLM dedup decode returned null, keeping all candidates',
+        'Failed to parse dedup response as JSON. Full response:',
         1
       )
+      log('warn', 'dedup', content, 1)
       return afterExact
     }
 
@@ -548,12 +634,6 @@ async function writeResorts(
   )
   let created = 0
   for (const candidate of candidates) {
-    log(
-      'info',
-      'appwrite',
-      `Creating: ${candidate.resortName} (${candidate.country}) [region=${region}]`,
-      1
-    )
     await adminTablesDb.createRow({
       databaseId: DATABASE_ID,
       tableId: RESORTS_TABLE_ID,
@@ -582,13 +662,15 @@ async function writeResorts(
 
 async function seed(options: {
   region: string
-  count: string
+  batches: string
   model?: string
   dryRun?: boolean
+  sources?: boolean
 }) {
   const region = options.region
-  const count = Number.parseInt(options.count, 10)
+  const batches = Number.parseInt(options.batches, 10)
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
+  const sources = options.sources ? SOURCE_WEBSITES : undefined
 
   if (!REGIONS.includes(region as (typeof REGIONS)[number])) {
     log(
@@ -599,11 +681,11 @@ async function seed(options: {
     process.exit(1)
   }
 
-  if (Number.isNaN(count) || count < 1) {
+  if (Number.isNaN(batches) || batches < 1) {
     log(
       'error',
       'seed',
-      `Invalid count "${options.count}". Must be a positive integer.`
+      `Invalid batches "${options.batches}". Must be a positive integer.`
     )
     process.exit(1)
   }
@@ -622,21 +704,75 @@ async function seed(options: {
   log(
     'info',
     'seed',
-    `Requesting ${count} candidate(s) from LLM (model: ${model})`,
+    `Up to ${batches} batch(es) (model: ${model}), stopping early if no new resorts found`,
     1
   )
 
-  const prompt = LLM_CANDIDATE_USER_PROMPT(count, region)
+  const allCandidates: Candidate[] = []
+  const seenCandidateNames = new Set<string>()
 
-  const candidates = await callLLM(prompt, model)
-  if (candidates.length === 0) {
-    log('error', 'seed', 'No candidates returned from LLM. Aborting.')
+  for (let i = 0; i < batches; i++) {
+    log(
+      'info',
+      'seed',
+      `Batch ${i + 1}/${batches} (have ${allCandidates.length} unique so far)`,
+      1
+    )
+
+    const existingResorts = allCandidates.map((c) => c.resortName)
+    const prompt = LLM_CANDIDATE_USER_PROMPT(region, sources, existingResorts)
+    const batchCandidates = await callLLM(
+      prompt,
+      model,
+      LLM_MAX_RETRIES,
+      existingResorts
+    )
+
+    if (batchCandidates.length === 0) {
+      log(
+        'warn',
+        'seed',
+        `Batch ${i + 1} returned no candidates, stopping early.`,
+        1
+      )
+      break
+    }
+
+    const prevCount = allCandidates.length
+    for (const c of batchCandidates) {
+      const key = c.resortName.toLowerCase()
+      if (!seenCandidateNames.has(key)) {
+        seenCandidateNames.add(key)
+        allCandidates.push(c)
+      }
+    }
+    const added = allCandidates.length - prevCount
+    const dupes = batchCandidates.length - added
+    log(
+      'success',
+      'seed',
+      `Batch ${i + 1}: ${batchCandidates.length} found, ${dupes} duplicate(s), ${added} new (${allCandidates.length} unique total)`,
+      1
+    )
+
+    if (added === 0) {
+      log('warn', 'seed', 'No new resorts found, stopping early.', 1)
+      break
+    }
+  }
+
+  if (allCandidates.length === 0) {
+    log('error', 'seed', 'No candidates returned from any batch. Aborting.')
     process.exit(1)
   }
 
   console.log()
-  log('success', 'seed', `LLM returned ${candidates.length} candidate(s):`)
-  for (const c of candidates) {
+  log(
+    'success',
+    'seed',
+    `All batches complete. ${allCandidates.length} unique candidate(s):`
+  )
+  for (const c of allCandidates) {
     log('info', 'seed', `${c.resortName} (${c.country})`, 1)
   }
 
@@ -650,7 +786,11 @@ async function seed(options: {
     )
   }
 
-  const afterDedup = await deduplicateWithLLM(candidates, existingNames, model)
+  const afterDedup = await deduplicateWithLLM(
+    allCandidates,
+    existingNames,
+    model
+  )
   log(
     'success',
     'seed',
@@ -698,8 +838,8 @@ program
     'Region name (must match a value from src/regions.ts)'
   )
   .requiredOption(
-    '--count <number>',
-    'Number of resort candidates to request from LLM'
+    '--batches <number>',
+    'Maximum number of LLM batch calls (stops early if no new resorts found)'
   )
   .option(
     '--model <model>',
@@ -708,6 +848,10 @@ program
   .option(
     '--dry-run',
     'Run interactively without reading from or writing to the database'
+  )
+  .option(
+    '--sources',
+    'Include source website recommendations in the LLM prompt to guide web search'
   )
   .action(seed)
 
