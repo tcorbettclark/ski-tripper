@@ -1,6 +1,7 @@
 import type { Models } from 'appwrite'
 import { MapPin } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Range } from 'react-range'
 import { TableVirtuoso } from 'react-virtuoso'
 import { getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
@@ -44,6 +45,8 @@ export default function Resorts({
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
   const [suitableForFilter, setSuitableForFilter] = useState('')
+  const [minAltitude, setMinAltitude] = useState(-1)
+  const [maxAltitude, setMaxAltitude] = useState(-1)
   const [selectedResort, setSelectedResort] = useState<Resort | null>(null)
   const [showProposalForm, setShowProposalForm] = useState(false)
   const [proposalError, setProposalError] = useState('')
@@ -68,6 +71,8 @@ export default function Resorts({
     () => [...new Set(resorts.map((r) => r.region).filter(Boolean))].sort(),
     [resorts]
   )
+
+  const altitudeBounds = useMemo(() => ({ min: 500, max: 5000 }), [])
 
   const filteredResorts = useMemo(() => {
     let result = resorts
@@ -99,6 +104,14 @@ export default function Resorts({
       result = result.filter((r) => r.suitableFor?.includes(suitableForFilter))
     }
 
+    if (minAltitude >= 0 || maxAltitude >= 0) {
+      const lo = minAltitude >= 0 ? minAltitude : altitudeBounds.min
+      const hi = maxAltitude >= 0 ? maxAltitude : altitudeBounds.max
+      result = result.filter(
+        (r) => r.baseAltitude >= lo && r.summitAltitude <= hi
+      )
+    }
+
     return result
   }, [
     resorts,
@@ -107,6 +120,9 @@ export default function Resorts({
     regionFilter,
     minPisteKm,
     suitableForFilter,
+    minAltitude,
+    maxAltitude,
+    altitudeBounds,
   ])
 
   const handleRowClick = useCallback((resort: Resort) => {
@@ -189,6 +205,8 @@ export default function Resorts({
     setRegionFilter('')
     setMinPisteKm(0)
     setSuitableForFilter('')
+    setMinAltitude(-1)
+    setMaxAltitude(-1)
   }, [])
 
   if (resorts.length === 0) {
@@ -241,7 +259,9 @@ export default function Resorts({
     countryFilter ||
     regionFilter ||
     minPisteKm > 0 ||
-    suitableForFilter
+    suitableForFilter ||
+    minAltitude >= 0 ||
+    maxAltitude >= 0
 
   return (
     <div style={resortsStyles.container}>
@@ -257,6 +277,8 @@ export default function Resorts({
           onChange={(e) => setSearchQuery(e.target.value)}
           style={resortsStyles.searchInput}
         />
+      </div>
+      <div style={resortsStyles.controlsRow}>
         <select
           value={countryFilter}
           onChange={(e) => setCountryFilter(e.target.value)}
@@ -310,6 +332,76 @@ export default function Resorts({
             onChange={(e) => setMinPisteKm(Number(e.target.value))}
             style={resortsStyles.slider}
           />
+        </div>
+        <div style={resortsStyles.sliderGroup}>
+          <span style={resortsStyles.sliderLabel}>
+            Altitude: {minAltitude >= 0 ? minAltitude : altitudeBounds.min}m–
+            {maxAltitude >= 0 ? maxAltitude : altitudeBounds.max}m
+          </span>
+          <div style={resortsStyles.rangeWrapper}>
+            <Range
+              min={altitudeBounds.min}
+              max={altitudeBounds.max}
+              step={100}
+              values={[
+                minAltitude >= 0 ? minAltitude : altitudeBounds.min,
+                maxAltitude >= 0 ? maxAltitude : altitudeBounds.max,
+              ]}
+              onChange={(values: number[]) => {
+                setMinAltitude(values[0])
+                setMaxAltitude(values[1])
+              }}
+              renderTrack={({ props, children }) => {
+                const lo = minAltitude >= 0 ? minAltitude : altitudeBounds.min
+                const hi = maxAltitude >= 0 ? maxAltitude : altitudeBounds.max
+                const range = altitudeBounds.max - altitudeBounds.min || 1
+                const leftPercent = ((lo - altitudeBounds.min) / range) * 100
+                const rightPercent = ((hi - altitudeBounds.min) / range) * 100
+                return (
+                  <div
+                    {...props}
+                    style={{
+                      ...props.style,
+                      height: '6px',
+                      width: '100%',
+                      borderRadius: '3px',
+                      background: colors.bgInput,
+                      alignSelf: 'center',
+                      position: 'relative' as const,
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute' as const,
+                        height: '6px',
+                        borderRadius: '3px',
+                        left: `${leftPercent}%`,
+                        right: `${100 - rightPercent}%`,
+                        background: colors.accent,
+                      }}
+                    />
+                    {children}
+                  </div>
+                )
+              }}
+              renderThumb={({ props: { key: thumbKey, ...thumbProps } }) => (
+                <div
+                  key={thumbKey}
+                  {...thumbProps}
+                  style={{
+                    ...thumbProps.style,
+                    height: '18px',
+                    width: '18px',
+                    borderRadius: '50%',
+                    background: colors.accent,
+                    border: '2px solid #fff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                    outline: 'none',
+                  }}
+                />
+              )}
+            />
+          </div>
         </div>
         <button
           type="button"
@@ -835,7 +927,7 @@ const resortsStyles = {
     flexWrap: 'wrap' as const,
   },
   searchInput: {
-    flex: '1 1 240px',
+    width: '100%',
     minWidth: '180px',
     padding: '10px 16px',
     borderRadius: '8px',
@@ -873,6 +965,11 @@ const resortsStyles = {
   slider: {
     width: '140px',
     accentColor: colors.accent,
+  },
+  rangeWrapper: {
+    height: '20px',
+    display: 'flex',
+    alignItems: 'center',
   },
   clearButton: {
     padding: '10px 16px',
