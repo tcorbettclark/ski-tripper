@@ -436,7 +436,10 @@ export default function ProposalCard({
                   value={proposal.transferTime}
                 />
                 {proposal.websites && proposal.websites.length > 0 && (
-                  <DetailField label="Websites">
+                  <DetailField
+                    label="Websites"
+                    style={{ gridColumn: 'span 2' }}
+                  >
                     <div
                       style={{
                         display: 'flex',
@@ -995,7 +998,7 @@ const styles = {
     display: 'inline-block',
     padding: '2px 10px',
     borderRadius: '12px',
-    fontSize: '12px',
+    fontSize: '11px',
     fontFamily: fonts.body,
     fontWeight: '500',
   },

@@ -406,7 +406,24 @@ export default function Resorts({
                   `Created proposal for ${proposalSuccessName}`
                 ) : (
                   <>
-                    {selectedResort.resortName}
+                    {(() => {
+                      const flagUrl =
+                        selectedResort.country &&
+                        getCountryFlagUrl(selectedResort.country)
+                      return flagUrl ? (
+                        <img
+                          src={flagUrl}
+                          alt={selectedResort.country}
+                          style={resortsStyles.flag}
+                        />
+                      ) : null
+                    })()}
+                    {selectedResort.resortName || '—'}
+                    {selectedResort.country
+                      ? ` in ${selectedResort.region ? `${selectedResort.region}, ` : ''}${selectedResort.country}`
+                      : selectedResort.region
+                        ? ` in ${selectedResort.region}`
+                        : ''}
                     {selectedResort.latitude && selectedResort.longitude && (
                       <a
                         href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
@@ -433,43 +450,6 @@ export default function Resorts({
             {!showProposalForm && !proposalSuccess && (
               <>
                 <div style={resortsStyles.detailGrid}>
-                  {(() => {
-                    const flagUrl =
-                      selectedResort.country &&
-                      getCountryFlagUrl(selectedResort.country)
-                    return flagUrl ? (
-                      <DetailField label="Country">
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                          }}
-                        >
-                          <img
-                            src={flagUrl}
-                            alt={selectedResort.country}
-                            style={resortsStyles.flag}
-                          />
-                          {selectedResort.country}
-                          {selectedResort.region
-                            ? `, ${selectedResort.region}`
-                            : ''}
-                        </span>
-                      </DetailField>
-                    ) : (
-                      <DetailField
-                        label="Country"
-                        value={
-                          selectedResort.country
-                            ? selectedResort.region
-                              ? `${selectedResort.country}, ${selectedResort.region}`
-                              : selectedResort.country
-                            : selectedResort.region || '—'
-                        }
-                      />
-                    )
-                  })()}
                   <DetailField
                     label="Altitude Range"
                     value={
@@ -543,7 +523,10 @@ export default function Resorts({
                   />
                   {selectedResort.websites &&
                     selectedResort.websites.length > 0 && (
-                      <DetailField label="Websites">
+                      <DetailField
+                        label="Websites"
+                        style={{ gridColumn: 'span 2' }}
+                      >
                         <div
                           style={{
                             display: 'flex',
@@ -656,13 +639,15 @@ function DetailField({
   label,
   value,
   children,
+  style,
 }: {
   label: string
   value?: string
   children?: React.ReactNode
+  style?: React.CSSProperties
 }) {
   return (
-    <div style={resortsStyles.detailField}>
+    <div style={{ ...resortsStyles.detailField, ...style }}>
       <span style={resortsStyles.detailFieldLabel}>{label}</span>
       <span style={resortsStyles.detailFieldValue}>
         {children ?? (value || '—')}
@@ -995,7 +980,7 @@ const resortsStyles = {
     display: 'inline-block',
     padding: '2px 10px',
     borderRadius: '12px',
-    fontSize: '12px',
+    fontSize: '11px',
     fontFamily: fonts.body,
     fontWeight: '500',
   },

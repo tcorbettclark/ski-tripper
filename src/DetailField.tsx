@@ -4,15 +4,17 @@ interface DetailFieldProps {
   label: string
   value?: string
   children?: React.ReactNode
+  style?: React.CSSProperties
 }
 
 export default function DetailField({
   label,
   value,
   children,
+  style,
 }: DetailFieldProps) {
   return (
-    <div>
+    <div style={style}>
       <div style={styles.fieldLabel}>{label}</div>
       <div style={styles.fieldValue}>{children ?? (value || '—')}</div>
     </div>
