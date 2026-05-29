@@ -18,16 +18,17 @@ const sampleResorts: Resort[] = [
     description: 'A great French resort',
     latitude: '45.9237',
     longitude: '6.8694',
-    topAltitude: 3842,
-    bottomAltitude: 1035,
+    summitAltitude: 3842,
+    baseAltitude: 1035,
     nearestAirport: 'GVA',
     transferTime: '1h',
     pisteKm: 150,
-    difficulty: 'advanced',
+    suitableFor: ['advanced'],
     liftCount: 50,
     snowReliability: 'high',
     skiSeasonMonths: 'Dec-Apr',
-    websiteUrl: 'https://chamonix.com',
+    websites: ['https://chamonix.com'],
+    linkedResortsDescription: '',
     enriched: true,
   },
   {
@@ -40,16 +41,17 @@ const sampleResorts: Resort[] = [
     description: 'A great Canadian resort',
     latitude: '50.1163',
     longitude: '-122.9574',
-    topAltitude: 2184,
-    bottomAltitude: 653,
+    summitAltitude: 2184,
+    baseAltitude: 653,
     nearestAirport: 'YVR',
     transferTime: '2h',
     pisteKm: 200,
-    difficulty: 'advanced',
+    suitableFor: ['advanced'],
     liftCount: 30,
     snowReliability: 'high',
     skiSeasonMonths: 'Nov-Apr',
-    websiteUrl: 'https://whistler.com',
+    websites: ['https://whistler.com'],
+    linkedResortsDescription: '',
     enriched: true,
   },
   {
@@ -62,16 +64,17 @@ const sampleResorts: Resort[] = [
     description: 'A classic Swiss resort',
     latitude: '46.0207',
     longitude: '7.7491',
-    topAltitude: 3899,
-    bottomAltitude: 1620,
+    summitAltitude: 3899,
+    baseAltitude: 1620,
     nearestAirport: 'GVA',
     transferTime: '3h 30m',
     pisteKm: 360,
-    difficulty: 'advanced',
+    suitableFor: ['advanced'],
     liftCount: 53,
     snowReliability: 'high',
     skiSeasonMonths: 'Nov-May',
-    websiteUrl: 'https://zermatt.ch',
+    websites: ['https://zermatt.ch'],
+    linkedResortsDescription: '',
     enriched: true,
   },
 ]
@@ -112,7 +115,7 @@ describe('Resorts', () => {
     expect(screen.getByText('Country')).toBeTruthy()
     expect(screen.getByText('Region')).toBeTruthy()
     expect(screen.getByText('Piste Km')).toBeTruthy()
-    expect(screen.getByText('Altitude Range')).toBeTruthy()
+    expect(screen.getByText('Altitude')).toBeTruthy()
     expect(screen.getByText('Season')).toBeTruthy()
   })
 

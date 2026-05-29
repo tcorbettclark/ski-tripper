@@ -22,16 +22,17 @@ const sampleResorts: Resort[] = [
     description: 'A famous ski resort',
     latitude: '45.4475',
     longitude: '6.9219',
-    topAltitude: 3330,
-    bottomAltitude: 1850,
+    summitAltitude: 3330,
+    baseAltitude: 1850,
     nearestAirport: 'GVA',
     transferTime: '1h 30m',
     pisteKm: 300,
-    difficulty: 'advanced',
+    suitableFor: ['advanced'],
     liftCount: 80,
     snowReliability: 'high',
     skiSeasonMonths: 'Dec-Apr',
-    websiteUrl: 'https://valdisere.com',
+    websites: ['https://valdisere.com'],
+    linkedResortsDescription: '',
     enriched: true,
   },
   {
@@ -44,16 +45,17 @@ const sampleResorts: Resort[] = [
     description: 'North American resort',
     latitude: '50.1207',
     longitude: '-122.9640',
-    topAltitude: 2280,
-    bottomAltitude: 675,
+    summitAltitude: 2280,
+    baseAltitude: 675,
     nearestAirport: 'YVR',
     transferTime: '2h',
     pisteKm: 200,
-    difficulty: 'intermediate',
+    suitableFor: ['intermediate'],
     liftCount: 37,
     snowReliability: 'high',
     skiSeasonMonths: 'Nov-Apr',
-    websiteUrl: 'https://whistler.com',
+    websites: ['https://whistler.com'],
+    linkedResortsDescription: '',
     enriched: true,
   },
 ]
@@ -101,7 +103,7 @@ describe('CreateProposalForm', () => {
     const { container } = renderForm()
     expect(screen.getByText(/resort name/i)).toBeTruthy()
     expect(screen.getByLabelText(/country/i)).toBeTruthy()
-    expect(screen.getByText(/top altitude/i)).toBeTruthy()
+    expect(screen.getByText(/summit altitude/i)).toBeTruthy()
     expect(screen.getByText(/nearest airport/i)).toBeTruthy()
     expect(screen.getByText(/transfer time/i)).toBeTruthy()
     expect(screen.getByText(/trip dates/i)).toBeTruthy()
@@ -123,16 +125,16 @@ describe('CreateProposalForm', () => {
     fill('resortName', "Val d'Isère")
     fill('country', 'France')
     fill('region', 'Alps')
-    fill('topAltitude', '3330')
-    fill('bottomAltitude', '1850')
+    fill('summitAltitude', '3330')
+    fill('baseAltitude', '1850')
     fill('nearestAirport', 'GVA')
     fill('transferTime', '1h 30m')
     fill('pisteKm', '300')
-    fill('difficulty', 'advanced')
+    fireEvent.click(screen.getByLabelText('Advanced'))
     fill('liftCount', '80')
     fill('snowReliability', 'high')
     fill('skiSeasonMonths', 'Dec-Apr')
-    fill('websiteUrl', 'https://valdisere.com')
+    fill('websites', 'https://valdisere.com')
     fill('latitude', '45.4475')
     fill('longitude', '6.9219')
 
@@ -260,12 +262,12 @@ describe('CreateProposalForm', () => {
       expect(regionInput.value).toBe('Alps')
 
       const topAltInput = container.querySelector(
-        '[name="topAltitude"]'
+        '[name="summitAltitude"]'
       ) as HTMLInputElement
       expect(topAltInput.value).toBe('3330')
 
       const bottomAltInput = container.querySelector(
-        '[name="bottomAltitude"]'
+        '[name="baseAltitude"]'
       ) as HTMLInputElement
       expect(bottomAltInput.value).toBe('1850')
 

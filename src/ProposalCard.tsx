@@ -19,10 +19,11 @@ import { borders, colors, fonts, formStyles } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
 import { ensureUrlScheme, formatDate, isValidUrl, sanitizeUrl } from './utils'
 
-const difficultyLabels: Record<string, string> = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
+const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
+const SUITABILITY_COLORS: Record<string, string> = {
+  beginner: '#4CAF50',
+  intermediate: '#FF9800',
+  advanced: '#F44336',
 }
 
 const snowReliabilityLabels: Record<string, string> = {
@@ -376,15 +377,33 @@ export default function ProposalCard({
                 />
                 <DetailField
                   label="Altitude Range"
-                  value={`${proposal.bottomAltitude}m – ${proposal.topAltitude}m`}
+                  value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
                 />
                 <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
-                <DetailField
-                  label="Difficulty"
-                  value={
-                    difficultyLabels[proposal.difficulty] ?? proposal.difficulty
-                  }
-                />
+                <div style={styles.suitabilityField}>
+                  <span style={styles.fieldLabel}>Suitable For</span>
+                  <div style={styles.suitabilityPills}>
+                    {SUITABILITY_LEVELS.map((level) => {
+                      const active = proposal.suitableFor?.includes(level)
+                      return (
+                        <span
+                          key={level}
+                          style={{
+                            ...styles.suitabilityPill,
+                            ...(active
+                              ? {
+                                  background: SUITABILITY_COLORS[level],
+                                  color: '#fff',
+                                }
+                              : styles.suitabilityPillInactive),
+                          }}
+                        >
+                          {level.charAt(0).toUpperCase() + level.slice(1)}
+                        </span>
+                      )
+                    })}
+                  </div>
+                </div>
                 <DetailField label="Lifts" value={String(proposal.liftCount)} />
                 <DetailField
                   label="Snow Reliability"
@@ -425,25 +444,45 @@ export default function ProposalCard({
                     '—'
                   )}
                 </DetailField>
-                {proposal.websiteUrl && isValidUrl(proposal.websiteUrl) && (
-                  <DetailField label="Website">
-                    <a
-                      href={sanitizeUrl(proposal.websiteUrl)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                {proposal.websites && proposal.websites.length > 0 && (
+                  <DetailField label="Websites">
+                    <div
                       style={{
-                        ...styles.websiteLinkInline,
-                        textDecoration: websiteHovered ? 'underline' : 'none',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
                       }}
-                      aria-label="Visit website"
-                      onMouseEnter={() => setWebsiteHovered(true)}
-                      onMouseLeave={() => setWebsiteHovered(false)}
                     >
-                      {proposal.websiteUrl.replace(/^https?:\/\//, '')}
-                    </a>
+                      {proposal.websites.map((url) => (
+                        <a
+                          key={url}
+                          href={sanitizeUrl(url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            ...styles.websiteLinkInline,
+                            textDecoration: websiteHovered
+                              ? 'underline'
+                              : 'none',
+                          }}
+                          onMouseEnter={() => setWebsiteHovered(true)}
+                          onMouseLeave={() => setWebsiteHovered(false)}
+                        >
+                          {url.replace(/^https?:\/\//, '')}
+                        </a>
+                      ))}
+                    </div>
                   </DetailField>
                 )}
               </div>
+              {proposal.linkedResortsDescription && (
+                <div style={styles.descriptionSection}>
+                  <span style={styles.fieldLabel}>Linked Resorts</span>
+                  <p style={styles.descriptionText}>
+                    {proposal.linkedResortsDescription}
+                  </p>
+                </div>
+              )}
               <div
                 style={{
                   ...styles.accommodationItem,
@@ -935,6 +974,48 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: '14px',
     color: colors.accent,
+  },
+  suitabilityField: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+  },
+  fieldLabel: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '500' as const,
+    color: colors.textSecondary,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  },
+  suitabilityPills: {
+    display: 'flex',
+    gap: '6px',
+    flexWrap: 'wrap' as const,
+  },
+  suitabilityPill: {
+    display: 'inline-block',
+    padding: '2px 10px',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontFamily: fonts.body,
+    fontWeight: '500',
+  },
+  suitabilityPillInactive: {
+    background: 'rgba(255,255,255,0.08)',
+    color: colors.textSecondary,
+    border: borders.muted,
+  },
+  descriptionSection: {
+    marginTop: '12px',
+    marginBottom: '8px',
+  },
+  descriptionText: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: colors.textPrimary,
+    lineHeight: '1.6',
+    margin: '4px 0 0',
   },
   detailFieldValue: {
     fontFamily: fonts.body,

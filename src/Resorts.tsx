@@ -27,6 +27,7 @@ export default function Resorts({
   const [countryFilter, setCountryFilter] = useState('')
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
+  const [suitableForFilter, setSuitableForFilter] = useState<string[]>([])
   const [selectedResort, setSelectedResort] = useState<Resort | null>(null)
   const [showProposalForm, setShowProposalForm] = useState(false)
   const [proposalError, setProposalError] = useState('')
@@ -79,8 +80,21 @@ export default function Resorts({
       result = result.filter((r) => r.pisteKm >= minPisteKm)
     }
 
+    if (suitableForFilter.length > 0) {
+      result = result.filter((r) =>
+        suitableForFilter.every((level) => r.suitableFor?.includes(level))
+      )
+    }
+
     return result
-  }, [resorts, debouncedQuery, countryFilter, regionFilter, minPisteKm])
+  }, [
+    resorts,
+    debouncedQuery,
+    countryFilter,
+    regionFilter,
+    minPisteKm,
+    suitableForFilter,
+  ])
 
   const handleRowClick = useCallback((resort: Resort) => {
     setSelectedResort(resort)
@@ -130,18 +144,19 @@ export default function Resorts({
             resortName: customResortName || resort.resortName,
             country: resort.country,
             region: resort.region,
-            topAltitude: resort.topAltitude,
-            bottomAltitude: resort.bottomAltitude,
+            summitAltitude: resort.summitAltitude,
+            baseAltitude: resort.baseAltitude,
             nearestAirport: resort.nearestAirport,
             transferTime: resort.transferTime,
             pisteKm: resort.pisteKm,
-            difficulty: resort.difficulty,
+            suitableFor: resort.suitableFor,
             liftCount: resort.liftCount,
             snowReliability: resort.snowReliability,
             skiSeasonMonths: resort.skiSeasonMonths,
-            websiteUrl: resort.websiteUrl,
+            websites: resort.websites,
             latitude: resort.latitude,
             longitude: resort.longitude,
+            linkedResortsDescription: resort.linkedResortsDescription,
           },
         })
         setProposalSuccessName(customResortName || resort.resortName)
@@ -160,6 +175,7 @@ export default function Resorts({
     setCountryFilter('')
     setRegionFilter('')
     setMinPisteKm(0)
+    setSuitableForFilter([])
   }, [])
 
   if (resorts.length === 0) {
@@ -173,12 +189,15 @@ export default function Resorts({
     )
   }
 
+  const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
+
   const columns = [
-    { key: 'resortName', label: 'Resort Name', width: '28%' },
-    { key: 'country', label: 'Country', width: '14%' },
-    { key: 'region', label: 'Region', width: '16%' },
-    { key: 'pisteKm', label: 'Piste Km', width: '12%' },
-    { key: 'altitudeRange', label: 'Altitude Range', width: '16%' },
+    { key: 'resortName', label: 'Resort Name', width: '24%' },
+    { key: 'country', label: 'Country', width: '12%' },
+    { key: 'region', label: 'Region', width: '14%' },
+    { key: 'suitableFor', label: 'Level', width: '12%' },
+    { key: 'pisteKm', label: 'Piste Km', width: '10%' },
+    { key: 'altitudeRange', label: 'Altitude', width: '14%' },
     { key: 'skiSeasonMonths', label: 'Season', width: '14%' },
   ] as const
 
@@ -190,11 +209,15 @@ export default function Resorts({
         return resort.country
       case 'region':
         return resort.region
+      case 'suitableFor':
+        return resort.suitableFor
+          ? resort.suitableFor.map((l) => l.charAt(0).toUpperCase()).join(' · ')
+          : ''
       case 'pisteKm':
         return resort.pisteKm ? String(resort.pisteKm) : ''
       case 'altitudeRange':
-        if (resort.bottomAltitude && resort.topAltitude) {
-          return `${resort.bottomAltitude}m–${resort.topAltitude}m`
+        if (resort.baseAltitude && resort.summitAltitude) {
+          return `${resort.baseAltitude}m–${resort.summitAltitude}m`
         }
         return ''
       case 'skiSeasonMonths':
@@ -205,7 +228,11 @@ export default function Resorts({
   }
 
   const hasActiveFilters =
-    searchQuery || countryFilter || regionFilter || minPisteKm > 0
+    searchQuery ||
+    countryFilter ||
+    regionFilter ||
+    minPisteKm > 0 ||
+    suitableForFilter.length > 0
 
   return (
     <div style={resortsStyles.container}>
@@ -262,6 +289,24 @@ export default function Resorts({
             onChange={(e) => setMinPisteKm(Number(e.target.value))}
             style={resortsStyles.slider}
           />
+        </div>
+        <div style={resortsStyles.checkboxGroup}>
+          {SUITABILITY_LEVELS.map((level) => (
+            <label key={level} style={resortsStyles.checkboxLabel}>
+              <input
+                type="checkbox"
+                checked={suitableForFilter.includes(level)}
+                onChange={(e) => {
+                  setSuitableForFilter((prev) =>
+                    e.target.checked
+                      ? [...prev, level]
+                      : prev.filter((l) => l !== level)
+                  )
+                }}
+              />
+              {level.charAt(0).toUpperCase() + level.slice(1)}
+            </label>
+          ))}
         </div>
         <button
           type="button"
@@ -380,9 +425,9 @@ export default function Resorts({
                   <DetailField
                     label="Altitude Range"
                     value={
-                      selectedResort.bottomAltitude &&
-                      selectedResort.topAltitude
-                        ? `${selectedResort.bottomAltitude}m–${selectedResort.topAltitude}m`
+                      selectedResort.baseAltitude &&
+                      selectedResort.summitAltitude
+                        ? `${selectedResort.baseAltitude}m–${selectedResort.summitAltitude}m`
                         : ''
                     }
                   />
@@ -395,8 +440,12 @@ export default function Resorts({
                     value={selectedResort.transferTime}
                   />
                   <DetailField
-                    label="Difficulty"
-                    value={selectedResort.difficulty}
+                    label="Suitable For"
+                    value={
+                      selectedResort.suitableFor
+                        ?.map((l) => l.charAt(0).toUpperCase() + l.slice(1))
+                        .join(', ') || ''
+                    }
                   />
                   <DetailField
                     label="Lift Count"
@@ -434,25 +483,43 @@ export default function Resorts({
                       '—'
                     )}
                   </DetailField>
-                  {selectedResort.websiteUrl && (
-                    <DetailField label="Website">
-                      <a
-                        href={selectedResort.websiteUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          ...resortsStyles.websiteLinkInline,
-                          textDecoration: websiteHovered ? 'underline' : 'none',
-                        }}
-                        aria-label="Visit website"
-                        onMouseEnter={() => setWebsiteHovered(true)}
-                        onMouseLeave={() => setWebsiteHovered(false)}
-                      >
-                        {selectedResort.websiteUrl}
-                      </a>
-                    </DetailField>
-                  )}
+                  {selectedResort.websites &&
+                    selectedResort.websites.length > 0 && (
+                      <DetailField label="Websites">
+                        {selectedResort.websites.map((url, i) => (
+                          <span key={url}>
+                            {i > 0 && ', '}
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                ...resortsStyles.websiteLinkInline,
+                                textDecoration: websiteHovered
+                                  ? 'underline'
+                                  : 'none',
+                              }}
+                              onMouseEnter={() => setWebsiteHovered(true)}
+                              onMouseLeave={() => setWebsiteHovered(false)}
+                            >
+                              {new URL(url).hostname}
+                            </a>
+                          </span>
+                        ))}
+                      </DetailField>
+                    )}
                 </div>
+
+                {selectedResort.linkedResortsDescription && (
+                  <div style={resortsStyles.detailDescriptionSection}>
+                    <span style={resortsStyles.detailDescriptionLabel}>
+                      Linked Resorts
+                    </span>
+                    <p style={resortsStyles.detailDescriptionText}>
+                      {selectedResort.linkedResortsDescription}
+                    </p>
+                  </div>
+                )}
 
                 {selectedResort.description && (
                   <div style={resortsStyles.detailDescriptionSection}>
@@ -726,6 +793,20 @@ const resortsStyles = {
   slider: {
     width: '140px',
     accentColor: colors.accent,
+  },
+  checkboxGroup: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+  },
+  checkboxLabel: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.textPrimary,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3px',
+    cursor: 'pointer',
   },
   clearButton: {
     padding: '10px 16px',

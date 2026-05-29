@@ -19,16 +19,17 @@ const sampleProposal: Proposal = {
   transferTime: '2h 30m',
   country: 'France',
   region: 'Alps',
-  topAltitude: 3456,
-  bottomAltitude: 1850,
+  summitAltitude: 3456,
+  baseAltitude: 1850,
   pisteKm: 300,
-  difficulty: 'advanced',
+  suitableFor: ['advanced'],
   liftCount: 80,
   snowReliability: 'high',
   skiSeasonMonths: 'Dec-Apr',
-  websiteUrl: 'https://valdisere.com',
+  websites: ['https://valdisere.com'],
   latitude: '45.4475',
   longitude: '6.9219',
+  linkedResortsDescription: '',
 }
 
 function renderForm(props = {}) {

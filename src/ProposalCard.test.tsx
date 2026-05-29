@@ -26,16 +26,17 @@ const baseProposal: Proposal = {
   transferTime: '1 hour',
   country: 'Test Country',
   region: 'Alps',
-  topAltitude: 3000,
-  bottomAltitude: 1500,
+  summitAltitude: 3000,
+  baseAltitude: 1500,
   pisteKm: 600,
-  difficulty: 'intermediate',
+  suitableFor: ['intermediate'],
   liftCount: 50,
   snowReliability: 'high',
   skiSeasonMonths: 'Dec-Apr',
-  websiteUrl: 'https://example.com',
+  websites: ['https://example.com'],
   latitude: '45.9163',
   longitude: '7.7554',
+  linkedResortsDescription: '',
 }
 
 describe('ProposalCard', () => {
@@ -87,7 +88,7 @@ describe('ProposalCard', () => {
     ).toBeDefined()
   })
 
-  it('displays altitude range from topAltitude and bottomAltitude', () => {
+  it('displays altitude range from summitAltitude and baseAltitude', () => {
     render(
       <ProposalCard
         proposal={baseProposal}
@@ -105,7 +106,7 @@ describe('ProposalCard', () => {
     expect(screen.getByText('1500m – 3000m')).toBeDefined()
   })
 
-  it('displays website link when websiteUrl is valid', () => {
+  it('displays website link when websites is non-empty', () => {
     render(
       <ProposalCard
         proposal={baseProposal}
@@ -125,8 +126,8 @@ describe('ProposalCard', () => {
     expect(link.closest('a')!.getAttribute('href')).toBe('https://example.com/')
   })
 
-  it('hides website link when websiteUrl is empty', () => {
-    const noWebsiteProposal = { ...baseProposal, websiteUrl: '' }
+  it('hides website link when websites is empty', () => {
+    const noWebsiteProposal = { ...baseProposal, websites: [] }
     render(
       <ProposalCard
         proposal={noWebsiteProposal}

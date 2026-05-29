@@ -4,8 +4,10 @@ import { COUNTRIES } from './countries'
 import DateRangeField from './DateRangeField'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
-import type { Proposal } from './types.d.ts'
-import { ensureUrlScheme } from './utils'
+import type { Proposal } from './types.d'
+import { ensureUrlScheme, isValidUrl } from './utils'
+
+const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
 
 interface EditProposalFormProps {
   proposal: Proposal
@@ -30,18 +32,19 @@ export default function EditProposalForm({
     resortName: proposal.resortName || '',
     country: proposal.country || '',
     region: proposal.region || '',
-    topAltitude: proposal.topAltitude?.toString() || '',
-    bottomAltitude: proposal.bottomAltitude?.toString() || '',
+    summitAltitude: proposal.summitAltitude?.toString() || '',
+    baseAltitude: proposal.baseAltitude?.toString() || '',
     nearestAirport: proposal.nearestAirport || '',
     transferTime: proposal.transferTime || '',
     pisteKm: proposal.pisteKm?.toString() || '',
-    difficulty: proposal.difficulty || '',
+    suitableFor: proposal.suitableFor || [],
     liftCount: proposal.liftCount?.toString() || '',
     snowReliability: proposal.snowReliability || '',
     skiSeasonMonths: proposal.skiSeasonMonths || '',
-    websiteUrl: proposal.websiteUrl || '',
+    websites: proposal.websites ? proposal.websites.join(', ') : '',
     latitude: proposal.latitude || '',
     longitude: proposal.longitude || '',
+    linkedResortsDescription: proposal.linkedResortsDescription || '',
     description: proposal.description || '',
     startDate: proposal.startDate || '',
     endDate: proposal.endDate || '',
@@ -64,11 +67,18 @@ export default function EditProposalForm({
     try {
       const updatedProposal = await updateProposal(proposal.$id, userId, {
         ...form,
-        websiteUrl: ensureUrlScheme(form.websiteUrl),
-        topAltitude: Number(form.topAltitude),
-        bottomAltitude: Number(form.bottomAltitude),
+        websites: form.websites
+          ? form.websites
+              .split(/[,\s]+/)
+              .map((u) => u.trim())
+              .filter((u) => u && isValidUrl(ensureUrlScheme(u)))
+          : [],
+        summitAltitude: Number(form.summitAltitude),
+        baseAltitude: Number(form.baseAltitude),
         pisteKm: Number(form.pisteKm),
         liftCount: Number(form.liftCount),
+        suitableFor: form.suitableFor,
+        linkedResortsDescription: form.linkedResortsDescription,
       })
       onUpdated(updatedProposal)
     } catch (err: unknown) {
@@ -105,19 +115,19 @@ export default function EditProposalForm({
         placeholder="e.g. Alps"
       />
       <Field
-        label="Top Altitude (m)"
-        name="topAltitude"
+        label="Summit Altitude (m)"
+        name="summitAltitude"
         type="number"
-        value={form.topAltitude}
+        value={form.summitAltitude}
         onChange={handleChange}
         required
         placeholder="e.g. 3330"
       />
       <Field
-        label="Bottom Altitude (m)"
-        name="bottomAltitude"
+        label="Base Altitude (m)"
+        name="baseAltitude"
         type="number"
-        value={form.bottomAltitude}
+        value={form.baseAltitude}
         onChange={handleChange}
         required
         placeholder="e.g. 1500"
@@ -147,15 +157,44 @@ export default function EditProposalForm({
         required
         placeholder="e.g. 600"
       />
-      <Field
-        label="Difficulty"
-        name="difficulty"
-        value={form.difficulty}
-        onChange={handleChange}
-        required
-        options={['beginner', 'intermediate', 'advanced']}
-        placeholder="Select a difficulty…"
-      />
+      <div style={fieldStyles.default.field}>
+        <span style={fieldStyles.default.label}>Suitable For</span>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          {SUITABILITY_LEVELS.map((level) => (
+            <label
+              key={level}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={form.suitableFor.includes(level)}
+                onChange={(e) => {
+                  setForm((f) => ({
+                    ...f,
+                    suitableFor: e.target.checked
+                      ? [...f.suitableFor, level].sort(
+                          (a, b) =>
+                            SUITABILITY_LEVELS.indexOf(
+                              a as (typeof SUITABILITY_LEVELS)[number]
+                            ) -
+                            SUITABILITY_LEVELS.indexOf(
+                              b as (typeof SUITABILITY_LEVELS)[number]
+                            )
+                        )
+                      : f.suitableFor.filter((l) => l !== level),
+                  }))
+                }}
+              />
+              {level.charAt(0).toUpperCase() + level.slice(1)}
+            </label>
+          ))}
+        </div>
+      </div>
       <Field
         label="Lift Count"
         name="liftCount"
@@ -183,13 +222,20 @@ export default function EditProposalForm({
         placeholder="e.g. Dec-Apr"
       />
       <Field
-        label="Website URL"
-        name="websiteUrl"
+        label="Websites"
+        name="websites"
         type="text"
-        value={form.websiteUrl}
+        value={form.websites}
         onChange={handleChange}
         required
-        placeholder="e.g. example.com"
+        placeholder="e.g. example.com, ski-resort.com"
+      />
+      <Field
+        label="Linked Resorts"
+        name="linkedResortsDescription"
+        value={form.linkedResortsDescription}
+        onChange={handleChange}
+        placeholder="e.g. Part of the 3 Vallées with Méribel and Courchevel"
       />
       <Field
         label="Latitude"

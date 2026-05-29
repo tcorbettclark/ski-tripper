@@ -44,7 +44,7 @@ const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given source tex
 Rules:
 - Extract only information that is explicitly stated in the source text
 - If a value is not found in the text, use reasonable defaults but never make up specific numbers
-- For altitude, the topAltitude must be HIGHER than the bottomAltitude
+- For altitude, the summitAltitude must be HIGHER than the baseAltitude
 - Return valid JSON only, no explanatory text`
 
 const LLM_USER_PROMPT = (
@@ -121,14 +121,14 @@ const enrichSchema = z.object({
     .describe(
       'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights'
     ),
-  topAltitude: z.coerce
+  summitAltitude: z.coerce
     .number()
     .int()
-    .describe('Top altitude in metres above sea level'),
-  bottomAltitude: z.coerce
+    .describe('Summit altitude in metres above sea level'),
+  baseAltitude: z.coerce
     .number()
     .int()
-    .describe('Bottom altitude in metres above sea level'),
+    .describe('Base altitude in metres above sea level'),
   nearestAirport: z
     .string()
     .describe('IATA code of the nearest airport, e.g. "GVA"'),
@@ -139,18 +139,26 @@ const enrichSchema = z.object({
     .number()
     .int()
     .describe('Total groomed piste length in kilometres'),
-  difficulty: z
-    .enum(['beginner', 'intermediate', 'advanced'])
-    .describe('Overall difficulty rating of the resort'),
+  suitableFor: z
+    .array(z.enum(['beginner', 'intermediate', 'advanced']))
+    .min(1)
+    .describe(
+      'Which skiing ability levels the resort is suitable for (at least one required)'
+    ),
   liftCount: z.coerce.number().int().describe('Number of ski lifts'),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
     .describe('Snow reliability rating'),
   skiSeasonMonths: z.string().describe('Typical ski season, e.g. "Dec-Apr"'),
-  websiteUrl: z
+  websites: z
+    .array(z.string())
+    .describe(
+      'URLs of websites with information about skiing at the resort, e.g. ["https://www.zermatt.ch/en/skiing"]'
+    ),
+  linkedResortsDescription: z
     .string()
     .describe(
-      'URL of the resort\'s official website for ski season visits, e.g. "https://www.zermatt.ch/en/skiing"'
+      'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."'
     ),
 })
 
@@ -259,13 +267,13 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
         description:
           'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights',
       },
-      topAltitude: {
+      summitAltitude: {
         type: 'integer',
-        description: 'Top altitude in metres above sea level',
+        description: 'Summit altitude in metres above sea level',
       },
-      bottomAltitude: {
+      baseAltitude: {
         type: 'integer',
-        description: 'Bottom altitude in metres above sea level',
+        description: 'Base altitude in metres above sea level',
       },
       nearestAirport: {
         type: 'string',
@@ -279,10 +287,14 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
         type: 'integer',
         description: 'Total groomed piste length in kilometres',
       },
-      difficulty: {
-        type: 'string',
-        enum: ['beginner', 'intermediate', 'advanced'],
-        description: 'Overall difficulty rating of the resort',
+      suitableFor: {
+        type: 'array',
+        items: {
+          type: 'string',
+          enum: ['beginner', 'intermediate', 'advanced'],
+        },
+        description:
+          'Which skiing ability levels the resort is suitable for (at least one)',
       },
       liftCount: {
         type: 'integer',
@@ -297,24 +309,31 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
         type: 'string',
         description: 'Typical ski season, e.g. "Dec-Apr"',
       },
-      websiteUrl: {
+      websites: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          'URLs of websites with information about skiing at the resort',
+      },
+      linkedResortsDescription: {
         type: 'string',
         description:
-          'URL of the most informative website for ski season visits, e.g. "https://www.zermatt.ch/en/skiing"',
+          'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."',
       },
     },
     required: [
       'description',
-      'topAltitude',
-      'bottomAltitude',
+      'summitAltitude',
+      'baseAltitude',
       'nearestAirport',
       'transferTime',
       'pisteKm',
-      'difficulty',
+      'suitableFor',
       'liftCount',
       'snowReliability',
       'skiSeasonMonths',
-      'websiteUrl',
+      'websites',
+      'linkedResortsDescription',
     ],
   }
 }
@@ -330,16 +349,17 @@ function logEnrichData(
   logSummary('Coordinates', coordsStr, indent)
   logSummary(
     'Altitude',
-    `${data.bottomAltitude}m - ${data.topAltitude}m`,
+    `${data.baseAltitude}m - ${data.summitAltitude}m`,
     indent
   )
   logSummary('Airport', `${data.nearestAirport} (${data.transferTime})`, indent)
   logSummary('Piste', `${data.pisteKm} km`, indent)
   logSummary('Lifts', `${data.liftCount}`, indent)
-  logSummary('Difficulty', data.difficulty, indent)
+  logSummary('Suitable For', data.suitableFor.join(', '), indent)
   logSummary('Snow', data.snowReliability, indent)
   logSummary('Season', data.skiSeasonMonths, indent)
-  logSummary('Website', data.websiteUrl, indent)
+  logSummary('Websites', data.websites.join(', '), indent)
+  logSummary('Linked Resorts', data.linkedResortsDescription, indent)
   logSummary('Description', data.description, indent)
 }
 
@@ -611,16 +631,17 @@ async function writeEnrichedResort(
       description: data.description,
       latitude: coords?.latitude ?? '',
       longitude: coords?.longitude ?? '',
-      topAltitude: data.topAltitude,
-      bottomAltitude: data.bottomAltitude,
+      summitAltitude: data.summitAltitude,
+      baseAltitude: data.baseAltitude,
       nearestAirport: data.nearestAirport,
       transferTime: data.transferTime,
       pisteKm: data.pisteKm,
-      difficulty: data.difficulty,
+      suitableFor: JSON.stringify(data.suitableFor),
       liftCount: data.liftCount,
       snowReliability: data.snowReliability,
       skiSeasonMonths: data.skiSeasonMonths,
-      websiteUrl: data.websiteUrl,
+      websites: JSON.stringify(data.websites),
+      linkedResortsDescription: data.linkedResortsDescription,
       enriched: true,
     },
   })
