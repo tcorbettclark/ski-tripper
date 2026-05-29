@@ -108,7 +108,7 @@ export default function ProposalCard({
   const [discussionCollapsed, setDiscussionCollapsed] = useState(true)
   const [discussionCount, setDiscussionCount] = useState(0)
   const [latLngHovered, setLatLngHovered] = useState(false)
-  const [websiteHovered, setWebsiteHovered] = useState(false)
+  const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
   const [proposalCollapsed, setProposalCollapsed] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
@@ -461,12 +461,11 @@ export default function ProposalCard({
                           rel="noopener noreferrer"
                           style={{
                             ...styles.websiteLinkInline,
-                            textDecoration: websiteHovered
-                              ? 'underline'
-                              : 'none',
+                            textDecoration:
+                              hoveredWebsite === url ? 'underline' : 'none',
                           }}
-                          onMouseEnter={() => setWebsiteHovered(true)}
-                          onMouseLeave={() => setWebsiteHovered(false)}
+                          onMouseEnter={() => setHoveredWebsite(url)}
+                          onMouseLeave={() => setHoveredWebsite(null)}
                         >
                           {url.replace(/^https?:\/\//, '')}
                         </a>
