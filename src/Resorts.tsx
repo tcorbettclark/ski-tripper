@@ -1,9 +1,24 @@
 import type { Models } from 'appwrite'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
+import { getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Resort } from './types.d.ts'
+import { sanitizeUrl } from './utils'
+
+const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
+const SUITABILITY_COLORS: Record<string, string> = {
+  beginner: '#4CAF50',
+  intermediate: '#FF9800',
+  advanced: '#F44336',
+}
+
+const snowReliabilityLabels: Record<string, string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+}
 
 interface ResortsProps {
   user: Models.User
@@ -186,8 +201,6 @@ export default function Resorts({
       </div>
     )
   }
-
-  const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
 
   const columns = [
     { key: 'resortName', label: 'Resort Name', width: '24%' },
@@ -405,43 +418,89 @@ export default function Resorts({
             {!showProposalForm && !proposalSuccess && (
               <>
                 <div style={resortsStyles.detailGrid}>
-                  <DetailField label="Country" value={selectedResort.country} />
-                  <DetailField label="Region" value={selectedResort.region} />
-                  <DetailField
-                    label="Piste Km"
-                    value={
-                      selectedResort.pisteKm
-                        ? String(selectedResort.pisteKm)
-                        : ''
-                    }
-                  />
+                  {(() => {
+                    const flagUrl =
+                      selectedResort.country &&
+                      getCountryFlagUrl(selectedResort.country)
+                    return flagUrl ? (
+                      <DetailField label="Country">
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <img
+                            src={flagUrl}
+                            alt={selectedResort.country}
+                            style={resortsStyles.flag}
+                          />
+                          {selectedResort.country}
+                          {selectedResort.region
+                            ? `, ${selectedResort.region}`
+                            : ''}
+                        </span>
+                      </DetailField>
+                    ) : (
+                      <DetailField
+                        label="Country"
+                        value={
+                          selectedResort.country
+                            ? selectedResort.region
+                              ? `${selectedResort.country}, ${selectedResort.region}`
+                              : selectedResort.country
+                            : selectedResort.region || '—'
+                        }
+                      />
+                    )
+                  })()}
                   <DetailField
                     label="Altitude Range"
                     value={
                       selectedResort.baseAltitude &&
                       selectedResort.summitAltitude
-                        ? `${selectedResort.baseAltitude}m–${selectedResort.summitAltitude}m`
+                        ? `${selectedResort.baseAltitude}m – ${selectedResort.summitAltitude}m`
                         : ''
                     }
                   />
                   <DetailField
-                    label="Nearest Airport"
-                    value={selectedResort.nearestAirport}
-                  />
-                  <DetailField
-                    label="Transfer Time"
-                    value={selectedResort.transferTime}
-                  />
-                  <DetailField
-                    label="Suitable For"
+                    label="Piste"
                     value={
-                      selectedResort.suitableFor
-                        ?.map((l) => l.charAt(0).toUpperCase() + l.slice(1))
-                        .join(', ') || ''
+                      selectedResort.pisteKm
+                        ? `${selectedResort.pisteKm} km`
+                        : ''
                     }
                   />
+                  <div style={resortsStyles.suitabilityField}>
+                    <span style={resortsStyles.detailFieldLabel}>
+                      Suitable For
+                    </span>
+                    <div style={resortsStyles.suitabilityPills}>
+                      {SUITABILITY_LEVELS.map((level) => {
+                        const active =
+                          selectedResort.suitableFor?.includes(level)
+                        return (
+                          <span
+                            key={level}
+                            style={{
+                              ...resortsStyles.suitabilityPill,
+                              ...(active
+                                ? {
+                                    background: SUITABILITY_COLORS[level],
+                                    color: '#fff',
+                                  }
+                                : resortsStyles.suitabilityPillInactive),
+                            }}
+                          >
+                            {level.charAt(0).toUpperCase() + level.slice(1)}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </div>
                   <DetailField
-                    label="Lift Count"
+                    label="Lifts"
                     value={
                       selectedResort.liftCount
                         ? String(selectedResort.liftCount)
@@ -450,11 +509,22 @@ export default function Resorts({
                   />
                   <DetailField
                     label="Snow Reliability"
-                    value={selectedResort.snowReliability}
+                    value={
+                      snowReliabilityLabels[selectedResort.snowReliability] ??
+                      selectedResort.snowReliability
+                    }
                   />
                   <DetailField
                     label="Ski Season"
                     value={selectedResort.skiSeasonMonths}
+                  />
+                  <DetailField
+                    label="Nearest Airport"
+                    value={selectedResort.nearestAirport}
+                  />
+                  <DetailField
+                    label="Transfer Time"
+                    value={selectedResort.transferTime}
                   />
                   <DetailField label="Latitude/longitude">
                     {selectedResort.latitude || selectedResort.longitude ? (
@@ -479,13 +549,17 @@ export default function Resorts({
                   {selectedResort.websites &&
                     selectedResort.websites.length > 0 && (
                       <DetailField label="Websites">
-                        {selectedResort.websites.map((url, i) => (
-                          <span key={url}>
-                            {i > 0 && ', '}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                          }}
+                        >
+                          {selectedResort.websites.map((url) => (
                             <a
-                              href={
-                                url.startsWith('http') ? url : `https://${url}`
-                              }
+                              key={url}
+                              href={sanitizeUrl(url)}
                               target="_blank"
                               rel="noopener noreferrer"
                               style={{
@@ -496,16 +570,10 @@ export default function Resorts({
                               onMouseEnter={() => setHoveredWebsite(url)}
                               onMouseLeave={() => setHoveredWebsite(null)}
                             >
-                              {
-                                new URL(
-                                  url.startsWith('http')
-                                    ? url
-                                    : `https://${url}`
-                                ).hostname
-                              }
+                              {url.replace(/^https?:\/\//, '')}
                             </a>
-                          </span>
-                        ))}
+                          ))}
+                        </div>
                       </DetailField>
                     )}
                 </div>
@@ -903,6 +971,34 @@ const resortsStyles = {
     gridTemplateColumns: '1fr 1fr',
     gap: '12px',
     marginBottom: '16px',
+  },
+  flag: {
+    display: 'inline-block',
+    width: '20px',
+    height: '14px',
+  },
+  suitabilityField: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+  },
+  suitabilityPills: {
+    display: 'flex',
+    gap: '6px',
+    flexWrap: 'wrap' as const,
+  },
+  suitabilityPill: {
+    display: 'inline-block',
+    padding: '2px 10px',
+    borderRadius: '12px',
+    fontSize: '12px',
+    fontFamily: fonts.body,
+    fontWeight: '500',
+  },
+  suitabilityPillInactive: {
+    background: 'rgba(255,255,255,0.08)',
+    color: colors.textSecondary,
+    border: borders.muted,
   },
   detailField: {
     display: 'flex',
