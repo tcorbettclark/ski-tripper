@@ -63,6 +63,17 @@ export function parseJsonArray(value: string | string[]): string[] {
   return []
 }
 
+export function parseJsonNumberArray(value: string | number[]): number[] {
+  if (Array.isArray(value)) return value
+  try {
+    const parsed = JSON.parse(value)
+    if (Array.isArray(parsed)) return parsed
+  } catch {
+    // fallthrough
+  }
+  return []
+}
+
 export function formatRelativeTime(iso: string) {
   const date = dayjs(iso)
   const diffDays = dayjs().diff(date, 'day')

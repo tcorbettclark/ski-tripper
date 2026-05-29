@@ -19,7 +19,13 @@ import type {
   Trip,
   Vote,
 } from './types.d'
-import { dayjs, isValidUrl, parseJsonArray, randomThreeWords } from './utils'
+import {
+  dayjs,
+  isValidUrl,
+  parseJsonArray,
+  parseJsonNumberArray,
+  randomThreeWords,
+} from './utils'
 
 export function hasSession(): boolean {
   const projectId = process.env.PUBLIC_APPWRITE_PROJECT_ID as string
@@ -59,6 +65,57 @@ async function fetchRow<T extends { $id: string }>(
   result: Promise<Models.Row>
 ): Promise<T> {
   return toRow<T>(await result)
+}
+
+function parseProposal(proposal: Proposal): Proposal {
+  proposal.suitableFor = parseJsonArray(
+    proposal.suitableFor as unknown as string
+  )
+  proposal.websites = parseJsonArray(proposal.websites as unknown as string)
+  return proposal
+}
+
+function parsePoll(poll: Poll): Poll {
+  poll.proposalIds = parseJsonArray(poll.proposalIds as unknown as string)
+  return poll
+}
+
+function parseVote(vote: Vote): Vote {
+  vote.proposalIds = parseJsonArray(vote.proposalIds as unknown as string)
+  vote.tokenCounts = parseJsonNumberArray(vote.tokenCounts as unknown as string)
+  return vote
+}
+
+async function fetchProposalRows(
+  result: Promise<{ rows: Models.Row[] }>
+): Promise<Proposal[]> {
+  return (await fetchRows<Proposal>(result)).map(parseProposal)
+}
+
+async function fetchProposalRow(
+  result: Promise<Models.Row>
+): Promise<Proposal> {
+  return parseProposal(await fetchRow<Proposal>(result))
+}
+
+async function fetchPollRows(
+  result: Promise<{ rows: Models.Row[] }>
+): Promise<Poll[]> {
+  return (await fetchRows<Poll>(result)).map(parsePoll)
+}
+
+async function fetchPollRow(result: Promise<Models.Row>): Promise<Poll> {
+  return parsePoll(await fetchRow<Poll>(result))
+}
+
+async function fetchVoteRows(
+  result: Promise<{ rows: Models.Row[] }>
+): Promise<Vote[]> {
+  return (await fetchRows<Vote>(result)).map(parseVote)
+}
+
+async function fetchVoteRow(result: Promise<Models.Row>): Promise<Vote> {
+  return parseVote(await fetchRow<Vote>(result))
 }
 
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
@@ -285,14 +342,14 @@ export async function deleteTrip(
         queries: [Query.equal('tripId', tripId), Query.limit(5000)],
       })
     ),
-    fetchRows<Proposal>(
+    fetchProposalRows(
       db.listRows({
         databaseId: DATABASE_ID,
         tableId: PROPOSALS_TABLE_ID,
         queries: [Query.equal('tripId', tripId), Query.limit(1000)],
       })
     ),
-    fetchRows<Poll>(
+    fetchPollRows(
       db.listRows({
         databaseId: DATABASE_ID,
         tableId: POLLS_TABLE_ID,
@@ -302,7 +359,7 @@ export async function deleteTrip(
   ])
   const votes =
     polls.length > 0
-      ? await fetchRows<Vote>(
+      ? await fetchVoteRows(
           db.listRows({
             databaseId: DATABASE_ID,
             tableId: VOTES_TABLE_ID,
@@ -504,7 +561,7 @@ async function _verifyParticipantByPoll(
   participantUserId: string,
   db: TablesDB
 ): Promise<void> {
-  const poll = await fetchRow<Poll>(
+  const poll = await fetchPollRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -545,7 +602,7 @@ export async function createProposal(
 ): Promise<Proposal> {
   await _verifyParticipant(tripId, proposerUserId, db)
   const { resortData, ...userData } = data
-  return fetchRow<Proposal>(
+  return fetchProposalRow(
     db.createRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -557,6 +614,8 @@ export async function createProposal(
         state: 'DRAFT',
         ...userData,
         ...resortData,
+        suitableFor: JSON.stringify(resortData.suitableFor),
+        websites: JSON.stringify(resortData.websites),
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
@@ -572,7 +631,7 @@ export async function listProposals(
   db: TablesDB = tablesDb
 ): Promise<{ proposals: Proposal[] }> {
   await _verifyParticipant(tripId, participantUserId, db)
-  const proposals = await fetchRows<Proposal>(
+  const proposals = await fetchProposalRows(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -591,7 +650,7 @@ export async function getProposal(
   participantUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -608,7 +667,7 @@ export async function updateProposal(
   data: Partial<Proposal>,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -626,7 +685,11 @@ export async function updateProposal(
     proposerUserId: _proposerUserId,
     ...safeData
   } = dataRecord
-  return fetchRow<Proposal>(
+  if (Array.isArray(safeData.suitableFor))
+    safeData.suitableFor = JSON.stringify(safeData.suitableFor)
+  if (Array.isArray(safeData.websites))
+    safeData.websites = JSON.stringify(safeData.websites)
+  return fetchProposalRow(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -641,7 +704,7 @@ export async function deleteProposal(
   proposerUserId: string,
   db: TablesDB = tablesDb
 ): Promise<void> {
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -694,7 +757,7 @@ export async function submitProposal(
   proposerUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -716,7 +779,7 @@ export async function submitProposal(
     throw new Error(
       'At least one accommodation is required to submit a proposal.'
     )
-  const updated = await fetchRow<Proposal>(
+  const updated = await fetchProposalRow(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -737,7 +800,7 @@ export async function rejectProposal(
   pollCreatorUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -754,7 +817,7 @@ export async function rejectProposal(
   ) {
     throw new Error('Only the coordinator can reject this proposal.')
   }
-  const updated = await fetchRow<Proposal>(
+  const updated = await fetchProposalRow(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -775,7 +838,7 @@ export async function revertProposalToDraft(
   pollCreatorUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Proposal> {
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -794,7 +857,7 @@ export async function revertProposalToDraft(
       'Only the coordinator can move this proposal back to draft.'
     )
   }
-  const updated = await fetchRow<Proposal>(
+  const updated = await fetchProposalRow(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -827,7 +890,7 @@ export async function createPoll(
   ) {
     throw new Error('Only the coordinator can create a poll.')
   }
-  const openPolls = await fetchRows<Poll>(
+  const openPolls = await fetchPollRows(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -841,7 +904,7 @@ export async function createPoll(
   if (openPolls.length > 0) {
     throw new Error('A poll is already open for this trip.')
   }
-  const proposals = await fetchRows<Proposal>(
+  const proposals = await fetchProposalRows(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -858,7 +921,7 @@ export async function createPoll(
   const proposalIds = proposals.map((p) => p.$id)
   const startDate = dayjs().toISOString()
   const endDate = dayjs().add(durationDays, 'day').toISOString()
-  return fetchRow<Poll>(
+  return fetchPollRow(
     db.createRow({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -868,7 +931,7 @@ export async function createPoll(
         pollCreatorUserId,
         pollCreatorUserName,
         state: 'OPEN',
-        proposalIds,
+        proposalIds: JSON.stringify(proposalIds),
         startDate,
         endDate,
       } as Record<string, unknown>,
@@ -885,7 +948,7 @@ export async function closePoll(
   pollCreatorUserId: string,
   db: TablesDB = tablesDb
 ): Promise<Poll> {
-  const poll = await fetchRow<Poll>(
+  const poll = await fetchPollRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -900,7 +963,7 @@ export async function closePoll(
   ) {
     throw new Error('Only the coordinator can close a poll.')
   }
-  return fetchRow<Poll>(
+  return fetchPollRow(
     db.updateRow({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -916,7 +979,7 @@ export async function listPolls(
   db: TablesDB = tablesDb
 ): Promise<{ polls: Poll[] }> {
   await _verifyParticipant(tripId, participantUserId, db)
-  const polls = await fetchRows<Poll>(
+  const polls = await fetchPollRows(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -937,7 +1000,7 @@ export async function upsertVote(
   tokenCounts: number[],
   db: TablesDB = tablesDb
 ): Promise<Vote> {
-  const poll = await fetchRow<Poll>(
+  const poll = await fetchPollRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
@@ -959,7 +1022,7 @@ export async function upsertVote(
   if (total > poll.proposalIds.length) {
     throw new Error(`Total tokens cannot exceed ${poll.proposalIds.length}.`)
   }
-  const votes = await fetchRows<Vote>(
+  const votes = await fetchVoteRows(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: VOTES_TABLE_ID,
@@ -971,16 +1034,19 @@ export async function upsertVote(
     })
   )
   if (votes.length > 0) {
-    return fetchRow<Vote>(
+    return fetchVoteRow(
       db.updateRow({
         databaseId: DATABASE_ID,
         tableId: VOTES_TABLE_ID,
         rowId: votes[0].$id,
-        data: { proposalIds, tokenCounts } as Record<string, unknown>,
+        data: {
+          proposalIds: JSON.stringify(proposalIds),
+          tokenCounts: JSON.stringify(tokenCounts),
+        } as Record<string, unknown>,
       })
     )
   }
-  return fetchRow<Vote>(
+  return fetchVoteRow(
     db.createRow({
       databaseId: DATABASE_ID,
       tableId: VOTES_TABLE_ID,
@@ -988,8 +1054,8 @@ export async function upsertVote(
       data: {
         pollId,
         voterUserId,
-        proposalIds,
-        tokenCounts,
+        proposalIds: JSON.stringify(proposalIds),
+        tokenCounts: JSON.stringify(tokenCounts),
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
@@ -1005,7 +1071,7 @@ export async function listVotes(
   db: TablesDB = tablesDb
 ): Promise<{ votes: Vote[] }> {
   await _verifyParticipantByPoll(pollId, participantUserId, db)
-  const votes = await fetchRows<Vote>(
+  const votes = await fetchVoteRows(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: VOTES_TABLE_ID,
@@ -1033,7 +1099,7 @@ export async function createAccommodation(
   },
   db: TablesDB = tablesDb
 ): Promise<Accommodation> {
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -1100,7 +1166,7 @@ export async function updateAccommodation(
       rowId: accommodationId,
     })
   )
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
@@ -1136,7 +1202,7 @@ export async function deleteAccommodation(
       rowId: accommodationId,
     })
   )
-  const proposal = await fetchRow<Proposal>(
+  const proposal = await fetchProposalRow(
     db.getRow({
       databaseId: DATABASE_ID,
       tableId: PROPOSALS_TABLE_ID,
