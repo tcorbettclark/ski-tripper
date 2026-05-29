@@ -3,8 +3,7 @@
 import * as readline from 'node:readline/promises'
 import { aiJsonSafeParse } from 'ai-json-safe-parse'
 import { Command } from 'commander'
-import type { SearchResponse } from 'exa-js'
-import Exa from 'exa-js'
+import Exa, { type DeepObjectOutputSchema } from 'exa-js'
 import { Client, Query, TablesDB } from 'node-appwrite'
 import { Ollama } from 'ollama'
 import * as z from 'zod'
@@ -14,6 +13,48 @@ const OLLAMA_HOST = 'https://ollama.com'
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
 const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 const DEFAULT_MODEL = 'kimi-k2.6:cloud'
+const EXA_NUM_RESULTS = 7
+const EXA_MAX_CHARS = 8000 as const
+
+const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
+  `Here is detailed information about the "${resortName}" ski resort in ${country}, including altitude, piste length, lift count, nearest airport, transfer time, and useful websites:`
+
+const EXA_COORDS_QUERY = (resortName: string, country: string) =>
+  `The geographic coordinates of the "${resortName}" ski resort in ${country}:`
+
+const COORDS_SCHEMA: DeepObjectOutputSchema = {
+  type: 'object',
+  properties: {
+    latitude: {
+      type: 'string',
+      description: 'Latitude as a string, e.g. "46.0939"',
+    },
+    longitude: {
+      type: 'string',
+      description: 'Longitude as a string, e.g. "7.0765"',
+    },
+  },
+  required: ['latitude', 'longitude'],
+}
+
+const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given source text from web searches, extract factual data about the ski resort into a JSON object matching this schema:
+
+{SCHEMA}
+
+Rules:
+- Extract only information that is explicitly stated in the source text
+- If a value is not found in the text, use reasonable defaults but never make up specific numbers
+- For altitude, the topAltitude must be HIGHER than the bottomAltitude
+- Return valid JSON only, no explanatory text`
+
+const LLM_USER_PROMPT = (
+  resortName: string,
+  country: string,
+  sourceText: string
+) =>
+  `Extract ski resort data for "${resortName}" in ${country} from the following source text:
+
+${sourceText}`
 
 const ANSI_RESET = '\x1b[0m'
 const ANSI_DIM = '\x1b[2m'
@@ -74,74 +115,12 @@ const ollama = new Ollama({
 
 const exa = new Exa(process.env.EXA_API_KEY as string)
 
-const webSearchTool = {
-  type: 'function' as const,
-  function: {
-    name: 'web_search',
-    description:
-      'Search the web for factual information about a ski resort. Use this to look up accurate statistics, coordinates, airport codes, transfer times, piste lengths, lift counts, snow reliability, season dates, and official website URLs.',
-    parameters: {
-      type: 'object',
-      required: ['query'],
-      properties: {
-        query: {
-          type: 'string',
-          description: 'Search query for ski resort information',
-        },
-      },
-    },
-  },
-}
-
-async function executeWebSearch(query: string): Promise<string> {
-  log('info', 'search', `Querying Exa for: "${query}"`)
-  const results: SearchResponse<{
-    text: { maxCharacters: 3000 }
-    highlights: { maxCharacters: 500 }
-  }> = await exa.search(query, {
-    type: 'auto',
-    numResults: 3,
-    contents: {
-      text: { maxCharacters: 3000 },
-      highlights: { maxCharacters: 500 },
-    },
-  })
-
-  const snippets = results.results
-    .filter((r) => r.text || r.highlights)
-    .map((r) => {
-      const parts: string[] = []
-      if (r.title) parts.push(`Title: ${r.title}`)
-      if (r.url) parts.push(`URL: ${r.url}`)
-      if (r.text) parts.push(r.text)
-      if (r.highlights) parts.push(r.highlights.join(' ... '))
-      return parts.join('\n')
-    })
-
-  for (const r of results.results) {
-    log(
-      'info',
-      'search',
-      `"${r.title ?? '(no title)'}" - ${r.url ?? '(no url)'}`,
-      1
-    )
-  }
-  log(
-    'success',
-    'search',
-    `${results.results.length} result(s) for: "${query}"`
-  )
-  return snippets.join('\n\n---\n\n')
-}
-
 const enrichSchema = z.object({
   description: z
     .string()
     .describe(
       'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights'
     ),
-  latitude: z.string().describe('Latitude as a string, e.g. "46.0939"'),
-  longitude: z.string().describe('Longitude as a string, e.g. "7.0765"'),
   topAltitude: z.coerce
     .number()
     .int()
@@ -177,6 +156,81 @@ const enrichSchema = z.object({
 
 type EnrichData = z.infer<typeof enrichSchema>
 
+interface Coordinates {
+  latitude: string
+  longitude: string
+}
+
+async function fetchCoordinates(
+  resortName: string,
+  country: string
+): Promise<Coordinates | null> {
+  log('info', 'enrich', 'Fetching coordinates from Exa...', 1)
+  try {
+    const response = await exa.search(EXA_COORDS_QUERY(resortName, country), {
+      type: 'deep-lite',
+      numResults: 3,
+      useAutoprompt: true,
+      contents: { text: { maxCharacters: 2000 } },
+      outputSchema: COORDS_SCHEMA,
+    })
+
+    const output = response.output?.content as
+      | { latitude: string; longitude: string }
+      | undefined
+    if (output?.latitude && output?.longitude) {
+      log(
+        'success',
+        'enrich',
+        `Coordinates: ${output.latitude}, ${output.longitude}`,
+        1
+      )
+      return { latitude: output.latitude, longitude: output.longitude }
+    }
+  } catch (err) {
+    log('warn', 'enrich', `Deep search for coordinates failed: ${err}`, 1)
+  }
+
+  log('warn', 'enrich', 'No coordinates found, falling back to text search', 1)
+  try {
+    const results = await exa.search(EXA_COORDS_QUERY(resortName, country), {
+      type: 'auto',
+      numResults: 3,
+      useAutoprompt: true,
+      contents: {
+        text: { maxCharacters: 2000 },
+        highlights: {
+          query: 'latitude longitude coordinates',
+          maxCharacters: 1000,
+        },
+      },
+    })
+
+    const coordRegex = /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/
+    for (const result of results.results) {
+      const textToSearch = [
+        ...(result.highlights ?? []),
+        result.text ?? '',
+      ].join(' ')
+      const match = textToSearch.match(coordRegex)
+      if (match) {
+        log(
+          'success',
+          'enrich',
+          `Coordinates (from text): ${match[1]}, ${match[2]}`,
+          1
+        )
+        return { latitude: match[1], longitude: match[2] }
+      }
+    }
+  } catch (err) {
+    log('warn', 'enrich', `Fallback coordinate search failed: ${err}`, 1)
+  }
+
+  log('error', 'enrich', 'Could not determine coordinates', 1)
+  return null
+}
+
 function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   return z.codec(z.string(), schema, {
     decode: (jsonString, ctx) => {
@@ -197,12 +251,6 @@ function jsonCodec<T extends z.core.$ZodType>(schema: T) {
 }
 
 function buildJsonSchema(): JSONSchema.JSONSchema {
-  const fieldDescriptions: Record<string, string> = {}
-  for (const [key, value] of Object.entries(enrichSchema.shape)) {
-    const desc = (value as { description?: string }).description
-    if (desc) fieldDescriptions[key] = desc
-  }
-
   return {
     type: 'object',
     properties: {
@@ -210,14 +258,6 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
         type: 'string',
         description:
           'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights',
-      },
-      latitude: {
-        type: 'string',
-        description: 'Latitude as a string, e.g. "46.0939"',
-      },
-      longitude: {
-        type: 'string',
-        description: 'Longitude as a string, e.g. "7.0765"',
       },
       topAltitude: {
         type: 'integer',
@@ -265,8 +305,6 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
     },
     required: [
       'description',
-      'latitude',
-      'longitude',
       'topAltitude',
       'bottomAltitude',
       'nearestAirport',
@@ -281,8 +319,15 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
   }
 }
 
-function logEnrichData(data: EnrichData, indent = 0) {
-  logSummary('Coordinates', `${data.latitude}, ${data.longitude}`, indent)
+function logEnrichData(
+  data: EnrichData,
+  coords: Coordinates | null,
+  indent = 0
+) {
+  const coordsStr = coords
+    ? `${coords.latitude}, ${coords.longitude}`
+    : 'unknown'
+  logSummary('Coordinates', coordsStr, indent)
   logSummary(
     'Altitude',
     `${data.bottomAltitude}m - ${data.topAltitude}m`,
@@ -301,333 +346,107 @@ function logEnrichData(data: EnrichData, indent = 0) {
 async function enrichResort(
   resortName: string,
   country: string,
-  model: string,
-  maxRetries = 3
-): Promise<EnrichData | null> {
-  const responseCodec = jsonCodec(enrichSchema)
-  const jsonSchema = buildJsonSchema()
-
-  const prompt = `Provide detailed information about the ski resort "${resortName}" in ${country}. Return a JSON object with these fields:
-- description: a few paragraphs about the resort's terrain, atmosphere, and highlights
-- latitude: as a string (e.g. "46.0939")
-- longitude: as a string (e.g. "7.0765")
-- topAltitude: top altitude in metres (integer)
-- bottomAltitude: bottom altitude in metres (integer)
-- nearestAirport: IATA code of the nearest airport
-- transferTime: transfer time from airport (e.g. "2h 00m")
-- pisteKm: total groomed piste length in km (integer)
-- difficulty: one of "beginner", "intermediate", "advanced"
-- liftCount: number of lifts (integer)
-- snowReliability: one of "high", "medium", "low"
-- skiSeasonMonths: typical season (e.g. "Dec-Apr")
-- websiteUrl: URL of the resort's official website for ski season visits
-
-Be accurate and specific. Use real data. Search the web if you are not certain about any facts.
-
-Do not include any additional text or explanations. Return valid JSON only.`
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      log(
-        'info',
-        'enrich',
-        `Attempt ${attempt}/${maxRetries} for "${resortName}" (model: ${model})`
-      )
-      const messages: Array<{
-        role: 'system' | 'user' | 'assistant' | 'tool'
-        content: string
-        tool_name?: string
-      }> = [
-        {
-          role: 'system',
-          content: `You are a ski resort expert. Return results as raw JSON without any introductory text. Match this schema: ${JSON.stringify(jsonSchema)}. Be accurate about resort statistics. Use real, factual data. Use the web_search tool to look up any information you are not completely certain about.`,
-        },
-        { role: 'user', content: prompt },
-      ]
-
-      let finalContent = ''
-
-      for (let round = 0; round < 5; round++) {
-        log(
-          'info',
-          'enrich',
-          `LLM round ${round + 1}/5 (messages: ${messages.length})`,
-          1
-        )
-        const response = await ollama.chat({
-          stream: false as const,
-          model,
-          messages,
-          tools: [webSearchTool],
-        })
-
-        if (
-          response.message.tool_calls &&
-          response.message.tool_calls.length > 0
-        ) {
-          const toolNames = response.message.tool_calls
-            .map((tc) => tc.function.name)
-            .join(', ')
-          log(
-            'info',
-            'enrich',
-            `LLM requested ${response.message.tool_calls.length} tool call(s): ${toolNames}`,
-            1
-          )
-          messages.push({
-            role: 'assistant',
-            content: response.message.content ?? '',
-          })
-
-          for (const toolCall of response.message.tool_calls) {
-            const fnName = toolCall.function.name
-            const fnArgs = toolCall.function.arguments as { query?: string }
-
-            if (fnName === 'web_search' && fnArgs.query) {
-              log(
-                'info',
-                'enrich',
-                `Executing web_search: "${fnArgs.query}"`,
-                2
-              )
-              const searchResult = await executeWebSearch(fnArgs.query)
-              log(
-                'success',
-                'enrich',
-                `web_search returned ${searchResult.length} chars`,
-                2
-              )
-              messages.push({
-                role: 'tool',
-                content: searchResult,
-                tool_name: fnName,
-              })
-            }
-          }
-
-          continue
-        }
-
-        finalContent = response.message.content
-        log(
-          'success',
-          'enrich',
-          `LLM returned final response (${finalContent.length} chars)`,
-          1
-        )
-        break
-      }
-
-      if (!finalContent) {
-        log(
-          'error',
-          'enrich',
-          'No final content received after tool call rounds',
-          1
-        )
-        throw new Error('LLM returned empty response after tool calls')
-      }
-
-      log(
-        'info',
-        'enrich',
-        `Parsing JSON response (${finalContent.length} chars)...`,
-        1
-      )
-      const result = responseCodec.decode(finalContent, {
-        reportInput: true,
-      })
-
-      if (!result) {
-        log(
-          'error',
-          'enrich',
-          `Failed to parse JSON, raw response: ${finalContent.slice(0, 300)}`,
-          1
-        )
-        throw new Error('LLM returned empty or invalid response')
-      }
-
-      log(
-        'success',
-        'enrich',
-        `Successfully parsed enriched data for "${resortName}"`,
-        1
-      )
-      return result
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      log(
-        'error',
-        'enrich',
-        `Attempt ${attempt}/${maxRetries} failed: ${message}`,
-        1
-      )
-      if (attempt === maxRetries) {
-        log(
-          'error',
-          'enrich',
-          `Max retries reached for "${resortName}", skipping.`,
-          1
-        )
-        return null
-      }
-    }
-  }
-
-  return null
-}
-
-async function enrichResortViaExa(
-  resortName: string,
-  country: string,
-  model: string,
-  maxRetries = 3
-): Promise<EnrichData | null> {
+  model: string
+): Promise<{ data: EnrichData; coords: Coordinates | null } | null> {
   const responseCodec = jsonCodec(enrichSchema)
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      log(
-        'info',
-        'enrich-exa-llm',
-        `Attempt ${attempt}/${maxRetries} for "${resortName}" via Exa+LLM`
-      )
+  log('info', 'enrich', `Enriching "${resortName}" via Exa+LLM`)
 
-      log('info', 'enrich-exa-llm', 'Fetching source text from Exa...', 1)
-      const results: SearchResponse<{ text: { maxCharacters: 5000 } }> =
-        await exa.search(
-          `"${resortName}" ${country} ski resort statistics altitude piste lifts airport`,
-          {
-            type: 'auto',
-            numResults: 5,
-            contents: { text: { maxCharacters: 5000 } },
-          }
-        )
+  const coords = await fetchCoordinates(resortName, country)
 
-      const sourceText = results.results
-        .filter((r) => r.text)
-        .map((r) => `## ${r.title ?? 'Untitled'}\n${r.text}`)
-        .join('\n\n')
+  log('info', 'enrich', 'Fetching source text from Exa...', 1)
+  const results = await exa.search(EXA_SEARCH_QUERY(resortName, country), {
+    type: 'auto',
+    numResults: EXA_NUM_RESULTS,
+    useAutoprompt: true,
+    contents: {
+      text: { maxCharacters: EXA_MAX_CHARS },
+      highlights: true,
+    },
+  })
 
-      if (!sourceText) {
-        log('error', 'enrich-exa-llm', 'No source text found', 1)
-        throw new Error('No source text found from Exa')
+  const sourceText = results.results
+    .filter((r) => r.text)
+    .map((r) => {
+      const parts = [`## ${r.title ?? 'Untitled'}`]
+      if (r.highlights?.length) {
+        parts.push(`### Key facts\n${r.highlights.join('\n')}`)
       }
+      parts.push(r.text!)
+      return parts.join('\n')
+    })
+    .join('\n\n')
 
-      log(
-        'success',
-        'enrich-exa-llm',
-        `Got ${sourceText.length} chars of source text from ${results.results.length} results`,
-        1
-      )
-
-      const systemPrompt = `You are a ski resort data extractor. Given source text from web searches, extract factual data about the ski resort into a JSON object matching this schema:
-
-${JSON.stringify(buildJsonSchema(), null, 2)}
-
-Rules:
-- Extract only information that is explicitly stated in the source text
-- If a value is not found in the text, use reasonable defaults but never make up specific numbers
-- For altitude, the topAltitude must be HIGHER than the bottomAltitude
-- Return valid JSON only, no explanatory text`
-
-      const userPrompt = `Extract ski resort data for "${resortName}" in ${country} from the following source text:
-
-${sourceText}`
-
-      log('info', 'enrich-exa-llm', 'Streaming LLM extraction...', 1)
-      const stream = await ollama.chat({
-        stream: true,
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      })
-      log('info', 'enrich-exa-llm', 'Stream created, reading chunks...', 1)
-
-      let content = ''
-      let thinking = ''
-      let isThinking = true
-      for await (const chunk of stream) {
-        const thinkPart = (chunk.message as unknown as Record<string, unknown>)
-          .thinking
-        if (typeof thinkPart === 'string' && thinkPart) {
-          thinking += thinkPart
-          process.stdout.write(`${ANSI_DIM}${thinkPart}${ANSI_RESET}`)
-        }
-        if (chunk.message.content) {
-          if (isThinking) {
-            isThinking = false
-            console.log()
-            log(
-              'info',
-              'enrich-exa-llm',
-              `Model thought for ${thinking.length} chars`,
-              1
-            )
-          }
-          content += chunk.message.content
-          process.stdout.write(chunk.message.content)
-        }
-      }
-      console.log()
-      if (!content) {
-        log(
-          'error',
-          'enrich-exa-llm',
-          'LLM returned empty content after thinking',
-          1
-        )
-        throw new Error('LLM returned empty content')
-      }
-      log(
-        'info',
-        'enrich-exa-llm',
-        `LLM response received (${content.length} chars)`,
-        1
-      )
-
-      const result = responseCodec.decode(content, { reportInput: true })
-      if (!result) {
-        log(
-          'error',
-          'enrich-exa-llm',
-          `Failed to parse LLM response: ${content.slice(0, 300)}`,
-          1
-        )
-        throw new Error('Failed to parse LLM response as valid enrichment data')
-      }
-
-      log(
-        'success',
-        'enrich-exa-llm',
-        `Successfully enriched "${resortName}" via Exa+LLM`,
-        1
-      )
-      return result
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      log(
-        'error',
-        'enrich-exa-llm',
-        `Attempt ${attempt}/${maxRetries} failed: ${message}`,
-        1
-      )
-      if (attempt === maxRetries) {
-        log(
-          'error',
-          'enrich-exa-llm',
-          `Max retries reached for "${resortName}", skipping.`,
-          1
-        )
-        return null
-      }
-    }
+  if (!sourceText) {
+    log('error', 'enrich', 'No source text found', 1)
+    return null
   }
 
-  return null
+  log(
+    'success',
+    'enrich',
+    `Got ${sourceText.length} chars of source text from ${results.results.length} results`,
+    1
+  )
+
+  const systemPrompt = LLM_SYSTEM_PROMPT.replace(
+    '{SCHEMA}',
+    JSON.stringify(buildJsonSchema(), null, 2)
+  )
+
+  const userPrompt = LLM_USER_PROMPT(resortName, country, sourceText)
+
+  log('info', 'enrich', 'Streaming LLM extraction...', 1)
+  const stream = await ollama.chat({
+    stream: true,
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+  })
+  log('info', 'enrich', 'Stream created, reading chunks...', 1)
+
+  let content = ''
+  let thinking = ''
+  let isThinking = true
+  for await (const chunk of stream) {
+    const thinkPart = (chunk.message as unknown as Record<string, unknown>)
+      .thinking
+    if (typeof thinkPart === 'string' && thinkPart) {
+      thinking += thinkPart
+      process.stdout.write(`${ANSI_DIM}${thinkPart}${ANSI_RESET}`)
+    }
+    if (chunk.message.content) {
+      if (isThinking) {
+        isThinking = false
+        console.log()
+        log('info', 'enrich', `Model thought for ${thinking.length} chars`, 1)
+      }
+      content += chunk.message.content
+      process.stdout.write(chunk.message.content)
+    }
+  }
+  console.log()
+  if (!content) {
+    log('error', 'enrich', 'LLM returned empty content after thinking', 1)
+    return null
+  }
+  log('info', 'enrich', `LLM response received (${content.length} chars)`, 1)
+
+  const result = responseCodec.decode(content, { reportInput: true })
+  if (!result) {
+    log(
+      'error',
+      'enrich',
+      `Failed to parse LLM response: ${content.slice(0, 300)}`,
+      1
+    )
+    return null
+  }
+
+  log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
+  return { data: result, coords }
 }
 
 interface UnenrichedResort {
@@ -676,7 +495,11 @@ async function listUnenrichedResorts(
   return resorts
 }
 
-function displayEnrichedData(resort: UnenrichedResort, data: EnrichData) {
+function displayEnrichedData(
+  resort: UnenrichedResort,
+  data: EnrichData,
+  coords: Coordinates | null
+) {
   console.log()
   const location = resort.region
     ? `${resort.country}, ${resort.region}`
@@ -685,19 +508,25 @@ function displayEnrichedData(resort: UnenrichedResort, data: EnrichData) {
     `  ${ANSI_BOLD}${resort.resortName}${ANSI_RESET} ${ANSI_DIM}(${location})${ANSI_RESET}`
   )
   console.log()
-  logEnrichData(data, 2)
+  logEnrichData(data, coords, 2)
 }
 
 async function confirmEnrichedData(
   resort: UnenrichedResort,
   data: EnrichData,
+  coords: Coordinates | null,
   autoAccept: boolean
-): Promise<{ accepted: boolean; data: EnrichData; autoAcceptRest: boolean }> {
+): Promise<{
+  accepted: boolean
+  data: EnrichData
+  coords: Coordinates | null
+  autoAcceptRest: boolean
+}> {
   if (autoAccept) {
-    return { accepted: true, data, autoAcceptRest: true }
+    return { accepted: true, data, coords, autoAcceptRest: true }
   }
 
-  displayEnrichedData(resort, data)
+  displayEnrichedData(resort, data, coords)
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -709,21 +538,21 @@ async function confirmEnrichedData(
     const trimmed = answer.trim().toLowerCase()
 
     if (trimmed === 'y' || trimmed === '') {
-      return { accepted: true, data, autoAcceptRest: false }
+      return { accepted: true, data, coords, autoAcceptRest: false }
     }
 
     if (trimmed === 'auto') {
       log('info', 'enrich', 'Auto-accepting all remaining resorts.', 1)
-      return { accepted: true, data, autoAcceptRest: true }
+      return { accepted: true, data, coords, autoAcceptRest: true }
     }
 
     if (trimmed === 'skip') {
-      return { accepted: false, data, autoAcceptRest: false }
+      return { accepted: false, data, coords, autoAcceptRest: false }
     }
 
     if (trimmed === 'quit') {
       log('warn', 'enrich', 'Stopping enrichment.', 1)
-      return { accepted: false, data, autoAcceptRest: false }
+      return { accepted: false, data, coords, autoAcceptRest: false }
     }
 
     if (trimmed === 'modify') {
@@ -753,10 +582,10 @@ async function confirmEnrichedData(
         }
       }
 
-      return { accepted: true, data: modified, autoAcceptRest: false }
+      return { accepted: true, data: modified, coords, autoAcceptRest: false }
     }
 
-    return { accepted: true, data, autoAcceptRest: false }
+    return { accepted: true, data, coords, autoAcceptRest: false }
   } finally {
     rl.close()
   }
@@ -765,7 +594,8 @@ async function confirmEnrichedData(
 async function writeEnrichedResort(
   adminTablesDb: TablesDB,
   resortId: string,
-  data: EnrichData
+  data: EnrichData,
+  coords: Coordinates | null
 ): Promise<void> {
   log(
     'info',
@@ -779,8 +609,8 @@ async function writeEnrichedResort(
     rowId: resortId,
     data: {
       description: data.description,
-      latitude: data.latitude,
-      longitude: data.longitude,
+      latitude: coords?.latitude ?? '',
+      longitude: coords?.longitude ?? '',
       topAltitude: data.topAltitude,
       bottomAltitude: data.bottomAltitude,
       nearestAirport: data.nearestAirport,
@@ -803,7 +633,6 @@ async function enrich(options: {
   region?: string
   country?: string
   output?: string
-  exa?: boolean
 }) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
 
@@ -829,16 +658,10 @@ async function enrich(options: {
       'enrich',
       `Resort: "${resortName}", Country: "${country}"${options.region ? `, Region: "${options.region}"` : ''}`
     )
-    log(
-      'info',
-      'enrich',
-      `Model: ${model}${options.exa ? ' (using Exa search + LLM)' : ''}`
-    )
+    log('info', 'enrich', `Model: ${model}`)
 
-    const data = options.exa
-      ? await enrichResortViaExa(resortName, country, model)
-      : await enrichResort(resortName, country, model)
-    if (!data) {
+    const result = await enrichResort(resortName, country, model)
+    if (!result) {
       log('error', 'enrich', `Failed to enrich "${resortName}".`)
       process.exit(1)
     }
@@ -848,7 +671,9 @@ async function enrich(options: {
         resortName,
         country,
         region: options.region,
-        ...data,
+        latitude: result.coords?.latitude ?? '',
+        longitude: result.coords?.longitude ?? '',
+        ...result.data,
       }
       log('info', 'enrich', `Writing enriched JSON to ${options.output}`)
       await Bun.write(options.output, JSON.stringify(outputData, null, 2))
@@ -860,7 +685,8 @@ async function enrich(options: {
     } else {
       displayEnrichedData(
         { $id: '', resortName, country, region: options.region ?? '' },
-        data
+        result.data,
+        result.coords
       )
     }
 
@@ -908,10 +734,8 @@ async function enrich(options: {
       `[${i + 1}/${resorts.length}] Enriching ${resort.resortName} (${resort.country})...`
     )
 
-    const data = options.exa
-      ? await enrichResortViaExa(resort.resortName, resort.country, model)
-      : await enrichResort(resort.resortName, resort.country, model)
-    if (!data) {
+    const result = await enrichResort(resort.resortName, resort.country, model)
+    if (!result) {
       log(
         'warn',
         'enrich',
@@ -922,15 +746,25 @@ async function enrich(options: {
       continue
     }
 
-    const result = await confirmEnrichedData(resort, data, autoAccept)
-    autoAccept = result.autoAcceptRest
+    const confirmed = await confirmEnrichedData(
+      resort,
+      result.data,
+      result.coords,
+      autoAccept
+    )
+    autoAccept = confirmed.autoAcceptRest
 
-    if (result.accepted) {
-      await writeEnrichedResort(adminTablesDb, resort.$id, result.data)
+    if (confirmed.accepted) {
+      await writeEnrichedResort(
+        adminTablesDb,
+        resort.$id,
+        confirmed.data,
+        confirmed.coords
+      )
       enriched++
       log('success', 'enrich', 'Written to database (enriched: true).', 1)
     } else {
-      if (result.data === data && !autoAccept) {
+      if (confirmed.data === result.data && !autoAccept) {
         stopRequested = true
       }
       skipped++
@@ -970,10 +804,6 @@ program
   .option(
     '--output <path>',
     'Write enriched JSON to a file instead of stdout (standalone mode only)'
-  )
-  .option(
-    '--exa',
-    'Use Exa text search + LLM extraction instead of LLM with tool-calling'
   )
   .action(enrich)
 
