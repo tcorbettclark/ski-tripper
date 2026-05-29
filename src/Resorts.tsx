@@ -373,6 +373,14 @@ export default function Resorts({
                 >
                   {col.key === 'resortName' ? (
                     resort.resortName
+                  ) : col.key === 'country' &&
+                    resort.country &&
+                    getCountryFlagUrl(resort.country) ? (
+                    <img
+                      src={getCountryFlagUrl(resort.country)}
+                      alt={resort.country}
+                      style={resortsStyles.countryFlag}
+                    />
                   ) : col.key === 'suitableFor' && resort.suitableFor ? (
                     <span style={resortsStyles.levelBadges}>
                       {resort.suitableFor.map((level) => (
@@ -1001,6 +1009,12 @@ const resortsStyles = {
     gridTemplateColumns: '1fr 1fr',
     gap: '12px',
     marginBottom: '16px',
+  },
+  countryFlag: {
+    display: 'inline-block',
+    width: '22px',
+    height: '15px',
+    verticalAlign: 'middle',
   },
   flag: {
     display: 'inline-block',
