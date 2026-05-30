@@ -8,6 +8,7 @@ import { Client, Query, TablesDB } from 'node-appwrite'
 import { Ollama } from 'ollama'
 import * as z from 'zod'
 import type { JSONSchema } from 'zod/v4/core'
+import { cleanUrls } from './clean-urls'
 
 const OLLAMA_HOST = 'https://ollama.com'
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
@@ -690,6 +691,7 @@ async function enrichResort(
 
   log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
   const defaulted = withDefaults(result)
+  defaulted.websites = cleanUrls(defaulted.websites)
   const normalised = normalisePistePercentages(defaulted)
   if (
     normalised.beginnerPct !== result.beginnerPct ||
@@ -838,6 +840,7 @@ type IssueKind =
   | 'invalid_snow_reliability'
   | 'invalid_season'
   | 'altitude_inverted'
+  | 'dirty_websites'
 
 interface AuditIssue {
   resort: string
@@ -997,6 +1000,7 @@ function auditResort(resort: ResortRow): AuditIssue[] {
   } catch {
     websites = []
   }
+
   if (websites.length === 0) {
     issues.push({
       resort: resort.resortName,
@@ -1005,14 +1009,28 @@ function auditResort(resort: ResortRow): AuditIssue[] {
       kind: 'missing_string',
       detail: 'Websites list is empty',
     })
-  } else if (websites.length < MIN_WEBSITES) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'websites',
-      kind: 'too_few_websites',
-      detail: `Only ${websites.length} website(s) (min ${MIN_WEBSITES})`,
-    })
+  } else {
+    if (websites.length < MIN_WEBSITES) {
+      issues.push({
+        resort: resort.resortName,
+        country: resort.country,
+        field: 'websites',
+        kind: 'too_few_websites',
+        detail: `Only ${websites.length} website(s) (min ${MIN_WEBSITES})`,
+      })
+    }
+    const cleaned = cleanUrls(websites)
+    if (JSON.stringify(cleaned) !== JSON.stringify(websites)) {
+      const removedLines = websites.map((w) => `      - ${w}`).join('\n')
+      const addedLines = cleaned.map((w) => `      + ${w}`).join('\n')
+      issues.push({
+        resort: resort.resortName,
+        country: resort.country,
+        field: 'websites',
+        kind: 'dirty_websites',
+        detail: `${removedLines}\n---\n${addedLines}`,
+      })
+    }
   }
 
   addMissingString(
@@ -1085,9 +1103,22 @@ function displayAuditResults(issues: AuditIssue[], totalResorts: number) {
   for (const [resortKey, resortIssues] of grouped) {
     console.log(`  ${ANSI_BOLD}${resortKey}${ANSI_RESET}`)
     for (const issue of resortIssues) {
-      console.log(
-        `    ${ANSI_RED}\u2717${ANSI_RESET} ${ANSI_YELLOW}${issue.field}${ANSI_RESET}: ${issue.detail}`
-      )
+      if (issue.kind === 'dirty_websites') {
+        const [removedBlock, addedBlock] = issue.detail.split('\n---\n')
+        console.log(
+          `    ${ANSI_RED}\u2717${ANSI_RESET} ${ANSI_YELLOW}${issue.field}${ANSI_RESET}:`
+        )
+        for (const line of removedBlock.split('\n')) {
+          console.log(`${ANSI_RED}${line}${ANSI_RESET}`)
+        }
+        for (const line of addedBlock.split('\n')) {
+          console.log(`${ANSI_GREEN}${line}${ANSI_RESET}`)
+        }
+      } else {
+        console.log(
+          `    ${ANSI_RED}\u2717${ANSI_RESET} ${ANSI_YELLOW}${issue.field}${ANSI_RESET}: ${issue.detail}`
+        )
+      }
     }
     console.log()
   }
@@ -1304,6 +1335,9 @@ async function fixResort(
         patch[field] = value
       }
     }
+  }
+  if ('websites' in patch && Array.isArray(patch.websites)) {
+    patch.websites = cleanUrls(patch.websites as string[])
   }
   if (needsCoords && coords) {
     patch.latitude = coords.latitude
