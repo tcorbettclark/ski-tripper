@@ -19,13 +19,7 @@ import type {
   Trip,
   Vote,
 } from './types.d'
-import {
-  dayjs,
-  isValidUrl,
-  parseJsonArray,
-  parseJsonNumberArray,
-  randomThreeWords,
-} from './utils'
+import { dayjs, isValidUrl, parseJsonArray, randomThreeWords } from './utils'
 
 export function hasSession(): boolean {
   const projectId = process.env.PUBLIC_APPWRITE_PROJECT_ID as string
@@ -73,13 +67,10 @@ function parseProposal(proposal: Proposal): Proposal {
 }
 
 function parsePoll(poll: Poll): Poll {
-  poll.proposalIds = parseJsonArray(poll.proposalIds as unknown as string)
   return poll
 }
 
 function parseVote(vote: Vote): Vote {
-  vote.proposalIds = parseJsonArray(vote.proposalIds as unknown as string)
-  vote.tokenCounts = parseJsonNumberArray(vote.tokenCounts as unknown as string)
   return vote
 }
 
@@ -927,7 +918,7 @@ export async function createPoll(
         pollCreatorUserId,
         pollCreatorUserName,
         state: 'OPEN',
-        proposalIds: JSON.stringify(proposalIds),
+        proposalIds,
         startDate,
         endDate,
         outcome: '',
@@ -1039,8 +1030,8 @@ export async function upsertVote(
         tableId: VOTES_TABLE_ID,
         rowId: votes[0].$id,
         data: {
-          proposalIds: JSON.stringify(proposalIds),
-          tokenCounts: JSON.stringify(tokenCounts),
+          proposalIds,
+          tokenCounts,
         } as Record<string, unknown>,
       })
     )
@@ -1053,8 +1044,8 @@ export async function upsertVote(
       data: {
         pollId,
         voterUserId,
-        proposalIds: JSON.stringify(proposalIds),
-        tokenCounts: JSON.stringify(tokenCounts),
+        proposalIds,
+        tokenCounts,
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),

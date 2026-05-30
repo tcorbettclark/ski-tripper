@@ -944,7 +944,7 @@ describe('createPoll', () => {
     expect(db.createRow).toHaveBeenCalledTimes(1)
     const [{ data }] = db.createRow.mock.calls[0]
     expect(data.state).toBe('OPEN')
-    expect(data.proposalIds).toBe(JSON.stringify(['prop-1', 'prop-2']))
+    expect(data.proposalIds).toEqual(['prop-1', 'prop-2'])
     expect(data.tripId).toBe('trip-1')
     expect(data.pollCreatorUserId).toBe('coord-1')
     expect(data.pollCreatorUserName).toBe('Coordinator Name')
@@ -1132,8 +1132,8 @@ describe('upsertVote', () => {
     const [{ data }] = db.createRow.mock.calls[0]
     expect(data.pollId).toBe('poll-1')
     expect(data.voterUserId).toBe('user-1')
-    expect(data.proposalIds).toBe(JSON.stringify(['p-1']))
-    expect(data.tokenCounts).toBe(JSON.stringify([2]))
+    expect(data.proposalIds).toEqual(['p-1'])
+    expect(data.tokenCounts).toEqual([2])
   })
 
   it('updates existing vote document when one already exists', async () => {
