@@ -9,7 +9,7 @@ import DetailField from './DetailField'
 import PisteBreakdown from './PisteBreakdown'
 import { borders, colors, detailStyles, fonts, formStyles } from './theme'
 import type { Resort } from './types.d.ts'
-import { sanitizeUrl } from './utils'
+import { ensureUrlScheme, sanitizeUrl } from './utils'
 
 const snowReliabilityLabels: Record<string, string> = {
   high: 'High',
@@ -538,7 +538,7 @@ export default function Resorts({
                           {selectedResort.websites.map((url) => (
                             <a
                               key={url}
-                              href={sanitizeUrl(url)}
+                              href={sanitizeUrl(ensureUrlScheme(url))}
                               target="_blank"
                               rel="noopener noreferrer"
                               style={{
@@ -549,7 +549,7 @@ export default function Resorts({
                               onMouseEnter={() => setHoveredWebsite(url)}
                               onMouseLeave={() => setHoveredWebsite(null)}
                             >
-                              {url.replace(/^https?:\/\//, '')}
+                              {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
                             </a>
                           ))}
                         </div>

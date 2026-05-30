@@ -417,7 +417,7 @@ export default function ProposalCard({
                       {proposal.websites.map((url) => (
                         <a
                           key={url}
-                          href={sanitizeUrl(url)}
+                          href={sanitizeUrl(ensureUrlScheme(url))}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
@@ -428,7 +428,7 @@ export default function ProposalCard({
                           onMouseEnter={() => setHoveredWebsite(url)}
                           onMouseLeave={() => setHoveredWebsite(null)}
                         >
-                          {url.replace(/^https?:\/\//, '')}
+                          {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
                         </a>
                       ))}
                     </div>
