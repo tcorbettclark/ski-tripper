@@ -56,7 +56,7 @@ const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given source tex
 Rules:
 - Extract only information that is explicitly stated in the source text
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
-- If a value is not found in the text, use reasonable defaults but never make up specific numbers
+- If a value is not found in the text, set it to null — never fabricate data or guess specific numbers
 - For altitude, the summitAltitude must be HIGHER than the baseAltitude
 - For piste percentages (beginnerPct, intermediatePct, advancedPct), use the first reasonable estimate from the source text. Don't deliberate or reconsider — pick and move on. Round to the nearest 5 so they sum to 100
 - Return valid JSON only, no explanatory text`
@@ -372,90 +372,78 @@ function jsonCodec<T extends z.core.$ZodType>(schema: T) {
 }
 
 function buildJsonSchema(): JSONSchema.JSONSchema {
+  const nullable = (
+    schema: JSONSchema.JSONSchema & { description?: string },
+    desc: string
+  ): JSONSchema.JSONSchema => ({
+    anyOf: [schema, { type: 'null' }],
+    description: `${desc}, or null if not found`,
+  })
+
   return {
     type: 'object',
     properties: {
-      description: {
-        type: 'string',
-        description:
-          'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights',
-      },
-      summitAltitude: {
-        type: 'integer',
-        description: 'Summit altitude in metres above sea level',
-      },
-      baseAltitude: {
-        type: 'integer',
-        description: 'Base altitude in metres above sea level',
-      },
-      nearestAirport: {
-        type: 'string',
-        description: 'IATA code of the nearest airport, e.g. "GVA"',
-      },
-      transferTime: {
-        type: 'string',
-        description: 'Transfer time from airport, e.g. "2h 00m"',
-      },
-      pisteKm: {
-        type: 'integer',
-        description: 'Total groomed piste length in kilometres',
-      },
-      beginnerPct: {
-        type: 'integer',
-        description:
-          'Percentage of beginner (blue) piste, rounded to nearest 5, e.g. 25',
-      },
-      intermediatePct: {
-        type: 'integer',
-        description:
-          'Percentage of intermediate (red) piste, rounded to nearest 5, e.g. 50',
-      },
-      advancedPct: {
-        type: 'integer',
-        description:
-          'Percentage of advanced (black) piste, rounded to nearest 5, e.g. 25',
-      },
-      liftCount: {
-        type: 'integer',
-        description: 'Number of ski lifts',
-      },
-      snowReliability: {
-        type: 'string',
-        enum: ['high', 'medium', 'low'],
-        description: 'Snow reliability rating',
-      },
-      skiSeasonMonths: {
-        type: 'string',
-        description: 'Typical ski season, e.g. "Dec-Apr"',
-      },
-      websites: {
-        type: 'array',
-        items: { type: 'string' },
-        description:
-          'URLs of websites with information about skiing at the resort',
-      },
-      linkedResortsDescription: {
-        type: 'string',
-        description:
-          'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."',
-      },
+      description: nullable(
+        { type: 'string' },
+        'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights'
+      ),
+      summitAltitude: nullable(
+        { type: 'integer' },
+        'Summit altitude in metres above sea level'
+      ),
+      baseAltitude: nullable(
+        { type: 'integer' },
+        'Base altitude in metres above sea level'
+      ),
+      nearestAirport: nullable(
+        { type: 'string' },
+        'IATA code of the nearest airport, e.g. "GVA"'
+      ),
+      transferTime: nullable(
+        { type: 'string' },
+        'Transfer time from airport, e.g. "2h 00m"'
+      ),
+      pisteKm: nullable(
+        { type: 'integer' },
+        'Total groomed piste length in kilometres'
+      ),
+      beginnerPct: nullable(
+        { type: 'integer' },
+        'Percentage of beginner (blue) piste, rounded to nearest 5, e.g. 25'
+      ),
+      intermediatePct: nullable(
+        { type: 'integer' },
+        'Percentage of intermediate (red) piste, rounded to nearest 5, e.g. 50'
+      ),
+      advancedPct: nullable(
+        { type: 'integer' },
+        'Percentage of advanced (black) piste, rounded to nearest 5, e.g. 25'
+      ),
+      liftCount: nullable({ type: 'integer' }, 'Number of ski lifts'),
+      snowReliability: nullable(
+        {
+          type: 'string',
+          enum: ['high', 'medium', 'low'],
+        },
+        'Snow reliability rating (high/medium/low)'
+      ),
+      skiSeasonMonths: nullable(
+        { type: 'string' },
+        'Typical ski season, e.g. "Dec-Apr"'
+      ),
+      websites: nullable(
+        {
+          type: 'array',
+          items: { type: 'string' },
+        },
+        'URLs of websites with information about skiing at the resort'
+      ),
+      linkedResortsDescription: nullable(
+        { type: 'string' },
+        'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."'
+      ),
     },
-    required: [
-      'description',
-      'summitAltitude',
-      'baseAltitude',
-      'nearestAirport',
-      'transferTime',
-      'pisteKm',
-      'beginnerPct',
-      'intermediatePct',
-      'advancedPct',
-      'liftCount',
-      'snowReliability',
-      'skiSeasonMonths',
-      'websites',
-      'linkedResortsDescription',
-    ],
+    required: [],
   }
 }
 
