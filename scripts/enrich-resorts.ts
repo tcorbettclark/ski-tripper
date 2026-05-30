@@ -58,7 +58,7 @@ Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - If a value is not found in the text, set it to null — never fabricate data or guess specific numbers
 - For altitude, the summitAltitude must be HIGHER than the baseAltitude
-- For piste percentages (beginnerPct, intermediatePct, advancedPct), use the first reasonable estimate from the source text. Don't deliberate or reconsider — pick and move on. Round to the nearest 5 so they sum to 100
+- For piste percentages (beginnerPct, intermediatePct, advancedPct), use the first reasonable estimate from the source text. Don't deliberate or reconsider — pick and move on
 - Return valid JSON only, no explanatory text`
 
 const LLM_USER_PROMPT = (
@@ -163,23 +163,17 @@ const enrichSchema = z.object({
     .number()
     .int()
     .nullable()
-    .describe(
-      'Percentage of beginner (blue) piste, rounded to nearest 5, e.g. 25'
-    ),
+    .describe('Approximate percentage of beginner (blue) piste, e.g. 25'),
   intermediatePct: z.coerce
     .number()
     .int()
     .nullable()
-    .describe(
-      'Percentage of intermediate (red) piste, rounded to nearest 5, e.g. 50'
-    ),
+    .describe('Approximate percentage of intermediate (red) piste, e.g. 50'),
   advancedPct: z.coerce
     .number()
     .int()
     .nullable()
-    .describe(
-      'Percentage of advanced (black) piste, rounded to nearest 5, e.g. 25'
-    ),
+    .describe('Approximate percentage of advanced (black) piste, e.g. 25'),
   liftCount: z.coerce.number().int().nullable().describe('Number of ski lifts'),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
@@ -409,15 +403,15 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
       ),
       beginnerPct: nullable(
         { type: 'integer' },
-        'Percentage of beginner (blue) piste, rounded to nearest 5, e.g. 25'
+        'Approximate percentage of beginner (blue) piste, e.g. 25'
       ),
       intermediatePct: nullable(
         { type: 'integer' },
-        'Percentage of intermediate (red) piste, rounded to nearest 5, e.g. 50'
+        'Approximate percentage of intermediate (red) piste, e.g. 50'
       ),
       advancedPct: nullable(
         { type: 'integer' },
-        'Percentage of advanced (black) piste, rounded to nearest 5, e.g. 25'
+        'Approximate percentage of advanced (black) piste, e.g. 25'
       ),
       liftCount: nullable({ type: 'integer' }, 'Number of ski lifts'),
       snowReliability: nullable(
