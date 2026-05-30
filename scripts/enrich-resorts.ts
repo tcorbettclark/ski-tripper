@@ -131,57 +131,72 @@ const exa = new Exa(process.env.EXA_API_KEY as string)
 const enrichSchema = z.object({
   description: z
     .string()
+    .nullable()
     .describe(
       'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights'
     ),
   summitAltitude: z.coerce
     .number()
     .int()
+    .nullable()
     .describe('Summit altitude in metres above sea level'),
   baseAltitude: z.coerce
     .number()
     .int()
+    .nullable()
     .describe('Base altitude in metres above sea level'),
   nearestAirport: z
     .string()
+    .nullable()
     .describe('IATA code of the nearest airport, e.g. "GVA"'),
   transferTime: z
     .string()
+    .nullable()
     .describe('Transfer time from airport, e.g. "2h 00m"'),
   pisteKm: z.coerce
     .number()
     .int()
+    .nullable()
     .describe('Total groomed piste length in kilometres'),
   beginnerPct: z.coerce
     .number()
     .int()
+    .nullable()
     .describe(
       'Percentage of beginner (blue) piste, rounded to nearest 5, e.g. 25'
     ),
   intermediatePct: z.coerce
     .number()
     .int()
+    .nullable()
     .describe(
       'Percentage of intermediate (red) piste, rounded to nearest 5, e.g. 50'
     ),
   advancedPct: z.coerce
     .number()
     .int()
+    .nullable()
     .describe(
       'Percentage of advanced (black) piste, rounded to nearest 5, e.g. 25'
     ),
-  liftCount: z.coerce.number().int().describe('Number of ski lifts'),
+  liftCount: z.coerce.number().int().nullable().describe('Number of ski lifts'),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
+    .nullable()
     .describe('Snow reliability rating'),
-  skiSeasonMonths: z.string().describe('Typical ski season, e.g. "Dec-Apr"'),
+  skiSeasonMonths: z
+    .string()
+    .nullable()
+    .describe('Typical ski season, e.g. "Dec-Apr"'),
   websites: z
     .array(z.string())
+    .nullable()
     .describe(
       '3 to 6 URLs of websites with information about skiing at the resort, e.g. ["https://www.zermatt.ch/en/skiing"]. Refer to the key source information, also piste maps.'
     ),
   linkedResortsDescription: z
     .string()
+    .nullable()
     .describe(
       'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."'
     ),
@@ -189,7 +204,40 @@ const enrichSchema = z.object({
 
 type EnrichData = z.infer<typeof enrichSchema>
 
-function normalisePistePercentages(data: EnrichData): EnrichData {
+type ResolvedEnrichData = {
+  [K in keyof EnrichData]: NonNullable<EnrichData[K]>
+}
+
+const enrichDefaults: Record<string, string | number | string[]> = {
+  description: '',
+  summitAltitude: 0,
+  baseAltitude: 0,
+  nearestAirport: '',
+  transferTime: '',
+  pisteKm: 0,
+  beginnerPct: 0,
+  intermediatePct: 0,
+  advancedPct: 0,
+  liftCount: 0,
+  snowReliability: '',
+  skiSeasonMonths: '',
+  websites: [],
+  linkedResortsDescription: '',
+}
+
+function withDefaults(data: EnrichData): ResolvedEnrichData {
+  const result = { ...data } as Record<string, unknown>
+  for (const [key, fallback] of Object.entries(enrichDefaults)) {
+    if (result[key] === null) {
+      result[key] = fallback
+    }
+  }
+  return result as ResolvedEnrichData
+}
+
+function normalisePistePercentages(
+  data: ResolvedEnrichData
+): ResolvedEnrichData {
   const b = data.beginnerPct
   const i = data.intermediatePct
   const a = data.advancedPct
@@ -467,7 +515,7 @@ function auditFieldsToEnrichFields(fields: AuditField[]): string[] {
 }
 
 function logEnrichData(
-  data: EnrichData,
+  data: ResolvedEnrichData,
   coords: Coordinates | null,
   indent = 0
 ) {
@@ -480,7 +528,13 @@ function logEnrichData(
     `${data.baseAltitude}m - ${data.summitAltitude}m`,
     indent
   )
-  logSummary('Airport', `${data.nearestAirport} (${data.transferTime})`, indent)
+  logSummary(
+    'Airport',
+    data.nearestAirport
+      ? `${data.nearestAirport} (${data.transferTime})`
+      : 'unknown',
+    indent
+  )
   logSummary('Piste', `${data.pisteKm} km`, indent)
   logSummary('Beginner', `${data.beginnerPct}%`, indent)
   logSummary('Intermediate', `${data.intermediatePct}%`, indent)
@@ -497,7 +551,7 @@ async function enrichResort(
   resortName: string,
   country: string,
   model: string
-): Promise<{ data: EnrichData; coords: Coordinates | null } | null> {
+): Promise<{ data: ResolvedEnrichData; coords: Coordinates | null } | null> {
   const responseCodec = jsonCodec(enrichSchema)
 
   log('info', 'enrich', `Enriching "${resortName}" via Exa+LLM`)
@@ -635,7 +689,8 @@ async function enrichResort(
   }
 
   log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
-  const normalised = normalisePistePercentages(result)
+  const defaulted = withDefaults(result)
+  const normalised = normalisePistePercentages(defaulted)
   if (
     normalised.beginnerPct !== result.beginnerPct ||
     normalised.intermediatePct !== result.intermediatePct ||
@@ -1242,7 +1297,12 @@ async function fixResort(
   const patch: Record<string, unknown> = {}
   for (const field of enrichFields) {
     if (field in parsed) {
-      patch[field] = parsed[field]
+      const value = parsed[field]
+      if (value === null && field in enrichDefaults) {
+        patch[field] = enrichDefaults[field]
+      } else {
+        patch[field] = value
+      }
     }
   }
   if (needsCoords && coords) {
@@ -1359,7 +1419,7 @@ async function fix(options: { model?: string }) {
 
 function displayEnrichedData(
   resort: UnenrichedResort,
-  data: EnrichData,
+  data: ResolvedEnrichData,
   coords: Coordinates | null
 ) {
   console.log()
@@ -1375,12 +1435,12 @@ function displayEnrichedData(
 
 async function confirmEnrichedData(
   resort: UnenrichedResort,
-  data: EnrichData,
+  data: ResolvedEnrichData,
   coords: Coordinates | null,
   autoAccept: boolean
 ): Promise<{
   accepted: boolean
-  data: EnrichData
+  data: ResolvedEnrichData
   coords: Coordinates | null
   autoAcceptRest: boolean
 }> {
@@ -1456,7 +1516,7 @@ async function confirmEnrichedData(
 async function writeEnrichedResort(
   adminTablesDb: TablesDB,
   resortId: string,
-  data: EnrichData,
+  data: ResolvedEnrichData,
   coords: Coordinates | null
 ): Promise<void> {
   log(
