@@ -163,7 +163,7 @@ const enrichSchema = z.object({
   websites: z
     .array(z.string())
     .describe(
-      'URLs of websites with information about skiing at the resort, e.g. ["https://www.zermatt.ch/en/skiing"]'
+      '3 to 6 URLs of websites with information about skiing at the resort, e.g. ["https://www.zermatt.ch/en/skiing"]. Refer to the key source information, also piste maps.'
     ),
   linkedResortsDescription: z
     .string()
