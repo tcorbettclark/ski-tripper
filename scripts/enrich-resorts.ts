@@ -660,10 +660,18 @@ async function enrichResort(
         log('info', 'enrich', `Model thought for ${thinking.length} chars`, 1)
       }
       content += chunk.message.content
-      process.stdout.write(chunk.message.content)
     }
   }
-  console.log()
+  if (isThinking && !content) {
+    console.log()
+    log('error', 'enrich', 'LLM returned empty content after thinking', 1)
+    return null
+  }
+  try {
+    console.log(JSON.stringify(JSON.parse(content), null, 2))
+  } catch {
+    console.log(content)
+  }
   if (!content) {
     log('error', 'enrich', 'LLM returned empty content after thinking', 1)
     return null
@@ -1299,10 +1307,18 @@ async function fixResort(
         log('info', 'fix', `Model thought for ${thinking.length} chars`, 1)
       }
       content += chunk.message.content
-      process.stdout.write(chunk.message.content)
     }
   }
-  console.log()
+  if (isThinking && !content) {
+    console.log()
+    log('error', 'fix', 'LLM returned empty content after thinking', 1)
+    return null
+  }
+  try {
+    console.log(JSON.stringify(JSON.parse(content), null, 2))
+  } catch {
+    console.log(content)
+  }
 
   if (!content) {
     log('error', 'fix', 'LLM returned empty content after thinking', 1)
