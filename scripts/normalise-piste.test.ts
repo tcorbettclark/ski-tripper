@@ -8,20 +8,23 @@ function normalisePistePercentages(b: number, i: number, a: number) {
   const total = b + i + a
   if (total === 0) return { beginnerPct: 0, intermediatePct: 0, advancedPct: 0 }
 
-  let nb = round5((b / total) * 100)
-  let ni = round5((i / total) * 100)
-  let na = round5((a / total) * 100)
+  const ub = (b / total) * 100
+  const ui = (i / total) * 100
+  const ua = (a / total) * 100
 
-  const remainder = 100 - (nb + ni + na)
-  if (remainder !== 0) {
-    const biggest =
-      nb >= ni && nb >= na ? 'beginner' : ni >= na ? 'intermediate' : 'advanced'
-    if (biggest === 'beginner') nb += remainder
-    else if (biggest === 'intermediate') ni += remainder
-    else na += remainder
+  const rb = round5(ub)
+  const ri = round5(ui)
+  const ra = round5(ua)
+
+  if (rb + ri + ra === 100) {
+    return { beginnerPct: rb, intermediatePct: ri, advancedPct: ra }
   }
 
-  return { beginnerPct: nb, intermediatePct: ni, advancedPct: na }
+  return {
+    beginnerPct: Math.round(ub),
+    intermediatePct: Math.round(ui),
+    advancedPct: Math.round(ua),
+  }
 }
 
 describe('normalisePistePercentages', () => {
@@ -50,12 +53,11 @@ describe('normalisePistePercentages', () => {
     ).toBe(100)
   })
 
-  it('handles rounding remainder by adding to largest category', () => {
+  it('handles rounding that sums to 100 by rounding to nearest 5', () => {
     const result = normalisePistePercentages(33, 34, 33)
     expect(
       result.beginnerPct + result.intermediatePct + result.advancedPct
     ).toBe(100)
-    expect(result.intermediatePct).toBeGreaterThanOrEqual(result.beginnerPct)
   })
 
   it('handles one category being 100%', () => {
@@ -84,7 +86,7 @@ describe('normalisePistePercentages', () => {
     })
   })
 
-  it('rounds non-5 values to nearest 5', () => {
+  it('rounds non-5 values to nearest 5 when they sum to 100', () => {
     const result = normalisePistePercentages(7, 13, 80)
     expect(result.beginnerPct % 5).toBe(0)
     expect(result.intermediatePct % 5).toBe(0)
@@ -92,5 +94,30 @@ describe('normalisePistePercentages', () => {
     expect(
       result.beginnerPct + result.intermediatePct + result.advancedPct
     ).toBe(100)
+  })
+
+  it('falls back to unrounded values when rounding to 5 does not sum to 100', () => {
+    const result = normalisePistePercentages(12, 33, 55)
+    const total =
+      result.beginnerPct + result.intermediatePct + result.advancedPct
+    expect(total).toBe(100)
+  })
+
+  it('always produces values that sum to exactly 100', () => {
+    const cases = [
+      [1, 2, 97],
+      [13, 37, 50],
+      [33, 34, 33],
+      [6, 19, 75],
+      [10, 30, 60],
+      [5, 45, 50],
+    ] as const
+    for (const [b, i, a] of cases) {
+      const result = normalisePistePercentages(b, i, a)
+      expect(
+        result.beginnerPct + result.intermediatePct + result.advancedPct,
+        `For input ${b}/${i}/${a}`
+      ).toBe(100)
+    }
   })
 })

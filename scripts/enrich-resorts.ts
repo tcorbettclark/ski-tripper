@@ -245,21 +245,25 @@ function normalisePistePercentages(
   const total = b + i + a
   if (total === 0) return data
 
-  const round5 = (n: number) => Math.round(n / 5) * 5
-  let nb = round5((b / total) * 100)
-  let ni = round5((i / total) * 100)
-  let na = round5((a / total) * 100)
+  const ub = (b / total) * 100
+  const ui = (i / total) * 100
+  const ua = (a / total) * 100
 
-  const remainder = 100 - (nb + ni + na)
-  if (remainder !== 0) {
-    const biggest =
-      nb >= ni && nb >= na ? 'beginner' : ni >= na ? 'intermediate' : 'advanced'
-    if (biggest === 'beginner') nb += remainder
-    else if (biggest === 'intermediate') ni += remainder
-    else na += remainder
+  const round5 = (n: number) => Math.round(n / 5) * 5
+  const rb = round5(ub)
+  const ri = round5(ui)
+  const ra = round5(ua)
+
+  if (rb + ri + ra === 100) {
+    return { ...data, beginnerPct: rb, intermediatePct: ri, advancedPct: ra }
   }
 
-  return { ...data, beginnerPct: nb, intermediatePct: ni, advancedPct: na }
+  return {
+    ...data,
+    beginnerPct: Math.round(ub),
+    intermediatePct: Math.round(ui),
+    advancedPct: Math.round(ua),
+  }
 }
 
 interface Coordinates {
@@ -841,6 +845,7 @@ type IssueKind =
   | 'invalid_season'
   | 'altitude_inverted'
   | 'dirty_websites'
+  | 'piste_breakdown_sum'
 
 interface AuditIssue {
   resort: string
@@ -956,6 +961,17 @@ function auditResort(resort: ResortRow): AuditIssue[] {
       field: 'pisteBreakdown',
       kind: 'zero_number',
       detail: 'All piste breakdowns (beginner/intermediate/advanced) are zero',
+    })
+  } else if (
+    resort.beginnerPct + resort.intermediatePct + resort.advancedPct !==
+    100
+  ) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'pisteBreakdown',
+      kind: 'piste_breakdown_sum',
+      detail: `Piste breakdown percentages sum to ${resort.beginnerPct + resort.intermediatePct + resort.advancedPct} instead of 100 (${resort.beginnerPct}/${resort.intermediatePct}/${resort.advancedPct})`,
     })
   }
   addZeroNumber('liftCount', resort.liftCount, 'Lift count')
@@ -1344,6 +1360,47 @@ async function fixResort(
     patch.longitude = coords.longitude
   }
 
+  const pisteFields = ['beginnerPct', 'intermediatePct', 'advancedPct'] as const
+  if (pisteFields.every((f) => f in patch)) {
+    const b = patch.beginnerPct as number
+    const i = patch.intermediatePct as number
+    const a = patch.advancedPct as number
+    const total = b + i + a
+    if (total > 0) {
+      const normalised = normalisePistePercentages({
+        description: '',
+        summitAltitude: 0,
+        baseAltitude: 0,
+        nearestAirport: '',
+        transferTime: '',
+        pisteKm: 0,
+        beginnerPct: b,
+        intermediatePct: i,
+        advancedPct: a,
+        liftCount: 0,
+        snowReliability: 'medium',
+        skiSeasonMonths: '',
+        websites: [],
+        linkedResortsDescription: '',
+      })
+      patch.beginnerPct = normalised.beginnerPct
+      patch.intermediatePct = normalised.intermediatePct
+      patch.advancedPct = normalised.advancedPct
+      if (
+        normalised.beginnerPct !== b ||
+        normalised.intermediatePct !== i ||
+        normalised.advancedPct !== a
+      ) {
+        log(
+          'info',
+          'fix',
+          `Normalised piste %: ${b}/${i}/${a} -> ${normalised.beginnerPct}/${normalised.intermediatePct}/${normalised.advancedPct}`,
+          1
+        )
+      }
+    }
+  }
+
   return { patch, coords }
 }
 
@@ -1428,7 +1485,57 @@ async function fix(options: { model?: string }) {
       `[${idx}/${issuesByResort.size}] Fixing ${resort.resortName} (${resort.country}) - ${issues.length} issue(s)`
     )
 
-    const result = await fixResort(resort, issues, model)
+    const pisteSumIssue = issues.find((i) => i.kind === 'piste_breakdown_sum')
+    const otherIssues = issues.filter((i) => i.kind !== 'piste_breakdown_sum')
+
+    if (pisteSumIssue) {
+      const normalised = normalisePistePercentages({
+        description: resort.description,
+        summitAltitude: resort.summitAltitude,
+        baseAltitude: resort.baseAltitude,
+        nearestAirport: resort.nearestAirport,
+        transferTime: resort.transferTime,
+        pisteKm: resort.pisteKm,
+        beginnerPct: resort.beginnerPct,
+        intermediatePct: resort.intermediatePct,
+        advancedPct: resort.advancedPct,
+        liftCount: resort.liftCount,
+        snowReliability: resort.snowReliability as 'high' | 'medium' | 'low',
+        skiSeasonMonths: resort.skiSeasonMonths,
+        websites: resort.websites ? JSON.parse(resort.websites) : [],
+        linkedResortsDescription: resort.linkedResortsDescription,
+      })
+      if (
+        normalised.beginnerPct !== resort.beginnerPct ||
+        normalised.intermediatePct !== resort.intermediatePct ||
+        normalised.advancedPct !== resort.advancedPct
+      ) {
+        log(
+          'info',
+          'fix',
+          `Normalised piste % for ${resort.resortName}: ${resort.beginnerPct}/${resort.intermediatePct}/${resort.advancedPct} -> ${normalised.beginnerPct}/${normalised.intermediatePct}/${normalised.advancedPct}`,
+          1
+        )
+        const patch: Record<string, unknown> = {
+          beginnerPct: normalised.beginnerPct,
+          intermediatePct: normalised.intermediatePct,
+          advancedPct: normalised.advancedPct,
+        }
+        await writePatchedResort(adminTablesDb, resortId, patch)
+        fixed++
+      } else {
+        log(
+          'warn',
+          'fix',
+          `Could not normalise piste % for ${resort.resortName} (values already normalised but don't sum to 100)`,
+          1
+        )
+      }
+    }
+
+    if (otherIssues.length === 0) continue
+
+    const result = await fixResort(resort, otherIssues, model)
     if (!result) {
       log('warn', 'fix', `Failed to fix ${resort.resortName}, skipping.`, 1)
       failed++
