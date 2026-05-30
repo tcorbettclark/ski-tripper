@@ -28,7 +28,7 @@ const SOURCE_WEBSITES = [
 ] as const
 
 const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
-  `Official website and ski area information for ${resortName} ski resort in ${country}, including piste maps, lift status, altitude, nearest airport, transfer time, and resort facilities`
+  `Official website and ski area information for ${resortName} ski resort in ${country}, including piste maps, piste difficulty breakdown, lift status, altitude, nearest airport, transfer time, and resort facilities`
 
 const EXA_COORDS_QUERY = (resortName: string, country: string) =>
   `Location and geographic coordinates of ${resortName} ski resort in ${country}`
@@ -57,7 +57,7 @@ Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - If a value is not found in the text, use reasonable defaults but never make up specific numbers
 - For altitude, the summitAltitude must be HIGHER than the baseAltitude
-- For piste percentages (beginnerPct, intermediatePct, advancedPct), estimate from whatever data is available (km of piste, number of runs, or stated percentages). Round to the nearest 5 so they sum to 100
+- For piste percentages (beginnerPct, intermediatePct, advancedPct), use the first reasonable estimate from the source text. Don't deliberate or reconsider — pick and move on. Round to the nearest 5 so they sum to 100
 - Return valid JSON only, no explanatory text`
 
 const LLM_USER_PROMPT = (
