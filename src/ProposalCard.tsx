@@ -149,9 +149,7 @@ export default function ProposalCard({
     addingAccommodation || editingAccommodationId !== null
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
   const canRevertToDraft = isCoordinator && isRejected
-  const hasDiscussionBody = !discussionCollapsed
-  const hasProposalBody = !proposalCollapsed
-  const hasAccommodationsBody = !accommodationCollapsed
+
   const hasActions =
     canAct || canReject || canRevertToDraft || !!rejectError || !!revertError
 
@@ -326,9 +324,7 @@ export default function ProposalCard({
         </div>
 
         {!previewMode && (
-          <div
-            style={hasDiscussionBody ? styles.section : styles.sectionNoBorder}
-          >
+          <div style={styles.section}>
             <button
               type="button"
               onClick={() => setDiscussionCollapsed((c) => !c)}
@@ -341,7 +337,7 @@ export default function ProposalCard({
                 {discussionCollapsed ? '+' : '−'}
               </span>
             </button>
-            {hasDiscussionBody && (
+            {!discussionCollapsed && (
               <DiscussionSection
                 proposalId={proposal.$id}
                 userId={userId}
@@ -356,13 +352,7 @@ export default function ProposalCard({
           </div>
         )}
 
-        <div
-          style={
-            previewMode || hasProposalBody
-              ? styles.section
-              : styles.sectionNoBorder
-          }
-        >
+        <div style={styles.section}>
           {!previewMode && (
             <button
               type="button"
@@ -375,7 +365,7 @@ export default function ProposalCard({
               </span>
             </button>
           )}
-          {(previewMode || hasProposalBody) && (
+          {(previewMode || !proposalCollapsed) && (
             <>
               <div style={styles.grid}>
                 <DetailField
@@ -515,11 +505,7 @@ export default function ProposalCard({
         </div>
 
         {!previewMode && (
-          <div
-            style={
-              hasAccommodationsBody ? styles.section : styles.sectionNoBorder
-            }
-          >
+          <div style={styles.section}>
             <button
               type="button"
               onClick={() => setAccommodationCollapsed((c) => !c)}
@@ -530,7 +516,7 @@ export default function ProposalCard({
                 {accommodationCollapsed ? '+' : '−'}
               </span>
             </button>
-            {hasAccommodationsBody && (
+            {!accommodationCollapsed && (
               <>
                 {accommodations.length === 0 && !addingAccommodation && (
                   <p style={styles.noAccommodations}>No accommodations yet.</p>
@@ -1001,10 +987,7 @@ const styles = {
     paddingTop: '10px',
     marginBottom: '10px',
   },
-  sectionNoBorder: {
-    paddingTop: '10px',
-    marginBottom: '10px',
-  },
+
   sectionHeader: {
     display: 'flex',
     alignItems: 'center',
