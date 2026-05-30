@@ -31,6 +31,10 @@ export function formatDate(iso: string) {
   return dayjs(iso).format('ddd DD MMM YYYY')
 }
 
+export function formatDateTime(iso: string) {
+  return dayjs(iso).format('D MMM YYYY, h:mm A')
+}
+
 export function formatTimeRemaining(endDate: string) {
   const end = dayjs(endDate)
   if (end.isBefore(dayjs())) return '0 days left'

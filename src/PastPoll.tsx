@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import PollResults from './PollResults'
 import { borders, colors, fonts, formStyles } from './theme'
 import type { Poll, Proposal, Vote } from './types.d.ts'
-import { formatDate } from './utils'
+import { formatDate, formatDateTime } from './utils'
 
 interface PastPollProps {
   poll: Poll
@@ -54,7 +54,19 @@ export default function PastPoll({
           {formatDate(poll.startDate)} – {formatDate(poll.endDate)}
         </span>
       </div>
-      {poll.outcome && <p style={styles.outcome}>{poll.outcome}</p>}
+      {poll.outcome && (
+        <div style={styles.outcomeBox}>
+          <span style={styles.outcomeIcon}>✔</span>
+          <div style={styles.outcomeContent}>
+            <span style={styles.outcomeLabel}>Outcome</span>
+            <p style={styles.outcomeText}>{poll.outcome}</p>
+          </div>
+          <span style={styles.outcomeMeta}>
+            Closed by {poll.pollCreatorUserName} ·{' '}
+            {formatDateTime(poll.$updatedAt)}
+          </span>
+        </div>
+      )}
       {error && <p style={formStyles.error}>{error}</p>}
       {loading ? (
         <p style={styles.loading}>Loading…</p>
@@ -97,11 +109,50 @@ const styles = {
     fontSize: '13px',
     margin: '10px 0 0',
   },
-  outcome: {
+  outcomeBox: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '10px',
+    marginTop: '8px',
+    padding: '10px 14px',
+    borderRadius: '8px',
+    background: 'rgba(59,189,232,0.08)',
+    border: borders.accent,
+    marginBottom: '12px',
+    position: 'relative' as const,
+  },
+  outcomeContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  outcomeIcon: {
+    fontSize: '16px',
+    color: colors.accent,
+    lineHeight: '1.5',
+    flexShrink: 0,
+  },
+  outcomeLabel: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    fontWeight: '600',
+    color: colors.accent,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase' as const,
+  },
+  outcomeText: {
     fontFamily: fonts.body,
     fontSize: '14px',
     color: colors.textPrimary,
-    margin: '8px 0 12px',
+    margin: 0,
     lineHeight: '1.5',
+  },
+  outcomeMeta: {
+    fontFamily: fonts.body,
+    fontSize: '11px',
+    color: colors.textSecondary,
+    alignSelf: 'flex-end',
+    whiteSpace: 'nowrap',
+    marginLeft: 'auto',
+    paddingLeft: '12px',
   },
 } as const

@@ -210,6 +210,7 @@ describe('PastPoll', () => {
     })
 
     await waitFor(() => {
+      expect(screen.getByText('Outcome'))
       expect(
         screen.getByText('Chamonix through to next round, Annecy rejected')
       )
