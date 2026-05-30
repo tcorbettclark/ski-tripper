@@ -119,6 +119,7 @@ const samplePolls: Poll[] = [
     proposalIds: ['prop-2'],
     startDate: '2024-01-05T00:00:00Z',
     endDate: '2024-01-12T00:00:00Z',
+    outcome: '',
   },
 ]
 
@@ -430,6 +431,7 @@ describe('Overview', () => {
       proposalIds: ['prop-1'],
       startDate: '2024-01-01T00:00:00Z',
       endDate: '2024-01-08T00:00:00Z',
+      outcome: 'Chamonix through to next round',
     }
     const onNavigateToTab = mock(() => {})
     const eventUser = userEvent.setup()
@@ -615,6 +617,7 @@ describe('Overview', () => {
       proposalIds: ['prop-1'],
       startDate: '2024-01-01T00:00:00Z',
       endDate: '2024-01-08T00:00:00Z',
+      outcome: 'Chamonix through to next round',
     }
     await act(async () => {
       renderOverview({

@@ -69,6 +69,7 @@ export interface Poll {
   proposalIds: string[]
   startDate: string
   endDate: string
+  outcome: string
 }
 
 export interface Vote {

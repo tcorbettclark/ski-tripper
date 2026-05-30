@@ -54,6 +54,7 @@ export default function PastPoll({
           {formatDate(poll.startDate)} – {formatDate(poll.endDate)}
         </span>
       </div>
+      {poll.outcome && <p style={styles.outcome}>{poll.outcome}</p>}
       {error && <p style={formStyles.error}>{error}</p>}
       {loading ? (
         <p style={styles.loading}>Loading…</p>
@@ -95,5 +96,12 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: '13px',
     margin: '10px 0 0',
+  },
+  outcome: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: colors.textPrimary,
+    margin: '8px 0 12px',
+    lineHeight: '1.5',
   },
 } as const

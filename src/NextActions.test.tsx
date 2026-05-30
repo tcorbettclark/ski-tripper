@@ -15,6 +15,7 @@ const sampleActivePoll: Poll = {
   proposalIds: ['prop-2'],
   startDate: '2024-01-05T00:00:00Z',
   endDate: '2024-01-12T00:00:00Z',
+  outcome: '',
 }
 
 const defaultProps = {

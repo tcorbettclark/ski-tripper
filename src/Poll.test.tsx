@@ -50,6 +50,7 @@ function createMockPoll(overrides: Record<string, unknown> = {}) {
     proposalIds: [TEST_IDS.PROPOSAL_1],
     startDate,
     endDate,
+    outcome: '',
     ...overrides,
   }
 }
@@ -76,9 +77,13 @@ function createMockCallbacks(
     ),
     listVotes: mock(() => Promise.resolve({ votes: [] })),
     createPoll: mock(() => Promise.resolve(createMockPoll())),
-    closePoll: mock(() =>
+    closePoll: mock((_pollId: string, _userId: string, _outcome: string) =>
       Promise.resolve(
-        createMockPoll({ $id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' })
+        createMockPoll({
+          $id: TEST_IDS.POLL_CLOSED,
+          state: 'CLOSED',
+          outcome: 'Test outcome',
+        })
       )
     ),
     upsertVote: mock(() => Promise.resolve(createMockVote())),
@@ -350,10 +355,36 @@ describe('Poll', () => {
       })
     })
 
-    it('calls closePoll and notifies on close', async () => {
+    it('shows outcome form when Close Poll is clicked', async () => {
+      await act(async () => {
+        renderPoll({
+          listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
+          getCoordinatorParticipant: createCoordinatorMock(),
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      expect(screen.getByLabelText(/outcome/i)).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /confirm close/i })
+      ).toBeTruthy()
+      expect(screen.getByRole('button', { name: /cancel/i })).toBeTruthy()
+    })
+
+    it('calls closePoll with outcome text when Confirm Close is clicked', async () => {
       const closePoll = mock(() =>
         Promise.resolve(
-          createMockPoll({ $id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' })
+          createMockPoll({
+            $id: TEST_IDS.POLL_CLOSED,
+            state: 'CLOSED',
+            outcome: 'Chamonix through, Annecy rejected',
+          })
         )
       )
       const onActivePollChange = mock(() => {})
@@ -373,17 +404,81 @@ describe('Poll', () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
       })
 
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText(/outcome/i), {
+          target: { value: 'Chamonix through, Annecy rejected' },
+        })
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm close/i }))
+      })
+
       await waitFor(() => {
         expect(onActivePollChange).toHaveBeenCalledWith(null)
       })
 
-      expect(closePoll).toHaveBeenCalledWith(TEST_IDS.POLL_OPEN, TEST_IDS.USER)
+      expect(closePoll).toHaveBeenCalledWith(
+        TEST_IDS.POLL_OPEN,
+        TEST_IDS.USER,
+        'Chamonix through, Annecy rejected'
+      )
+    })
+
+    it('disables Confirm Close when outcome is empty', async () => {
+      await act(async () => {
+        renderPoll({
+          listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
+          getCoordinatorParticipant: createCoordinatorMock(),
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      expect(
+        (
+          screen.getByRole('button', {
+            name: /confirm close/i,
+          }) as HTMLButtonElement
+        ).disabled
+      ).toBe(true)
+    })
+
+    it('hides outcome form on Cancel', async () => {
+      await act(async () => {
+        renderPoll({
+          listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
+          getCoordinatorParticipant: createCoordinatorMock(),
+        })
+      })
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      expect(screen.getByLabelText(/outcome/i)).toBeTruthy()
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
+      })
+
+      expect(screen.queryByLabelText(/outcome/i)).toBeNull()
+      expect(screen.getByRole('button', { name: /close poll/i })).toBeTruthy()
     })
 
     it('moves closed poll to past polls section', async () => {
       const closedPoll = createMockPoll({
         $id: TEST_IDS.POLL_CLOSED,
         state: 'CLOSED',
+        outcome: 'Chamonix through',
       })
       const closePoll = mock(() => Promise.resolve(closedPoll))
       await act(async () => {
@@ -400,6 +495,17 @@ describe('Poll', () => {
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
       })
+
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText(/outcome/i), {
+          target: { value: 'Chamonix through' },
+        })
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm close/i }))
+      })
+
       await waitFor(() => {
         expect(screen.getByText(/Past Polls/i))
       })
@@ -429,14 +535,28 @@ describe('Poll', () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
       })
 
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText(/outcome/i), {
+          target: { value: 'Outcome' },
+        })
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm close/i }))
+      })
+
       expect(
-        (screen.getByRole('button', { name: /Closing/i }) as HTMLButtonElement)
+        (screen.getByRole('button', { name: /closing/i }) as HTMLButtonElement)
           .disabled
       ).toBe(true)
 
       await act(async () => {
         resolveClose?.(
-          createMockPoll({ $id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' })
+          createMockPoll({
+            $id: TEST_IDS.POLL_CLOSED,
+            state: 'CLOSED',
+            outcome: 'Outcome',
+          })
         )
       })
     })
@@ -746,6 +866,16 @@ describe('Poll', () => {
 
       await act(async () => {
         fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+      })
+
+      await act(async () => {
+        fireEvent.change(screen.getByLabelText(/outcome/i), {
+          target: { value: 'Some outcome' },
+        })
+      })
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: /confirm close/i }))
       })
 
       await waitFor(() => {

@@ -13,6 +13,7 @@ const poll = {
   proposalIds: ['p-1', 'p-2', 'p-3'],
   startDate: '2024-01-01',
   endDate: '2024-01-07',
+  outcome: '',
 }
 const proposals = [
   {
@@ -221,6 +222,7 @@ describe('PollResults', () => {
       proposalIds: ['p-3', 'p-1', 'p-2'],
       startDate: '2024-01-01',
       endDate: '2024-01-07',
+      outcome: '',
     }
     const proposalsAlpha = [
       {

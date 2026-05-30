@@ -39,7 +39,11 @@ interface PollComponentProps {
     userName: string,
     durationDays: number
   ) => Promise<PollType>
-  closePoll?: (pollId: string, userId: string) => Promise<PollType>
+  closePoll?: (
+    pollId: string,
+    userId: string,
+    outcome: string
+  ) => Promise<PollType>
   upsertVote?: (
     pollId: string,
     userId: string,
@@ -84,6 +88,8 @@ export default function Poll({
   const [pollDuration, setPollDuration] = useState(7)
   const [closingPoll, setClosingPoll] = useState(false)
   const [closePollError, setClosePollError] = useState<string | null>(null)
+  const [outcomeText, setOutcomeText] = useState('')
+  const [showOutcomeForm, setShowOutcomeForm] = useState(false)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -195,10 +201,12 @@ export default function Poll({
     setClosingPoll(true)
     setClosePollError(null)
     try {
-      const closed = await closePoll(activePoll.$id, user.$id)
+      const closed = await closePoll(activePoll.$id, user.$id, outcomeText)
       setActivePoll(null)
       setPastPolls((p) => [closed, ...p])
       onActivePollChange?.(null)
+      setShowOutcomeForm(false)
+      setOutcomeText('')
     } catch (err) {
       setClosePollError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -234,15 +242,49 @@ export default function Poll({
                     {formatDate(activePoll.endDate)}
                   </p>
                 </div>
-                {isCoordinator && (
+                {isCoordinator && !showOutcomeForm && (
                   <button
                     type="button"
-                    onClick={handleClosePoll}
-                    disabled={closingPoll}
+                    onClick={() => setShowOutcomeForm(true)}
                     style={styles.closePollButton}
                   >
-                    {closingPoll ? 'Closing…' : 'Close Poll'}
+                    Close Poll
                   </button>
+                )}
+                {isCoordinator && showOutcomeForm && (
+                  <div style={styles.outcomeForm}>
+                    <label htmlFor="outcome" style={styles.outcomeLabel}>
+                      Outcome:
+                    </label>
+                    <textarea
+                      id="outcome"
+                      value={outcomeText}
+                      onChange={(e) => setOutcomeText(e.target.value)}
+                      placeholder="Which proposals are through and which are rejected..."
+                      style={styles.outcomeTextarea}
+                    />
+                    <div style={styles.outcomeActions}>
+                      <button
+                        type="button"
+                        onClick={handleClosePoll}
+                        disabled={closingPoll || !outcomeText.trim()}
+                        style={styles.outcomeSubmitButton}
+                      >
+                        {closingPoll ? 'Closing…' : 'Confirm Close'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowOutcomeForm(false)
+                          setOutcomeText('')
+                        }}
+                        disabled={closingPoll}
+                        style={styles.outcomeCancelButton}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
               {closePollError && (
@@ -393,6 +435,54 @@ const styles = {
     border: '1px solid rgba(255,107,107,0.3)',
     background: 'transparent',
     color: colors.error,
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    fontWeight: '500',
+    cursor: 'pointer',
+  },
+  outcomeForm: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    minWidth: '280px',
+  },
+  outcomeLabel: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+  },
+  outcomeTextarea: {
+    width: '100%',
+    minHeight: '80px',
+    padding: '8px 10px',
+    borderRadius: '6px',
+    border: borders.subtle,
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    resize: 'vertical',
+  },
+  outcomeActions: {
+    display: 'flex',
+    gap: '8px',
+  },
+  outcomeSubmitButton: {
+    padding: '7px 18px',
+    borderRadius: '6px',
+    border: 'none',
+    background: colors.error,
+    color: '#fff',
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  outcomeCancelButton: {
+    padding: '7px 18px',
+    borderRadius: '6px',
+    border: borders.subtle,
+    background: 'transparent',
+    color: colors.textSecondary,
     fontFamily: fonts.body,
     fontSize: '13px',
     fontWeight: '500',

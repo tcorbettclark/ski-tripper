@@ -27,6 +27,7 @@ function createMockPoll(overrides: Partial<Poll> = {}): Poll {
     proposalIds: [TEST_IDS.PROPOSAL_1],
     startDate,
     endDate,
+    outcome: '',
     ...overrides,
   }
 }
@@ -190,6 +191,32 @@ describe('PastPoll', () => {
   })
 
   it('renders "Poll · CLOSED" label', async () => {
+    await act(async () => {
+      renderPastPoll()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/Poll · CLOSED/i))
+    })
+  })
+
+  it('renders outcome text when present', async () => {
+    await act(async () => {
+      renderPastPoll({
+        poll: createMockPoll({
+          outcome: 'Chamonix through to next round, Annecy rejected',
+        }),
+      })
+    })
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Chamonix through to next round, Annecy rejected')
+      )
+    })
+  })
+
+  it('does not render outcome element when outcome is empty', async () => {
     await act(async () => {
       renderPastPoll()
     })

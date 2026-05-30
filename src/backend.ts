@@ -930,6 +930,7 @@ export async function createPoll(
         proposalIds: JSON.stringify(proposalIds),
         startDate,
         endDate,
+        outcome: '',
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
@@ -942,8 +943,10 @@ export async function createPoll(
 export async function closePoll(
   pollId: string,
   pollCreatorUserId: string,
+  outcome: string,
   db: TablesDB = tablesDb
 ): Promise<Poll> {
+  if (!outcome.trim()) throw new Error('Outcome is required to close a poll.')
   const poll = await fetchPollRow(
     db.getRow({
       databaseId: DATABASE_ID,
@@ -964,7 +967,7 @@ export async function closePoll(
       databaseId: DATABASE_ID,
       tableId: POLLS_TABLE_ID,
       rowId: pollId,
-      data: { state: 'CLOSED' } as Record<string, unknown>,
+      data: { state: 'CLOSED', outcome } as Record<string, unknown>,
     })
   )
 }

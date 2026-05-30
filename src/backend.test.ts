@@ -1000,7 +1000,7 @@ describe('createPoll', () => {
 })
 
 describe('closePoll', () => {
-  it('sets state to CLOSED when caller is coordinator and poll is OPEN', async () => {
+  it('sets state to CLOSED and outcome when caller is coordinator and poll is OPEN', async () => {
     const db = createMockDb({
       getRow: mock(() =>
         Promise.resolve({ $id: 'poll-1', tripId: 'trip-1', state: 'OPEN' })
@@ -1011,10 +1011,32 @@ describe('closePoll', () => {
         })
       ),
     })
-    await closePoll('poll-1', 'coord-1', db)
+    await closePoll(
+      'poll-1',
+      'coord-1',
+      'Chamonix through, Annecy rejected',
+      db
+    )
     expect(db.updateRow).toHaveBeenCalledTimes(1)
     const [{ data }] = db.updateRow.mock.calls[0]
     expect(data.state).toBe('CLOSED')
+    expect(data.outcome).toBe('Chamonix through, Annecy rejected')
+  })
+
+  it('throws when outcome is empty', async () => {
+    const db = createMockDb()
+    expect(closePoll('poll-1', 'coord-1', '', db)).rejects.toThrow(
+      'Outcome is required to close a poll.'
+    )
+    expect(db.updateRow).not.toHaveBeenCalled()
+  })
+
+  it('throws when outcome is whitespace only', async () => {
+    const db = createMockDb()
+    expect(closePoll('poll-1', 'coord-1', '   ', db)).rejects.toThrow(
+      'Outcome is required to close a poll.'
+    )
+    expect(db.updateRow).not.toHaveBeenCalled()
   })
 
   it('throws when poll is not OPEN', async () => {
@@ -1023,7 +1045,7 @@ describe('closePoll', () => {
         Promise.resolve({ $id: 'poll-1', tripId: 'trip-1', state: 'CLOSED' })
       ),
     })
-    expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow(
+    expect(closePoll('poll-1', 'coord-1', 'Some outcome', db)).rejects.toThrow(
       'Only open polls can be closed.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -1040,7 +1062,7 @@ describe('closePoll', () => {
         })
       ),
     })
-    expect(closePoll('poll-1', 'user-1', db)).rejects.toThrow(
+    expect(closePoll('poll-1', 'user-1', 'Some outcome', db)).rejects.toThrow(
       'Only the coordinator can close a poll.'
     )
     expect(db.updateRow).not.toHaveBeenCalled()
@@ -1050,7 +1072,9 @@ describe('closePoll', () => {
     const db = createMockDb({
       getRow: mock(() => Promise.reject(new Error('Not found'))),
     })
-    expect(closePoll('poll-1', 'coord-1', db)).rejects.toThrow('Not found')
+    expect(closePoll('poll-1', 'coord-1', 'Some outcome', db)).rejects.toThrow(
+      'Not found'
+    )
   })
 })
 
