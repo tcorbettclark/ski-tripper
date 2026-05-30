@@ -29,7 +29,7 @@ const SOURCE_WEBSITES = [
 ] as const
 
 const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
-  `Official website and ski area information for ${resortName} ski resort in ${country}, including piste maps, piste difficulty breakdown, lift status, altitude, nearest airport, transfer time, and resort facilities`
+  `Official website and ski area information for ${resortName} ski resort in ${country}, including piste difficulty breakdown, lift status, altitude, nearest airport, transfer time, and resort facilities`
 
 const EXA_COORDS_QUERY = (resortName: string, country: string) =>
   `Location and geographic coordinates of ${resortName} ski resort in ${country}`
@@ -193,7 +193,7 @@ const enrichSchema = z.object({
     .array(z.string())
     .nullable()
     .describe(
-      '3 to 6 URLs of websites with information about skiing at the resort, e.g. ["https://www.zermatt.ch/en/skiing"]. Refer to the key source information, also piste maps.'
+      'All URLs of websites with information about skiing at the resort, e.g. ["https://www.zermatt.ch/en/skiing"]. Include every relevant URL found in the source text; do not attempt to consolidate or deduplicate.'
     ),
   linkedResortsDescription: z
     .string()
@@ -436,7 +436,7 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
           type: 'array',
           items: { type: 'string' },
         },
-        'URLs of websites with information about skiing at the resort'
+        'All URLs of websites with information about skiing at the resort. Include every relevant URL found in the source text; do not attempt to consolidate or deduplicate.'
       ),
       linkedResortsDescription: nullable(
         { type: 'string' },
