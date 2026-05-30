@@ -585,9 +585,9 @@ export async function createProposal(
       nearestAirport: string
       transferTime: string
       pisteKm: number
-      beginnerKm: number
-      intermediateKm: number
-      advancedKm: number
+      beginnerPct: number
+      intermediatePct: number
+      advancedPct: number
       liftCount: number
       snowReliability: 'high' | 'medium' | 'low'
       skiSeasonMonths: string

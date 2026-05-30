@@ -158,9 +158,9 @@ export default function Resorts({
             nearestAirport: resort.nearestAirport,
             transferTime: resort.transferTime,
             pisteKm: resort.pisteKm,
-            beginnerKm: resort.beginnerKm,
-            intermediateKm: resort.intermediateKm,
-            advancedKm: resort.advancedKm,
+            beginnerPct: resort.beginnerPct,
+            intermediatePct: resort.intermediatePct,
+            advancedPct: resort.advancedPct,
             liftCount: resort.liftCount,
             snowReliability: resort.snowReliability,
             skiSeasonMonths: resort.skiSeasonMonths,
@@ -389,9 +389,9 @@ export default function Resorts({
                     />
                   ) : col.key === 'pisteBreakdown' ? (
                     <PisteBreakdown
-                      beginnerKm={resort.beginnerKm}
-                      intermediateKm={resort.intermediateKm}
-                      advancedKm={resort.advancedKm}
+                      beginnerPct={resort.beginnerPct}
+                      intermediatePct={resort.intermediatePct}
+                      advancedPct={resort.advancedPct}
                       compact
                     />
                   ) : (
@@ -490,9 +490,9 @@ export default function Resorts({
                   />
                   <DetailField label="Piste Breakdown">
                     <PisteBreakdown
-                      beginnerKm={selectedResort.beginnerKm}
-                      intermediateKm={selectedResort.intermediateKm}
-                      advancedKm={selectedResort.advancedKm}
+                      beginnerPct={selectedResort.beginnerPct}
+                      intermediatePct={selectedResort.intermediatePct}
+                      advancedPct={selectedResort.advancedPct}
                     />
                   </DetailField>
                   <DetailField

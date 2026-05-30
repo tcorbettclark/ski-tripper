@@ -377,9 +377,9 @@ export default function ProposalCard({
                 <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
                 <DetailField label="Piste Breakdown">
                   <PisteBreakdown
-                    beginnerKm={proposal.beginnerKm}
-                    intermediateKm={proposal.intermediateKm}
-                    advancedKm={proposal.advancedKm}
+                    beginnerPct={proposal.beginnerPct}
+                    intermediatePct={proposal.intermediatePct}
+                    advancedPct={proposal.advancedPct}
                   />
                 </DetailField>
                 <DetailField label="Lifts" value={String(proposal.liftCount)} />

@@ -35,9 +35,9 @@ export default function EditProposalForm({
     nearestAirport: proposal.nearestAirport || '',
     transferTime: proposal.transferTime || '',
     pisteKm: proposal.pisteKm?.toString() || '',
-    beginnerKm: proposal.beginnerKm?.toString() || '',
-    intermediateKm: proposal.intermediateKm?.toString() || '',
-    advancedKm: proposal.advancedKm?.toString() || '',
+    beginnerPct: proposal.beginnerPct?.toString() || '',
+    intermediatePct: proposal.intermediatePct?.toString() || '',
+    advancedPct: proposal.advancedPct?.toString() || '',
     liftCount: proposal.liftCount?.toString() || '',
     snowReliability: proposal.snowReliability || '',
     skiSeasonMonths: proposal.skiSeasonMonths || '',
@@ -82,9 +82,9 @@ export default function EditProposalForm({
         summitAltitude: Number(form.summitAltitude),
         baseAltitude: Number(form.baseAltitude),
         pisteKm: Number(form.pisteKm),
-        beginnerKm: Number(form.beginnerKm),
-        intermediateKm: Number(form.intermediateKm),
-        advancedKm: Number(form.advancedKm),
+        beginnerPct: Number(form.beginnerPct),
+        intermediatePct: Number(form.intermediatePct),
+        advancedPct: Number(form.advancedPct),
         liftCount: Number(form.liftCount),
         linkedResortsDescription: form.linkedResortsDescription,
       })
@@ -166,28 +166,28 @@ export default function EditProposalForm({
         placeholder="e.g. 600"
       />
       <Field
-        label="Beginner Km"
-        name="beginnerKm"
+        label="Beginner %"
+        name="beginnerPct"
         type="number"
-        value={form.beginnerKm}
+        value={form.beginnerPct}
         onChange={handleChange}
-        placeholder="e.g. 100"
+        placeholder="e.g. 25"
       />
       <Field
-        label="Intermediate Km"
-        name="intermediateKm"
+        label="Intermediate %"
+        name="intermediatePct"
         type="number"
-        value={form.intermediateKm}
-        onChange={handleChange}
-        placeholder="e.g. 200"
-      />
-      <Field
-        label="Advanced Km"
-        name="advancedKm"
-        type="number"
-        value={form.advancedKm}
+        value={form.intermediatePct}
         onChange={handleChange}
         placeholder="e.g. 50"
+      />
+      <Field
+        label="Advanced %"
+        name="advancedPct"
+        type="number"
+        value={form.advancedPct}
+        onChange={handleChange}
+        placeholder="e.g. 25"
       />
       <Field
         label="Lift Count"

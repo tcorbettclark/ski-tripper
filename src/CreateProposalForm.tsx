@@ -34,9 +34,9 @@ interface CreateProposalFormProps {
         nearestAirport: string
         transferTime: string
         pisteKm: number
-        beginnerKm: number
-        intermediateKm: number
-        advancedKm: number
+        beginnerPct: number
+        intermediatePct: number
+        advancedPct: number
         liftCount: number
         snowReliability: 'high' | 'medium' | 'low'
         skiSeasonMonths: string
@@ -59,9 +59,9 @@ const EMPTY_FORM = {
   nearestAirport: '',
   transferTime: '',
   pisteKm: '',
-  beginnerKm: '',
-  intermediateKm: '',
-  advancedKm: '',
+  beginnerPct: '',
+  intermediatePct: '',
+  advancedPct: '',
   liftCount: '',
   snowReliability: '' as '' | 'high' | 'medium' | 'low',
   skiSeasonMonths: '',
@@ -95,9 +95,11 @@ function resortToFormFields(resort: Resort): Partial<typeof EMPTY_FORM> {
     nearestAirport: resort.nearestAirport,
     transferTime: resort.transferTime,
     pisteKm: resort.pisteKm ? String(resort.pisteKm) : '',
-    beginnerKm: resort.beginnerKm ? String(resort.beginnerKm) : '',
-    intermediateKm: resort.intermediateKm ? String(resort.intermediateKm) : '',
-    advancedKm: resort.advancedKm ? String(resort.advancedKm) : '',
+    beginnerPct: resort.beginnerPct ? String(resort.beginnerPct) : '',
+    intermediatePct: resort.intermediatePct
+      ? String(resort.intermediatePct)
+      : '',
+    advancedPct: resort.advancedPct ? String(resort.advancedPct) : '',
     liftCount: resort.liftCount ? String(resort.liftCount) : '',
     snowReliability: resort.snowReliability || '',
     skiSeasonMonths: resort.skiSeasonMonths,
@@ -204,9 +206,9 @@ export default function CreateProposalForm({
           nearestAirport: form.nearestAirport,
           transferTime: form.transferTime,
           pisteKm: Number(form.pisteKm),
-          beginnerKm: Number(form.beginnerKm),
-          intermediateKm: Number(form.intermediateKm),
-          advancedKm: Number(form.advancedKm),
+          beginnerPct: Number(form.beginnerPct),
+          intermediatePct: Number(form.intermediatePct),
+          advancedPct: Number(form.advancedPct),
           liftCount: Number(form.liftCount),
           snowReliability: form.snowReliability || 'medium',
           skiSeasonMonths: form.skiSeasonMonths,
@@ -348,28 +350,28 @@ export default function CreateProposalForm({
         placeholder="e.g. 600"
       />
       <Field
-        label="Beginner Km"
-        name="beginnerKm"
+        label="Beginner %"
+        name="beginnerPct"
         type="number"
-        value={form.beginnerKm}
+        value={form.beginnerPct}
         onChange={handleChange}
-        placeholder="e.g. 100"
+        placeholder="e.g. 25"
       />
       <Field
-        label="Intermediate Km"
-        name="intermediateKm"
+        label="Intermediate %"
+        name="intermediatePct"
         type="number"
-        value={form.intermediateKm}
-        onChange={handleChange}
-        placeholder="e.g. 200"
-      />
-      <Field
-        label="Advanced Km"
-        name="advancedKm"
-        type="number"
-        value={form.advancedKm}
+        value={form.intermediatePct}
         onChange={handleChange}
         placeholder="e.g. 50"
+      />
+      <Field
+        label="Advanced %"
+        name="advancedPct"
+        type="number"
+        value={form.advancedPct}
+        onChange={handleChange}
+        placeholder="e.g. 25"
       />
       <Field
         label="Lift Count"

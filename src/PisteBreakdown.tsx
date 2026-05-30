@@ -7,57 +7,57 @@ const PISTE_COLOURS = {
 } as const
 
 interface PisteBreakdownProps {
-  beginnerKm: number
-  intermediateKm: number
-  advancedKm: number
+  beginnerPct: number
+  intermediatePct: number
+  advancedPct: number
   compact?: boolean
 }
 
 export default function PisteBreakdown({
-  beginnerKm,
-  intermediateKm,
-  advancedKm,
+  beginnerPct,
+  intermediatePct,
+  advancedPct,
   compact = false,
 }: PisteBreakdownProps) {
-  const total = beginnerKm + intermediateKm + advancedKm
+  const total = beginnerPct + intermediatePct + advancedPct
   if (total === 0) return null
 
   const bars = [
-    { label: 'Beginner', km: beginnerKm, colour: PISTE_COLOURS.beginner },
+    { label: 'Beginner', pct: beginnerPct, colour: PISTE_COLOURS.beginner },
     {
       label: 'Intermediate',
-      km: intermediateKm,
+      pct: intermediatePct,
       colour: PISTE_COLOURS.intermediate,
     },
-    { label: 'Advanced', km: advancedKm, colour: PISTE_COLOURS.advanced },
+    { label: 'Advanced', pct: advancedPct, colour: PISTE_COLOURS.advanced },
   ]
 
   return (
     <div style={compact ? compactStyles.container : defaultStyles.container}>
       {bars.map((bar) => {
-        const pct = (bar.km / total) * 100
-        const tooltip = `${bar.label}: ${bar.km} km (${pct.toFixed(0)}%)`
+        const widthPct = (bar.pct / total) * 100
+        const tooltip = `${bar.label}: ${bar.pct}%`
         const isBlackBar = bar.label === 'Advanced'
         return (
           <div key={bar.label} style={defaultStyles.barRow} title={tooltip}>
             <div
               style={{
                 ...(compact ? compactStyles.bar : defaultStyles.bar),
-                width: `${pct}%`,
+                width: `${widthPct}%`,
                 background: bar.colour,
                 border: isBlackBar
                   ? '1px solid rgba(255, 255, 255, 0.6)'
                   : 'none',
               }}
             />
-            {!compact && bar.km > 0 && (
+            {!compact && bar.pct > 0 && (
               <span
                 style={{
-                  ...defaultStyles.kmLabel,
+                  ...defaultStyles.pctLabel,
                   color: isBlackBar ? 'rgba(255, 255, 255, 0.6)' : bar.colour,
                 }}
               >
-                {bar.km}
+                {bar.pct}%
               </span>
             )}
           </div>
@@ -85,7 +85,7 @@ const defaultStyles = {
     minWidth: '1px',
     transition: 'width 0.2s ease',
   },
-  kmLabel: {
+  pctLabel: {
     fontFamily: fonts.body,
     fontSize: '10px',
   },

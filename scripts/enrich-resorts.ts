@@ -57,6 +57,7 @@ Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - If a value is not found in the text, use reasonable defaults but never make up specific numbers
 - For altitude, the summitAltitude must be HIGHER than the baseAltitude
+- For piste percentages (beginnerPct, intermediatePct, advancedPct), estimate from whatever data is available (km of piste, number of runs, or stated percentages). Round to the nearest 5 so they sum to 100
 - Return valid JSON only, no explanatory text`
 
 const LLM_USER_PROMPT = (
@@ -151,18 +152,24 @@ const enrichSchema = z.object({
     .number()
     .int()
     .describe('Total groomed piste length in kilometres'),
-  beginnerKm: z.coerce
+  beginnerPct: z.coerce
     .number()
     .int()
-    .describe('Length of beginner (blue) piste in kilometres'),
-  intermediateKm: z.coerce
+    .describe(
+      'Percentage of beginner (blue) piste, rounded to nearest 5, e.g. 25'
+    ),
+  intermediatePct: z.coerce
     .number()
     .int()
-    .describe('Length of intermediate (red) piste in kilometres'),
-  advancedKm: z.coerce
+    .describe(
+      'Percentage of intermediate (red) piste, rounded to nearest 5, e.g. 50'
+    ),
+  advancedPct: z.coerce
     .number()
     .int()
-    .describe('Length of advanced (black) piste in kilometres'),
+    .describe(
+      'Percentage of advanced (black) piste, rounded to nearest 5, e.g. 25'
+    ),
   liftCount: z.coerce.number().int().describe('Number of ski lifts'),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
@@ -181,6 +188,30 @@ const enrichSchema = z.object({
 })
 
 type EnrichData = z.infer<typeof enrichSchema>
+
+function normalisePistePercentages(data: EnrichData): EnrichData {
+  const b = data.beginnerPct
+  const i = data.intermediatePct
+  const a = data.advancedPct
+  const total = b + i + a
+  if (total === 0) return data
+
+  const round5 = (n: number) => Math.round(n / 5) * 5
+  let nb = round5((b / total) * 100)
+  let ni = round5((i / total) * 100)
+  let na = round5((a / total) * 100)
+
+  const remainder = 100 - (nb + ni + na)
+  if (remainder !== 0) {
+    const biggest =
+      nb >= ni && nb >= na ? 'beginner' : ni >= na ? 'intermediate' : 'advanced'
+    if (biggest === 'beginner') nb += remainder
+    else if (biggest === 'intermediate') ni += remainder
+    else na += remainder
+  }
+
+  return { ...data, beginnerPct: nb, intermediatePct: ni, advancedPct: na }
+}
 
 interface Coordinates {
   latitude: string
@@ -316,17 +347,20 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
         type: 'integer',
         description: 'Total groomed piste length in kilometres',
       },
-      beginnerKm: {
+      beginnerPct: {
         type: 'integer',
-        description: 'Length of beginner (blue) piste in kilometres',
+        description:
+          'Percentage of beginner (blue) piste, rounded to nearest 5, e.g. 25',
       },
-      intermediateKm: {
+      intermediatePct: {
         type: 'integer',
-        description: 'Length of intermediate (red) piste in kilometres',
+        description:
+          'Percentage of intermediate (red) piste, rounded to nearest 5, e.g. 50',
       },
-      advancedKm: {
+      advancedPct: {
         type: 'integer',
-        description: 'Length of advanced (black) piste in kilometres',
+        description:
+          'Percentage of advanced (black) piste, rounded to nearest 5, e.g. 25',
       },
       liftCount: {
         type: 'integer',
@@ -360,9 +394,9 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
       'nearestAirport',
       'transferTime',
       'pisteKm',
-      'beginnerKm',
-      'intermediateKm',
-      'advancedKm',
+      'beginnerPct',
+      'intermediatePct',
+      'advancedPct',
       'liftCount',
       'snowReliability',
       'skiSeasonMonths',
@@ -422,7 +456,7 @@ function auditFieldsToEnrichFields(fields: AuditField[]): string[] {
   const enrichFields: string[] = []
   for (const field of fields) {
     if (field === 'pisteBreakdown') {
-      enrichFields.push('beginnerKm', 'intermediateKm', 'advancedKm')
+      enrichFields.push('beginnerPct', 'intermediatePct', 'advancedPct')
     } else if (field === 'latitude' || field === 'longitude') {
       // coordinates are fetched separately, not via LLM
     } else {
@@ -448,9 +482,9 @@ function logEnrichData(
   )
   logSummary('Airport', `${data.nearestAirport} (${data.transferTime})`, indent)
   logSummary('Piste', `${data.pisteKm} km`, indent)
-  logSummary('Beginner', `${data.beginnerKm} km`, indent)
-  logSummary('Intermediate', `${data.intermediateKm} km`, indent)
-  logSummary('Advanced', `${data.advancedKm} km`, indent)
+  logSummary('Beginner', `${data.beginnerPct}%`, indent)
+  logSummary('Intermediate', `${data.intermediatePct}%`, indent)
+  logSummary('Advanced', `${data.advancedPct}%`, indent)
   logSummary('Lifts', `${data.liftCount}`, indent)
   logSummary('Snow', data.snowReliability, indent)
   logSummary('Season', data.skiSeasonMonths, indent)
@@ -601,7 +635,20 @@ async function enrichResort(
   }
 
   log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
-  return { data: result, coords }
+  const normalised = normalisePistePercentages(result)
+  if (
+    normalised.beginnerPct !== result.beginnerPct ||
+    normalised.intermediatePct !== result.intermediatePct ||
+    normalised.advancedPct !== result.advancedPct
+  ) {
+    log(
+      'info',
+      'enrich',
+      `Normalised piste %: ${result.beginnerPct}/${result.intermediatePct}/${result.advancedPct} -> ${normalised.beginnerPct}/${normalised.intermediatePct}/${normalised.advancedPct}`,
+      1
+    )
+  }
+  return { data: normalised, coords }
 }
 
 interface UnenrichedResort {
@@ -620,9 +667,9 @@ interface ResortRow extends UnenrichedResort {
   nearestAirport: string
   transferTime: string
   pisteKm: number
-  beginnerKm: number
-  intermediateKm: number
-  advancedKm: number
+  beginnerPct: number
+  intermediatePct: number
+  advancedPct: number
   liftCount: number
   snowReliability: string
   skiSeasonMonths: string
@@ -702,9 +749,9 @@ async function listAllEnrichedResorts(
         nearestAirport: (r.nearestAirport as string) ?? '',
         transferTime: (r.transferTime as string) ?? '',
         pisteKm: (r.pisteKm as number) ?? 0,
-        beginnerKm: (r.beginnerKm as number) ?? 0,
-        intermediateKm: (r.intermediateKm as number) ?? 0,
-        advancedKm: (r.advancedKm as number) ?? 0,
+        beginnerPct: (r.beginnerPct as number) ?? 0,
+        intermediatePct: (r.intermediatePct as number) ?? 0,
+        advancedPct: (r.advancedPct as number) ?? 0,
         liftCount: (r.liftCount as number) ?? 0,
         snowReliability: (r.snowReliability as string) ?? '',
         skiSeasonMonths: (r.skiSeasonMonths as string) ?? '',
@@ -841,9 +888,9 @@ function auditResort(resort: ResortRow): AuditIssue[] {
   addMissingString('transferTime', resort.transferTime, 'Transfer time')
   addZeroNumber('pisteKm', resort.pisteKm, 'Piste km')
   if (
-    resort.beginnerKm === 0 &&
-    resort.intermediateKm === 0 &&
-    resort.advancedKm === 0
+    resort.beginnerPct === 0 &&
+    resort.intermediatePct === 0 &&
+    resort.advancedPct === 0
   ) {
     issues.push({
       resort: resort.resortName,
@@ -1431,9 +1478,9 @@ async function writeEnrichedResort(
       nearestAirport: data.nearestAirport,
       transferTime: data.transferTime,
       pisteKm: data.pisteKm,
-      beginnerKm: data.beginnerKm,
-      intermediateKm: data.intermediateKm,
-      advancedKm: data.advancedKm,
+      beginnerPct: data.beginnerPct,
+      intermediatePct: data.intermediatePct,
+      advancedPct: data.advancedPct,
       liftCount: data.liftCount,
       snowReliability: data.snowReliability,
       skiSeasonMonths: data.skiSeasonMonths,
