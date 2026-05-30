@@ -1,7 +1,7 @@
 import type { Models } from 'appwrite'
 import { MapPin } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Range } from 'react-range'
+
 import { TableVirtuoso } from 'react-virtuoso'
 import { getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
@@ -45,8 +45,7 @@ export default function Resorts({
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
   const [suitableForFilter, setSuitableForFilter] = useState('')
-  const [minAltitude, setMinAltitude] = useState(-1)
-  const [maxAltitude, setMaxAltitude] = useState(-1)
+  const [minPeakHeight, setMinPeakHeight] = useState(0)
   const [selectedResort, setSelectedResort] = useState<Resort | null>(null)
   const [showProposalForm, setShowProposalForm] = useState(false)
   const [proposalError, setProposalError] = useState('')
@@ -71,8 +70,6 @@ export default function Resorts({
     () => [...new Set(resorts.map((r) => r.region).filter(Boolean))].sort(),
     [resorts]
   )
-
-  const altitudeBounds = useMemo(() => ({ min: 500, max: 5000 }), [])
 
   const filteredResorts = useMemo(() => {
     let result = resorts
@@ -104,12 +101,8 @@ export default function Resorts({
       result = result.filter((r) => r.suitableFor?.includes(suitableForFilter))
     }
 
-    if (minAltitude >= 0 || maxAltitude >= 0) {
-      const lo = minAltitude >= 0 ? minAltitude : altitudeBounds.min
-      const hi = maxAltitude >= 0 ? maxAltitude : altitudeBounds.max
-      result = result.filter(
-        (r) => r.baseAltitude >= lo && r.summitAltitude <= hi
-      )
+    if (minPeakHeight > 0) {
+      result = result.filter((r) => r.summitAltitude >= minPeakHeight)
     }
 
     return result
@@ -120,9 +113,7 @@ export default function Resorts({
     regionFilter,
     minPisteKm,
     suitableForFilter,
-    minAltitude,
-    maxAltitude,
-    altitudeBounds,
+    minPeakHeight,
   ])
 
   const handleRowClick = useCallback((resort: Resort) => {
@@ -205,8 +196,7 @@ export default function Resorts({
     setRegionFilter('')
     setMinPisteKm(0)
     setSuitableForFilter('')
-    setMinAltitude(-1)
-    setMaxAltitude(-1)
+    setMinPeakHeight(0)
   }, [])
 
   if (resorts.length === 0) {
@@ -226,7 +216,7 @@ export default function Resorts({
     { key: 'region', label: 'Region', width: '14%' },
     { key: 'suitableFor', label: 'Level', width: '12%' },
     { key: 'pisteKm', label: 'Piste Km', width: '10%' },
-    { key: 'altitudeRange', label: 'Altitude', width: '14%' },
+    { key: 'altitudeRange', label: 'Peak Height', width: '14%' },
     { key: 'skiSeasonMonths', label: 'Season', width: '14%' },
   ] as const
 
@@ -260,8 +250,7 @@ export default function Resorts({
     regionFilter ||
     minPisteKm > 0 ||
     suitableForFilter ||
-    minAltitude >= 0 ||
-    maxAltitude >= 0
+    minPeakHeight > 0
 
   return (
     <div style={resortsStyles.container}>
@@ -334,74 +323,22 @@ export default function Resorts({
           />
         </div>
         <div style={resortsStyles.sliderGroup}>
-          <span style={resortsStyles.sliderLabel}>
-            Altitude: {minAltitude >= 0 ? minAltitude : altitudeBounds.min}m–
-            {maxAltitude >= 0 ? maxAltitude : altitudeBounds.max}m
-          </span>
-          <div style={resortsStyles.rangeWrapper}>
-            <Range
-              min={altitudeBounds.min}
-              max={altitudeBounds.max}
-              step={100}
-              values={[
-                minAltitude >= 0 ? minAltitude : altitudeBounds.min,
-                maxAltitude >= 0 ? maxAltitude : altitudeBounds.max,
-              ]}
-              onChange={(values: number[]) => {
-                setMinAltitude(values[0])
-                setMaxAltitude(values[1])
-              }}
-              renderTrack={({ props, children }) => {
-                const lo = minAltitude >= 0 ? minAltitude : altitudeBounds.min
-                const hi = maxAltitude >= 0 ? maxAltitude : altitudeBounds.max
-                const range = altitudeBounds.max - altitudeBounds.min || 1
-                const leftPercent = ((lo - altitudeBounds.min) / range) * 100
-                const rightPercent = ((hi - altitudeBounds.min) / range) * 100
-                return (
-                  <div
-                    {...props}
-                    style={{
-                      ...props.style,
-                      height: '6px',
-                      width: '100%',
-                      borderRadius: '3px',
-                      background: colors.bgInput,
-                      alignSelf: 'center',
-                      position: 'relative' as const,
-                    }}
-                  >
-                    <div
-                      style={{
-                        position: 'absolute' as const,
-                        height: '6px',
-                        borderRadius: '3px',
-                        left: `${leftPercent}%`,
-                        right: `${100 - rightPercent}%`,
-                        background: colors.accent,
-                      }}
-                    />
-                    {children}
-                  </div>
-                )
-              }}
-              renderThumb={({ props: { key: thumbKey, ...thumbProps } }) => (
-                <div
-                  key={thumbKey}
-                  {...thumbProps}
-                  style={{
-                    ...thumbProps.style,
-                    height: '18px',
-                    width: '18px',
-                    borderRadius: '50%',
-                    background: colors.accent,
-                    border: '2px solid #fff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                    outline: 'none',
-                  }}
-                />
-              )}
-            />
-          </div>
+          <label
+            htmlFor="min-peak-height-slider"
+            style={resortsStyles.sliderLabel}
+          >
+            Min Peak Height: {minPeakHeight}m
+          </label>
+          <input
+            id="min-peak-height-slider"
+            type="range"
+            min={0}
+            max={5000}
+            step={100}
+            value={minPeakHeight}
+            onChange={(e) => setMinPeakHeight(Number(e.target.value))}
+            style={resortsStyles.slider}
+          />
         </div>
         <button
           type="button"
@@ -966,11 +903,7 @@ const resortsStyles = {
     width: '140px',
     accentColor: colors.accent,
   },
-  rangeWrapper: {
-    height: '20px',
-    display: 'flex',
-    alignItems: 'center',
-  },
+
   clearButton: {
     padding: '10px 16px',
     borderRadius: '7px',

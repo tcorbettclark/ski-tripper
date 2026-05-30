@@ -116,7 +116,7 @@ describe('Resorts', () => {
     expect(screen.getByText('Country')).toBeTruthy()
     expect(screen.getByText('Region')).toBeTruthy()
     expect(screen.getByText('Piste Km')).toBeTruthy()
-    expect(screen.getByText('Altitude')).toBeTruthy()
+    expect(screen.getByText('Peak Height')).toBeTruthy()
     expect(screen.getByText('Season')).toBeTruthy()
   })
 
