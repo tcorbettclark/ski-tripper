@@ -80,9 +80,10 @@ export default function PastPoll({
 const styles = {
   container: {
     marginBottom: '16px',
-    border: borders.subtle,
-    borderRadius: '8px',
-    padding: '14px',
+    background: colors.bgCard,
+    border: borders.card,
+    borderRadius: '14px',
+    padding: '24px',
   },
   header: {
     display: 'flex',
@@ -115,11 +116,9 @@ const styles = {
     gap: '10px',
     marginTop: '8px',
     padding: '10px 14px',
-    borderRadius: '8px',
-    background: 'rgba(59,189,232,0.08)',
-    border: borders.accent,
+    borderRadius: '6px',
+    borderLeft: `3px solid ${colors.accent}`,
     marginBottom: '12px',
-    position: 'relative' as const,
   },
   outcomeContent: {
     flex: 1,
