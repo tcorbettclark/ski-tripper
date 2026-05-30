@@ -541,7 +541,7 @@ export default function Overview({
                           key={col}
                           style={{
                             ...(isCurrentUser
-                              ? overviewStyles.nameCellClickable
+                              ? overviewStyles.gridCellClickable
                               : overviewStyles.gridCell),
                             flex: '0 0 auto',
                             minWidth: colWidths[col],
