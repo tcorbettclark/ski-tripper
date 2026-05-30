@@ -1395,9 +1395,10 @@ async function fixResort(
 async function writePatchedResort(
   adminTablesDb: TablesDB,
   resortId: string,
+  resortName: string,
   patch: Record<string, unknown>
 ): Promise<void> {
-  log('info', 'appwrite', `Patching resort ${resortId}...`, 1)
+  log('info', 'appwrite', `Patching ${resortName}...`, 1)
 
   if ('websites' in patch && Array.isArray(patch.websites)) {
     patch.websites = JSON.stringify(patch.websites)
@@ -1409,12 +1410,15 @@ async function writePatchedResort(
     rowId: resortId,
     data: patch,
   })
-  log(
-    'success',
-    'appwrite',
-    `Patched fields [${Object.keys(patch).join(', ')}] for resort ${resortId}`,
-    1
-  )
+  const summary = Object.entries(patch)
+    .map(([k, v]) => {
+      if (k === 'websites' && typeof v === 'string') {
+        return `${k}: ${JSON.parse(v).length} urls`
+      }
+      return `${k}: ${v}`
+    })
+    .join(', ')
+  log('success', 'appwrite', `Updated ${resortName}: ${summary}`, 1)
 }
 
 async function fix(options: { model?: string }) {
@@ -1509,7 +1513,12 @@ async function fix(options: { model?: string }) {
           intermediatePct: normalised.intermediatePct,
           advancedPct: normalised.advancedPct,
         }
-        await writePatchedResort(adminTablesDb, resortId, patch)
+        await writePatchedResort(
+          adminTablesDb,
+          resortId,
+          resort.resortName,
+          patch
+        )
         fixed++
       } else {
         log(
@@ -1531,8 +1540,13 @@ async function fix(options: { model?: string }) {
     }
 
     if (Object.keys(result.patch).length > 0) {
-      log('info', 'fix', `Patch: ${JSON.stringify(result.patch)}`, 2)
-      await writePatchedResort(adminTablesDb, resortId, result.patch)
+      log('info', 'fix', `Patching ${Object.keys(result.patch).join(', ')}`, 2)
+      await writePatchedResort(
+        adminTablesDb,
+        resortId,
+        resort.resortName,
+        result.patch
+      )
       fixed++
     } else {
       log('warn', 'fix', `No fields to patch for ${resort.resortName}`, 1)
