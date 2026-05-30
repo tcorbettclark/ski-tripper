@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import { getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
-import { borders, colors, fonts, formStyles } from './theme'
+import DetailField from './DetailField'
+import { borders, colors, detailStyles, fonts, formStyles } from './theme'
 import type { Resort } from './types.d.ts'
 import { sanitizeUrl } from './utils'
 
@@ -453,7 +454,7 @@ export default function Resorts({
             onKeyDown={(e) => e.stopPropagation()}
           >
             <div style={resortsStyles.detailHeader}>
-              <h3 style={resortsStyles.detailTitle}>
+              <h3 style={detailStyles.title}>
                 {proposalSuccess ? (
                   `Created proposal for ${proposalSuccessName}`
                 ) : (
@@ -520,31 +521,30 @@ export default function Resorts({
                     }
                   />
                   <div style={resortsStyles.suitabilityField}>
-                    <span style={resortsStyles.detailFieldLabel}>
-                      Suitable For
-                    </span>
-                    <div style={resortsStyles.suitabilityPills}>
-                      {SUITABILITY_LEVELS.map((level) => {
-                        const active =
-                          selectedResort.suitableFor?.includes(level)
-                        return (
-                          <span
-                            key={level}
-                            style={{
-                              ...resortsStyles.suitabilityPill,
-                              ...(active
-                                ? {
-                                    background: SUITABILITY_COLORS[level],
-                                    color: '#fff',
-                                  }
-                                : resortsStyles.suitabilityPillInactive),
-                            }}
-                          >
-                            {level.charAt(0).toUpperCase() + level.slice(1)}
-                          </span>
-                        )
-                      })}
-                    </div>
+                    <DetailField label="Suitable For" style={{ gap: '4px' }}>
+                      <div style={resortsStyles.suitabilityPills}>
+                        {SUITABILITY_LEVELS.map((level) => {
+                          const active =
+                            selectedResort.suitableFor?.includes(level)
+                          return (
+                            <span
+                              key={level}
+                              style={{
+                                ...resortsStyles.suitabilityPill,
+                                ...(active
+                                  ? {
+                                      background: SUITABILITY_COLORS[level],
+                                      color: '#fff',
+                                    }
+                                  : resortsStyles.suitabilityPillInactive),
+                              }}
+                            >
+                              {level.charAt(0).toUpperCase() + level.slice(1)}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </DetailField>
                   </div>
                   <DetailField
                     label="Lifts"
@@ -593,7 +593,7 @@ export default function Resorts({
                               target="_blank"
                               rel="noopener noreferrer"
                               style={{
-                                ...resortsStyles.websiteLinkInline,
+                                ...detailStyles.websiteLink,
                                 textDecoration:
                                   hoveredWebsite === url ? 'underline' : 'none',
                               }}
@@ -610,23 +610,21 @@ export default function Resorts({
 
                 {selectedResort.linkedResortsDescription && (
                   <div style={resortsStyles.detailDescriptionSection}>
-                    <span style={resortsStyles.detailDescriptionLabel}>
-                      Linked Resorts
-                    </span>
-                    <p style={resortsStyles.detailDescriptionText}>
-                      {selectedResort.linkedResortsDescription}
-                    </p>
+                    <DetailField label="Linked Resorts">
+                      <p style={detailStyles.descriptionText}>
+                        {selectedResort.linkedResortsDescription}
+                      </p>
+                    </DetailField>
                   </div>
                 )}
 
                 {selectedResort.description && (
                   <div style={resortsStyles.detailDescriptionSection}>
-                    <span style={resortsStyles.detailDescriptionLabel}>
-                      Description
-                    </span>
-                    <p style={resortsStyles.detailDescriptionText}>
-                      {selectedResort.description}
-                    </p>
+                    <DetailField label="Description">
+                      <p style={detailStyles.descriptionText}>
+                        {selectedResort.description}
+                      </p>
+                    </DetailField>
                   </div>
                 )}
               </>
@@ -683,27 +681,6 @@ export default function Resorts({
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function DetailField({
-  label,
-  value,
-  children,
-  style,
-}: {
-  label: string
-  value?: string
-  children?: React.ReactNode
-  style?: React.CSSProperties
-}) {
-  return (
-    <div style={{ ...resortsStyles.detailField, ...style }}>
-      <span style={resortsStyles.detailFieldLabel}>{label}</span>
-      <span style={resortsStyles.detailFieldValue}>
-        {children ?? (value || '—')}
-      </span>
     </div>
   )
 }
@@ -1009,16 +986,6 @@ const resortsStyles = {
     justifyContent: 'space-between',
     marginBottom: '20px',
   },
-  detailTitle: {
-    fontFamily: fonts.display,
-    fontSize: '24px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    margin: 0,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
   mapPinLink: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -1074,51 +1041,8 @@ const resortsStyles = {
     color: colors.textSecondary,
     border: borders.muted,
   },
-  detailField: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '2px',
-  },
-  detailFieldLabel: {
-    fontFamily: fonts.body,
-    fontSize: '11px',
-    fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase' as const,
-  },
-  detailFieldValue: {
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    color: colors.textPrimary,
-  },
   detailDescriptionSection: {
     marginBottom: '16px',
-  },
-  mapLink: {
-    color: colors.accent,
-    textDecoration: 'none',
-    fontSize: '12px',
-  },
-  detailDescriptionLabel: {
-    fontFamily: fonts.body,
-    fontSize: '11px',
-    fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase' as const,
-  },
-  detailDescriptionText: {
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    color: colors.textPrimary,
-    lineHeight: '1.6',
-    margin: '4px 0 0',
-  },
-  websiteLinkInline: {
-    fontFamily: fonts.body,
-    fontSize: '12px',
-    color: colors.accent,
   },
   proposeButton: {
     padding: '12px 24px',

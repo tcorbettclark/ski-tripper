@@ -124,6 +124,31 @@ export const authStyles = {
   },
 }
 
+export const detailStyles = {
+  title: {
+    fontFamily: fonts.display,
+    fontSize: '22px',
+    fontWeight: '600',
+    color: colors.textPrimary,
+    margin: 0,
+    display: 'inline-flex' as const,
+    alignItems: 'center',
+    gap: '6px',
+  },
+  websiteLink: {
+    fontFamily: fonts.body,
+    fontSize: '13px',
+    color: colors.accent,
+  },
+  descriptionText: {
+    fontFamily: fonts.body,
+    fontSize: '14px',
+    color: colors.textPrimary,
+    lineHeight: '1.6',
+    margin: '4px 0 0',
+  },
+} as const
+
 export const fieldStyles = {
   default: {
     field: {

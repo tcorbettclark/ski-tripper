@@ -25,8 +25,9 @@ const styles = {
   fieldLabel: {
     fontFamily: fonts.body,
     fontSize: '10px',
+    fontWeight: '500',
     color: colors.textSecondary,
-    letterSpacing: '0.1em',
+    letterSpacing: '0.08em',
     textTransform: 'uppercase',
     marginBottom: '4px',
   },

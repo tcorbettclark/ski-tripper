@@ -16,7 +16,7 @@ import { getCountryFlagUrl } from './countries'
 import DetailField from './DetailField'
 import DiscussionSection from './DiscussionSection'
 import EditProposalForm from './EditProposalForm'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, detailStyles, fonts, formStyles } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
 import { ensureUrlScheme, formatDate, isValidUrl, sanitizeUrl } from './utils'
 
@@ -287,7 +287,7 @@ export default function ProposalCard({
     <>
       <div style={previewMode ? styles.previewCard : styles.card}>
         <div style={styles.header}>
-          <span style={styles.headerLeft}>
+          <span style={detailStyles.title}>
             {(() => {
               const flagUrl =
                 proposal.country && getCountryFlagUrl(proposal.country)
@@ -392,28 +392,29 @@ export default function ProposalCard({
                 />
                 <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
                 <div style={styles.suitabilityField}>
-                  <span style={styles.fieldLabel}>Suitable For</span>
-                  <div style={styles.suitabilityPills}>
-                    {SUITABILITY_LEVELS.map((level) => {
-                      const active = proposal.suitableFor?.includes(level)
-                      return (
-                        <span
-                          key={level}
-                          style={{
-                            ...styles.suitabilityPill,
-                            ...(active
-                              ? {
-                                  background: SUITABILITY_COLORS[level],
-                                  color: '#fff',
-                                }
-                              : styles.suitabilityPillInactive),
-                          }}
-                        >
-                          {level.charAt(0).toUpperCase() + level.slice(1)}
-                        </span>
-                      )
-                    })}
-                  </div>
+                  <DetailField label="Suitable For" style={{ gap: '4px' }}>
+                    <div style={styles.suitabilityPills}>
+                      {SUITABILITY_LEVELS.map((level) => {
+                        const active = proposal.suitableFor?.includes(level)
+                        return (
+                          <span
+                            key={level}
+                            style={{
+                              ...styles.suitabilityPill,
+                              ...(active
+                                ? {
+                                    background: SUITABILITY_COLORS[level],
+                                    color: '#fff',
+                                  }
+                                : styles.suitabilityPillInactive),
+                            }}
+                          >
+                            {level.charAt(0).toUpperCase() + level.slice(1)}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  </DetailField>
                 </div>
                 <DetailField label="Lifts" value={String(proposal.liftCount)} />
                 <DetailField
@@ -454,7 +455,7 @@ export default function ProposalCard({
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            ...styles.websiteLinkInline,
+                            ...detailStyles.websiteLink,
                             textDecoration:
                               hoveredWebsite === url ? 'underline' : 'none',
                           }}
@@ -470,10 +471,11 @@ export default function ProposalCard({
               </div>
               {proposal.linkedResortsDescription && (
                 <div style={styles.descriptionSection}>
-                  <span style={styles.fieldLabel}>Linked Resorts</span>
-                  <p style={styles.descriptionText}>
-                    {proposal.linkedResortsDescription}
-                  </p>
+                  <DetailField label="Linked Resorts">
+                    <p style={detailStyles.descriptionText}>
+                      {proposal.linkedResortsDescription}
+                    </p>
+                  </DetailField>
                 </div>
               )}
               <div
@@ -946,15 +948,6 @@ const styles = {
     alignItems: 'flex-start',
     gap: '12px',
   },
-  headerLeft: {
-    fontFamily: fonts.display,
-    fontSize: '22px',
-    fontWeight: '600',
-    color: colors.textPrimary,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '6px',
-  },
   headerRight: {
     fontFamily: fonts.display,
     fontSize: '22px',
@@ -971,23 +964,10 @@ const styles = {
     marginLeft: '4px',
     verticalAlign: 'middle',
   },
-  websiteLinkInline: {
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    color: colors.accent,
-  },
   suitabilityField: {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '4px',
-  },
-  fieldLabel: {
-    fontFamily: fonts.body,
-    fontSize: '11px',
-    fontWeight: '500' as const,
-    color: colors.textSecondary,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase' as const,
   },
   suitabilityPills: {
     display: 'flex',
@@ -1010,18 +990,6 @@ const styles = {
   descriptionSection: {
     marginTop: '12px',
     marginBottom: '8px',
-  },
-  descriptionText: {
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    color: colors.textPrimary,
-    lineHeight: '1.6',
-    margin: '4px 0 0',
-  },
-  detailFieldValue: {
-    fontFamily: fonts.body,
-    fontSize: '14px',
-    color: colors.textPrimary,
   },
   flag: {
     display: 'inline-block',
