@@ -6,16 +6,10 @@ import { TableVirtuoso } from 'react-virtuoso'
 import { getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
 import DetailField from './DetailField'
+import PisteBreakdown from './PisteBreakdown'
 import { borders, colors, detailStyles, fonts, formStyles } from './theme'
 import type { Resort } from './types.d.ts'
 import { sanitizeUrl } from './utils'
-
-const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
-const SUITABILITY_COLORS: Record<string, string> = {
-  beginner: '#4CAF50',
-  intermediate: '#FF9800',
-  advanced: '#F44336',
-}
 
 const snowReliabilityLabels: Record<string, string> = {
   high: 'High',
@@ -45,7 +39,6 @@ export default function Resorts({
   const [countryFilter, setCountryFilter] = useState('')
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
-  const [suitableForFilter, setSuitableForFilter] = useState('')
   const [minPeakHeight, setMinPeakHeight] = useState(0)
   const [selectedResort, setSelectedResort] = useState<Resort | null>(null)
   const [showProposalForm, setShowProposalForm] = useState(false)
@@ -98,10 +91,6 @@ export default function Resorts({
       result = result.filter((r) => r.pisteKm >= minPisteKm)
     }
 
-    if (suitableForFilter) {
-      result = result.filter((r) => r.suitableFor?.includes(suitableForFilter))
-    }
-
     if (minPeakHeight > 0) {
       result = result.filter((r) => r.summitAltitude >= minPeakHeight)
     }
@@ -113,7 +102,6 @@ export default function Resorts({
     countryFilter,
     regionFilter,
     minPisteKm,
-    suitableForFilter,
     minPeakHeight,
   ])
 
@@ -170,7 +158,9 @@ export default function Resorts({
             nearestAirport: resort.nearestAirport,
             transferTime: resort.transferTime,
             pisteKm: resort.pisteKm,
-            suitableFor: resort.suitableFor,
+            beginnerKm: resort.beginnerKm,
+            intermediateKm: resort.intermediateKm,
+            advancedKm: resort.advancedKm,
             liftCount: resort.liftCount,
             snowReliability: resort.snowReliability,
             skiSeasonMonths: resort.skiSeasonMonths,
@@ -196,7 +186,6 @@ export default function Resorts({
     setCountryFilter('')
     setRegionFilter('')
     setMinPisteKm(0)
-    setSuitableForFilter('')
     setMinPeakHeight(0)
   }, [])
 
@@ -215,7 +204,7 @@ export default function Resorts({
     { key: 'resortName', label: 'Resort Name', width: '24%' },
     { key: 'country', label: 'Country', width: '12%' },
     { key: 'region', label: 'Region', width: '14%' },
-    { key: 'suitableFor', label: 'Level', width: '12%' },
+    { key: 'pisteBreakdown', label: 'Piste', width: '12%' },
     { key: 'pisteKm', label: 'Piste Km', width: '10%' },
     { key: 'altitudeRange', label: 'Peak Height', width: '14%' },
     { key: 'skiSeasonMonths', label: 'Season', width: '14%' },
@@ -229,7 +218,7 @@ export default function Resorts({
         return resort.country
       case 'region':
         return resort.region
-      case 'suitableFor':
+      case 'pisteBreakdown':
         return ''
       case 'pisteKm':
         return resort.pisteKm ? String(resort.pisteKm) : ''
@@ -250,7 +239,6 @@ export default function Resorts({
     countryFilter ||
     regionFilter ||
     minPisteKm > 0 ||
-    suitableForFilter ||
     minPeakHeight > 0
 
   return (
@@ -290,18 +278,6 @@ export default function Resorts({
           {regionOptions.map((r) => (
             <option key={r} value={r}>
               {r}
-            </option>
-          ))}
-        </select>
-        <select
-          value={suitableForFilter}
-          onChange={(e) => setSuitableForFilter(e.target.value)}
-          style={resortsStyles.filterSelect}
-        >
-          <option value="">All Levels</option>
-          {SUITABILITY_LEVELS.map((level) => (
-            <option key={level} value={level}>
-              {level.charAt(0).toUpperCase() + level.slice(1)}
             </option>
           ))}
         </select>
@@ -411,21 +387,13 @@ export default function Resorts({
                       alt={resort.country}
                       style={resortsStyles.countryFlag}
                     />
-                  ) : col.key === 'suitableFor' && resort.suitableFor ? (
-                    <span style={resortsStyles.levelBadges}>
-                      {resort.suitableFor.map((level) => (
-                        <span
-                          key={level}
-                          style={{
-                            ...resortsStyles.levelBadge,
-                            background: SUITABILITY_COLORS[level],
-                            color: '#fff',
-                          }}
-                        >
-                          {level.charAt(0).toUpperCase()}
-                        </span>
-                      ))}
-                    </span>
+                  ) : col.key === 'pisteBreakdown' ? (
+                    <PisteBreakdown
+                      beginnerKm={resort.beginnerKm}
+                      intermediateKm={resort.intermediateKm}
+                      advancedKm={resort.advancedKm}
+                      compact
+                    />
                   ) : (
                     getCellValue(resort, col.key)
                   )}
@@ -520,32 +488,13 @@ export default function Resorts({
                         : ''
                     }
                   />
-                  <div style={resortsStyles.suitabilityField}>
-                    <DetailField label="Suitable For" style={{ gap: '4px' }}>
-                      <div style={resortsStyles.suitabilityPills}>
-                        {SUITABILITY_LEVELS.map((level) => {
-                          const active =
-                            selectedResort.suitableFor?.includes(level)
-                          return (
-                            <span
-                              key={level}
-                              style={{
-                                ...resortsStyles.suitabilityPill,
-                                ...(active
-                                  ? {
-                                      background: SUITABILITY_COLORS[level],
-                                      color: '#fff',
-                                    }
-                                  : resortsStyles.suitabilityPillInactive),
-                              }}
-                            >
-                              {level.charAt(0).toUpperCase() + level.slice(1)}
-                            </span>
-                          )
-                        })}
-                      </div>
-                    </DetailField>
-                  </div>
+                  <DetailField label="Piste Breakdown">
+                    <PisteBreakdown
+                      beginnerKm={selectedResort.beginnerKm}
+                      intermediateKm={selectedResort.intermediateKm}
+                      advancedKm={selectedResort.advancedKm}
+                    />
+                  </DetailField>
                   <DetailField
                     label="Lifts"
                     value={
@@ -940,23 +889,6 @@ const resortsStyles = {
     textOverflow: 'ellipsis',
     maxWidth: '200px',
   },
-  levelBadges: {
-    display: 'inline-flex',
-    gap: '4px',
-    alignItems: 'center',
-  },
-  levelBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center' as const,
-    width: '22px',
-    height: '22px',
-    borderRadius: '11px',
-    fontSize: '11px',
-    fontFamily: fonts.body,
-    fontWeight: '600',
-    lineHeight: 1,
-  },
   overlay: {
     position: 'fixed' as const,
     top: 0,
@@ -1017,29 +949,6 @@ const resortsStyles = {
     display: 'inline-block',
     width: '20px',
     height: '14px',
-  },
-  suitabilityField: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
-  },
-  suitabilityPills: {
-    display: 'flex',
-    gap: '6px',
-    flexWrap: 'wrap' as const,
-  },
-  suitabilityPill: {
-    display: 'inline-block',
-    padding: '2px 10px',
-    borderRadius: '12px',
-    fontSize: '11px',
-    fontFamily: fonts.body,
-    fontWeight: '500',
-  },
-  suitabilityPillInactive: {
-    background: 'rgba(255,255,255,0.08)',
-    color: colors.textSecondary,
-    border: borders.muted,
   },
   detailDescriptionSection: {
     marginBottom: '16px',

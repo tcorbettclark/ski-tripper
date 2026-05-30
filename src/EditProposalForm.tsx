@@ -7,8 +7,6 @@ import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
 import type { Proposal } from './types.d'
 import { ensureUrlScheme, isValidUrl } from './utils'
 
-const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
-
 interface EditProposalFormProps {
   proposal: Proposal
   userId: string
@@ -37,7 +35,9 @@ export default function EditProposalForm({
     nearestAirport: proposal.nearestAirport || '',
     transferTime: proposal.transferTime || '',
     pisteKm: proposal.pisteKm?.toString() || '',
-    suitableFor: proposal.suitableFor || [],
+    beginnerKm: proposal.beginnerKm?.toString() || '',
+    intermediateKm: proposal.intermediateKm?.toString() || '',
+    advancedKm: proposal.advancedKm?.toString() || '',
     liftCount: proposal.liftCount?.toString() || '',
     snowReliability: proposal.snowReliability || '',
     skiSeasonMonths: proposal.skiSeasonMonths || '',
@@ -82,8 +82,10 @@ export default function EditProposalForm({
         summitAltitude: Number(form.summitAltitude),
         baseAltitude: Number(form.baseAltitude),
         pisteKm: Number(form.pisteKm),
+        beginnerKm: Number(form.beginnerKm),
+        intermediateKm: Number(form.intermediateKm),
+        advancedKm: Number(form.advancedKm),
         liftCount: Number(form.liftCount),
-        suitableFor: form.suitableFor,
         linkedResortsDescription: form.linkedResortsDescription,
       })
       onUpdated(updatedProposal)
@@ -163,44 +165,30 @@ export default function EditProposalForm({
         required
         placeholder="e.g. 600"
       />
-      <div style={fieldStyles.default.field}>
-        <span style={fieldStyles.default.label}>Suitable For</span>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {SUITABILITY_LEVELS.map((level) => (
-            <label
-              key={level}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.suitableFor.includes(level)}
-                onChange={(e) => {
-                  setForm((f) => ({
-                    ...f,
-                    suitableFor: e.target.checked
-                      ? [...f.suitableFor, level].sort(
-                          (a, b) =>
-                            SUITABILITY_LEVELS.indexOf(
-                              a as (typeof SUITABILITY_LEVELS)[number]
-                            ) -
-                            SUITABILITY_LEVELS.indexOf(
-                              b as (typeof SUITABILITY_LEVELS)[number]
-                            )
-                        )
-                      : f.suitableFor.filter((l) => l !== level),
-                  }))
-                }}
-              />
-              {level.charAt(0).toUpperCase() + level.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
+      <Field
+        label="Beginner Km"
+        name="beginnerKm"
+        type="number"
+        value={form.beginnerKm}
+        onChange={handleChange}
+        placeholder="e.g. 100"
+      />
+      <Field
+        label="Intermediate Km"
+        name="intermediateKm"
+        type="number"
+        value={form.intermediateKm}
+        onChange={handleChange}
+        placeholder="e.g. 200"
+      />
+      <Field
+        label="Advanced Km"
+        name="advancedKm"
+        type="number"
+        value={form.advancedKm}
+        onChange={handleChange}
+        placeholder="e.g. 50"
+      />
       <Field
         label="Lift Count"
         name="liftCount"

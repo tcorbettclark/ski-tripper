@@ -149,12 +149,18 @@ const enrichSchema = z.object({
     .number()
     .int()
     .describe('Total groomed piste length in kilometres'),
-  suitableFor: z
-    .array(z.enum(['beginner', 'intermediate', 'advanced']))
-    .min(1)
-    .describe(
-      'Which skiing ability levels the resort is suitable for (at least one required)'
-    ),
+  beginnerKm: z.coerce
+    .number()
+    .int()
+    .describe('Length of beginner (blue) piste in kilometres'),
+  intermediateKm: z.coerce
+    .number()
+    .int()
+    .describe('Length of intermediate (red) piste in kilometres'),
+  advancedKm: z.coerce
+    .number()
+    .int()
+    .describe('Length of advanced (black) piste in kilometres'),
   liftCount: z.coerce.number().int().describe('Number of ski lifts'),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
@@ -300,14 +306,17 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
         type: 'integer',
         description: 'Total groomed piste length in kilometres',
       },
-      suitableFor: {
-        type: 'array',
-        items: {
-          type: 'string',
-          enum: ['beginner', 'intermediate', 'advanced'],
-        },
-        description:
-          'Which skiing ability levels the resort is suitable for (at least one)',
+      beginnerKm: {
+        type: 'integer',
+        description: 'Length of beginner (blue) piste in kilometres',
+      },
+      intermediateKm: {
+        type: 'integer',
+        description: 'Length of intermediate (red) piste in kilometres',
+      },
+      advancedKm: {
+        type: 'integer',
+        description: 'Length of advanced (black) piste in kilometres',
       },
       liftCount: {
         type: 'integer',
@@ -341,7 +350,9 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
       'nearestAirport',
       'transferTime',
       'pisteKm',
-      'suitableFor',
+      'beginnerKm',
+      'intermediateKm',
+      'advancedKm',
       'liftCount',
       'snowReliability',
       'skiSeasonMonths',
@@ -367,8 +378,10 @@ function logEnrichData(
   )
   logSummary('Airport', `${data.nearestAirport} (${data.transferTime})`, indent)
   logSummary('Piste', `${data.pisteKm} km`, indent)
+  logSummary('Beginner', `${data.beginnerKm} km`, indent)
+  logSummary('Intermediate', `${data.intermediateKm} km`, indent)
+  logSummary('Advanced', `${data.advancedKm} km`, indent)
   logSummary('Lifts', `${data.liftCount}`, indent)
-  logSummary('Suitable For', data.suitableFor.join(', '), indent)
   logSummary('Snow', data.snowReliability, indent)
   logSummary('Season', data.skiSeasonMonths, indent)
   logSummary('Websites', data.websites.join(', '), indent)
@@ -661,7 +674,9 @@ async function writeEnrichedResort(
       nearestAirport: data.nearestAirport,
       transferTime: data.transferTime,
       pisteKm: data.pisteKm,
-      suitableFor: JSON.stringify(data.suitableFor),
+      beginnerKm: data.beginnerKm,
+      intermediateKm: data.intermediateKm,
+      advancedKm: data.advancedKm,
       liftCount: data.liftCount,
       snowReliability: data.snowReliability,
       skiSeasonMonths: data.skiSeasonMonths,

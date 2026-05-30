@@ -51,7 +51,9 @@ interface ProposalsProps {
         nearestAirport: string
         transferTime: string
         pisteKm: number
-        suitableFor: string[]
+        beginnerKm: number
+        intermediateKm: number
+        advancedKm: number
         liftCount: number
         snowReliability: 'high' | 'medium' | 'low'
         skiSeasonMonths: string

@@ -68,9 +68,6 @@ async function fetchRow<T extends { $id: string }>(
 }
 
 function parseProposal(proposal: Proposal): Proposal {
-  proposal.suitableFor = parseJsonArray(
-    proposal.suitableFor as unknown as string
-  )
   proposal.websites = parseJsonArray(proposal.websites as unknown as string)
   return proposal
 }
@@ -588,7 +585,9 @@ export async function createProposal(
       nearestAirport: string
       transferTime: string
       pisteKm: number
-      suitableFor: string[]
+      beginnerKm: number
+      intermediateKm: number
+      advancedKm: number
       liftCount: number
       snowReliability: 'high' | 'medium' | 'low'
       skiSeasonMonths: string
@@ -614,7 +613,6 @@ export async function createProposal(
         state: 'DRAFT',
         ...userData,
         ...resortData,
-        suitableFor: JSON.stringify(resortData.suitableFor),
         websites: JSON.stringify(resortData.websites),
       } as Record<string, unknown>,
       permissions: [
@@ -685,8 +683,6 @@ export async function updateProposal(
     proposerUserId: _proposerUserId,
     ...safeData
   } = dataRecord
-  if (Array.isArray(safeData.suitableFor))
-    safeData.suitableFor = JSON.stringify(safeData.suitableFor)
   if (Array.isArray(safeData.websites))
     safeData.websites = JSON.stringify(safeData.websites)
   return fetchProposalRow(
@@ -1377,7 +1373,6 @@ export async function listResorts(
     })
   )
   for (const resort of resorts) {
-    resort.suitableFor = parseJsonArray(resort.suitableFor as unknown as string)
     resort.websites = parseJsonArray(resort.websites as unknown as string)
   }
   return { resorts }

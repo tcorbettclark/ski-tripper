@@ -27,7 +27,9 @@ const sampleResorts: Resort[] = [
     nearestAirport: 'GVA',
     transferTime: '1h 30m',
     pisteKm: 300,
-    suitableFor: ['advanced'],
+    beginnerKm: 0,
+    intermediateKm: 0,
+    advancedKm: 0,
     liftCount: 80,
     snowReliability: 'high',
     skiSeasonMonths: 'Dec-Apr',
@@ -50,7 +52,9 @@ const sampleResorts: Resort[] = [
     nearestAirport: 'YVR',
     transferTime: '2h',
     pisteKm: 200,
-    suitableFor: ['intermediate'],
+    beginnerKm: 0,
+    intermediateKm: 0,
+    advancedKm: 0,
     liftCount: 37,
     snowReliability: 'high',
     skiSeasonMonths: 'Nov-Apr',
@@ -135,7 +139,9 @@ describe('CreateProposalForm', () => {
     fill('nearestAirport', 'GVA')
     fill('transferTime', '1h 30m')
     fill('pisteKm', '300')
-    fireEvent.click(screen.getByLabelText('Advanced'))
+    fill('beginnerKm', '0')
+    fill('intermediateKm', '0')
+    fill('advancedKm', '0')
     fill('liftCount', '80')
     fill('snowReliability', 'high')
     fill('skiSeasonMonths', 'Dec-Apr')

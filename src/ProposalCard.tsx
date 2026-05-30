@@ -16,16 +16,10 @@ import { getCountryFlagUrl } from './countries'
 import DetailField from './DetailField'
 import DiscussionSection from './DiscussionSection'
 import EditProposalForm from './EditProposalForm'
+import PisteBreakdown from './PisteBreakdown'
 import { borders, colors, detailStyles, fonts, formStyles } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
 import { ensureUrlScheme, formatDate, isValidUrl, sanitizeUrl } from './utils'
-
-const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
-const SUITABILITY_COLORS: Record<string, string> = {
-  beginner: '#4CAF50',
-  intermediate: '#FF9800',
-  advanced: '#F44336',
-}
 
 const snowReliabilityLabels: Record<string, string> = {
   high: 'High',
@@ -381,31 +375,13 @@ export default function ProposalCard({
                   value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
                 />
                 <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
-                <div style={styles.suitabilityField}>
-                  <DetailField label="Suitable For" style={{ gap: '4px' }}>
-                    <div style={styles.suitabilityPills}>
-                      {SUITABILITY_LEVELS.map((level) => {
-                        const active = proposal.suitableFor?.includes(level)
-                        return (
-                          <span
-                            key={level}
-                            style={{
-                              ...styles.suitabilityPill,
-                              ...(active
-                                ? {
-                                    background: SUITABILITY_COLORS[level],
-                                    color: '#fff',
-                                  }
-                                : styles.suitabilityPillInactive),
-                            }}
-                          >
-                            {level.charAt(0).toUpperCase() + level.slice(1)}
-                          </span>
-                        )
-                      })}
-                    </div>
-                  </DetailField>
-                </div>
+                <DetailField label="Piste Breakdown">
+                  <PisteBreakdown
+                    beginnerKm={proposal.beginnerKm}
+                    intermediateKm={proposal.intermediateKm}
+                    advancedKm={proposal.advancedKm}
+                  />
+                </DetailField>
                 <DetailField label="Lifts" value={String(proposal.liftCount)} />
                 <DetailField
                   label="Snow Reliability"
@@ -949,29 +925,6 @@ const styles = {
     textDecoration: 'none',
     marginLeft: '4px',
     verticalAlign: 'middle',
-  },
-  suitabilityField: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
-  },
-  suitabilityPills: {
-    display: 'flex',
-    gap: '6px',
-    flexWrap: 'wrap' as const,
-  },
-  suitabilityPill: {
-    display: 'inline-block',
-    padding: '2px 10px',
-    borderRadius: '12px',
-    fontSize: '11px',
-    fontFamily: fonts.body,
-    fontWeight: '500',
-  },
-  suitabilityPillInactive: {
-    background: 'rgba(255,255,255,0.08)',
-    color: colors.textSecondary,
-    border: borders.muted,
   },
   descriptionSection: {
     marginTop: '12px',

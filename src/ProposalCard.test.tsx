@@ -29,7 +29,9 @@ const baseProposal: Proposal = {
   summitAltitude: 3000,
   baseAltitude: 1500,
   pisteKm: 600,
-  suitableFor: ['intermediate'],
+  beginnerKm: 200,
+  intermediateKm: 300,
+  advancedKm: 100,
   liftCount: 50,
   snowReliability: 'high',
   skiSeasonMonths: 'Dec-Apr',
@@ -76,7 +78,7 @@ describe('ProposalCard', () => {
 
     expect(screen.getByText(/Alps/)).toBeDefined()
     expect(screen.getByText('600 km')).toBeDefined()
-    expect(screen.getByText('Intermediate')).toBeDefined()
+    expect(screen.getByText('Piste Breakdown')).toBeDefined()
     expect(screen.getByText('50')).toBeDefined()
     expect(screen.getByText('High')).toBeDefined()
     expect(screen.getByText('Dec-Apr')).toBeDefined()

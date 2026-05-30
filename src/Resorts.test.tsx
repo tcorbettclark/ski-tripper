@@ -23,7 +23,9 @@ const sampleResorts: Resort[] = [
     nearestAirport: 'GVA',
     transferTime: '1h',
     pisteKm: 150,
-    suitableFor: ['advanced'],
+    beginnerKm: 30,
+    intermediateKm: 60,
+    advancedKm: 60,
     liftCount: 50,
     snowReliability: 'high',
     skiSeasonMonths: 'Dec-Apr',
@@ -46,7 +48,9 @@ const sampleResorts: Resort[] = [
     nearestAirport: 'YVR',
     transferTime: '2h',
     pisteKm: 200,
-    suitableFor: ['advanced'],
+    beginnerKm: 40,
+    intermediateKm: 80,
+    advancedKm: 80,
     liftCount: 30,
     snowReliability: 'high',
     skiSeasonMonths: 'Nov-Apr',
@@ -69,7 +73,9 @@ const sampleResorts: Resort[] = [
     nearestAirport: 'GVA',
     transferTime: '3h 30m',
     pisteKm: 360,
-    suitableFor: ['advanced'],
+    beginnerKm: 50,
+    intermediateKm: 130,
+    advancedKm: 180,
     liftCount: 53,
     snowReliability: 'high',
     skiSeasonMonths: 'Nov-May',
@@ -102,7 +108,6 @@ describe('Resorts', () => {
     expect(screen.getByPlaceholderText('Search resorts...')).toBeTruthy()
     expect(screen.getByDisplayValue('All Countries')).toBeTruthy()
     expect(screen.getByDisplayValue('All Regions')).toBeTruthy()
-    expect(screen.getByDisplayValue('All Levels')).toBeTruthy()
   })
 
   it('shows result count', () => {
@@ -184,18 +189,6 @@ describe('Resorts', () => {
     })
   })
 
-  it('filters resorts by suitability level', async () => {
-    const eventUser = userEvent.setup()
-    render(<Resorts {...defaultProps()} />)
-
-    const levelSelect = screen.getByDisplayValue('All Levels')
-    await eventUser.selectOptions(levelSelect, 'advanced')
-
-    await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
-    })
-  })
-
   it('displays all resorts passed as props', () => {
     const extraResort: Resort = {
       ...sampleResorts[0],
@@ -204,7 +197,9 @@ describe('Resorts', () => {
       country: 'Japan',
       region: 'Hokkaido',
       pisteKm: 50,
-      suitableFor: ['beginner'],
+      beginnerKm: 50,
+      intermediateKm: 0,
+      advancedKm: 0,
     }
     const fourResorts = [...sampleResorts, extraResort]
     render(<Resorts {...defaultProps({ resorts: fourResorts })} />)

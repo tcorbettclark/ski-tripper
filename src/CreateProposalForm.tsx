@@ -34,7 +34,9 @@ interface CreateProposalFormProps {
         nearestAirport: string
         transferTime: string
         pisteKm: number
-        suitableFor: string[]
+        beginnerKm: number
+        intermediateKm: number
+        advancedKm: number
         liftCount: number
         snowReliability: 'high' | 'medium' | 'low'
         skiSeasonMonths: string
@@ -48,8 +50,6 @@ interface CreateProposalFormProps {
   accountGet?: () => Promise<Models.User>
 }
 
-const SUITABILITY_LEVELS = ['beginner', 'intermediate', 'advanced'] as const
-
 const EMPTY_FORM = {
   resortName: '',
   country: '',
@@ -59,7 +59,9 @@ const EMPTY_FORM = {
   nearestAirport: '',
   transferTime: '',
   pisteKm: '',
-  suitableFor: [] as string[],
+  beginnerKm: '',
+  intermediateKm: '',
+  advancedKm: '',
   liftCount: '',
   snowReliability: '' as '' | 'high' | 'medium' | 'low',
   skiSeasonMonths: '',
@@ -93,7 +95,9 @@ function resortToFormFields(resort: Resort): Partial<typeof EMPTY_FORM> {
     nearestAirport: resort.nearestAirport,
     transferTime: resort.transferTime,
     pisteKm: resort.pisteKm ? String(resort.pisteKm) : '',
-    suitableFor: resort.suitableFor || [],
+    beginnerKm: resort.beginnerKm ? String(resort.beginnerKm) : '',
+    intermediateKm: resort.intermediateKm ? String(resort.intermediateKm) : '',
+    advancedKm: resort.advancedKm ? String(resort.advancedKm) : '',
     liftCount: resort.liftCount ? String(resort.liftCount) : '',
     snowReliability: resort.snowReliability || '',
     skiSeasonMonths: resort.skiSeasonMonths,
@@ -200,8 +204,9 @@ export default function CreateProposalForm({
           nearestAirport: form.nearestAirport,
           transferTime: form.transferTime,
           pisteKm: Number(form.pisteKm),
-          suitableFor:
-            form.suitableFor.length > 0 ? form.suitableFor : ['intermediate'],
+          beginnerKm: Number(form.beginnerKm),
+          intermediateKm: Number(form.intermediateKm),
+          advancedKm: Number(form.advancedKm),
           liftCount: Number(form.liftCount),
           snowReliability: form.snowReliability || 'medium',
           skiSeasonMonths: form.skiSeasonMonths,
@@ -342,44 +347,30 @@ export default function CreateProposalForm({
         required
         placeholder="e.g. 600"
       />
-      <div style={fieldStyles.default.field}>
-        <span style={fieldStyles.default.label}>Suitable For</span>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          {SUITABILITY_LEVELS.map((level) => (
-            <label
-              key={level}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.suitableFor.includes(level)}
-                onChange={(e) => {
-                  setForm((f) => ({
-                    ...f,
-                    suitableFor: e.target.checked
-                      ? [...f.suitableFor, level].sort(
-                          (a, b) =>
-                            SUITABILITY_LEVELS.indexOf(
-                              a as (typeof SUITABILITY_LEVELS)[number]
-                            ) -
-                            SUITABILITY_LEVELS.indexOf(
-                              b as (typeof SUITABILITY_LEVELS)[number]
-                            )
-                        )
-                      : f.suitableFor.filter((l) => l !== level),
-                  }))
-                }}
-              />
-              {level.charAt(0).toUpperCase() + level.slice(1)}
-            </label>
-          ))}
-        </div>
-      </div>
+      <Field
+        label="Beginner Km"
+        name="beginnerKm"
+        type="number"
+        value={form.beginnerKm}
+        onChange={handleChange}
+        placeholder="e.g. 100"
+      />
+      <Field
+        label="Intermediate Km"
+        name="intermediateKm"
+        type="number"
+        value={form.intermediateKm}
+        onChange={handleChange}
+        placeholder="e.g. 200"
+      />
+      <Field
+        label="Advanced Km"
+        name="advancedKm"
+        type="number"
+        value={form.advancedKm}
+        onChange={handleChange}
+        placeholder="e.g. 50"
+      />
       <Field
         label="Lift Count"
         name="liftCount"

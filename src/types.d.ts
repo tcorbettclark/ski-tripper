@@ -35,7 +35,9 @@ export interface Proposal {
   summitAltitude: number
   baseAltitude: number
   pisteKm: number
-  suitableFor: string[]
+  beginnerKm: number
+  intermediateKm: number
+  advancedKm: number
   liftCount: number
   snowReliability: 'high' | 'medium' | 'low'
   skiSeasonMonths: string
@@ -106,7 +108,9 @@ export interface Resort {
   nearestAirport: string
   transferTime: string
   pisteKm: number
-  suitableFor: string[]
+  beginnerKm: number
+  intermediateKm: number
+  advancedKm: number
   liftCount: number
   snowReliability: 'high' | 'medium' | 'low'
   skiSeasonMonths: string
