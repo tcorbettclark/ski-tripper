@@ -463,7 +463,7 @@ export default function CreateProposalForm({
       {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
         <button type="submit" disabled={saving} style={formStyles.saveButton}>
-          {saving ? 'Saving…' : 'Create Proposal'}
+          {saving ? 'Saving draft…' : 'Create Draft Proposal'}
         </button>
         <button
           type="button"

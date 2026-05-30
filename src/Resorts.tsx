@@ -864,7 +864,7 @@ function ProposalForm({
       {error && <p style={formStyles.error}>{error}</p>}
       <div style={resortsStyles.proposalFormActions}>
         <button type="submit" disabled={saving} style={formStyles.saveButton}>
-          {saving ? 'Creating...' : 'Create Proposal'}
+          {saving ? 'Creating draft...' : 'Create Draft Proposal'}
         </button>
         <button
           type="button"

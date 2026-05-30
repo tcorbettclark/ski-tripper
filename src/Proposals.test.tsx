@@ -112,7 +112,7 @@ describe('Proposals', () => {
     await user.click(screen.getByRole('button', { name: /\+ new proposal/i }))
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /create proposal/i }))
+      expect(screen.getByRole('button', { name: /create draft proposal/i }))
     })
   })
 
