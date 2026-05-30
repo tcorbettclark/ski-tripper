@@ -372,6 +372,66 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
   }
 }
 
+const JSON_SCHEMA_PROPERTIES: Record<string, JSONSchema.JSONSchema> =
+  buildJsonSchema().properties as Record<string, JSONSchema.JSONSchema>
+
+function buildSubsetJsonSchema(fields: string[]): JSONSchema.JSONSchema {
+  const properties: Record<string, JSONSchema.JSONSchema> = {}
+  for (const field of fields) {
+    if (JSON_SCHEMA_PROPERTIES[field]) {
+      properties[field] = JSON_SCHEMA_PROPERTIES[field]
+    }
+  }
+  return {
+    type: 'object',
+    properties,
+    required: fields.filter((f) => f in JSON_SCHEMA_PROPERTIES),
+  }
+}
+
+function buildSubsetZodSchema(
+  fields: string[]
+): z.ZodObject<Record<string, z.core.$ZodType>> {
+  const shape: Record<string, z.core.$ZodType> = {}
+  for (const field of fields) {
+    if (field in enrichSchema.shape) {
+      shape[field] =
+        enrichSchema.shape[field as keyof typeof enrichSchema.shape]
+    }
+  }
+  return z.object(shape)
+}
+
+type AuditField =
+  | 'description'
+  | 'latitude'
+  | 'longitude'
+  | 'summitAltitude'
+  | 'baseAltitude'
+  | 'nearestAirport'
+  | 'transferTime'
+  | 'pisteKm'
+  | 'pisteBreakdown'
+  | 'liftCount'
+  | 'snowReliability'
+  | 'skiSeasonMonths'
+  | 'websites'
+  | 'linkedResortsDescription'
+
+function auditFieldsToEnrichFields(fields: AuditField[]): string[] {
+  const enrichFields: string[] = []
+  for (const field of fields) {
+    if (field === 'pisteBreakdown') {
+      enrichFields.push('beginnerKm', 'intermediateKm', 'advancedKm')
+    } else if (field === 'latitude' || field === 'longitude') {
+      // coordinates are fetched separately, not via LLM
+    } else {
+      enrichFields.push(field)
+    }
+  }
+  return [...new Set(enrichFields)]
+}
+
 function logEnrichData(
   data: EnrichData,
   coords: Coordinates | null,
@@ -960,6 +1020,296 @@ async function audit() {
   displayAuditResults(allIssues, resorts.length)
 }
 
+async function fixResort(
+  resort: ResortRow,
+  issues: AuditIssue[],
+  model: string
+): Promise<{
+  patch: Record<string, unknown>
+  coords: Coordinates | null
+} | null> {
+  const auditFields = [...new Set(issues.map((i) => i.field))] as AuditField[]
+  const enrichFields = auditFieldsToEnrichFields(auditFields)
+  const needsCoords =
+    auditFields.includes('latitude') || auditFields.includes('longitude')
+
+  log(
+    'info',
+    'fix',
+    `Fixing "${resort.resortName}" - fields: ${auditFields.join(', ')}`,
+    1
+  )
+
+  let coords: Coordinates | null = null
+  if (needsCoords) {
+    coords = await fetchCoordinates(resort.resortName, resort.country)
+  }
+
+  if (enrichFields.length === 0) {
+    log('info', 'fix', 'Only coordinate fixes needed, skipping LLM', 1)
+    const patch: Record<string, unknown> = {}
+    if (coords) {
+      patch.latitude = coords.latitude
+      patch.longitude = coords.longitude
+    }
+    return { patch, coords }
+  }
+
+  const subsetSchema = buildSubsetZodSchema(enrichFields)
+  const subsetJsonSchema = buildSubsetJsonSchema(enrichFields)
+  const responseCodec = jsonCodec(subsetSchema)
+
+  log('info', 'fix', 'Fetching source text from Exa...', 1)
+  const [sourcedResults, broadResults] = await Promise.all([
+    exa.search(EXA_SEARCH_QUERY(resort.resortName, resort.country), {
+      type: 'auto',
+      numResults: EXA_SOURCED_NUM_RESULTS,
+      useAutoprompt: true,
+      includeDomains: [...SOURCE_WEBSITES],
+      contents: {
+        text: { maxCharacters: EXA_MAX_CHARS },
+        highlights: true,
+      },
+    }),
+    exa.search(EXA_SEARCH_QUERY(resort.resortName, resort.country), {
+      type: 'auto',
+      numResults: EXA_BROAD_NUM_RESULTS,
+      useAutoprompt: true,
+      contents: {
+        text: { maxCharacters: EXA_MAX_CHARS },
+        highlights: true,
+      },
+    }),
+  ])
+
+  const seenUrls = new Set<string>()
+  const allResults = [...sourcedResults.results, ...broadResults.results]
+  const dedupedResults = allResults.filter((r) => {
+    if (seenUrls.has(r.url)) return false
+    seenUrls.add(r.url)
+    return true
+  })
+
+  const sourcedHosts = new Set(
+    sourcedResults.results.map((r) => new URL(r.url).hostname)
+  )
+
+  log(
+    'info',
+    'fix',
+    `Sourced: ${sourcedResults.results.length}, Broad: ${broadResults.results.length}, Deduped: ${dedupedResults.length}`,
+    1
+  )
+
+  const sourceText = dedupedResults
+    .filter((r) => r.text)
+    .map((r) => {
+      const tag = sourcedHosts.has(new URL(r.url).hostname)
+        ? 'Authoritative source'
+        : 'General source'
+      const parts = [`## ${r.title ?? 'Untitled'} (${tag})\nURL: ${r.url}`]
+      if (r.highlights?.length) {
+        parts.push(`### Key facts\n${r.highlights.join('\n')}`)
+      }
+      parts.push(r.text!)
+      return parts.join('\n')
+    })
+    .join('\n\n')
+
+  if (!sourceText) {
+    log('error', 'fix', 'No source text found', 1)
+    return null
+  }
+
+  log(
+    'success',
+    'fix',
+    `Got ${sourceText.length} chars of source text from ${dedupedResults.length} results`,
+    1
+  )
+
+  const systemPrompt = LLM_SYSTEM_PROMPT.replace(
+    '{SCHEMA}',
+    JSON.stringify(subsetJsonSchema, null, 2)
+  )
+  const focusList = enrichFields.join(', ')
+  const userPrompt = `Extract ONLY the following fields for "${resort.resortName}" in ${resort.country} from the source text below: ${focusList}.\n\nDo NOT include any fields other than ${focusList}.\n\n${sourceText}`
+
+  log('info', 'fix', `Streaming LLM extraction for fields: ${focusList}...`, 1)
+  const stream = await ollama.chat({
+    stream: true,
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+  })
+
+  let content = ''
+  let thinking = ''
+  let isThinking = true
+  for await (const chunk of stream) {
+    const thinkPart = (chunk.message as unknown as Record<string, unknown>)
+      .thinking
+    if (typeof thinkPart === 'string' && thinkPart) {
+      thinking += thinkPart
+      process.stdout.write(`${ANSI_DIM}${thinkPart}${ANSI_RESET}`)
+    }
+    if (chunk.message.content) {
+      if (isThinking) {
+        isThinking = false
+        console.log()
+        log('info', 'fix', `Model thought for ${thinking.length} chars`, 1)
+      }
+      content += chunk.message.content
+      process.stdout.write(chunk.message.content)
+    }
+  }
+  console.log()
+
+  if (!content) {
+    log('error', 'fix', 'LLM returned empty content after thinking', 1)
+    return null
+  }
+  log('info', 'fix', `LLM response received (${content.length} chars)`, 1)
+
+  const result = responseCodec.decode(content, { reportInput: true })
+  if (!result) {
+    log(
+      'error',
+      'fix',
+      `Failed to parse LLM response: ${content.slice(0, 300)}`,
+      1
+    )
+    return null
+  }
+
+  const parsed = result as Record<string, unknown>
+  log(
+    'success',
+    'fix',
+    `Successfully extracted fields for "${resort.resortName}"`,
+    1
+  )
+
+  const patch: Record<string, unknown> = {}
+  for (const field of enrichFields) {
+    if (field in parsed) {
+      patch[field] = parsed[field]
+    }
+  }
+  if (needsCoords && coords) {
+    patch.latitude = coords.latitude
+    patch.longitude = coords.longitude
+  }
+
+  return { patch, coords }
+}
+
+async function writePatchedResort(
+  adminTablesDb: TablesDB,
+  resortId: string,
+  patch: Record<string, unknown>
+): Promise<void> {
+  log('info', 'appwrite', `Patching resort ${resortId}...`, 1)
+
+  if ('websites' in patch && Array.isArray(patch.websites)) {
+    patch.websites = JSON.stringify(patch.websites)
+  }
+
+  await adminTablesDb.updateRow({
+    databaseId: DATABASE_ID,
+    tableId: RESORTS_TABLE_ID,
+    rowId: resortId,
+    data: patch,
+  })
+  log(
+    'success',
+    'appwrite',
+    `Patched fields [${Object.keys(patch).join(', ')}] for resort ${resortId}`,
+    1
+  )
+}
+
+async function fix(options: { model?: string }) {
+  const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
+  const adminTablesDb = initAppwrite()
+  log('info', 'fix', 'Starting resort data quality fix')
+
+  const resorts = await listAllEnrichedResorts(adminTablesDb)
+
+  if (resorts.length === 0) {
+    log('warn', 'fix', 'No enriched resorts found. Nothing to fix.')
+    process.exit(0)
+  }
+
+  const resortMap = new Map(resorts.map((r) => [r.$id, r]))
+  const allIssues: AuditIssue[] = []
+  for (const resort of resorts) {
+    allIssues.push(...auditResort(resort))
+  }
+
+  if (allIssues.length === 0) {
+    log('success', 'fix', 'All resorts pass quality checks. Nothing to fix.')
+    return
+  }
+
+  const issuesByResort = new Map<string, AuditIssue[]>()
+  for (const issue of allIssues) {
+    const resort = resorts.find(
+      (r) => r.resortName === issue.resort && r.country === issue.country
+    )
+    if (!resort) continue
+    let list = issuesByResort.get(resort.$id)
+    if (!list) {
+      list = []
+      issuesByResort.set(resort.$id, list)
+    }
+    list.push(issue)
+  }
+
+  log(
+    'info',
+    'fix',
+    `Fixing issues in ${issuesByResort.size} resort(s) out of ${resorts.length} total`
+  )
+
+  let fixed = 0
+  let failed = 0
+
+  let idx = 0
+  for (const [resortId, issues] of issuesByResort) {
+    idx++
+    const resort = resortMap.get(resortId)!
+    log(
+      'info',
+      'fix',
+      `[${idx}/${issuesByResort.size}] Fixing ${resort.resortName} (${resort.country}) - ${issues.length} issue(s)`
+    )
+
+    const result = await fixResort(resort, issues, model)
+    if (!result) {
+      log('warn', 'fix', `Failed to fix ${resort.resortName}, skipping.`, 1)
+      failed++
+      continue
+    }
+
+    if (Object.keys(result.patch).length > 0) {
+      log('info', 'fix', `Patch: ${JSON.stringify(result.patch)}`, 2)
+      await writePatchedResort(adminTablesDb, resortId, result.patch)
+      fixed++
+    } else {
+      log('warn', 'fix', `No fields to patch for ${resort.resortName}`, 1)
+    }
+  }
+
+  log(
+    'success',
+    'fix',
+    `Done. Fixed: ${fixed}, Failed: ${failed}, Total issues: ${issuesByResort.size}`
+  )
+}
+
 function displayEnrichedData(
   resort: UnenrichedResort,
   data: EnrichData,
@@ -1277,9 +1627,15 @@ program
     '--audit',
     'Audit enriched resorts for missing/zero fields and low quality data'
   )
+  .option(
+    '--fix',
+    'Fix audited issues by re-enriching only the problematic fields'
+  )
   .action((options) => {
     if (options.audit) {
       audit()
+    } else if (options.fix) {
+      fix(options)
     } else {
       enrich(options)
     }
