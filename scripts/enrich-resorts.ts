@@ -101,7 +101,7 @@ function log(level: LogLevel, tag: string, message: string, indent = 0): void {
 function logSummary(label: string, value: string, indent = 0) {
   const pad = '  '.repeat(indent)
   console.log(
-    `${pad}${ANSI_DIM}${label.padEnd(16)}${ANSI_RESET} ${ANSI_BOLD}${value}${ANSI_RESET}`
+    `${pad}${ANSI_DIM}${label.padEnd(24)}${ANSI_RESET} ${ANSI_BOLD}${value}${ANSI_RESET}`
   )
 }
 
@@ -551,6 +551,26 @@ interface UnenrichedResort {
   region: string
 }
 
+interface ResortRow extends UnenrichedResort {
+  description: string
+  latitude: string
+  longitude: string
+  summitAltitude: number
+  baseAltitude: number
+  nearestAirport: string
+  transferTime: string
+  pisteKm: number
+  beginnerKm: number
+  intermediateKm: number
+  advancedKm: number
+  liftCount: number
+  snowReliability: string
+  skiSeasonMonths: string
+  websites: string
+  linkedResortsDescription: string
+  enriched: boolean
+}
+
 async function listUnenrichedResorts(
   adminTablesDb: TablesDB
 ): Promise<UnenrichedResort[]> {
@@ -588,6 +608,356 @@ async function listUnenrichedResorts(
   }
   log('success', 'appwrite', `Total un-enriched resorts: ${resorts.length}`)
   return resorts
+}
+
+async function listAllEnrichedResorts(
+  adminTablesDb: TablesDB
+): Promise<ResortRow[]> {
+  log('info', 'appwrite', 'Fetching enriched resorts from database...')
+  const resorts: ResortRow[] = []
+  let offset = 0
+  const limit = 100
+  while (true) {
+    const { rows } = await adminTablesDb.listRows({
+      databaseId: DATABASE_ID,
+      tableId: RESORTS_TABLE_ID,
+      queries: [
+        Query.equal('enriched', true),
+        Query.limit(limit),
+        Query.offset(offset),
+      ],
+    })
+    for (const row of rows) {
+      const r = row as Record<string, unknown>
+      resorts.push({
+        $id: r.$id as string,
+        resortName: r.resortName as string,
+        country: r.country as string,
+        region: r.region as string,
+        description: (r.description as string) ?? '',
+        latitude: (r.latitude as string) ?? '',
+        longitude: (r.longitude as string) ?? '',
+        summitAltitude: (r.summitAltitude as number) ?? 0,
+        baseAltitude: (r.baseAltitude as number) ?? 0,
+        nearestAirport: (r.nearestAirport as string) ?? '',
+        transferTime: (r.transferTime as string) ?? '',
+        pisteKm: (r.pisteKm as number) ?? 0,
+        beginnerKm: (r.beginnerKm as number) ?? 0,
+        intermediateKm: (r.intermediateKm as number) ?? 0,
+        advancedKm: (r.advancedKm as number) ?? 0,
+        liftCount: (r.liftCount as number) ?? 0,
+        snowReliability: (r.snowReliability as string) ?? '',
+        skiSeasonMonths: (r.skiSeasonMonths as string) ?? '',
+        websites: (r.websites as string) ?? '',
+        linkedResortsDescription: (r.linkedResortsDescription as string) ?? '',
+        enriched: r.enriched as boolean,
+      })
+    }
+    log(
+      'info',
+      'appwrite',
+      `Fetched ${rows.length} rows (total so far: ${resorts.length})`,
+      1
+    )
+    if (rows.length < limit) break
+    offset += limit
+  }
+  log('success', 'appwrite', `Total enriched resorts: ${resorts.length}`)
+  return resorts
+}
+
+type IssueKind =
+  | 'missing_string'
+  | 'missing_number'
+  | 'zero_number'
+  | 'too_few_websites'
+  | 'short_description'
+  | 'invalid_airport'
+  | 'invalid_snow_reliability'
+  | 'invalid_season'
+  | 'altitude_inverted'
+
+interface AuditIssue {
+  resort: string
+  country: string
+  field: string
+  kind: IssueKind
+  detail: string
+}
+
+const MIN_WEBSITES = 3
+const MIN_DESCRIPTION_LENGTH = 100
+const IATA_PATTERN = /^[A-Z]{3}$/
+
+function auditResort(resort: ResortRow): AuditIssue[] {
+  const issues: AuditIssue[] = []
+
+  const addMissingString = (
+    field: keyof ResortRow,
+    value: string,
+    label: string
+  ) => {
+    if (!value || value.trim() === '') {
+      issues.push({
+        resort: resort.resortName,
+        country: resort.country,
+        field,
+        kind: 'missing_string',
+        detail: `${label} is empty`,
+      })
+    }
+  }
+
+  const addZeroNumber = (
+    field: keyof ResortRow,
+    value: number,
+    label: string
+  ) => {
+    if (value === 0) {
+      issues.push({
+        resort: resort.resortName,
+        country: resort.country,
+        field,
+        kind: 'zero_number',
+        detail: `${label} is zero`,
+      })
+    }
+  }
+
+  addMissingString('description', resort.description, 'Description')
+  if (
+    resort.description &&
+    resort.description.trim().length < MIN_DESCRIPTION_LENGTH
+  ) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'description',
+      kind: 'short_description',
+      detail: `Description is only ${resort.description.trim().length} chars (min ${MIN_DESCRIPTION_LENGTH})`,
+    })
+  }
+
+  addMissingString('latitude', resort.latitude, 'Latitude')
+  addMissingString('longitude', resort.longitude, 'Longitude')
+  if (resort.summitAltitude === 0 && resort.baseAltitude === 0) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'summitAltitude',
+      kind: 'zero_number',
+      detail: 'Both summit and base altitude are zero',
+    })
+  }
+
+  if (
+    resort.summitAltitude > 0 &&
+    resort.baseAltitude > 0 &&
+    resort.summitAltitude <= resort.baseAltitude
+  ) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'summitAltitude',
+      kind: 'altitude_inverted',
+      detail: `Summit (${resort.summitAltitude}m) <= Base (${resort.baseAltitude}m)`,
+    })
+  }
+
+  addMissingString('nearestAirport', resort.nearestAirport, 'Nearest airport')
+  if (
+    resort.nearestAirport &&
+    !IATA_PATTERN.test(resort.nearestAirport.trim())
+  ) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'nearestAirport',
+      kind: 'invalid_airport',
+      detail: `Nearest airport "${resort.nearestAirport}" is not a valid IATA code`,
+    })
+  }
+
+  addMissingString('transferTime', resort.transferTime, 'Transfer time')
+  addZeroNumber('pisteKm', resort.pisteKm, 'Piste km')
+  if (
+    resort.beginnerKm === 0 &&
+    resort.intermediateKm === 0 &&
+    resort.advancedKm === 0
+  ) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'pisteBreakdown',
+      kind: 'zero_number',
+      detail: 'All piste breakdowns (beginner/intermediate/advanced) are zero',
+    })
+  }
+  addZeroNumber('liftCount', resort.liftCount, 'Lift count')
+
+  addMissingString(
+    'snowReliability',
+    resort.snowReliability,
+    'Snow reliability'
+  )
+  if (
+    resort.snowReliability &&
+    !['high', 'medium', 'low'].includes(resort.snowReliability)
+  ) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'snowReliability',
+      kind: 'invalid_snow_reliability',
+      detail: `Snow reliability "${resort.snowReliability}" is not high/medium/low`,
+    })
+  }
+
+  addMissingString('skiSeasonMonths', resort.skiSeasonMonths, 'Ski season')
+  if (resort.skiSeasonMonths) {
+    const season = resort.skiSeasonMonths.trim()
+    const isMonMon = /^[A-Z][a-z]{2}-[A-Z][a-z]{2}$/.test(season)
+    const isYearRound = /^year.?round$/i.test(season)
+    if (!isMonMon && !isYearRound) {
+      issues.push({
+        resort: resort.resortName,
+        country: resort.country,
+        field: 'skiSeasonMonths',
+        kind: 'invalid_season',
+        detail: `Ski season "${resort.skiSeasonMonths}" doesn't match Mon-Mon or Year-round format`,
+      })
+    }
+  }
+
+  let websites: string[] = []
+  try {
+    websites = resort.websites ? JSON.parse(resort.websites) : []
+  } catch {
+    websites = []
+  }
+  if (websites.length === 0) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'websites',
+      kind: 'missing_string',
+      detail: 'Websites list is empty',
+    })
+  } else if (websites.length < MIN_WEBSITES) {
+    issues.push({
+      resort: resort.resortName,
+      country: resort.country,
+      field: 'websites',
+      kind: 'too_few_websites',
+      detail: `Only ${websites.length} website(s) (min ${MIN_WEBSITES})`,
+    })
+  }
+
+  addMissingString(
+    'linkedResortsDescription',
+    resort.linkedResortsDescription,
+    'Linked resorts description'
+  )
+
+  return issues
+}
+
+function displayAuditResults(issues: AuditIssue[], totalResorts: number) {
+  const resortsAffected = new Set(issues.map((i) => i.resort))
+  const cleanCount = totalResorts - resortsAffected.size
+
+  console.log()
+  console.log(`${ANSI_CYAN}${ANSI_BOLD}Audit Results${ANSI_RESET}`)
+  console.log()
+
+  logSummary('Total resorts', `${totalResorts}`, 1)
+  logSummary('Resorts with issues', `${resortsAffected.size}`, 1)
+  logSummary('Clean resorts', `${cleanCount}`, 1)
+  logSummary('Total issues', `${issues.length}`, 1)
+
+  const byKind: Record<string, AuditIssue[]> = {}
+  for (const issue of issues) {
+    if (!byKind[issue.kind]) byKind[issue.kind] = []
+    byKind[issue.kind].push(issue)
+  }
+
+  console.log()
+  console.log(`${ANSI_CYAN}${ANSI_BOLD}Breakdown by Issue Type${ANSI_RESET}`)
+  console.log()
+  for (const [kind, group] of Object.entries(byKind).sort((a, b) =>
+    a[0].localeCompare(b[0])
+  )) {
+    logSummary(kind.replace(/_/g, ' '), `${group.length}`, 1)
+  }
+
+  const byField: Record<string, AuditIssue[]> = {}
+  for (const issue of issues) {
+    if (!byField[issue.field]) byField[issue.field] = []
+    byField[issue.field].push(issue)
+  }
+
+  console.log()
+  console.log(`${ANSI_CYAN}${ANSI_BOLD}Breakdown by Field${ANSI_RESET}`)
+  console.log()
+  for (const [field, group] of Object.entries(byField).sort((a, b) =>
+    a[0].localeCompare(b[0])
+  )) {
+    logSummary(field, `${group.length}`, 1)
+  }
+
+  console.log()
+  console.log(`${ANSI_CYAN}${ANSI_BOLD}Explicit Issue List${ANSI_RESET}`)
+  console.log()
+
+  const grouped = new Map<string, AuditIssue[]>()
+  for (const issue of issues) {
+    const key = `${issue.resort} (${issue.country})`
+    let group = grouped.get(key)
+    if (!group) {
+      group = []
+      grouped.set(key, group)
+    }
+    group.push(issue)
+  }
+
+  for (const [resortKey, resortIssues] of grouped) {
+    console.log(`  ${ANSI_BOLD}${resortKey}${ANSI_RESET}`)
+    for (const issue of resortIssues) {
+      console.log(
+        `    ${ANSI_RED}\u2717${ANSI_RESET} ${ANSI_YELLOW}${issue.field}${ANSI_RESET}: ${issue.detail}`
+      )
+    }
+    console.log()
+  }
+}
+
+async function audit() {
+  const adminTablesDb = initAppwrite()
+  log('info', 'audit', 'Starting resort data quality audit')
+
+  const resorts = await listAllEnrichedResorts(adminTablesDb)
+
+  if (resorts.length === 0) {
+    log('warn', 'audit', 'No enriched resorts found. Nothing to audit.')
+    process.exit(0)
+  }
+
+  const allIssues: AuditIssue[] = []
+  for (const resort of resorts) {
+    allIssues.push(...auditResort(resort))
+  }
+
+  if (allIssues.length > 0) {
+    log(
+      'warn',
+      'audit',
+      `Found ${allIssues.length} issue(s) across ${new Set(allIssues.map((i) => i.resort)).size} resort(s)`
+    )
+  } else {
+    log('success', 'audit', 'All resorts pass quality checks')
+  }
+
+  displayAuditResults(allIssues, resorts.length)
 }
 
 function displayEnrichedData(
@@ -903,6 +1273,16 @@ program
     '--output <path>',
     'Write enriched JSON to a file instead of stdout (standalone mode only)'
   )
-  .action(enrich)
+  .option(
+    '--audit',
+    'Audit enriched resorts for missing/zero fields and low quality data'
+  )
+  .action((options) => {
+    if (options.audit) {
+      audit()
+    } else {
+      enrich(options)
+    }
+  })
 
 program.parse()
