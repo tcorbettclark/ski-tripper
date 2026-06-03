@@ -16,7 +16,7 @@ const snowflakeOptions: ISourceOptions = {
   },
   particles: {
     number: {
-      value: 60,
+      value: 600,
       density: {
         enable: true,
       },
