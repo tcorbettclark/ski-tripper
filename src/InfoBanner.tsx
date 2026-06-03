@@ -150,6 +150,7 @@ const bannerStyles = {
     marginTop: '20px',
     textAlign: 'center' as const,
     position: 'relative' as const,
+    zIndex: 1,
   },
   slide: {},
   textWrap: {

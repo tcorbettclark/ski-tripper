@@ -76,6 +76,8 @@ export const authStyles = {
     padding: '24px',
   },
   card: {
+    position: 'relative' as const,
+    zIndex: 1,
     background: colors.bgCard,
     borderRadius: '16px',
     padding: '48px 44px',

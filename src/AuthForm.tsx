@@ -105,6 +105,8 @@ export default function AuthForm({
           textAlign: 'center',
           width: '100%',
           maxWidth: '420px',
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <BrandTitle fontSize="24px" />
