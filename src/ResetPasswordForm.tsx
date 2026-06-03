@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { account as _account } from './backend'
 import Field from './Field'
+import SnowflakeParticles from './SnowflakeParticles'
 import { authStyles, formStyles } from './theme'
 
 interface ResetPasswordFormProps {
@@ -44,7 +45,14 @@ export default function ResetPasswordForm({
   }
 
   return (
-    <div style={{ ...authStyles.container, flexDirection: 'column' }}>
+    <div
+      style={{
+        ...authStyles.container,
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
+      <SnowflakeParticles />
       <div style={authStyles.card}>
         <h1 style={authStyles.title}>Set new password</h1>
         <form onSubmit={handleSubmit} style={authStyles.form}>

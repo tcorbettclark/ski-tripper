@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SnowflakeParticles from './SnowflakeParticles'
 import { authStyles, formStyles } from './theme'
 
 interface EmailVerifyScreenProps {
@@ -31,7 +32,14 @@ export default function EmailVerifyScreen({
   }
 
   return (
-    <div style={{ ...authStyles.container, flexDirection: 'column' }}>
+    <div
+      style={{
+        ...authStyles.container,
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
+      <SnowflakeParticles />
       <div style={authStyles.card}>
         <h1 style={authStyles.title}>Verify your email</h1>
         <p style={verifyStyles.message}>We sent a verification link to</p>

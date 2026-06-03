@@ -4,6 +4,7 @@ import { account as _account } from './backend'
 import Field from './Field'
 import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
+import SnowflakeParticles from './SnowflakeParticles'
 import { authStyles, formStyles } from './theme'
 
 interface AuthFormProps {
@@ -89,7 +90,14 @@ export default function AuthForm({
   }
 
   return (
-    <div style={{ ...authStyles.container, flexDirection: 'column' }}>
+    <div
+      style={{
+        ...authStyles.container,
+        flexDirection: 'column',
+        position: 'relative',
+      }}
+    >
+      <SnowflakeParticles />
       <p
         style={{
           ...authStyles.brandName,

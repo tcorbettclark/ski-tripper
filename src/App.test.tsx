@@ -12,6 +12,10 @@ mock.module('./useIsSmallScreen', () => ({
   default: () => isSmallScreen,
 }))
 
+mock.module('./SnowflakeParticles', () => ({
+  default: () => null,
+}))
+
 const defaultUser: Models.User = {
   $id: 'user-1',
   name: 'Test User',

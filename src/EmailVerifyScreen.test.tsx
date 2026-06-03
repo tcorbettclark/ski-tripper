@@ -3,6 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import EmailVerifyScreen from './EmailVerifyScreen'
 
+mock.module('./SnowflakeParticles', () => ({
+  default: () => null,
+}))
+
 const noop = () => {}
 
 function renderEmailVerifyScreen(props = {}) {

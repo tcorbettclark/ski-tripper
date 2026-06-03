@@ -4,6 +4,10 @@ import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import AuthForm from './AuthForm'
 
+mock.module('./SnowflakeParticles', () => ({
+  default: () => null,
+}))
+
 const verifiedUser: Models.User = {
   $id: 'user-1',
   name: 'Test User',
