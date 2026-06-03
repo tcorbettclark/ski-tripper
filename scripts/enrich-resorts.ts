@@ -1,18 +1,47 @@
 #!/usr/bin/env bun
 
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as readline from 'node:readline/promises'
 import { aiJsonSafeParse } from 'ai-json-safe-parse'
 import { Command } from 'commander'
 import Exa, { type DeepObjectOutputSchema } from 'exa-js'
-import { Client, Query, TablesDB } from 'node-appwrite'
 import { Ollama } from 'ollama'
 import * as z from 'zod'
 import type { JSONSchema } from 'zod/v4/core'
 import { cleanUrls } from './clean-urls'
 
+interface SeededResort {
+  id: string
+  resortName: string
+  country: string
+  region: string
+}
+
+interface EnrichedResort {
+  id: string
+  description: string
+  latitude: string
+  longitude: string
+  summitAltitude: number
+  baseAltitude: number
+  nearestAirport: string
+  transferTime: string
+  pisteKm: number
+  beginnerPct: number
+  intermediatePct: number
+  advancedPct: number
+  liftCount: number
+  snowReliability: 'high' | 'medium' | 'low' | ''
+  skiSeasonMonths: string
+  websites: string[]
+  linkedResortsDescription: string
+}
+
+const SEEDED_PATH = path.join(process.cwd(), 'resorts', 'seeded.jsonl')
+const ENRICHED_PATH = path.join(process.cwd(), 'resorts', 'enriched.jsonl')
+
 const OLLAMA_HOST = 'https://ollama.com'
-const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
-const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
 const DEFAULT_MODEL = 'kimi-k2.6:cloud'
 const EXA_SOURCED_NUM_RESULTS = 4
 const EXA_BROAD_NUM_RESULTS = 4
@@ -105,21 +134,6 @@ function logSummary(label: string, value: string, indent = 0) {
   console.log(
     `${pad}${ANSI_DIM}${label.padEnd(24)}${ANSI_RESET} ${ANSI_BOLD}${value}${ANSI_RESET}`
   )
-}
-
-function initAppwrite() {
-  log(
-    'info',
-    'appwrite',
-    `Connecting to ${process.env.PUBLIC_APPWRITE_ENDPOINT} (project: ${process.env.PUBLIC_APPWRITE_PROJECT_ID})`
-  )
-  const adminClient = new Client()
-    .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
-    .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
-    .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
-
-  log('success', 'appwrite', 'Client initialized')
-  return new TablesDB(adminClient)
 }
 
 const ollama = new Ollama({
@@ -441,99 +455,6 @@ function buildJsonSchema(): JSONSchema.JSONSchema {
   }
 }
 
-const JSON_SCHEMA_PROPERTIES: Record<string, JSONSchema.JSONSchema> =
-  buildJsonSchema().properties as Record<string, JSONSchema.JSONSchema>
-
-function buildSubsetJsonSchema(fields: string[]): JSONSchema.JSONSchema {
-  const properties: Record<string, JSONSchema.JSONSchema> = {}
-  for (const field of fields) {
-    if (JSON_SCHEMA_PROPERTIES[field]) {
-      properties[field] = JSON_SCHEMA_PROPERTIES[field]
-    }
-  }
-  return {
-    type: 'object',
-    properties,
-    required: fields.filter((f) => f in JSON_SCHEMA_PROPERTIES),
-  }
-}
-
-function buildSubsetZodSchema(
-  fields: string[]
-): z.ZodObject<Record<string, z.core.$ZodType>> {
-  const shape: Record<string, z.core.$ZodType> = {}
-  for (const field of fields) {
-    if (field in enrichSchema.shape) {
-      shape[field] =
-        enrichSchema.shape[field as keyof typeof enrichSchema.shape]
-    }
-  }
-  return z.object(shape)
-}
-
-type AuditField =
-  | 'description'
-  | 'latitude'
-  | 'longitude'
-  | 'summitAltitude'
-  | 'baseAltitude'
-  | 'nearestAirport'
-  | 'transferTime'
-  | 'pisteKm'
-  | 'pisteBreakdown'
-  | 'liftCount'
-  | 'snowReliability'
-  | 'skiSeasonMonths'
-  | 'websites'
-  | 'linkedResortsDescription'
-
-function auditFieldsToEnrichFields(fields: AuditField[]): string[] {
-  const enrichFields: string[] = []
-  for (const field of fields) {
-    if (field === 'pisteBreakdown') {
-      enrichFields.push('beginnerPct', 'intermediatePct', 'advancedPct')
-    } else if (field === 'latitude' || field === 'longitude') {
-      // coordinates are fetched separately, not via LLM
-    } else {
-      enrichFields.push(field)
-    }
-  }
-  return [...new Set(enrichFields)]
-}
-
-function logEnrichData(
-  data: ResolvedEnrichData,
-  coords: Coordinates | null,
-  indent = 0
-) {
-  const coordsStr = coords
-    ? `${coords.latitude}, ${coords.longitude}`
-    : 'unknown'
-  logSummary('Coordinates', coordsStr, indent)
-  logSummary(
-    'Altitude',
-    `${data.baseAltitude}m - ${data.summitAltitude}m`,
-    indent
-  )
-  logSummary(
-    'Airport',
-    data.nearestAirport
-      ? `${data.nearestAirport} (${data.transferTime})`
-      : 'unknown',
-    indent
-  )
-  logSummary('Piste', `${data.pisteKm} km`, indent)
-  logSummary('Beginner', `${data.beginnerPct}%`, indent)
-  logSummary('Intermediate', `${data.intermediatePct}%`, indent)
-  logSummary('Advanced', `${data.advancedPct}%`, indent)
-  logSummary('Lifts', `${data.liftCount}`, indent)
-  logSummary('Snow', data.snowReliability, indent)
-  logSummary('Season', data.skiSeasonMonths, indent)
-  logSummary('Websites', data.websites.join(', '), indent)
-  logSummary('Linked Resorts', data.linkedResortsDescription, indent)
-  logSummary('Description', data.description, indent)
-}
-
 async function enrichResort(
   resortName: string,
   country: string,
@@ -702,892 +623,73 @@ async function enrichResort(
   return { data: normalised, coords }
 }
 
-interface UnenrichedResort {
-  $id: string
-  resortName: string
-  country: string
-  region: string
+function readSeededJsonl(): SeededResort[] {
+  if (!fs.existsSync(SEEDED_PATH)) return []
+  const lines = fs
+    .readFileSync(SEEDED_PATH, 'utf-8')
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+  return lines.map((line) => JSON.parse(line) as SeededResort)
 }
 
-interface ResortRow extends UnenrichedResort {
-  description: string
-  latitude: string
-  longitude: string
-  summitAltitude: number
-  baseAltitude: number
-  nearestAirport: string
-  transferTime: string
-  pisteKm: number
-  beginnerPct: number
-  intermediatePct: number
-  advancedPct: number
-  liftCount: number
-  snowReliability: string
-  skiSeasonMonths: string
-  websites: string
-  linkedResortsDescription: string
-  enriched: boolean
+function readEnrichedJsonl(): EnrichedResort[] {
+  if (!fs.existsSync(ENRICHED_PATH)) return []
+  const lines = fs
+    .readFileSync(ENRICHED_PATH, 'utf-8')
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+  return lines.map((line) => JSON.parse(line) as EnrichedResort)
 }
 
-async function listUnenrichedResorts(
-  adminTablesDb: TablesDB
-): Promise<UnenrichedResort[]> {
-  log('info', 'appwrite', 'Fetching un-enriched resorts from database...')
-  const resorts: UnenrichedResort[] = []
-  let offset = 0
-  const limit = 100
-  while (true) {
-    const { rows } = await adminTablesDb.listRows({
-      databaseId: DATABASE_ID,
-      tableId: RESORTS_TABLE_ID,
-      queries: [
-        Query.equal('enriched', false),
-        Query.limit(limit),
-        Query.offset(offset),
-      ],
-    })
-    for (const row of rows) {
-      const r = row as Record<string, unknown>
-      resorts.push({
-        $id: r.$id as string,
-        resortName: r.resortName as string,
-        country: r.country as string,
-        region: r.region as string,
-      })
-    }
-    log(
-      'info',
-      'appwrite',
-      `Fetched ${rows.length} rows (total so far: ${resorts.length})`,
-      1
-    )
-    if (rows.length < limit) break
-    offset += limit
-  }
-  log('success', 'appwrite', `Total un-enriched resorts: ${resorts.length}`)
-  return resorts
-}
-
-async function listAllEnrichedResorts(
-  adminTablesDb: TablesDB
-): Promise<ResortRow[]> {
-  log('info', 'appwrite', 'Fetching enriched resorts from database...')
-  const resorts: ResortRow[] = []
-  let offset = 0
-  const limit = 100
-  while (true) {
-    const { rows } = await adminTablesDb.listRows({
-      databaseId: DATABASE_ID,
-      tableId: RESORTS_TABLE_ID,
-      queries: [
-        Query.equal('enriched', true),
-        Query.limit(limit),
-        Query.offset(offset),
-      ],
-    })
-    for (const row of rows) {
-      const r = row as Record<string, unknown>
-      resorts.push({
-        $id: r.$id as string,
-        resortName: r.resortName as string,
-        country: r.country as string,
-        region: r.region as string,
-        description: (r.description as string) ?? '',
-        latitude: (r.latitude as string) ?? '',
-        longitude: (r.longitude as string) ?? '',
-        summitAltitude: (r.summitAltitude as number) ?? 0,
-        baseAltitude: (r.baseAltitude as number) ?? 0,
-        nearestAirport: (r.nearestAirport as string) ?? '',
-        transferTime: (r.transferTime as string) ?? '',
-        pisteKm: (r.pisteKm as number) ?? 0,
-        beginnerPct: (r.beginnerPct as number) ?? 0,
-        intermediatePct: (r.intermediatePct as number) ?? 0,
-        advancedPct: (r.advancedPct as number) ?? 0,
-        liftCount: (r.liftCount as number) ?? 0,
-        snowReliability: (r.snowReliability as string) ?? '',
-        skiSeasonMonths: (r.skiSeasonMonths as string) ?? '',
-        websites: (r.websites as string) ?? '',
-        linkedResortsDescription: (r.linkedResortsDescription as string) ?? '',
-        enriched: r.enriched as boolean,
-      })
-    }
-    log(
-      'info',
-      'appwrite',
-      `Fetched ${rows.length} rows (total so far: ${resorts.length})`,
-      1
-    )
-    if (rows.length < limit) break
-    offset += limit
-  }
-  log('success', 'appwrite', `Total enriched resorts: ${resorts.length}`)
-  return resorts
-}
-
-type IssueKind =
-  | 'missing_string'
-  | 'missing_number'
-  | 'zero_number'
-  | 'too_few_websites'
-  | 'short_description'
-  | 'invalid_airport'
-  | 'invalid_snow_reliability'
-  | 'invalid_season'
-  | 'altitude_inverted'
-  | 'dirty_websites'
-  | 'piste_breakdown_sum'
-
-interface AuditIssue {
-  resort: string
-  country: string
-  field: string
-  kind: IssueKind
-  detail: string
-}
-
-const MIN_WEBSITES = 3
-const MIN_DESCRIPTION_LENGTH = 100
-const IATA_PATTERN = /^[A-Z]{3}$/
-
-function auditResort(resort: ResortRow): AuditIssue[] {
-  const issues: AuditIssue[] = []
-
-  const addMissingString = (
-    field: keyof ResortRow,
-    value: string,
-    label: string
-  ) => {
-    if (!value || value.trim() === '') {
-      issues.push({
-        resort: resort.resortName,
-        country: resort.country,
-        field,
-        kind: 'missing_string',
-        detail: `${label} is empty`,
-      })
-    }
-  }
-
-  const addZeroNumber = (
-    field: keyof ResortRow,
-    value: number,
-    label: string
-  ) => {
-    if (value === 0) {
-      issues.push({
-        resort: resort.resortName,
-        country: resort.country,
-        field,
-        kind: 'zero_number',
-        detail: `${label} is zero`,
-      })
-    }
-  }
-
-  addMissingString('description', resort.description, 'Description')
-  if (
-    resort.description &&
-    resort.description.trim().length < MIN_DESCRIPTION_LENGTH
-  ) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'description',
-      kind: 'short_description',
-      detail: `Description is only ${resort.description.trim().length} chars (min ${MIN_DESCRIPTION_LENGTH})`,
-    })
-  }
-
-  addMissingString('latitude', resort.latitude, 'Latitude')
-  addMissingString('longitude', resort.longitude, 'Longitude')
-  if (resort.summitAltitude === 0 && resort.baseAltitude === 0) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'summitAltitude',
-      kind: 'zero_number',
-      detail: 'Both summit and base altitude are zero',
-    })
-  }
-
-  if (
-    resort.summitAltitude > 0 &&
-    resort.baseAltitude > 0 &&
-    resort.summitAltitude <= resort.baseAltitude
-  ) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'summitAltitude',
-      kind: 'altitude_inverted',
-      detail: `Summit (${resort.summitAltitude}m) <= Base (${resort.baseAltitude}m)`,
-    })
-  }
-
-  addMissingString('nearestAirport', resort.nearestAirport, 'Nearest airport')
-  if (
-    resort.nearestAirport &&
-    !IATA_PATTERN.test(resort.nearestAirport.trim())
-  ) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'nearestAirport',
-      kind: 'invalid_airport',
-      detail: `Nearest airport "${resort.nearestAirport}" is not a valid IATA code`,
-    })
-  }
-
-  addMissingString('transferTime', resort.transferTime, 'Transfer time')
-  addZeroNumber('pisteKm', resort.pisteKm, 'Piste km')
-  if (
-    resort.beginnerPct === 0 &&
-    resort.intermediatePct === 0 &&
-    resort.advancedPct === 0
-  ) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'pisteBreakdown',
-      kind: 'zero_number',
-      detail: 'All piste breakdowns (beginner/intermediate/advanced) are zero',
-    })
-  } else if (
-    resort.beginnerPct + resort.intermediatePct + resort.advancedPct !==
-    100
-  ) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'pisteBreakdown',
-      kind: 'piste_breakdown_sum',
-      detail: `Piste breakdown percentages sum to ${resort.beginnerPct + resort.intermediatePct + resort.advancedPct} instead of 100 (${resort.beginnerPct}/${resort.intermediatePct}/${resort.advancedPct})`,
-    })
-  }
-  addZeroNumber('liftCount', resort.liftCount, 'Lift count')
-
-  addMissingString(
-    'snowReliability',
-    resort.snowReliability,
-    'Snow reliability'
-  )
-  if (
-    resort.snowReliability &&
-    !['high', 'medium', 'low'].includes(resort.snowReliability)
-  ) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'snowReliability',
-      kind: 'invalid_snow_reliability',
-      detail: `Snow reliability "${resort.snowReliability}" is not high/medium/low`,
-    })
-  }
-
-  addMissingString('skiSeasonMonths', resort.skiSeasonMonths, 'Ski season')
-  if (resort.skiSeasonMonths) {
-    const season = resort.skiSeasonMonths.trim()
-    const isMonMon = /^[A-Z][a-z]{2}-[A-Z][a-z]{2}$/.test(season)
-    const isYearRound = /^year.?round$/i.test(season)
-    if (!isMonMon && !isYearRound) {
-      issues.push({
-        resort: resort.resortName,
-        country: resort.country,
-        field: 'skiSeasonMonths',
-        kind: 'invalid_season',
-        detail: `Ski season "${resort.skiSeasonMonths}" doesn't match Mon-Mon or Year-round format`,
-      })
-    }
-  }
-
-  let websites: string[] = []
-  try {
-    websites = resort.websites ? JSON.parse(resort.websites) : []
-  } catch {
-    websites = []
-  }
-
-  if (websites.length === 0) {
-    issues.push({
-      resort: resort.resortName,
-      country: resort.country,
-      field: 'websites',
-      kind: 'missing_string',
-      detail: 'Websites list is empty',
-    })
-  } else {
-    if (websites.length < MIN_WEBSITES) {
-      issues.push({
-        resort: resort.resortName,
-        country: resort.country,
-        field: 'websites',
-        kind: 'too_few_websites',
-        detail: `Only ${websites.length} website(s) (min ${MIN_WEBSITES})`,
-      })
-    }
-    const cleaned = cleanUrls(websites)
-    if (JSON.stringify(cleaned) !== JSON.stringify(websites)) {
-      const removedLines = websites.map((w) => `      - ${w}`).join('\n')
-      const addedLines = cleaned.map((w) => `      + ${w}`).join('\n')
-      issues.push({
-        resort: resort.resortName,
-        country: resort.country,
-        field: 'websites',
-        kind: 'dirty_websites',
-        detail: `${removedLines}\n---\n${addedLines}`,
-      })
-    }
-  }
-
-  addMissingString(
-    'linkedResortsDescription',
-    resort.linkedResortsDescription,
-    'Linked resorts description'
-  )
-
-  return issues
-}
-
-function displayAuditResults(issues: AuditIssue[], totalResorts: number) {
-  const resortsAffected = new Set(issues.map((i) => i.resort))
-  const cleanCount = totalResorts - resortsAffected.size
-
-  console.log()
-  console.log(`${ANSI_CYAN}${ANSI_BOLD}Audit Results${ANSI_RESET}`)
-  console.log()
-
-  logSummary('Total resorts', `${totalResorts}`, 1)
-  logSummary('Resorts with issues', `${resortsAffected.size}`, 1)
-  logSummary('Clean resorts', `${cleanCount}`, 1)
-  logSummary('Total issues', `${issues.length}`, 1)
-
-  const byKind: Record<string, AuditIssue[]> = {}
-  for (const issue of issues) {
-    if (!byKind[issue.kind]) byKind[issue.kind] = []
-    byKind[issue.kind].push(issue)
-  }
-
-  console.log()
-  console.log(`${ANSI_CYAN}${ANSI_BOLD}Breakdown by Issue Type${ANSI_RESET}`)
-  console.log()
-  for (const [kind, group] of Object.entries(byKind).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  )) {
-    logSummary(kind.replace(/_/g, ' '), `${group.length}`, 1)
-  }
-
-  const byField: Record<string, AuditIssue[]> = {}
-  for (const issue of issues) {
-    if (!byField[issue.field]) byField[issue.field] = []
-    byField[issue.field].push(issue)
-  }
-
-  console.log()
-  console.log(`${ANSI_CYAN}${ANSI_BOLD}Breakdown by Field${ANSI_RESET}`)
-  console.log()
-  for (const [field, group] of Object.entries(byField).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  )) {
-    logSummary(field, `${group.length}`, 1)
-  }
-
-  console.log()
-  console.log(`${ANSI_CYAN}${ANSI_BOLD}Explicit Issue List${ANSI_RESET}`)
-  console.log()
-
-  const grouped = new Map<string, AuditIssue[]>()
-  for (const issue of issues) {
-    const key = `${issue.resort} (${issue.country})`
-    let group = grouped.get(key)
-    if (!group) {
-      group = []
-      grouped.set(key, group)
-    }
-    group.push(issue)
-  }
-
-  for (const [resortKey, resortIssues] of grouped) {
-    console.log(`  ${ANSI_BOLD}${resortKey}${ANSI_RESET}`)
-    for (const issue of resortIssues) {
-      if (issue.kind === 'dirty_websites') {
-        const [removedBlock, addedBlock] = issue.detail.split('\n---\n')
-        console.log(
-          `    ${ANSI_RED}\u2717${ANSI_RESET} ${ANSI_YELLOW}${issue.field}${ANSI_RESET}:`
-        )
-        for (const line of removedBlock.split('\n')) {
-          console.log(`${ANSI_RED}${line}${ANSI_RESET}`)
-        }
-        for (const line of addedBlock.split('\n')) {
-          console.log(`${ANSI_GREEN}${line}${ANSI_RESET}`)
-        }
-      } else {
-        console.log(
-          `    ${ANSI_RED}\u2717${ANSI_RESET} ${ANSI_YELLOW}${issue.field}${ANSI_RESET}: ${issue.detail}`
-        )
-      }
-    }
-    console.log()
-  }
-}
-
-async function audit() {
-  const adminTablesDb = initAppwrite()
-  log('info', 'audit', 'Starting resort data quality audit')
-
-  const resorts = await listAllEnrichedResorts(adminTablesDb)
-
-  if (resorts.length === 0) {
-    log('warn', 'audit', 'No enriched resorts found. Nothing to audit.')
-    process.exit(0)
-  }
-
-  const allIssues: AuditIssue[] = []
-  for (const resort of resorts) {
-    allIssues.push(...auditResort(resort))
-  }
-
-  if (allIssues.length > 0) {
-    log(
-      'warn',
-      'audit',
-      `Found ${allIssues.length} issue(s) across ${new Set(allIssues.map((i) => i.resort)).size} resort(s)`
-    )
-  } else {
-    log('success', 'audit', 'All resorts pass quality checks')
-  }
-
-  displayAuditResults(allIssues, resorts.length)
-}
-
-async function fixResort(
-  resort: ResortRow,
-  issues: AuditIssue[],
-  model: string
-): Promise<{
-  patch: Record<string, unknown>
-  coords: Coordinates | null
-} | null> {
-  const auditFields = [...new Set(issues.map((i) => i.field))] as AuditField[]
-  const enrichFields = auditFieldsToEnrichFields(auditFields)
-  const needsCoords =
-    auditFields.includes('latitude') || auditFields.includes('longitude')
-
-  log(
-    'info',
-    'fix',
-    `Fixing "${resort.resortName}" - fields: ${auditFields.join(', ')}`,
-    1
-  )
-
-  let coords: Coordinates | null = null
-  if (needsCoords) {
-    coords = await fetchCoordinates(resort.resortName, resort.country)
-  }
-
-  if (enrichFields.length === 0) {
-    log('info', 'fix', 'Only coordinate fixes needed, skipping LLM', 1)
-    const patch: Record<string, unknown> = {}
-    if (coords) {
-      patch.latitude = coords.latitude
-      patch.longitude = coords.longitude
-    }
-    return { patch, coords }
-  }
-
-  const subsetSchema = buildSubsetZodSchema(enrichFields)
-  const subsetJsonSchema = buildSubsetJsonSchema(enrichFields)
-  const responseCodec = jsonCodec(subsetSchema)
-
-  log('info', 'fix', 'Fetching source text from Exa...', 1)
-  const [sourcedResults, broadResults] = await Promise.all([
-    exa.search(EXA_SEARCH_QUERY(resort.resortName, resort.country), {
-      type: 'auto',
-      numResults: EXA_SOURCED_NUM_RESULTS,
-      useAutoprompt: true,
-      includeDomains: [...SOURCE_WEBSITES],
-      contents: {
-        text: { maxCharacters: EXA_MAX_CHARS },
-        highlights: true,
-      },
-    }),
-    exa.search(EXA_SEARCH_QUERY(resort.resortName, resort.country), {
-      type: 'auto',
-      numResults: EXA_BROAD_NUM_RESULTS,
-      useAutoprompt: true,
-      contents: {
-        text: { maxCharacters: EXA_MAX_CHARS },
-        highlights: true,
-      },
-    }),
-  ])
-
-  const seenUrls = new Set<string>()
-  const allResults = [...sourcedResults.results, ...broadResults.results]
-  const dedupedResults = allResults.filter((r) => {
-    if (seenUrls.has(r.url)) return false
-    seenUrls.add(r.url)
-    return true
-  })
-
-  const sourcedHosts = new Set(
-    sourcedResults.results.map((r) => new URL(r.url).hostname)
-  )
-
-  log(
-    'info',
-    'fix',
-    `Sourced: ${sourcedResults.results.length}, Broad: ${broadResults.results.length}, Deduped: ${dedupedResults.length}`,
-    1
-  )
-
-  const sourceText = dedupedResults
-    .filter((r) => r.text)
-    .map((r) => {
-      const tag = sourcedHosts.has(new URL(r.url).hostname)
-        ? 'Authoritative source'
-        : 'General source'
-      const parts = [`## ${r.title ?? 'Untitled'} (${tag})\nURL: ${r.url}`]
-      if (r.highlights?.length) {
-        parts.push(`### Key facts\n${r.highlights.join('\n')}`)
-      }
-      parts.push(r.text!)
-      return parts.join('\n')
-    })
-    .join('\n\n')
-
-  if (!sourceText) {
-    log('error', 'fix', 'No source text found', 1)
-    return null
-  }
-
-  log(
-    'success',
-    'fix',
-    `Got ${sourceText.length} chars of source text from ${dedupedResults.length} results`,
-    1
-  )
-
-  const systemPrompt = LLM_SYSTEM_PROMPT.replace(
-    '{SCHEMA}',
-    JSON.stringify(subsetJsonSchema, null, 2)
-  )
-  const focusList = enrichFields.join(', ')
-  const userPrompt = `Extract ONLY the following fields for "${resort.resortName}" in ${resort.country} from the source text below: ${focusList}.\n\nDo NOT include any fields other than ${focusList}.\n\n${sourceText}`
-
-  log('info', 'fix', `Streaming LLM extraction for fields: ${focusList}...`, 1)
-  const stream = await ollama.chat({
-    stream: true,
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-  })
-
-  let content = ''
-  let thinking = ''
-  let isThinking = true
-  for await (const chunk of stream) {
-    const thinkPart = (chunk.message as unknown as Record<string, unknown>)
-      .thinking
-    if (typeof thinkPart === 'string' && thinkPart) {
-      thinking += thinkPart
-      process.stdout.write(`${ANSI_DIM}${thinkPart}${ANSI_RESET}`)
-    }
-    if (chunk.message.content) {
-      if (isThinking) {
-        isThinking = false
-        console.log()
-        log('info', 'fix', `Model thought for ${thinking.length} chars`, 1)
-      }
-      content += chunk.message.content
-    }
-  }
-  if (isThinking && !content) {
-    console.log()
-    log('error', 'fix', 'LLM returned empty content after thinking', 1)
-    return null
-  }
-  try {
-    console.log(JSON.stringify(JSON.parse(content), null, 2))
-  } catch {
-    console.log(content)
-  }
-
-  if (!content) {
-    log('error', 'fix', 'LLM returned empty content after thinking', 1)
-    return null
-  }
-  log('info', 'fix', `LLM response received (${content.length} chars)`, 1)
-
-  const result = responseCodec.decode(content, { reportInput: true })
-  if (!result) {
-    log(
-      'error',
-      'fix',
-      `Failed to parse LLM response: ${content.slice(0, 300)}`,
-      1
-    )
-    return null
-  }
-
-  const parsed = result as Record<string, unknown>
-  log(
-    'success',
-    'fix',
-    `Successfully extracted fields for "${resort.resortName}"`,
-    1
-  )
-
-  const patch: Record<string, unknown> = {}
-  for (const field of enrichFields) {
-    if (field in parsed) {
-      const value = parsed[field]
-      if (value === null && field in enrichDefaults) {
-        patch[field] = enrichDefaults[field]
-      } else {
-        patch[field] = value
-      }
-    }
-  }
-  if ('websites' in patch && Array.isArray(patch.websites)) {
-    patch.websites = cleanUrls(patch.websites as string[])
-  }
-  if (needsCoords && coords) {
-    patch.latitude = coords.latitude
-    patch.longitude = coords.longitude
-  }
-
-  const pisteFields = ['beginnerPct', 'intermediatePct', 'advancedPct'] as const
-  if (pisteFields.every((f) => f in patch)) {
-    const b = patch.beginnerPct as number
-    const i = patch.intermediatePct as number
-    const a = patch.advancedPct as number
-    const total = b + i + a
-    if (total > 0) {
-      const normalised = normalisePistePercentages({
-        description: '',
-        summitAltitude: 0,
-        baseAltitude: 0,
-        nearestAirport: '',
-        transferTime: '',
-        pisteKm: 0,
-        beginnerPct: b,
-        intermediatePct: i,
-        advancedPct: a,
-        liftCount: 0,
-        snowReliability: 'medium',
-        skiSeasonMonths: '',
-        websites: [],
-        linkedResortsDescription: '',
-      })
-      patch.beginnerPct = normalised.beginnerPct
-      patch.intermediatePct = normalised.intermediatePct
-      patch.advancedPct = normalised.advancedPct
-      if (
-        normalised.beginnerPct !== b ||
-        normalised.intermediatePct !== i ||
-        normalised.advancedPct !== a
-      ) {
-        log(
-          'info',
-          'fix',
-          `Normalised piste %: ${b}/${i}/${a} -> ${normalised.beginnerPct}/${normalised.intermediatePct}/${normalised.advancedPct}`,
-          1
-        )
-      }
-    }
-  }
-
-  return { patch, coords }
-}
-
-async function writePatchedResort(
-  adminTablesDb: TablesDB,
-  resortId: string,
-  resortName: string,
-  patch: Record<string, unknown>
-): Promise<void> {
-  log('info', 'appwrite', `Patching ${resortName}...`, 1)
-
-  if ('websites' in patch && Array.isArray(patch.websites)) {
-    patch.websites = JSON.stringify(patch.websites)
-  }
-
-  await adminTablesDb.updateRow({
-    databaseId: DATABASE_ID,
-    tableId: RESORTS_TABLE_ID,
-    rowId: resortId,
-    data: patch,
-  })
-  const summary = Object.entries(patch)
-    .map(([k, v]) => {
-      if (k === 'websites' && typeof v === 'string') {
-        return `${k}: ${JSON.parse(v).length} urls`
-      }
-      return `${k}: ${v}`
-    })
-    .join(', ')
-  log('success', 'appwrite', `Updated ${resortName}: ${summary}`, 1)
-}
-
-async function fix(options: { model?: string }) {
-  const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
-  const adminTablesDb = initAppwrite()
-  log('info', 'fix', 'Starting resort data quality fix')
-
-  const resorts = await listAllEnrichedResorts(adminTablesDb)
-
-  if (resorts.length === 0) {
-    log('warn', 'fix', 'No enriched resorts found. Nothing to fix.')
-    process.exit(0)
-  }
-
-  const resortMap = new Map(resorts.map((r) => [r.$id, r]))
-  const allIssues: AuditIssue[] = []
-  for (const resort of resorts) {
-    allIssues.push(...auditResort(resort))
-  }
-
-  if (allIssues.length === 0) {
-    log('success', 'fix', 'All resorts pass quality checks. Nothing to fix.')
-    return
-  }
-
-  const issuesByResort = new Map<string, AuditIssue[]>()
-  for (const issue of allIssues) {
-    const resort = resorts.find(
-      (r) => r.resortName === issue.resort && r.country === issue.country
-    )
-    if (!resort) continue
-    let list = issuesByResort.get(resort.$id)
-    if (!list) {
-      list = []
-      issuesByResort.set(resort.$id, list)
-    }
-    list.push(issue)
-  }
-
-  log(
-    'info',
-    'fix',
-    `Fixing issues in ${issuesByResort.size} resort(s) out of ${resorts.length} total`
-  )
-
-  let fixed = 0
-  let failed = 0
-
-  let idx = 0
-  for (const [resortId, issues] of issuesByResort) {
-    idx++
-    const resort = resortMap.get(resortId)!
-    log(
-      'info',
-      'fix',
-      `[${idx}/${issuesByResort.size}] Fixing ${resort.resortName} (${resort.country}) - ${issues.length} issue(s)`
-    )
-
-    const pisteSumIssue = issues.find((i) => i.kind === 'piste_breakdown_sum')
-    const otherIssues = issues.filter((i) => i.kind !== 'piste_breakdown_sum')
-
-    if (pisteSumIssue) {
-      const normalised = normalisePistePercentages({
-        description: resort.description,
-        summitAltitude: resort.summitAltitude,
-        baseAltitude: resort.baseAltitude,
-        nearestAirport: resort.nearestAirport,
-        transferTime: resort.transferTime,
-        pisteKm: resort.pisteKm,
-        beginnerPct: resort.beginnerPct,
-        intermediatePct: resort.intermediatePct,
-        advancedPct: resort.advancedPct,
-        liftCount: resort.liftCount,
-        snowReliability: resort.snowReliability as 'high' | 'medium' | 'low',
-        skiSeasonMonths: resort.skiSeasonMonths,
-        websites: resort.websites ? JSON.parse(resort.websites) : [],
-        linkedResortsDescription: resort.linkedResortsDescription,
-      })
-      if (
-        normalised.beginnerPct !== resort.beginnerPct ||
-        normalised.intermediatePct !== resort.intermediatePct ||
-        normalised.advancedPct !== resort.advancedPct
-      ) {
-        log(
-          'info',
-          'fix',
-          `Normalised piste % for ${resort.resortName}: ${resort.beginnerPct}/${resort.intermediatePct}/${resort.advancedPct} -> ${normalised.beginnerPct}/${normalised.intermediatePct}/${normalised.advancedPct}`,
-          1
-        )
-        const patch: Record<string, unknown> = {
-          beginnerPct: normalised.beginnerPct,
-          intermediatePct: normalised.intermediatePct,
-          advancedPct: normalised.advancedPct,
-        }
-        await writePatchedResort(
-          adminTablesDb,
-          resortId,
-          resort.resortName,
-          patch
-        )
-        fixed++
-      } else {
-        log(
-          'warn',
-          'fix',
-          `Could not normalise piste % for ${resort.resortName} (values already normalised but don't sum to 100)`,
-          1
-        )
-      }
-    }
-
-    if (otherIssues.length === 0) continue
-
-    const result = await fixResort(resort, otherIssues, model)
-    if (!result) {
-      log('warn', 'fix', `Failed to fix ${resort.resortName}, skipping.`, 1)
-      failed++
-      continue
-    }
-
-    if (Object.keys(result.patch).length > 0) {
-      log('info', 'fix', `Patching ${Object.keys(result.patch).join(', ')}`, 2)
-      await writePatchedResort(
-        adminTablesDb,
-        resortId,
-        resort.resortName,
-        result.patch
-      )
-      fixed++
-    } else {
-      log('warn', 'fix', `No fields to patch for ${resort.resortName}`, 1)
-    }
-  }
-
-  log(
-    'success',
-    'fix',
-    `Done. Fixed: ${fixed}, Failed: ${failed}, Total issues: ${issuesByResort.size}`
-  )
+function writeEnrichedJsonl(resorts: EnrichedResort[]): void {
+  fs.mkdirSync(path.dirname(ENRICHED_PATH), { recursive: true })
+  const content = resorts.map((r) => JSON.stringify(r)).join('\n') + '\n'
+  fs.writeFileSync(ENRICHED_PATH, content, 'utf-8')
 }
 
 function displayEnrichedData(
-  resort: UnenrichedResort,
+  resortName: string,
+  country: string,
+  region: string,
   data: ResolvedEnrichData,
   coords: Coordinates | null
 ) {
   console.log()
-  const location = resort.region
-    ? `${resort.country}, ${resort.region}`
-    : resort.country
+  const location = region ? `${country}, ${region}` : country
   console.log(
-    `  ${ANSI_BOLD}${resort.resortName}${ANSI_RESET} ${ANSI_DIM}(${location})${ANSI_RESET}`
+    `  ${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}(${location})${ANSI_RESET}`
   )
   console.log()
-  logEnrichData(data, coords, 2)
+  const coordsStr = coords
+    ? `${coords.latitude}, ${coords.longitude}`
+    : 'unknown'
+  logSummary('Coordinates', coordsStr, 2)
+  logSummary('Altitude', `${data.baseAltitude}m - ${data.summitAltitude}m`, 2)
+  logSummary(
+    'Airport',
+    data.nearestAirport
+      ? `${data.nearestAirport} (${data.transferTime})`
+      : 'unknown',
+    2
+  )
+  logSummary('Piste', `${data.pisteKm} km`, 2)
+  logSummary('Beginner', `${data.beginnerPct}%`, 2)
+  logSummary('Intermediate', `${data.intermediatePct}%`, 2)
+  logSummary('Advanced', `${data.advancedPct}%`, 2)
+  logSummary('Lifts', `${data.liftCount}`, 2)
+  logSummary('Snow', data.snowReliability, 2)
+  logSummary('Season', data.skiSeasonMonths, 2)
+  logSummary('Websites', data.websites.join(', '), 2)
+  logSummary('Linked Resorts', data.linkedResortsDescription, 2)
+  logSummary('Description', data.description.slice(0, 100) + '...', 2)
 }
 
 async function confirmEnrichedData(
-  resort: UnenrichedResort,
+  resortName: string,
+  country: string,
+  region: string,
   data: ResolvedEnrichData,
   coords: Coordinates | null,
   autoAccept: boolean
@@ -1601,7 +703,7 @@ async function confirmEnrichedData(
     return { accepted: true, data, coords, autoAcceptRest: true }
   }
 
-  displayEnrichedData(resort, data, coords)
+  displayEnrichedData(resortName, country, region, data, coords)
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -1666,46 +768,128 @@ async function confirmEnrichedData(
   }
 }
 
-async function writeEnrichedResort(
-  adminTablesDb: TablesDB,
-  resortId: string,
-  data: ResolvedEnrichData,
-  coords: Coordinates | null
-): Promise<void> {
+async function enrich(options: { model?: string; autoAccept?: boolean }) {
+  const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
+
+  const seeded = readSeededJsonl()
+  if (seeded.length === 0) {
+    log(
+      'error',
+      'enrich',
+      `No seeded resorts found in ${SEEDED_PATH}. Run seed-resorts first.`
+    )
+    process.exit(1)
+  }
+
+  const existingEnriched = readEnrichedJsonl()
+  const enrichedById = new Map(existingEnriched.map((r) => [r.id, r]))
+
+  const toEnrich = seeded.filter((r) => !enrichedById.has(r.id))
+
+  if (toEnrich.length === 0) {
+    log(
+      'success',
+      'enrich',
+      'All seeded resorts are already enriched. Nothing to do.'
+    )
+    return
+  }
+
   log(
     'info',
-    'appwrite',
-    `Writing enriched data for resort ${resortId} to database...`,
-    1
+    'enrich',
+    `Found ${toEnrich.length} resort(s) to enrich (out of ${seeded.length} total, ${existingEnriched.length} already enriched)`
   )
-  await adminTablesDb.updateRow({
-    databaseId: DATABASE_ID,
-    tableId: RESORTS_TABLE_ID,
-    rowId: resortId,
-    data: {
-      description: data.description,
-      latitude: coords?.latitude ?? '',
-      longitude: coords?.longitude ?? '',
-      summitAltitude: data.summitAltitude,
-      baseAltitude: data.baseAltitude,
-      nearestAirport: data.nearestAirport,
-      transferTime: data.transferTime,
-      pisteKm: data.pisteKm,
-      beginnerPct: data.beginnerPct,
-      intermediatePct: data.intermediatePct,
-      advancedPct: data.advancedPct,
-      liftCount: data.liftCount,
-      snowReliability: data.snowReliability,
-      skiSeasonMonths: data.skiSeasonMonths,
-      websites: JSON.stringify(data.websites),
-      linkedResortsDescription: data.linkedResortsDescription,
-      enriched: true,
-    },
-  })
-  log('success', 'appwrite', `Wrote enriched data for resort ${resortId}`, 1)
+  log('info', 'enrich', `Model: ${model}`)
+
+  let enriched = 0
+  let skipped = 0
+  let autoAccept = options.autoAccept ?? false
+
+  for (let i = 0; i < toEnrich.length; i++) {
+    const seededResort = toEnrich[i]
+    log(
+      'info',
+      'enrich',
+      `[${i + 1}/${toEnrich.length}] Enriching ${seededResort.resortName} (${seededResort.country})...`
+    )
+
+    const result = await enrichResort(
+      seededResort.resortName,
+      seededResort.country,
+      model
+    )
+    if (!result) {
+      log(
+        'warn',
+        'enrich',
+        `Failed to enrich ${seededResort.resortName}, skipping.`,
+        1
+      )
+      skipped++
+      continue
+    }
+
+    const confirmed = await confirmEnrichedData(
+      seededResort.resortName,
+      seededResort.country,
+      seededResort.region,
+      result.data,
+      result.coords,
+      autoAccept
+    )
+    autoAccept = confirmed.autoAcceptRest
+
+    if (confirmed.accepted) {
+      const enrichedEntry: EnrichedResort = {
+        id: seededResort.id,
+        description: confirmed.data.description,
+        latitude: confirmed.coords?.latitude ?? '',
+        longitude: confirmed.coords?.longitude ?? '',
+        summitAltitude: confirmed.data.summitAltitude,
+        baseAltitude: confirmed.data.baseAltitude,
+        nearestAirport: confirmed.data.nearestAirport,
+        transferTime: confirmed.data.transferTime,
+        pisteKm: confirmed.data.pisteKm,
+        beginnerPct: confirmed.data.beginnerPct,
+        intermediatePct: confirmed.data.intermediatePct,
+        advancedPct: confirmed.data.advancedPct,
+        liftCount: confirmed.data.liftCount,
+        snowReliability: confirmed.data.snowReliability as
+          | 'high'
+          | 'medium'
+          | 'low'
+          | '',
+        skiSeasonMonths: confirmed.data.skiSeasonMonths,
+        websites: confirmed.data.websites,
+        linkedResortsDescription: confirmed.data.linkedResortsDescription,
+      }
+      enrichedById.set(seededResort.id, enrichedEntry)
+      enriched++
+      log(
+        'success',
+        'enrich',
+        `Written ${seededResort.resortName} to enriched.jsonl`,
+        1
+      )
+
+      writeEnrichedJsonl(
+        [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
+      )
+    } else {
+      skipped++
+      log('warn', 'enrich', `Skipped ${seededResort.resortName}.`, 1)
+    }
+  }
+
+  log(
+    'success',
+    'enrich',
+    `Done. Enriched: ${enriched}, Skipped: ${skipped}, Total: ${toEnrich.length}`
+  )
 }
 
-async function enrich(options: {
+async function enrichStandalone(options: {
   model?: string
   resort?: string
   region?: string
@@ -1714,163 +898,70 @@ async function enrich(options: {
 }) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
 
-  if (options.resort) {
-    if (!options.region && !options.country) {
-      log(
-        'error',
-        'enrich',
-        '--region or --country is required when using --resort'
-      )
-      process.exit(1)
-    }
-
-    const resortName = options.resort
-    const country = options.country ?? options.region!
-    log(
-      'info',
-      'enrich',
-      `Mode: ${ANSI_BOLD}standalone${ANSI_RESET} (no Appwrite database)`
-    )
-    log(
-      'info',
-      'enrich',
-      `Resort: "${resortName}", Country: "${country}"${options.region ? `, Region: "${options.region}"` : ''}`
-    )
-    log('info', 'enrich', `Model: ${model}`)
-
-    const result = await enrichResort(resortName, country, model)
-    if (!result) {
-      log('error', 'enrich', `Failed to enrich "${resortName}".`)
-      process.exit(1)
-    }
-
-    if (options.output) {
-      const outputData = {
-        resortName,
-        country,
-        region: options.region,
-        latitude: result.coords?.latitude ?? '',
-        longitude: result.coords?.longitude ?? '',
-        ...result.data,
-      }
-      log('info', 'enrich', `Writing enriched JSON to ${options.output}`)
-      await Bun.write(options.output, JSON.stringify(outputData, null, 2))
-      log(
-        'success',
-        'enrich',
-        `Written ${JSON.stringify(outputData).length} bytes to ${options.output}`
-      )
-    } else {
-      displayEnrichedData(
-        { $id: '', resortName, country, region: options.region ?? '' },
-        result.data,
-        result.coords
-      )
-    }
-
-    log('success', 'enrich', 'Done.')
-    return
+  if (!options.resort) {
+    log('error', 'enrich', '--resort is required for standalone mode')
+    process.exit(1)
   }
 
-  const adminTablesDb = initAppwrite()
-  log('info', 'enrich', `Mode: ${ANSI_BOLD}database${ANSI_RESET} (Appwrite)`)
-  log('info', 'enrich', `Database: ${DATABASE_ID}, Table: ${RESORTS_TABLE_ID}`)
-  log('info', 'enrich', `Model: ${model}`)
-
-  const resorts = await listUnenrichedResorts(adminTablesDb)
-
-  if (resorts.length === 0) {
-    log('warn', 'enrich', 'No un-enriched resorts found. Nothing to do.')
-    process.exit(0)
-  }
-
+  const resortName = options.resort
+  const country = options.country ?? options.region ?? ''
   log(
     'info',
     'enrich',
-    `Found ${resorts.length} un-enriched resort(s): ${resorts.map((r) => `${r.resortName} (${r.country})`).join(', ')}`
+    `Mode: ${ANSI_BOLD}standalone${ANSI_RESET} (no file writes)`
   )
+  log(
+    'info',
+    'enrich',
+    `Resort: "${resortName}", Country: "${country}"${options.region ? `, Region: "${options.region}"` : ''}`
+  )
+  log('info', 'enrich', `Model: ${model}`)
 
-  let enriched = 0
-  let skipped = 0
-  let autoAccept = false
-  let stopRequested = false
-
-  for (let i = 0; i < resorts.length; i++) {
-    if (stopRequested) {
-      log(
-        'warn',
-        'enrich',
-        `Stopped. Skipped ${resorts.length - i} remaining resort(s).`
-      )
-      break
-    }
-
-    const resort = resorts[i]
-    log(
-      'info',
-      'enrich',
-      `[${i + 1}/${resorts.length}] Enriching ${resort.resortName} (${resort.country})...`
-    )
-
-    const result = await enrichResort(resort.resortName, resort.country, model)
-    if (!result) {
-      log(
-        'warn',
-        'enrich',
-        `Failed to enrich ${resort.resortName}, skipping.`,
-        1
-      )
-      skipped++
-      continue
-    }
-
-    const confirmed = await confirmEnrichedData(
-      resort,
-      result.data,
-      result.coords,
-      autoAccept
-    )
-    autoAccept = confirmed.autoAcceptRest
-
-    if (confirmed.accepted) {
-      await writeEnrichedResort(
-        adminTablesDb,
-        resort.$id,
-        confirmed.data,
-        confirmed.coords
-      )
-      enriched++
-      log('success', 'enrich', 'Written to database (enriched: true).', 1)
-    } else {
-      if (confirmed.data === result.data && !autoAccept) {
-        stopRequested = true
-      }
-      skipped++
-      log('warn', 'enrich', `Skipped ${resort.resortName}.`, 1)
-    }
+  const result = await enrichResort(resortName, country, model)
+  if (!result) {
+    log('error', 'enrich', `Failed to enrich "${resortName}".`)
+    process.exit(1)
   }
 
-  log(
-    'success',
-    'enrich',
-    `Done. Enriched: ${enriched}, Skipped: ${skipped}, Total: ${resorts.length}`
-  )
+  if (options.output) {
+    const outputData = {
+      resortName,
+      country,
+      region: options.region,
+      latitude: result.coords?.latitude ?? '',
+      longitude: result.coords?.longitude ?? '',
+      ...result.data,
+    }
+    await Bun.write(options.output, JSON.stringify(outputData, null, 2))
+    log(
+      'success',
+      'enrich',
+      `Written ${JSON.stringify(outputData).length} bytes to ${options.output}`
+    )
+  } else {
+    displayEnrichedData(
+      resortName,
+      country,
+      options.region ?? '',
+      result.data,
+      result.coords
+    )
+  }
+
+  log('success', 'enrich', 'Done.')
 }
 
 const program = new Command()
 
 program
   .name('enrich-resorts')
-  .description('Enrich un-enriched ski resorts with detailed data using LLM')
+  .description('Enrich ski resorts with detailed data using LLM and Exa search')
   .version('1.0.0')
   .option(
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
   )
-  .option(
-    '--resort <name>',
-    'Resort name for standalone mode (skips Appwrite database)'
-  )
+  .option('--resort <name>', 'Resort name for standalone mode (no file writes)')
   .option(
     '--region <region>',
     'Region for standalone mode (used as country if --country not set)'
@@ -1883,19 +974,10 @@ program
     '--output <path>',
     'Write enriched JSON to a file instead of stdout (standalone mode only)'
   )
-  .option(
-    '--audit',
-    'Audit enriched resorts for missing/zero fields and low quality data'
-  )
-  .option(
-    '--fix',
-    'Fix audited issues by re-enriching only the problematic fields'
-  )
+  .option('--auto-accept', 'Auto-accept all enriched data without prompting')
   .action((options) => {
-    if (options.audit) {
-      audit()
-    } else if (options.fix) {
-      fix(options)
+    if (options.resort) {
+      enrichStandalone(options)
     } else {
       enrich(options)
     }

@@ -1,24 +1,35 @@
 #!/usr/bin/env bun
 
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as readline from 'node:readline/promises'
 import { aiJsonSafeParse } from 'ai-json-safe-parse'
 import { Command } from 'commander'
 import Exa from 'exa-js'
-import {
-  ID,
-  Client as NodeClient,
-  TablesDB as NodeTablesDB,
-  Query,
-} from 'node-appwrite'
 import { Ollama } from 'ollama'
 import * as z from 'zod'
 import type { JSONSchema } from 'zod/v4/core'
 import { REGIONS } from '../src/regions'
 
-const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
-const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
-const DEFAULT_MODEL = 'kimi-k2.6:cloud'
+interface SeededResort {
+  id: string
+  resortName: string
+  country: string
+  region: string
+}
+
+function slugify(name: string, region: string, country: string): string {
+  const parts = [name, region, country]
+  return parts
+    .join('-')
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 const OLLAMA_HOST = 'https://ollama.com'
+const DEFAULT_MODEL = 'kimi-k2.6:cloud'
 const SOURCE_WEBSITES = [
   'skiresort.info',
   'onthesnow.com',
@@ -162,13 +173,6 @@ function log(level: LogLevel, tag: string, message: string, indent = 0): void {
     console.log(output)
   }
 }
-
-const adminClient = new NodeClient()
-  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
-  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
-  .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
-
-const adminTablesDb = new NodeTablesDB(adminClient)
 
 const ollama = new Ollama({
   host: OLLAMA_HOST,
@@ -422,33 +426,6 @@ async function callLLM(
   return []
 }
 
-async function listAllResortNames(): Promise<string[]> {
-  log('info', 'appwrite', 'Fetching existing resort names from database...')
-  const names: string[] = []
-  let offset = 0
-  const limit = 100
-  while (true) {
-    const { rows } = await adminTablesDb.listRows({
-      databaseId: DATABASE_ID,
-      tableId: RESORTS_TABLE_ID,
-      queries: [Query.limit(limit), Query.offset(offset)],
-    })
-    for (const row of rows) {
-      names.push((row as Record<string, unknown>).resortName as string)
-    }
-    log(
-      'info',
-      'appwrite',
-      `Fetched ${rows.length} rows (total: ${names.length})`,
-      1
-    )
-    if (rows.length < limit) break
-    offset += limit
-  }
-  log('success', 'appwrite', `Total existing resorts: ${names.length}`)
-  return names
-}
-
 async function deduplicateWithLLM(
   candidates: Candidate[],
   existingNames: string[],
@@ -640,41 +617,20 @@ async function confirmWithUser(candidates: Candidate[]): Promise<Candidate[]> {
   }
 }
 
-async function writeResorts(
-  candidates: Candidate[],
-  region: string
-): Promise<void> {
-  log(
-    'info',
-    'appwrite',
-    `Writing ${candidates.length} resort(s) (region: ${region})...`
-  )
-  let created = 0
-  for (const candidate of candidates) {
-    await adminTablesDb.createRow({
-      databaseId: DATABASE_ID,
-      tableId: RESORTS_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        resortName: candidate.resortName,
-        country: candidate.country,
-        region,
-        enriched: false,
-      },
-    })
-    created++
-    log(
-      'success',
-      'appwrite',
-      `Created: ${candidate.resortName} (${candidate.country}) [enriched=false]`,
-      1
-    )
-  }
-  log(
-    'success',
-    'appwrite',
-    `Done. Created ${created}/${candidates.length} resort(s).`
-  )
+function readSeededJsonl(filePath: string): SeededResort[] {
+  if (!fs.existsSync(filePath)) return []
+  const lines = fs
+    .readFileSync(filePath, 'utf-8')
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+  return lines.map((line) => JSON.parse(line) as SeededResort)
+}
+
+function writeSeededJsonl(filePath: string, resorts: SeededResort[]): void {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true })
+  const content = resorts.map((r) => JSON.stringify(r)).join('\n') + '\n'
+  fs.writeFileSync(filePath, content, 'utf-8')
 }
 
 async function seed(options: {
@@ -710,11 +666,16 @@ async function seed(options: {
 
   const dryRun = options.dryRun ?? false
 
+  const seededPath = path.join(process.cwd(), 'resorts', 'seeded.jsonl')
+  const existingSeeded = readSeededJsonl(seededPath)
+  const existingSlugs = new Set(existingSeeded.map((r) => r.id))
+  const existingNames = existingSeeded.map((r) => r.resortName)
+
   if (dryRun) {
     log(
       'info',
       'seed',
-      `${ANSI_BOLD}Dry run mode${ANSI_RESET} (no database reads or writes)`
+      `${ANSI_BOLD}Dry run mode${ANSI_RESET} (no file writes)`
     )
   }
 
@@ -729,6 +690,13 @@ async function seed(options: {
     log('info', 'seed', `Sources: ${includeDomains.join(', ')}`, 1)
   }
 
+  log(
+    'info',
+    'seed',
+    `Existing seeded resorts: ${existingSeeded.length} (${seededPath})`,
+    1
+  )
+
   const allCandidates: Candidate[] = []
   const seenCandidateNames = new Set<string>()
 
@@ -740,13 +708,17 @@ async function seed(options: {
       1
     )
 
-    const existingResorts = allCandidates.map((c) => c.resortName)
-    const prompt = LLM_CANDIDATE_USER_PROMPT(region, sources, existingResorts)
+    const existingResortNames = allCandidates.map((c) => c.resortName)
+    const prompt = LLM_CANDIDATE_USER_PROMPT(
+      region,
+      sources,
+      existingResortNames
+    )
     const batchCandidates = await callLLM(
       prompt,
       model,
       LLM_MAX_RETRIES,
-      existingResorts,
+      existingResortNames,
       includeDomains
     )
 
@@ -798,19 +770,13 @@ async function seed(options: {
     log('info', 'seed', `${c.resortName} (${c.country})`, 1)
   }
 
-  const existingNames = dryRun ? [] : await listAllResortNames()
-  if (!dryRun) {
-    log(
-      'info',
-      'seed',
-      `Found ${existingNames.length} existing resort(s) in database.`,
-      1
-    )
-  }
-
+  const allExistingNames = [
+    ...existingNames,
+    ...existingSeeded.map((r) => r.resortName),
+  ]
   const afterDedup = await deduplicateWithLLM(
     allCandidates,
-    existingNames,
+    allExistingNames,
     model
   )
   log(
@@ -825,25 +791,46 @@ async function seed(options: {
     process.exit(0)
   }
 
+  const newSeeded: SeededResort[] = confirmed.map((c) => {
+    const id = slugify(c.resortName, region, c.country)
+    return {
+      id,
+      resortName: c.resortName,
+      country: c.country,
+      region,
+    }
+  })
+
+  const duplicateIds = newSeeded.filter((r) => existingSlugs.has(r.id))
+  if (duplicateIds.length > 0) {
+    log(
+      'error',
+      'seed',
+      `Duplicate slug IDs generated: ${duplicateIds.map((r) => r.id).join(', ')}`
+    )
+    process.exit(1)
+  }
+
+  const allSeeded = [...existingSeeded, ...newSeeded]
+
   console.log()
   if (dryRun) {
     log(
       'info',
       'seed',
-      `${confirmed.length} resort(s) would be written (region: ${region}):`
+      `${newSeeded.length} resort(s) would be written to ${seededPath}:`
     )
-    for (const c of confirmed) {
-      log(
-        'info',
-        'seed',
-        `${c.resortName} (${c.country}) [region=${region}, enriched=false]`,
-        1
-      )
+    for (const r of newSeeded) {
+      log('info', 'seed', `${r.resortName} (${r.country}) [id=${r.id}]`, 1)
     }
-    log('success', 'seed', 'Dry run complete. No resorts written to database.')
+    log('success', 'seed', 'Dry run complete. No files written.')
   } else {
-    log('info', 'seed', `Writing ${confirmed.length} resort(s) to database...`)
-    await writeResorts(confirmed, region)
+    writeSeededJsonl(seededPath, allSeeded)
+    log(
+      'success',
+      'seed',
+      `Wrote ${newSeeded.length} new resort(s) to ${seededPath} (total: ${allSeeded.length})`
+    )
   }
 }
 
@@ -852,7 +839,7 @@ const program = new Command()
 program
   .name('seed-resorts')
   .description(
-    'Seed ski resorts into the database using LLM-generated candidates'
+    'Seed ski resorts into resorts/seeded.jsonl using LLM-generated candidates'
   )
   .version('1.0.0')
   .requiredOption(
@@ -869,7 +856,7 @@ program
   )
   .option(
     '--dry-run',
-    'Run interactively without reading from or writing to the database'
+    'Run interactively without reading from or writing to any files'
   )
   .option(
     '--sources',

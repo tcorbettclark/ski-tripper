@@ -116,11 +116,35 @@ export interface Resort {
   snowReliability: 'high' | 'medium' | 'low'
   skiSeasonMonths: string
   websites: string[]
-  latitude: string
-  longitude: string
   linkedResortsDescription: string
   enriched: boolean
+}
+
+export interface LocalResort {
+  id: string
+  resortName: string
+  country: string
+  region: string
+  description: string
+  latitude: string
+  longitude: string
+  summitAltitude: number
+  baseAltitude: number
+  nearestAirport: string
+  transferTime: string
+  pisteKm: number
+  beginnerPct: number
+  intermediatePct: number
+  advancedPct: number
+  liftCount: number
+  snowReliability: 'high' | 'medium' | 'low'
+  skiSeasonMonths: string
+  websites: string[]
   linkedResortsDescription: string
+}
+
+export interface ResortWithEmbedding extends LocalResort {
+  embedding: number[]
 }
 
 export interface Preferences {

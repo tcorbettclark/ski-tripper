@@ -11,3 +11,5 @@ dist-test
 .env.app-explorer.md
 localhost-key.pem
 localhost.pem
+resorts/
+public/resort-data.jsonl
