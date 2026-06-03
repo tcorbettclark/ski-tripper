@@ -276,7 +276,7 @@ export default function Resorts({
         <h2 style={resortsStyles.heading}>Resorts Catalog</h2>
       </div>
 
-      <div style={resortsStyles.searchRow}>
+      <div style={resortsStyles.filtersGrid}>
         <input
           type="text"
           placeholder={
@@ -305,67 +305,67 @@ export default function Resorts({
         >
           Clear search
         </button>
-      </div>
-      <div style={resortsStyles.controlsRow}>
-        <select
-          value={countryFilter}
-          onChange={(e) => setCountryFilter(e.target.value)}
-          style={resortsStyles.filterSelect}
-        >
-          <option value="">All Countries</option>
-          {countryOptions.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-        <select
-          value={regionFilter}
-          onChange={(e) => setRegionFilter(e.target.value)}
-          style={resortsStyles.filterSelect}
-        >
-          <option value="">All Regions</option>
-          {regionOptions.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-        <div style={resortsStyles.sliderGroup}>
-          <label
-            htmlFor="min-piste-km-slider"
-            style={resortsStyles.sliderLabel}
+        <div style={resortsStyles.filterControls}>
+          <select
+            value={countryFilter}
+            onChange={(e) => setCountryFilter(e.target.value)}
+            style={resortsStyles.filterSelect}
           >
-            Min Piste Km: {minPisteKm}
-          </label>
-          <input
-            id="min-piste-km-slider"
-            type="range"
-            min={0}
-            max={600}
-            step={10}
-            value={minPisteKm}
-            onChange={(e) => setMinPisteKm(Number(e.target.value))}
-            style={resortsStyles.slider}
-          />
-        </div>
-        <div style={resortsStyles.sliderGroup}>
-          <label
-            htmlFor="min-peak-height-slider"
-            style={resortsStyles.sliderLabel}
+            <option value="">All Countries</option>
+            {countryOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <select
+            value={regionFilter}
+            onChange={(e) => setRegionFilter(e.target.value)}
+            style={resortsStyles.filterSelect}
           >
-            Min Peak Height: {minPeakHeight}m
-          </label>
-          <input
-            id="min-peak-height-slider"
-            type="range"
-            min={0}
-            max={5000}
-            step={100}
-            value={minPeakHeight}
-            onChange={(e) => setMinPeakHeight(Number(e.target.value))}
-            style={resortsStyles.slider}
-          />
+            <option value="">All Regions</option>
+            {regionOptions.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+          <div style={resortsStyles.sliderGroup}>
+            <label
+              htmlFor="min-piste-km-slider"
+              style={resortsStyles.sliderLabel}
+            >
+              Min Piste Km: {minPisteKm}
+            </label>
+            <input
+              id="min-piste-km-slider"
+              type="range"
+              min={0}
+              max={600}
+              step={10}
+              value={minPisteKm}
+              onChange={(e) => setMinPisteKm(Number(e.target.value))}
+              style={resortsStyles.slider}
+            />
+          </div>
+          <div style={resortsStyles.sliderGroup}>
+            <label
+              htmlFor="min-peak-height-slider"
+              style={resortsStyles.sliderLabel}
+            >
+              Min Peak Height: {minPeakHeight}m
+            </label>
+            <input
+              id="min-peak-height-slider"
+              type="range"
+              min={0}
+              max={5000}
+              step={100}
+              value={minPeakHeight}
+              onChange={(e) => setMinPeakHeight(Number(e.target.value))}
+              style={resortsStyles.slider}
+            />
+          </div>
         </div>
         <button
           type="button"
@@ -832,22 +832,23 @@ const resortsStyles = {
     fontSize: '14px',
     margin: 0,
   },
-  controlsRow: {
+  filtersGrid: {
+    display: 'grid' as const,
+    gridTemplateColumns: '1fr auto',
+    gap: '8px 12px',
+    marginBottom: '16px',
+    justifyContent: 'center',
+    width: 'fit-content',
+    marginInline: 'auto',
+  },
+  filterControls: {
     display: 'flex',
     alignItems: 'flex-end',
     gap: '12px',
-    marginBottom: '16px',
     flexWrap: 'wrap' as const,
   },
-  searchRow: {
-    display: 'flex',
-    alignItems: 'flex-end',
-    gap: '8px',
-    marginBottom: '16px',
-  },
   searchInput: {
-    flex: 1,
-    minWidth: '180px',
+    width: '100%',
     padding: '10px 16px',
     borderRadius: '8px',
     border: borders.card,
