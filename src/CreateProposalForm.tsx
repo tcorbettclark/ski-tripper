@@ -8,7 +8,7 @@ import { COUNTRIES } from './countries'
 import DateRangeField from './DateRangeField'
 import Field from './Field'
 import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
-import type { Resort } from './types.d'
+import type { ResortWithEmbedding } from './types.d'
 import { ensureUrlScheme, isValidUrl } from './utils'
 
 interface CreateProposalFormProps {
@@ -16,7 +16,7 @@ interface CreateProposalFormProps {
   userId: string
   onCreated: (proposal: unknown) => void
   onDismiss: () => void
-  resorts?: Resort[]
+  resorts?: ResortWithEmbedding[]
   createProposal?: (
     tripId: string,
     userId: string,
@@ -74,7 +74,10 @@ const EMPTY_FORM = {
   endDate: '',
 }
 
-function filterResorts(resorts: Resort[], query: string): Resort[] {
+function filterResorts(
+  resorts: ResortWithEmbedding[],
+  query: string
+): ResortWithEmbedding[] {
   if (!query.trim()) return []
   const lower = query.toLowerCase()
   return resorts.filter(
@@ -85,7 +88,9 @@ function filterResorts(resorts: Resort[], query: string): Resort[] {
   )
 }
 
-function resortToFormFields(resort: Resort): Partial<typeof EMPTY_FORM> {
+function resortToFormFields(
+  resort: ResortWithEmbedding
+): Partial<typeof EMPTY_FORM> {
   return {
     resortName: resort.resortName,
     country: resort.country,
@@ -131,7 +136,7 @@ export default function CreateProposalForm({
 
   const suggestions = filterResorts(resorts, form.resortName)
 
-  const handleResortSelect = useCallback((resort: Resort) => {
+  const handleResortSelect = useCallback((resort: ResortWithEmbedding) => {
     setForm((f) => ({ ...f, ...resortToFormFields(resort) }))
     setShowSuggestions(false)
     setHighlightedIndex(-1)
@@ -264,8 +269,8 @@ export default function CreateProposalForm({
           >
             {suggestions.slice(0, 8).map((resort, i) => (
               <button
-                key={resort.$id}
-                data-testid={`resort-suggestion-${resort.$id}`}
+                key={resort.id}
+                data-testid={`resort-suggestion-${resort.id}`}
                 type="button"
                 style={{
                   ...styles.suggestion,

@@ -629,7 +629,7 @@ function readSeededJsonl(filePath: string): SeededResort[] {
 
 function writeSeededJsonl(filePath: string, resorts: SeededResort[]): void {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
-  const content = resorts.map((r) => JSON.stringify(r)).join('\n') + '\n'
+  const content = `${resorts.map((r) => JSON.stringify(r)).join('\n')}\n`
   fs.writeFileSync(filePath, content, 'utf-8')
 }
 

@@ -8,7 +8,7 @@ import type {
   Poll,
   Preferences,
   Proposal,
-  Resort,
+  ResortWithEmbedding,
   Trip,
   Vote,
 } from './types.d.ts'
@@ -123,11 +123,9 @@ const samplePolls: Poll[] = [
   },
 ]
 
-const sampleResorts: Resort[] = [
+const sampleResorts: ResortWithEmbedding[] = [
   {
-    $id: 'resort-1',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
+    id: 'whistler-rockies-canadian-canada',
     resortName: 'Whistler',
     country: 'Canada',
     region: 'Rockies (Canadian)',
@@ -147,12 +145,10 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Nov-Apr',
     websites: ['https://whistler.com'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.1, 0.2, 0.3],
   },
   {
-    $id: 'resort-2',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
+    id: 'chamonix-alps-france',
     resortName: 'Chamonix',
     country: 'France',
     region: 'Alps',
@@ -172,12 +168,10 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Dec-Apr',
     websites: ['https://chamonix.com'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.4, 0.5, 0.6],
   },
   {
-    $id: 'resort-3',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
+    id: 'zermatt-alps-switzerland',
     resortName: 'Zermatt',
     country: 'Switzerland',
     region: 'Alps',
@@ -197,7 +191,7 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Nov-May',
     websites: ['https://zermatt.ch'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.7, 0.8, 0.9],
   },
 ]
 

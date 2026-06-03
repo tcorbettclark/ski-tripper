@@ -645,7 +645,7 @@ function readEnrichedJsonl(): EnrichedResort[] {
 
 function writeEnrichedJsonl(resorts: EnrichedResort[]): void {
   fs.mkdirSync(path.dirname(ENRICHED_PATH), { recursive: true })
-  const content = resorts.map((r) => JSON.stringify(r)).join('\n') + '\n'
+  const content = `${resorts.map((r) => JSON.stringify(r)).join('\n')}\n`
   fs.writeFileSync(ENRICHED_PATH, content, 'utf-8')
 }
 
@@ -683,7 +683,7 @@ function displayEnrichedData(
   logSummary('Season', data.skiSeasonMonths, 2)
   logSummary('Websites', data.websites.join(', '), 2)
   logSummary('Linked Resorts', data.linkedResortsDescription, 2)
-  logSummary('Description', data.description.slice(0, 100) + '...', 2)
+  logSummary('Description', `${data.description.slice(0, 100)}...`, 2)
 }
 
 async function confirmEnrichedData(

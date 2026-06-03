@@ -31,7 +31,7 @@ import type {
   Poll,
   Preferences,
   Proposal,
-  Resort,
+  ResortWithEmbedding,
   Trip,
   Vote,
 } from './types.d.ts'
@@ -41,7 +41,7 @@ interface OverviewProps {
   user: Models.User
   trip: Trip
   tripId: string
-  resorts: Resort[]
+  resorts: ResortWithEmbedding[]
   onNavigateToTab: (
     tab: 'resorts' | 'proposals' | 'poll',
     statusFilter?: 'DRAFT' | 'SUBMITTED' | 'REJECTED'

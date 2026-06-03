@@ -18,12 +18,12 @@ import CreateProposalForm from './CreateProposalForm'
 import type { StatusFilter } from './ProposalsGrid'
 import ProposalsGrid from './ProposalsGrid'
 import { borders, colors, fonts } from './theme'
-import type { Accommodation, Proposal, Resort } from './types.d.ts'
+import type { Accommodation, Proposal, ResortWithEmbedding } from './types.d.ts'
 
 interface ProposalsProps {
   user: Models.User
   tripId: string
-  resorts: Resort[]
+  resorts: ResortWithEmbedding[]
   /** Pre-selected status tab — allows parent to navigate directly to a proposals sub-state. */
   statusFilter?: StatusFilter
   /** Called when the user clicks a status tab — lets the parent stay in sync when statusFilter is controlled. */

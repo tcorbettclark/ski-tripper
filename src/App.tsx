@@ -1,5 +1,5 @@
 import type { Models } from 'appwrite'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import AuthForm from './AuthForm'
 import {
   account as _account,
@@ -9,7 +9,6 @@ import {
   hasSession as _hasSession,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
-  listResorts as _listResorts,
   listTrips as _listTrips,
   updateTrip as _updateTrip,
 } from './backend'
@@ -28,7 +27,7 @@ import ResetPasswordForm from './ResetPasswordForm'
 import Resorts from './Resorts'
 import Trips from './Trips'
 import { colors, fonts } from './theme'
-import type { Preferences, Resort, Trip } from './types.d.ts'
+import type { Preferences, ResortWithEmbedding, Trip } from './types.d.ts'
 import useAuth from './useAuth'
 
 interface ListTripsResult {
@@ -62,7 +61,6 @@ interface AppProps {
     userId: string,
     data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
   ) => Promise<Preferences>
-  listResorts?: () => Promise<{ resorts: Resort[] }>
   updateTrip?: (
     tripId: string,
     data: Partial<Trip>,
@@ -85,7 +83,6 @@ const defaultListPolls = _listPolls
 const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
-const defaultListResorts = _listResorts
 const defaultUpdateTrip = _updateTrip
 const defaultUpdateRecovery = (
   userId: string,
@@ -106,7 +103,6 @@ export default function App({
   getCoordinatorParticipant = defaultGetCoordinatorParticipant,
   getPreferences = defaultGetPreferences,
   createPreferences = defaultCreatePreferences,
-  listResorts = defaultListResorts,
   updateTrip = defaultUpdateTrip,
   updateRecovery = defaultUpdateRecovery,
 }: AppProps) {
@@ -147,8 +143,31 @@ export default function App({
   const [activePollEndDate, setActivePollEndDate] = useState<string | null>(
     null
   )
-  const [resorts, setResorts] = useState<Resort[]>([])
+  const [resorts, setResorts] = useState<ResortWithEmbedding[]>([])
   const autoSelectedRef = useRef(false)
+
+  useEffect(() => {
+    try {
+      const data = '/resort-data.jsonl'
+      fetch(data)
+        .then((r) => r.text())
+        .then((text) => {
+          if (!text.trim()) {
+            setResorts([])
+            return
+          }
+          const parsed = text
+            .trim()
+            .split('\n')
+            .filter(Boolean)
+            .map((line) => JSON.parse(line) as ResortWithEmbedding)
+          setResorts(parsed)
+        })
+        .catch(() => setResorts([]))
+    } catch {
+      setResorts([])
+    }
+  }, [])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -213,16 +232,6 @@ export default function App({
     if (!user) return
     loadTrips(user.$id)
   }, [user, loadTrips])
-
-  useEffect(() => {
-    if (!selectedTripId) {
-      setResorts([])
-      return
-    }
-    listResorts()
-      .then((result) => setResorts(result.resorts.filter((r) => r.enriched)))
-      .catch(() => {})
-  }, [selectedTripId, listResorts])
 
   useEffect(() => {
     if (trips.length !== 1 || !user || autoSelectedRef.current) return

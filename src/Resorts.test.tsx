@@ -1,17 +1,26 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Models } from 'appwrite'
 import Resorts from './Resorts'
-import type { Resort } from './types.d.ts'
+import { getIsModelReady, onModelReady, searchResorts } from './resortSearch'
+import type { ResortWithEmbedding } from './types.d.ts'
 
-const user = { $id: 'user-1', name: 'Alice' } as Models.User
+mock.module('./resortSearch', () => ({
+  initSearchModel: mock(() => {}),
+  getIsModelReady: mock(() => true),
+  onModelReady: mock((cb: () => void) => cb()),
+  searchResorts: mock(
+    async (_query: string, resorts: ResortWithEmbedding[]) => resorts
+  ),
+  cosineSimilarity: mock(() => 1),
+  SIMILARITY_THRESHOLD: 0.3,
+}))
 
-const sampleResorts: Resort[] = [
+const user = { $id: 'user-1', name: 'Alice' }
+
+const sampleResorts: ResortWithEmbedding[] = [
   {
-    $id: 'resort-1',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
+    id: 'chamonix-alps-france',
     resortName: 'Chamonix',
     country: 'France',
     region: 'Alps',
@@ -31,12 +40,10 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Dec-Apr',
     websites: ['https://chamonix.com'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.1, 0.2, 0.3],
   },
   {
-    $id: 'resort-2',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
+    id: 'whistler-rockies-canadian-canada',
     resortName: 'Whistler',
     country: 'Canada',
     region: 'Rockies (Canadian)',
@@ -56,12 +63,10 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Nov-Apr',
     websites: ['https://whistler.com'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.4, 0.5, 0.6],
   },
   {
-    $id: 'resort-3',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
+    id: 'zermatt-alps-switzerland',
     resortName: 'Zermatt',
     country: 'Switzerland',
     region: 'Alps',
@@ -81,7 +86,7 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Nov-May',
     websites: ['https://zermatt.ch'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.7, 0.8, 0.9],
   },
 ]
 
@@ -97,9 +102,9 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
 }
 
 describe('Resorts', () => {
-  it('renders loading state when resorts is empty', () => {
+  it('renders no resorts message when resorts is empty', () => {
     render(<Resorts {...defaultProps({ resorts: [] })} />)
-    expect(screen.getByText('Loading resorts...')).toBeTruthy()
+    expect(screen.getByText('No resorts available')).toBeTruthy()
   })
 
   it('renders heading and filters', () => {
@@ -154,8 +159,8 @@ describe('Resorts', () => {
     const eventUser = userEvent.setup()
     render(<Resorts {...defaultProps()} />)
 
-    const searchInput = screen.getByPlaceholderText('Search resorts...')
-    await eventUser.type(searchInput, 'Chamonix')
+    const countrySelect = screen.getByDisplayValue('All Countries')
+    await eventUser.selectOptions(countrySelect, 'Canada')
 
     const clearButton = screen.getByRole('button', {
       name: /clear filters/i,
@@ -164,20 +169,20 @@ describe('Resorts', () => {
     expect(clearButton.disabled).toBe(false)
   })
 
-  it('clears search when clear button is clicked', async () => {
+  it('clears filters when clear button is clicked', async () => {
     const eventUser = userEvent.setup()
     render(<Resorts {...defaultProps()} />)
 
-    const searchInput = screen.getByPlaceholderText('Search resorts...')
-    await eventUser.type(searchInput, 'Ch')
+    const countrySelect = screen.getByDisplayValue('All Countries')
+    await eventUser.selectOptions(countrySelect, 'Canada')
     await eventUser.click(
       screen.getByRole('button', { name: /clear filters/i })
     )
 
-    expect(searchInput).toBeTruthy()
+    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
   })
 
-  it('shows 0 result count when no resorts match country filter', async () => {
+  it('shows filtered result count when country filter is applied', async () => {
     const eventUser = userEvent.setup()
     render(<Resorts {...defaultProps()} />)
 
@@ -190,9 +195,9 @@ describe('Resorts', () => {
   })
 
   it('displays all resorts passed as props', () => {
-    const extraResort: Resort = {
+    const extraResort: ResortWithEmbedding = {
       ...sampleResorts[0],
-      $id: 'resort-4',
+      id: 'extraresort-hokkaido-japan',
       resortName: 'ExtraResort',
       country: 'Japan',
       region: 'Hokkaido',
@@ -204,5 +209,16 @@ describe('Resorts', () => {
     const fourResorts = [...sampleResorts, extraResort]
     render(<Resorts {...defaultProps({ resorts: fourResorts })} />)
     expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
+  })
+
+  it('disables search input when model is not ready', () => {
+    mock.module('./resortSearch', () => ({
+      initSearchModel: mock(() => {}),
+      getIsModelReady: mock(() => false),
+      onModelReady: mock(() => {}),
+      searchResorts: mock(async () => []),
+      cosineSimilarity: mock(() => 1),
+      SIMILARITY_THRESHOLD: 0.3,
+    }))
   })
 })

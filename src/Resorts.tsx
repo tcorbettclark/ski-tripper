@@ -1,15 +1,21 @@
-import type { Models } from 'appwrite'
 import { MapPin } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-
 import { TableVirtuoso } from 'react-virtuoso'
 import { getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
 import DetailField from './DetailField'
 import PisteBreakdown from './PisteBreakdown'
+import {
+  getIsModelReady,
+  initSearchModel,
+  onModelReady,
+  searchResorts,
+} from './resortSearch'
 import { borders, colors, detailStyles, fonts, formStyles } from './theme'
-import type { Resort } from './types.d.ts'
+import type { ResortWithEmbedding } from './types.d.ts'
 import { ensureUrlScheme, sanitizeUrl } from './utils'
+
+initSearchModel()
 
 const snowReliabilityLabels: Record<string, string> = {
   high: 'High',
@@ -18,9 +24,9 @@ const snowReliabilityLabels: Record<string, string> = {
 }
 
 interface ResortsProps {
-  user: Models.User
+  user: { $id: string; name: string }
   tripId: string
-  resorts: Resort[]
+  resorts: ResortWithEmbedding[]
   onNavigateToProposals?: () => void
   onAuthError?: (err: unknown) => void
 }
@@ -35,12 +41,21 @@ export default function Resorts({
   onAuthError = NOOP_AUTH_ERROR,
 }: ResortsProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedQuery, setDebouncedQuery] = useState('')
   const [countryFilter, setCountryFilter] = useState('')
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
   const [minPeakHeight, setMinPeakHeight] = useState(0)
-  const [selectedResort, setSelectedResort] = useState<Resort | null>(null)
+  const [selectedResort, setSelectedResort] =
+    useState<ResortWithEmbedding | null>(null)
+  const [modelReady, setModelReady] = useState(getIsModelReady())
+  const [searchResults, setSearchResults] = useState<
+    ResortWithEmbedding[] | null
+  >(null)
+
+  useEffect(() => {
+    onModelReady(() => setModelReady(getIsModelReady()))
+  }, [])
+
   const [showProposalForm, setShowProposalForm] = useState(false)
   const [proposalError, setProposalError] = useState('')
   const [proposalSaving, setProposalSaving] = useState(false)
@@ -49,11 +64,37 @@ export default function Resorts({
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+    if (!searchQuery.trim()) {
+      setSearchResults(null)
+      return
+    }
+    if (!modelReady) {
+      setSearchResults(null)
+      return
+    }
+    const filteredByDropdowns = resorts.filter((r) => {
+      if (countryFilter && r.country !== countryFilter) return false
+      if (regionFilter && r.region !== regionFilter) return false
+      if (minPisteKm > 0 && r.pisteKm < minPisteKm) return false
+      if (minPeakHeight > 0 && r.summitAltitude < minPeakHeight) return false
+      return true
+    })
+    searchResorts(searchQuery, filteredByDropdowns)
+      .then((results) => {
+        setSearchResults(results)
+      })
+      .catch(() => {
+        setSearchResults(null)
+      })
+  }, [
+    searchQuery,
+    modelReady,
+    resorts,
+    countryFilter,
+    regionFilter,
+    minPisteKm,
+    minPeakHeight,
+  ])
 
   const countryOptions = useMemo(
     () => [...new Set(resorts.map((r) => r.country).filter(Boolean))].sort(),
@@ -66,18 +107,11 @@ export default function Resorts({
   )
 
   const filteredResorts = useMemo(() => {
-    let result = resorts
-
-    if (debouncedQuery) {
-      const q = debouncedQuery.toLowerCase().trim()
-      result = result.filter(
-        (r) =>
-          r.resortName?.toLowerCase().includes(q) ||
-          r.country?.toLowerCase().includes(q) ||
-          r.region?.toLowerCase().includes(q) ||
-          r.description?.toLowerCase().includes(q)
-      )
+    if (searchResults !== null) {
+      return searchResults
     }
+
+    let result = resorts
 
     if (countryFilter) {
       result = result.filter((r) => r.country === countryFilter)
@@ -98,14 +132,14 @@ export default function Resorts({
     return result
   }, [
     resorts,
-    debouncedQuery,
+    searchResults,
     countryFilter,
     regionFilter,
     minPisteKm,
     minPeakHeight,
   ])
 
-  const handleRowClick = useCallback((resort: Resort) => {
+  const handleRowClick = useCallback((resort: ResortWithEmbedding) => {
     setSelectedResort(resort)
     setShowProposalForm(false)
     setProposalError('')
@@ -131,7 +165,7 @@ export default function Resorts({
   const handleSubmitProposal = useCallback(
     async (
       e: React.FormEvent,
-      resort: Resort,
+      resort: ResortWithEmbedding,
       startDate: string,
       endDate: string,
       description: string,
@@ -195,7 +229,7 @@ export default function Resorts({
         <div style={resortsStyles.toolbar}>
           <h2 style={resortsStyles.heading}>Resorts Catalog</h2>
         </div>
-        <p style={resortsStyles.loading}>Loading resorts...</p>
+        <p style={resortsStyles.noResortsText}>No resorts available</p>
       </div>
     )
   }
@@ -210,7 +244,7 @@ export default function Resorts({
     { key: 'skiSeasonMonths', label: 'Season', width: '14%' },
   ] as const
 
-  function getCellValue(resort: Resort, key: string): string {
+  function getCellValue(resort: ResortWithEmbedding, key: string): string {
     switch (key) {
       case 'resortName':
         return resort.resortName
@@ -250,10 +284,16 @@ export default function Resorts({
       <div style={resortsStyles.controlsRow}>
         <input
           type="text"
-          placeholder="Search resorts..."
+          placeholder={
+            modelReady ? 'Search resorts...' : 'Loading search model...'
+          }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={resortsStyles.searchInput}
+          disabled={!modelReady}
+          style={{
+            ...resortsStyles.searchInput,
+            ...(modelReady ? {} : resortsStyles.searchInputDisabled),
+          }}
         />
       </div>
       <div style={resortsStyles.controlsRow}>
@@ -635,12 +675,12 @@ export default function Resorts({
 }
 
 interface ProposalFormProps {
-  resort: Resort
+  resort: ResortWithEmbedding
   saving: boolean
   error: string
   onSubmit: (
     e: React.FormEvent,
-    resort: Resort,
+    resort: ResortWithEmbedding,
     startDate: string,
     endDate: string,
     description: string,
@@ -776,7 +816,7 @@ const resortsStyles = {
     fontWeight: '600',
     cursor: 'pointer',
   },
-  loading: {
+  noResortsText: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
     fontSize: '14px',
@@ -800,6 +840,10 @@ const resortsStyles = {
     fontFamily: fonts.body,
     fontSize: '14px',
     outline: 'none',
+  },
+  searchInputDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
   },
   filterSelect: {
     padding: '10px 12px',

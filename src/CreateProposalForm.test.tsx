@@ -9,13 +9,11 @@ import {
 } from '@testing-library/react'
 import type { Models } from 'appwrite'
 import CreateProposalForm from './CreateProposalForm'
-import type { Resort } from './types.d'
+import type { ResortWithEmbedding } from './types.d'
 
-const sampleResorts: Resort[] = [
+const sampleResorts: ResortWithEmbedding[] = [
   {
-    $id: 'r-1',
-    $createdAt: '2025-01-01T00:00:00Z',
-    $updatedAt: '2025-01-01T00:00:00Z',
+    id: 'val-disere-alps-france',
     resortName: "Val d'Isère",
     country: 'France',
     region: 'Alps',
@@ -35,12 +33,10 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Dec-Apr',
     websites: ['https://valdisere.com'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.1, 0.2, 0.3],
   },
   {
-    $id: 'r-2',
-    $createdAt: '2025-01-01T00:00:00Z',
-    $updatedAt: '2025-01-01T00:00:00Z',
+    id: 'whistler-british-columbia-canada',
     resortName: 'Whistler',
     country: 'Canada',
     region: 'British Columbia',
@@ -60,7 +56,7 @@ const sampleResorts: Resort[] = [
     skiSeasonMonths: 'Nov-Apr',
     websites: ['https://whistler.com'],
     linkedResortsDescription: '',
-    enriched: true,
+    embedding: [0.4, 0.5, 0.6],
   },
 ]
 
@@ -359,7 +355,7 @@ describe('CreateProposalForm', () => {
       typeInResortInput(container, 'Val')
 
       const suggestion = container.querySelector(
-        '[data-testid="resort-suggestion-r-1"]'
+        '[data-testid="resort-suggestion-val-disere-alps-france"]'
       ) as HTMLElement
       fireEvent.mouseDown(suggestion)
 
@@ -394,7 +390,7 @@ describe('CreateProposalForm', () => {
       typeInResortInput(container, 'Val')
 
       const suggestion = container.querySelector(
-        '[data-testid="resort-suggestion-r-1"]'
+        '[data-testid="resort-suggestion-val-disere-alps-france"]'
       ) as HTMLElement
       fireEvent.mouseDown(suggestion)
 
