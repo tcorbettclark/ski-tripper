@@ -1,4 +1,7 @@
+import leven from 'leven'
 import type { ResortWithEmbedding } from './types.d'
+
+const MODEL_ID = 'Xenova/multi-qa-MiniLM-L6-cos-v1'
 
 let modelReady = false
 let modelFailed = false
@@ -15,13 +18,9 @@ function notifyReady(): void {
 const initPromise = (async () => {
   try {
     const { pipeline } = await import('@huggingface/transformers')
-    const extractor = await pipeline(
-      'feature-extraction',
-      'Xenova/all-MiniLM-L6-v2',
-      {
-        dtype: 'fp32',
-      }
-    )
+    const extractor = await pipeline('feature-extraction', MODEL_ID, {
+      dtype: 'fp32',
+    })
     embedder = async (text: string): Promise<number[]> => {
       const output = await extractor(text, {
         pooling: 'mean',
@@ -68,6 +67,71 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 
 export const SIMILARITY_THRESHOLD = 0.3
 
+export const TIER_EXACT = 0.5
+export const TIER_CLOSE = 0.3
+export const TIER_FUZZY = 0.2
+
+export const RATIO_CLOSE = 0.85
+export const RATIO_FUZZY = 0.5
+
+export function lexicalBoost(
+  query: string,
+  resort: ResortWithEmbedding
+): number {
+  if (!query) return 0
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean)
+  if (words.length === 0) return 0
+
+  const nameWords = tokenize(resort.resortName)
+  const countryWords = tokenize(resort.country)
+  const regionWords = tokenize(resort.region)
+
+  let totalBoost = 0
+  for (const word of words) {
+    totalBoost +=
+      bestWordBoost(word, nameWords) +
+      bestWordBoost(word, countryWords) +
+      bestWordBoost(word, regionWords)
+  }
+
+  return totalBoost / words.length
+}
+
+function tokenize(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[\s\-/()]+/)
+    .filter(Boolean)
+}
+
+function similarity(a: string, b: string): number {
+  if (a === b) return 1
+  const maxLen = Math.max(a.length, b.length)
+  if (maxLen === 0) return 1
+  return 1 - leven(a, b) / maxLen
+}
+
+function bestWordBoost(queryWord: string, fieldWords: string[]): number {
+  let best = 0
+  for (const fieldWord of fieldWords) {
+    const ratio = similarity(queryWord, fieldWord)
+    let tier = 0
+    if (ratio === 1) {
+      tier = TIER_EXACT
+    } else if (ratio >= RATIO_CLOSE) {
+      tier = TIER_CLOSE
+    } else if (ratio >= RATIO_FUZZY) {
+      tier = TIER_FUZZY
+    }
+    if (tier > best) best = tier
+  }
+  return best
+}
+
+export function scoreResort(cosine: number, boost: number): number {
+  return cosine + boost
+}
+
 export async function searchResorts(
   query: string,
   resorts: ResortWithEmbedding[]
@@ -76,18 +140,22 @@ export async function searchResorts(
     return resorts
   }
 
+  const trimmed = query.trim()
+
   if (!embedder) {
-    return resorts
+    const lexicalResults = resorts.filter((r) => lexicalBoost(trimmed, r) > 0)
+    return lexicalResults.length > 0 ? lexicalResults : resorts
   }
 
-  const embedding = await embedder(query.trim())
-  const results = resorts
-    .map((resort) => ({
-      resort,
-      similarity: cosineSimilarity(embedding, resort.embedding),
-    }))
-    .filter((r) => r.similarity >= SIMILARITY_THRESHOLD)
-    .sort((a, b) => b.similarity - a.similarity)
+  const embedding = await embedder(trimmed)
+  return resorts
+    .map((resort) => {
+      const cosine = cosineSimilarity(embedding, resort.embedding)
+      const boost = lexicalBoost(trimmed, resort)
+      const score = scoreResort(cosine, boost)
+      return { resort, score }
+    })
+    .filter((r) => r.score >= SIMILARITY_THRESHOLD)
+    .sort((a, b) => b.score - a.score)
     .map((r) => r.resort)
-  return results
 }

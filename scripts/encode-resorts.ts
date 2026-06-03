@@ -43,7 +43,7 @@ const ENRICHED_PATH = path.join(process.cwd(), 'resorts', 'enriched.jsonl')
 const ENCODED_PATH = path.join(process.cwd(), 'resorts', 'encoded.jsonl')
 const OUTPUT_PATH = path.join(process.cwd(), 'public', 'resort-data.jsonl')
 
-const MODEL_ID = 'Xenova/all-MiniLM-L6-v2'
+const MODEL_ID = 'Xenova/multi-qa-MiniLM-L6-cos-v1'
 
 const ANSI_RESET = '\x1b[0m'
 const ANSI_BOLD = '\x1b[1m'
