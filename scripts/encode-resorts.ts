@@ -3,6 +3,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { pipeline } from '@huggingface/transformers'
+import { Command } from 'commander'
 
 interface SeededResort {
   id: string
@@ -141,17 +142,29 @@ async function encode() {
   log(
     'info',
     'encode',
-    `Found ${seeded.length} seeded, ${enriched.length} enriched, ${existingEncoded.length} previously encoded`
+    `Found ${seeded.length} seeded, ${enriched.length} enriched, ${existingEncoded.length} previously encoded (only enriched resorts will be encoded)`
   )
+
+  const notEnriched = seeded.filter((s) => !enrichedById.has(s.id))
+
+  if (notEnriched.length > 0) {
+    log(
+      'warn',
+      'encode',
+      `Skipping ${notEnriched.length} seeded resort(s) without enriched data: ${notEnriched.map((s) => s.resortName).join(', ')}`
+    )
+  }
 
   const toEncode: Array<{
     seeded: SeededResort
-    enriched: EnrichedResort | undefined
+    enriched: EnrichedResort
     searchText: string
   }> = []
 
   for (const s of seeded) {
     const e = enrichedById.get(s.id)
+    if (!e) continue
+
     const searchText = computeSearchText(s, e)
     const hash = simpleHash(searchText)
     const existing = encodedById.get(s.id)
@@ -236,48 +249,67 @@ function build() {
   const enriched = readJsonl<EnrichedResort>(ENRICHED_PATH)
   const encoded = readJsonl<EncodedResort>(ENCODED_PATH)
 
-  if (seeded.length === 0) {
+  const seededIds = new Set(seeded.map((r) => r.id))
+  const enrichedIds = new Set(enriched.map((r) => r.id))
+  const encodedIds = new Set(encoded.map((r) => r.id))
+  const validIds = new Set(
+    [...seededIds].filter((id) => enrichedIds.has(id) && encodedIds.has(id))
+  )
+
+  if (seeded.length === 0 || validIds.size === 0) {
     log(
       'warn',
       'build',
-      'No seeded resorts found. Creating empty resort-data.jsonl.'
+      'No complete resorts found. Creating empty resort-data.jsonl.'
     )
     fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true })
     fs.writeFileSync(OUTPUT_PATH, '\n', 'utf-8')
     return
   }
 
+  const skipped =
+    seeded.length + enriched.length + encoded.length - validIds.size * 3
+  if (skipped > 0) {
+    log(
+      'warn',
+      'build',
+      `Skipping ${skipped} resort(s) missing from one or more files (seeded: ${seeded.length}, enriched: ${enriched.length}, encoded: ${encoded.length}, intersection: ${validIds.size})`
+    )
+  }
+
   const enrichedById = new Map(enriched.map((r) => [r.id, r]))
   const encodedById = new Map(encoded.map((r) => [r.id, r]))
 
-  const mergedResorts = seeded.map((s) => {
-    const e = enrichedById.get(s.id)
-    const enc = encodedById.get(s.id)
+  const mergedResorts = seeded
+    .filter((s) => validIds.has(s.id))
+    .map((s) => {
+      const e = enrichedById.get(s.id)!
+      const enc = encodedById.get(s.id)!
 
-    return {
-      id: s.id,
-      resortName: s.resortName,
-      country: s.country,
-      region: s.region,
-      description: e?.description ?? '',
-      latitude: e?.latitude ?? '',
-      longitude: e?.longitude ?? '',
-      summitAltitude: e?.summitAltitude ?? 0,
-      baseAltitude: e?.baseAltitude ?? 0,
-      nearestAirport: e?.nearestAirport ?? '',
-      transferTime: e?.transferTime ?? '',
-      pisteKm: e?.pisteKm ?? 0,
-      beginnerPct: e?.beginnerPct ?? 0,
-      intermediatePct: e?.intermediatePct ?? 0,
-      advancedPct: e?.advancedPct ?? 0,
-      liftCount: e?.liftCount ?? 0,
-      snowReliability: (e?.snowReliability || 'medium') as string,
-      skiSeasonMonths: e?.skiSeasonMonths ?? '',
-      websites: e?.websites ?? [],
-      linkedResortsDescription: e?.linkedResortsDescription ?? '',
-      ...(enc ? { embedding: enc.embedding } : {}),
-    }
-  })
+      return {
+        id: s.id,
+        resortName: s.resortName,
+        country: s.country,
+        region: s.region,
+        description: e.description,
+        latitude: e.latitude,
+        longitude: e.longitude,
+        summitAltitude: e.summitAltitude,
+        baseAltitude: e.baseAltitude,
+        nearestAirport: e.nearestAirport,
+        transferTime: e.transferTime,
+        pisteKm: e.pisteKm,
+        beginnerPct: e.beginnerPct,
+        intermediatePct: e.intermediatePct,
+        advancedPct: e.advancedPct,
+        liftCount: e.liftCount,
+        snowReliability: e.snowReliability,
+        skiSeasonMonths: e.skiSeasonMonths,
+        websites: e.websites,
+        linkedResortsDescription: e.linkedResortsDescription,
+        embedding: enc.embedding,
+      }
+    })
 
   writeJsonl(OUTPUT_PATH, mergedResorts)
   log(
@@ -287,10 +319,25 @@ function build() {
   )
 }
 
-const command = process.argv[2]
+const program = new Command()
 
-if (command === 'build') {
-  build()
-} else {
-  encode()
-}
+program
+  .name('encode-resorts')
+  .description(
+    'Encode seeded+enriched resorts into embeddings and build resort data file'
+  )
+  .version('1.0.0')
+  .command('encode', { isDefault: true })
+  .description(
+    'Encode resorts with embeddings (only resorts that are both seeded and enriched)'
+  )
+  .action(encode)
+
+program
+  .command('build')
+  .description(
+    'Build resort-data.jsonl from the intersection of seeded, enriched, and encoded files'
+  )
+  .action(build)
+
+program.parse()
