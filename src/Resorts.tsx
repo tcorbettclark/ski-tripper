@@ -281,7 +281,7 @@ export default function Resorts({
           type="text"
           placeholder={
             modelReady
-              ? 'Semantic search and filter (more words are better)'
+              ? 'Semantic search (more words are better)'
               : 'Loading search model...'
           }
           value={searchQuery}

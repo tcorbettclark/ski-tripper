@@ -110,9 +110,7 @@ describe('Resorts', () => {
     render(<Resorts {...defaultProps()} />)
     expect(screen.getByText('Resorts Catalog')).toBeTruthy()
     expect(
-      screen.getByPlaceholderText(
-        'Semantic search and filter (more words are better)'
-      )
+      screen.getByPlaceholderText('Semantic search (more words are better)')
     ).toBeTruthy()
     expect(screen.getByDisplayValue('All Countries')).toBeTruthy()
     expect(screen.getByDisplayValue('All Regions')).toBeTruthy()
