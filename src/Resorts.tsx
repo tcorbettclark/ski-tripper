@@ -216,7 +216,6 @@ export default function Resorts({
   )
 
   const clearFilters = useCallback(() => {
-    setSearchQuery('')
     setCountryFilter('')
     setRegionFilter('')
     setMinPisteKm(0)
@@ -269,11 +268,7 @@ export default function Resorts({
   }
 
   const hasActiveFilters =
-    searchQuery ||
-    countryFilter ||
-    regionFilter ||
-    minPisteKm > 0 ||
-    minPeakHeight > 0
+    countryFilter || regionFilter || minPisteKm > 0 || minPeakHeight > 0
 
   return (
     <div style={resortsStyles.container}>
@@ -281,11 +276,13 @@ export default function Resorts({
         <h2 style={resortsStyles.heading}>Resorts Catalog</h2>
       </div>
 
-      <div style={resortsStyles.controlsRow}>
+      <div style={resortsStyles.searchRow}>
         <input
           type="text"
           placeholder={
-            modelReady ? 'Search resorts...' : 'Loading search model...'
+            modelReady
+              ? 'Semantic search and filter (more words are better)'
+              : 'Loading search model...'
           }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -295,6 +292,19 @@ export default function Resorts({
             ...(modelReady ? {} : resortsStyles.searchInputDisabled),
           }}
         />
+        <button
+          type="button"
+          onClick={() => setSearchQuery('')}
+          disabled={!searchQuery}
+          style={{
+            ...resortsStyles.clearButton,
+            ...(searchQuery
+              ? resortsStyles.clearButtonEnabled
+              : resortsStyles.clearButtonDisabled),
+          }}
+        >
+          Clear search
+        </button>
       </div>
       <div style={resortsStyles.controlsRow}>
         <select
@@ -829,8 +839,14 @@ const resortsStyles = {
     marginBottom: '16px',
     flexWrap: 'wrap' as const,
   },
+  searchRow: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '8px',
+    marginBottom: '16px',
+  },
   searchInput: {
-    width: '100%',
+    flex: 1,
     minWidth: '180px',
     padding: '10px 16px',
     borderRadius: '8px',
@@ -877,11 +893,13 @@ const resortsStyles = {
   clearButton: {
     padding: '10px 16px',
     borderRadius: '7px',
-    border: borders.card,
+    border: `1px solid ${colors.accent}`,
     background: 'transparent',
-    color: colors.textSecondary,
+    color: colors.accent,
     fontFamily: fonts.body,
     fontSize: '13px',
+    fontWeight: '600',
+    whiteSpace: 'nowrap' as const,
   },
   clearButtonDisabled: {
     opacity: 0.4,
