@@ -94,49 +94,51 @@ export default function InfoBanner({
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {(() => {
-        const Icon = slides[active].icon
-        const color = slideColors[active % slideColors.length]
-        return <Icon size={20} color={color} style={bannerStyles.icon} />
-      })()}
       <div
         style={{
-          ...bannerStyles.textWrap,
+          ...bannerStyles.slide,
           opacity: visible ? 1 : 0,
           transition: `opacity ${FADE_DURATION_MS}ms ease-in-out`,
         }}
       >
-        <p
-          style={{
-            ...bannerStyles.text,
-            color: slideColors[active % slideColors.length],
-            whiteSpace: 'pre-line' as const,
-          }}
-        >
-          {slides[active].text}
-        </p>
+        {(() => {
+          const Icon = slides[active].icon
+          const color = slideColors[active % slideColors.length]
+          return <Icon size={20} color={color} style={bannerStyles.icon} />
+        })()}
+        <div style={bannerStyles.textWrap}>
+          <p
+            style={{
+              ...bannerStyles.text,
+              color: slideColors[active % slideColors.length],
+              whiteSpace: 'pre-line' as const,
+            }}
+          >
+            {slides[active].text}
+          </p>
+        </div>
+        <div style={bannerStyles.dots}>
+          {slides.map((_, i) => (
+            <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: dots are visual indicators for a static list
+              key={i}
+              style={
+                i === active
+                  ? {
+                      ...bannerStyles.dot,
+                      background: slideColors[i % slideColors.length],
+                    }
+                  : bannerStyles.dot
+              }
+            />
+          ))}
+        </div>
       </div>
-      <div style={bannerStyles.dots}>
-        {slides.map((_, i) => (
-          <span
-            // biome-ignore lint/suspicious/noArrayIndexKey: dots are visual indicators for a static list
-            key={i}
-            style={
-              i === active
-                ? {
-                    ...bannerStyles.dot,
-                    background: slideColors[i % slideColors.length],
-                  }
-                : bannerStyles.dot
-            }
-          />
-        ))}
-        {paused && (
-          <span style={bannerStyles.pauseIcon} aria-hidden="true">
-            &#9646;&#9646;
-          </span>
-        )}
-      </div>
+      {paused && (
+        <span style={bannerStyles.pauseIcon} aria-hidden="true">
+          &#9646;&#9646;
+        </span>
+      )}
     </section>
   )
 }
@@ -149,6 +151,7 @@ const bannerStyles = {
     textAlign: 'center' as const,
     position: 'relative' as const,
   },
+  slide: {},
   textWrap: {
     minHeight: '60px',
   },

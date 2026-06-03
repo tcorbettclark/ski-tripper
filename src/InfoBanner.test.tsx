@@ -80,7 +80,8 @@ describe('InfoBanner', () => {
       vi.advanceTimersByTime(4000)
     })
 
-    const wrapper = screen.getByText('First slide').parentElement!
+    const p = screen.getByText('First slide')
+    const wrapper = p.parentElement!.parentElement! as HTMLElement
     expect(wrapper.style.opacity).toBe('0')
 
     act(() => {
