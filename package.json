@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "dev": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --watch & bun server.js",
-    "build": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --minify && cp index.html dist/ && cp -r public/flags dist/flags",
+    "build": "bun run build-resort-data && bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --minify && cp index.html dist/ && cp -r public/flags dist/flags",
     "preview": "bun server.js",
     "test": "bun test --max-concurrency 1",
     "test:watch": "bun test --watch --max-concurrency 1",
@@ -37,10 +37,13 @@
     "cors-finder": "bash scripts/find-cors-test.sh",
     "db-admin": "bun run scripts/db-admin.ts",
     "seed-resorts": "bun run scripts/seed-resorts.ts",
-    "enrich-resorts": "bun run scripts/enrich-resorts.ts"
+    "enrich-resorts": "bun run scripts/enrich-resorts.ts",
+    "encode-resorts": "bun run scripts/encode-resorts.ts",
+    "build-resort-data": "bun run scripts/encode-resorts.ts build"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
+    "@huggingface/transformers": "^4.2.0",
     "@tsparticles/engine": "^4.1.2",
     "@tsparticles/preset-snow": "^4.1.2",
     "ai-json-safe-parse": "^0.3.0",
