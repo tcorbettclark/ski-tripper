@@ -2,7 +2,6 @@ import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Resorts from './Resorts'
-import { getIsModelReady, onModelReady, searchResorts } from './resortSearch'
 import type { ResortWithEmbedding } from './types.d.ts'
 
 mock.module('./resortSearch', () => ({

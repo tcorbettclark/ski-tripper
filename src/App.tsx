@@ -1,5 +1,5 @@
 import type { Models } from 'appwrite'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import AuthForm from './AuthForm'
 import {
   account as _account,

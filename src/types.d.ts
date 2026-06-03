@@ -94,32 +94,6 @@ export interface Discussion {
   type: 'comment' | 'system'
 }
 
-export interface Resort {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  resortName: string
-  country: string
-  region: string
-  description: string
-  latitude: string
-  longitude: string
-  summitAltitude: number
-  baseAltitude: number
-  nearestAirport: string
-  transferTime: string
-  pisteKm: number
-  beginnerPct: number
-  intermediatePct: number
-  advancedPct: number
-  liftCount: number
-  snowReliability: 'high' | 'medium' | 'low'
-  skiSeasonMonths: string
-  websites: string[]
-  linkedResortsDescription: string
-  enriched: boolean
-}
-
 export interface LocalResort {
   id: string
   resortName: string
