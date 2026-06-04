@@ -16,43 +16,46 @@ export default function PisteBreakdown({
   const total = beginnerPct + intermediatePct + advancedPct
   if (total === 0) return null
 
-  const bars = [
-    { label: 'Beginner', pct: beginnerPct, colour: colors.pisteBeginner },
+  const segments = [
+    { pct: beginnerPct, colour: colors.pisteBeginner, label: 'Beginner' },
     {
-      label: 'Intermediate',
       pct: intermediatePct,
       colour: colors.pisteIntermediate,
+      label: 'Intermediate',
     },
-    { label: 'Advanced', pct: advancedPct, colour: colors.pisteAdvanced },
+    { pct: advancedPct, colour: colors.pisteAdvanced, label: 'Advanced' },
   ]
 
   return (
     <div style={compact ? compactStyles.container : defaultStyles.container}>
-      {bars.map((bar) => {
-        const widthPct = (bar.pct / total) * 100
-        const tooltip = `${bar.label}: ${bar.pct}%`
-        return (
-          <div key={bar.label} style={defaultStyles.barRow} title={tooltip}>
+      <div
+        style={defaultStyles.bar}
+        title={segments.map((s) => `${s.label}: ${s.pct}%`).join(' • ')}
+      >
+        {segments.map((seg) => {
+          const widthPct = (seg.pct / total) * 100
+          if (widthPct === 0) return null
+          return (
             <div
+              key={seg.label}
               style={{
-                ...(compact ? compactStyles.bar : defaultStyles.bar),
                 width: `${widthPct}%`,
-                background: bar.colour,
+                background: seg.colour,
+                height: '100%',
+                minWidth: '1px',
               }}
             />
-            {!compact && bar.pct > 0 && (
-              <span
-                style={{
-                  ...defaultStyles.pctLabel,
-                  color: bar.colour,
-                }}
-              >
-                {bar.pct}%
-              </span>
-            )}
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
+      {!compact && (
+        <span style={defaultStyles.pctLabel}>
+          {segments
+            .filter((seg) => seg.pct > 0)
+            .map((seg) => `${seg.pct}%`)
+            .join(' / ')}
+        </span>
+      )}
     </div>
   )
 }
@@ -60,38 +63,35 @@ export default function PisteBreakdown({
 const defaultStyles = {
   container: {
     display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '2px',
-    width: '100%',
-  },
-  barRow: {
-    display: 'flex',
     alignItems: 'center' as const,
-    gap: '4px',
+    gap: '8px',
+    maxWidth: '200px',
   },
   bar: {
-    height: '5px',
-    borderRadius: '2px',
-    minWidth: '1px',
-    transition: 'width 0.2s ease',
+    display: 'flex',
+    height: '6px',
+    borderRadius: '3px',
+    overflow: 'hidden' as const,
+    flex: 1,
   },
   pctLabel: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
+    color: colors.textSecondary,
+    whiteSpace: 'nowrap' as const,
   },
 }
 
 const compactStyles = {
   container: {
     display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1px',
-    width: '100%',
+    maxWidth: '160px',
   },
   bar: {
-    height: '3px',
-    borderRadius: '1px',
-    minWidth: '1px',
-    transition: 'width 0.2s ease',
+    display: 'flex',
+    height: '4px',
+    borderRadius: '2px',
+    overflow: 'hidden' as const,
+    width: '100%',
   },
 }
