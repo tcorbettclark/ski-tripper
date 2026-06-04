@@ -58,7 +58,7 @@ function renderApp(props = {}, { loggedIn = true } = {}) {
       listPolls={() => Promise.resolve({ polls: [] })}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
-      getResortDataUrl={() => 'data:text/plain,'}
+      fetchResortData={() => Promise.resolve('')}
       {...props}
     />
   )
@@ -81,7 +81,7 @@ function renderAppWithTrip(props = {}, { loggedIn = true } = {}) {
       listPolls={() => Promise.resolve({ polls: [] })}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
-      getResortDataUrl={() => 'data:text/plain,'}
+      fetchResortData={() => Promise.resolve('')}
       {...props}
     />
   )
@@ -113,6 +113,27 @@ describe('App', () => {
       expect(screen.getByRole('heading', { name: /sign in/i }))
     })
     expect(mockAccountGet).not.toHaveBeenCalled()
+  })
+
+  it('does not fetch resort data before login', async () => {
+    const mockFetchResortData = mock(() => Promise.resolve(''))
+    renderApp(
+      { hasSession: () => false, fetchResortData: mockFetchResortData },
+      { loggedIn: false }
+    )
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /sign in/i }))
+    })
+    expect(mockFetchResortData).not.toHaveBeenCalled()
+  })
+
+  it('fetches resort data after login', async () => {
+    const mockFetchResortData = mock(() => Promise.resolve(''))
+    renderApp({ fetchResortData: mockFetchResortData })
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /test user/i }))
+    })
+    expect(mockFetchResortData).toHaveBeenCalled()
   })
 
   it('shows the user menu when authenticated', async () => {
@@ -271,7 +292,7 @@ describe('App', () => {
         listPolls={() => Promise.resolve({ polls: [] })}
         getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
         getPreferences={() => Promise.resolve(defaultPreferences)}
-        getResortDataUrl={() => 'data:text/plain,'}
+        fetchResortData={() => Promise.resolve('')}
       />
     )
 

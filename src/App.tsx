@@ -4,9 +4,9 @@ import AuthForm from './AuthForm'
 import {
   account as _account,
   createPreferences as _createPreferences,
+  fetchResortData as _fetchResortData,
   getCoordinatorParticipant as _getCoordinatorParticipant,
   getPreferences as _getPreferences,
-  getResortDataUrl as _getResortDataUrl,
   hasSession as _hasSession,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
@@ -72,7 +72,7 @@ interface AppProps {
     secret: string,
     password: string
   ) => Promise<unknown>
-  getResortDataUrl?: () => string
+  fetchResortData?: () => Promise<string>
 }
 
 const defaultAccountGet = () => _account.get()
@@ -91,7 +91,7 @@ const defaultUpdateRecovery = (
   secret: string,
   password: string
 ) => _account.updateRecovery(userId, secret, password)
-const defaultGetResortDataUrl = _getResortDataUrl
+const defaultFetchResortData = _fetchResortData
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -108,7 +108,7 @@ export default function App({
   createPreferences = defaultCreatePreferences,
   updateTrip = defaultUpdateTrip,
   updateRecovery = defaultUpdateRecovery,
-  getResortDataUrl = defaultGetResortDataUrl,
+  fetchResortData = defaultFetchResortData,
 }: AppProps) {
   const {
     user,
@@ -151,9 +151,8 @@ export default function App({
   const autoSelectedRef = useRef(false)
 
   useEffect(() => {
-    const url = getResortDataUrl()
-    fetch(url)
-      .then((r) => r.text())
+    if (!user) return
+    fetchResortData()
       .then((text) => {
         if (!text.trim()) {
           setResorts([])
@@ -167,7 +166,7 @@ export default function App({
         setResorts(parsed)
       })
       .catch(() => setResorts([]))
-  }, [getResortDataUrl])
+  }, [user, fetchResortData])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

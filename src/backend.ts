@@ -42,11 +42,16 @@ const RESORTS_BUCKET_ID = process.env
   .PUBLIC_APPWRITE_RESORTS_BUCKET_ID as string
 const RESORTS_FILE_ID = process.env.PUBLIC_APPWRITE_RESORTS_FILE_ID as string
 
-export function getResortDataUrl(): string {
-  return storage.getFileView({
-    bucketId: RESORTS_BUCKET_ID,
-    fileId: RESORTS_FILE_ID,
-  })
+export async function fetchResortData(): Promise<string> {
+  const response = await client.call(
+    'GET',
+    new URL(
+      `${process.env.PUBLIC_APPWRITE_ENDPOINT as string}/storage/buckets/${RESORTS_BUCKET_ID}/files/${RESORTS_FILE_ID}/view`
+    ),
+    { 'content-type': 'application/json' },
+    { project: process.env.PUBLIC_APPWRITE_PROJECT_ID as string }
+  )
+  return typeof response === 'string' ? response : JSON.stringify(response)
 }
 
 function toRow<T extends { $id: string }>(row: Models.Row): T {
