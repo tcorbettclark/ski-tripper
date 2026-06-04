@@ -15,15 +15,7 @@ import { InputFile } from 'node-appwrite/file'
 import * as z from 'zod'
 import { REGIONS } from '../src/regions'
 import { cleanUrls } from './lib/clean-urls'
-import {
-  ENCODED_PATH,
-  ENRICHED_PATH,
-  OUTPUT_PATH,
-  readJsonl,
-  SEEDED_PATH,
-  simpleHash,
-  writeJsonl,
-} from './lib/jsonl'
+import { readJsonl, simpleHash, writeJsonl } from './lib/jsonl'
 import {
   buildJsonSchema,
   DEFAULT_MODEL,
@@ -284,6 +276,70 @@ function withDefaults(data: EnrichData): ResolvedEnrichData {
     }
   }
   return result as ResolvedEnrichData
+}
+
+function isLowQualityValue(
+  key: keyof EnrichData,
+  value: string | number | string[] | null
+): boolean {
+  if (value === null) return true
+  if (value === enrichDefaults[key]) return true
+  if (typeof value === 'number' && value <= 0) return true
+  if (typeof value === 'string' && value.trim() === '') return true
+  if (Array.isArray(value) && value.length === 0) return true
+  return false
+}
+
+function hasLowQualityFields(entry: EnrichedResort): boolean {
+  const fields = Object.keys(enrichDefaults) as (keyof EnrichData)[]
+  for (const key of fields) {
+    if (
+      key in entry &&
+      isLowQualityValue(key, entry[key] as string | number | string[] | null)
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
+function listLowQualityFields(entry: EnrichedResort): string[] {
+  const fields = Object.keys(enrichDefaults) as (keyof EnrichData)[]
+  const result: string[] = []
+  for (const key of fields) {
+    if (
+      key in entry &&
+      isLowQualityValue(key, entry[key] as string | number | string[] | null)
+    ) {
+      result.push(key)
+    }
+  }
+  return result
+}
+
+function mergeEnriched(
+  existing: EnrichedResort,
+  newData: ResolvedEnrichData,
+  coords: Coordinates | null
+): EnrichedResort {
+  const merged = { ...existing }
+  const fields = Object.keys(enrichDefaults) as (keyof EnrichData)[]
+  for (const key of fields) {
+    const oldValue = existing[key] as string | number | string[] | null
+    const isOldLow = isLowQualityValue(key, oldValue)
+    if (isOldLow) {
+      ;(merged[key] as (typeof newData)[typeof key]) = newData[key]
+    }
+  }
+  if (coords) {
+    if (!existing.latitude || existing.latitude.trim() === '') {
+      merged.latitude = coords.latitude
+    }
+    if (!existing.longitude || existing.longitude.trim() === '') {
+      merged.longitude = coords.longitude
+    }
+  }
+  return merged
 }
 
 function normalisePistePercentages(
@@ -696,12 +752,14 @@ async function seed(options: {
   model?: string
   dryRun?: boolean
   sources?: boolean
+  seeded: string
 }) {
   const region = options.region
   const batches = Number.parseInt(options.batches, 10)
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
   const sources = options.sources ? SOURCE_WEBSITES : undefined
   const includeDomains = options.sources ? SOURCE_WEBSITES : undefined
+  const seededPath = options.seeded
 
   if (!REGIONS.includes(region as (typeof REGIONS)[number])) {
     log(
@@ -723,7 +781,7 @@ async function seed(options: {
 
   const dryRun = options.dryRun ?? false
 
-  const existingSeeded = readJsonl<SeededResort>(SEEDED_PATH)
+  const existingSeeded = readJsonl<SeededResort>(seededPath)
   const existingSlugs = new Set(existingSeeded.map((r) => r.id))
   const existingNames = existingSeeded.map((r) => r.resortName)
 
@@ -749,7 +807,7 @@ async function seed(options: {
   log(
     'info',
     'seed',
-    `Existing seeded resorts: ${existingSeeded.length} (${SEEDED_PATH})`,
+    `Existing seeded resorts: ${existingSeeded.length} (${seededPath})`,
     1
   )
 
@@ -874,18 +932,18 @@ async function seed(options: {
     log(
       'info',
       'seed',
-      `${newSeeded.length} resort(s) would be written to ${SEEDED_PATH}:`
+      `${newSeeded.length} resort(s) would be written to ${seededPath}:`
     )
     for (const r of newSeeded) {
       log('info', 'seed', `${r.resortName} (${r.country}) [id=${r.id}]`, 1)
     }
     log('success', 'seed', 'Dry run complete. No files written.')
   } else {
-    writeJsonl(SEEDED_PATH, allSeeded)
+    writeJsonl(seededPath, allSeeded)
     log(
       'success',
       'seed',
-      `Wrote ${newSeeded.length} new resort(s) to ${SEEDED_PATH} (total: ${allSeeded.length})`
+      `Wrote ${newSeeded.length} new resort(s) to ${seededPath} (total: ${allSeeded.length})`
     )
   }
 }
@@ -1243,31 +1301,144 @@ async function confirmEnrichedData(
   }
 }
 
-async function enrich(options: { model?: string; autoAccept?: boolean }) {
-  const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
+function toEnrichedEntry(
+  seededResort: SeededResort,
+  data: ResolvedEnrichData,
+  coords: Coordinates | null
+): EnrichedResort {
+  return {
+    id: seededResort.id,
+    description: data.description,
+    latitude: coords?.latitude ?? '',
+    longitude: coords?.longitude ?? '',
+    summitAltitude: data.summitAltitude,
+    baseAltitude: data.baseAltitude,
+    nearestAirport: data.nearestAirport,
+    transferTime: data.transferTime,
+    pisteKm: data.pisteKm,
+    beginnerPct: data.beginnerPct,
+    intermediatePct: data.intermediatePct,
+    advancedPct: data.advancedPct,
+    liftCount: data.liftCount,
+    snowReliability: data.snowReliability as 'high' | 'medium' | 'low' | '',
+    skiSeasonMonths: data.skiSeasonMonths,
+    websites: data.websites,
+    linkedResortsDescription: data.linkedResortsDescription,
+  }
+}
 
-  const seeded = readJsonl<SeededResort>(SEEDED_PATH)
+type EnrichMode = 'new' | 'fill' | 'all'
+
+async function enrich(options: {
+  model?: string
+  autoAccept?: boolean
+  fill?: boolean
+  all?: boolean
+  resort?: string
+  seeded: string
+  enriched: string
+}) {
+  const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
+  const seededPath = options.seeded
+  const enrichedPath = options.enriched
+  let mode: EnrichMode = 'new'
+  if (options.all && options.fill) {
+    log('error', 'enrich', 'Cannot use --fill and --all together. Pick one.')
+    process.exit(1)
+  }
+  if (options.all) mode = 'all'
+  else if (options.fill) mode = 'fill'
+
+  const seeded = readJsonl<SeededResort>(seededPath)
   if (seeded.length === 0) {
     log(
       'error',
       'enrich',
-      `No seeded resorts found in ${SEEDED_PATH}. Run seed first.`
+      `No seeded resorts found in ${seededPath}. Run seed first.`
     )
     process.exit(1)
   }
 
-  const existingEnriched = readJsonl<EnrichedResort>(ENRICHED_PATH)
+  const existingEnriched = readJsonl<EnrichedResort>(enrichedPath)
   const enrichedById = new Map(existingEnriched.map((r) => [r.id, r]))
 
-  const toEnrich = seeded.filter((r) => !enrichedById.has(r.id))
+  let toEnrich: SeededResort[]
+  const reEnrichMode = mode === 'fill' || mode === 'all'
 
-  if (toEnrich.length === 0) {
+  if (options.resort) {
+    const matched = seeded.filter((r) => r.id === options.resort)
+    if (matched.length === 0) {
+      log(
+        'error',
+        'enrich',
+        `No seeded resort with id "${options.resort}". Available: ${seeded.map((r) => r.id).join(', ')}`
+      )
+      process.exit(1)
+    }
+    toEnrich = matched
     log(
-      'success',
+      'info',
       'enrich',
-      'All seeded resorts are already enriched. Nothing to do.'
+      `Mode: ${ANSI_BOLD}--resort${ANSI_RESET} targeting "${options.resort}"`
     )
-    return
+  } else if (mode === 'new') {
+    toEnrich = seeded.filter((r) => !enrichedById.has(r.id))
+    if (toEnrich.length === 0) {
+      log(
+        'success',
+        'enrich',
+        'All seeded resorts are already enriched. Use --fill or --all to re-enrich.'
+      )
+      return
+    }
+    log(
+      'info',
+      'enrich',
+      `Mode: ${ANSI_BOLD}new${ANSI_RESET} (un-enriched resorts only)`
+    )
+  } else if (mode === 'fill') {
+    const newResorts = seeded.filter((r) => !enrichedById.has(r.id))
+    const lowQuality = seeded.filter((r) => {
+      const e = enrichedById.get(r.id)
+      return e && hasLowQualityFields(e)
+    })
+    toEnrich = [...newResorts, ...lowQuality]
+    const dedupedIds = new Set<string>()
+    toEnrich = toEnrich.filter((r) => {
+      if (dedupedIds.has(r.id)) return false
+      dedupedIds.add(r.id)
+      return true
+    })
+    if (toEnrich.length === 0) {
+      log(
+        'success',
+        'enrich',
+        'All seeded resorts are enriched with complete data. Use --all to re-enrich from scratch.'
+      )
+      return
+    }
+    log(
+      'info',
+      'enrich',
+      `Mode: ${ANSI_BOLD}fill${ANSI_RESET} (new resorts + resorts with low-quality fields)`
+    )
+    const lowQualityNames = lowQuality.map((r) => {
+      const fields = listLowQualityFields(enrichedById.get(r.id)!)
+      return `${r.resortName} (missing: ${fields.join(', ')})`
+    })
+    if (lowQualityNames.length > 0) {
+      log('info', 'enrich', `Low-quality resorts to re-fill:`, 1)
+      for (const name of lowQualityNames) {
+        log('info', 'enrich', `  ${name}`, 2)
+      }
+    }
+  } else {
+    toEnrich = seeded
+    log(
+      'info',
+      'enrich',
+      `Mode: ${ANSI_BOLD}all${ANSI_RESET} (re-enrich every resort from scratch)`
+    )
   }
 
   log(
@@ -1277,16 +1448,23 @@ async function enrich(options: { model?: string; autoAccept?: boolean }) {
   )
   log('info', 'enrich', `Model: ${model}`)
 
-  let enriched = 0
+  let enrichedCount = 0
   let skipped = 0
   let autoAccept = options.autoAccept ?? false
 
   for (let i = 0; i < toEnrich.length; i++) {
     const seededResort = toEnrich[i]
+    const existing = enrichedById.get(seededResort.id)
+    const action =
+      reEnrichMode && existing
+        ? mode === 'fill'
+          ? 'filling'
+          : 're-enriching'
+        : 'enriching'
     log(
       'info',
       'enrich',
-      `[${i + 1}/${toEnrich.length}] Enriching ${seededResort.resortName} (${seededResort.country})...`
+      `[${i + 1}/${toEnrich.length}] ${action} ${seededResort.resortName} (${seededResort.country})...`
     )
 
     const result = await enrichResort(
@@ -1316,31 +1494,21 @@ async function enrich(options: { model?: string; autoAccept?: boolean }) {
     autoAccept = confirmed.autoAcceptRest
 
     if (confirmed.accepted) {
-      const enrichedEntry: EnrichedResort = {
-        id: seededResort.id,
-        description: confirmed.data.description,
-        latitude: confirmed.coords?.latitude ?? '',
-        longitude: confirmed.coords?.longitude ?? '',
-        summitAltitude: confirmed.data.summitAltitude,
-        baseAltitude: confirmed.data.baseAltitude,
-        nearestAirport: confirmed.data.nearestAirport,
-        transferTime: confirmed.data.transferTime,
-        pisteKm: confirmed.data.pisteKm,
-        beginnerPct: confirmed.data.beginnerPct,
-        intermediatePct: confirmed.data.intermediatePct,
-        advancedPct: confirmed.data.advancedPct,
-        liftCount: confirmed.data.liftCount,
-        snowReliability: confirmed.data.snowReliability as
-          | 'high'
-          | 'medium'
-          | 'low'
-          | '',
-        skiSeasonMonths: confirmed.data.skiSeasonMonths,
-        websites: confirmed.data.websites,
-        linkedResortsDescription: confirmed.data.linkedResortsDescription,
+      let enrichedEntry: EnrichedResort
+      if (reEnrichMode && existing && mode === 'fill') {
+        const merged = mergeEnriched(existing, confirmed.data, confirmed.coords)
+        const lowFields = listLowQualityFields(existing)
+        log('info', 'enrich', `Filled fields: ${lowFields.join(', ')}`, 1)
+        enrichedEntry = merged
+      } else {
+        enrichedEntry = toEnrichedEntry(
+          seededResort,
+          confirmed.data,
+          confirmed.coords
+        )
       }
       enrichedById.set(seededResort.id, enrichedEntry)
-      enriched++
+      enrichedCount++
       log(
         'success',
         'enrich',
@@ -1349,7 +1517,7 @@ async function enrich(options: { model?: string; autoAccept?: boolean }) {
       )
 
       writeJsonl(
-        ENRICHED_PATH,
+        enrichedPath,
         [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
       )
     } else {
@@ -1361,70 +1529,8 @@ async function enrich(options: { model?: string; autoAccept?: boolean }) {
   log(
     'success',
     'enrich',
-    `Done. Enriched: ${enriched}, Skipped: ${skipped}, Total: ${toEnrich.length}`
+    `Done. Enriched: ${enrichedCount}, Skipped: ${skipped}, Total: ${toEnrich.length}`
   )
-}
-
-async function enrichStandalone(options: {
-  model?: string
-  resort?: string
-  region?: string
-  country?: string
-  output?: string
-}) {
-  const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
-
-  if (!options.resort) {
-    log('error', 'enrich', '--resort is required for standalone mode')
-    process.exit(1)
-  }
-
-  const resortName = options.resort
-  const country = options.country ?? options.region ?? ''
-  log(
-    'info',
-    'enrich',
-    `Mode: ${ANSI_BOLD}standalone${ANSI_RESET} (no file writes)`
-  )
-  log(
-    'info',
-    'enrich',
-    `Resort: "${resortName}", Country: "${country}"${options.region ? `, Region: "${options.region}"` : ''}`
-  )
-  log('info', 'enrich', `Model: ${model}`)
-
-  const result = await enrichResort(resortName, country, model)
-  if (!result) {
-    log('error', 'enrich', `Failed to enrich "${resortName}".`)
-    process.exit(1)
-  }
-
-  if (options.output) {
-    const outputData = {
-      resortName,
-      country,
-      region: options.region,
-      latitude: result.coords?.latitude ?? '',
-      longitude: result.coords?.longitude ?? '',
-      ...result.data,
-    }
-    await Bun.write(options.output, JSON.stringify(outputData, null, 2))
-    log(
-      'success',
-      'enrich',
-      `Written ${JSON.stringify(outputData).length} bytes to ${options.output}`
-    )
-  } else {
-    displayEnrichedData(
-      resortName,
-      country,
-      options.region ?? '',
-      result.data,
-      result.coords
-    )
-  }
-
-  log('success', 'enrich', 'Done.')
 }
 
 function computeSearchText(
@@ -1450,21 +1556,29 @@ function computeSearchText(
   return parts.filter(Boolean).join('. ')
 }
 
-async function encode() {
-  const seeded = readJsonl<SeededResort>(SEEDED_PATH)
+async function encode(options: {
+  seeded: string
+  enriched: string
+  encoded: string
+}) {
+  const seededPath = options.seeded
+  const enrichedPath = options.enriched
+  const encodedPath = options.encoded
+
+  const seeded = readJsonl<SeededResort>(seededPath)
   if (seeded.length === 0) {
     log(
       'error',
       'encode',
-      `No seeded resorts found in ${SEEDED_PATH}. Run seed first.`
+      `No seeded resorts found in ${seededPath}. Run seed first.`
     )
     process.exit(1)
   }
 
-  const enriched = readJsonl<EnrichedResort>(ENRICHED_PATH)
+  const enriched = readJsonl<EnrichedResort>(enrichedPath)
   const enrichedById = new Map(enriched.map((r) => [r.id, r]))
 
-  const existingEncoded = readJsonl<EncodedResort>(ENCODED_PATH)
+  const existingEncoded = readJsonl<EncodedResort>(encodedPath)
   const encodedById = new Map(existingEncoded.map((r) => [r.id, r]))
 
   log(
@@ -1560,22 +1674,32 @@ async function encode() {
   const allEncoded = [...encodedById.values()].sort((a, b) =>
     a.id.localeCompare(b.id)
   )
-  writeJsonl(ENCODED_PATH, allEncoded)
+  writeJsonl(encodedPath, allEncoded)
 
   log(
     'success',
     'encode',
     `Encoded ${encoded} resort(s). Total: ${allEncoded.length}`
   )
-  log('success', 'encode', `Written to ${ENCODED_PATH}`)
+  log('success', 'encode', `Written to ${encodedPath}`)
 }
 
-function build() {
+function build(options: {
+  seeded: string
+  enriched: string
+  encoded: string
+  output: string
+}) {
+  const seededPath = options.seeded
+  const enrichedPath = options.enriched
+  const encodedPath = options.encoded
+  const outputPath = options.output
+
   log('info', 'build', 'Building resort data file...')
 
-  const seeded = readJsonl<SeededResort>(SEEDED_PATH)
-  const enriched = readJsonl<EnrichedResort>(ENRICHED_PATH)
-  const encoded = readJsonl<EncodedResort>(ENCODED_PATH)
+  const seeded = readJsonl<SeededResort>(seededPath)
+  const enriched = readJsonl<EnrichedResort>(enrichedPath)
+  const encoded = readJsonl<EncodedResort>(encodedPath)
 
   const seededIds = new Set(seeded.map((r) => r.id))
   const enrichedIds = new Set(enriched.map((r) => r.id))
@@ -1590,8 +1714,8 @@ function build() {
       'build',
       'No complete resorts found. Creating empty resort-data.jsonl.'
     )
-    fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true })
-    fs.writeFileSync(OUTPUT_PATH, '\n', 'utf-8')
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true })
+    fs.writeFileSync(outputPath, '\n', 'utf-8')
     return
   }
 
@@ -1639,11 +1763,11 @@ function build() {
       }
     })
 
-  writeJsonl(OUTPUT_PATH, mergedResorts)
+  writeJsonl(outputPath, mergedResorts)
   log(
     'success',
     'build',
-    `Written ${mergedResorts.length} resort(s) to ${OUTPUT_PATH}`
+    `Written ${mergedResorts.length} resort(s) to ${outputPath}`
   )
 }
 
@@ -1686,7 +1810,7 @@ program
 program
   .command('seed')
   .description(
-    'Seed ski resorts into resorts/seeded.jsonl using LLM-generated candidates'
+    'Seed ski resorts into a seeded JSONL file using LLM-generated candidates'
   )
   .requiredOption(
     '--region <region>',
@@ -1696,6 +1820,7 @@ program
     '--batches <number>',
     'Maximum number of LLM batch calls (stops early if no new resorts found)'
   )
+  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
   .option(
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
@@ -1715,38 +1840,33 @@ program
   .description(
     'Enrich seeded resorts with detailed data using LLM and Exa search'
   )
+  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
+  .requiredOption('--enriched <path>', 'Path to enriched JSONL file')
   .option(
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
   )
   .option('--auto-accept', 'Auto-accept all enriched data without prompting')
+  .option(
+    '--resort <id>',
+    'Enrich a specific resort by id (e.g. "chamonix-alps-france")'
+  )
+  .option(
+    '--fill',
+    'Re-enrich resorts with missing or low-quality fields, merging new data into existing entries'
+  )
+  .option(
+    '--all',
+    'Re-enrich every resort from scratch, replacing all existing data'
+  )
   .action(enrich)
-
-program
-  .command('enrich-standalone')
-  .description('Enrich a single resort without writing to files')
-  .option('--resort <name>', 'Resort name for standalone mode (required)')
-  .option(
-    '--region <region>',
-    'Region for standalone mode (used as country if --country not set)'
-  )
-  .option(
-    '--country <country>',
-    'Country for standalone mode (overrides --region as country)'
-  )
-  .option(
-    '--model <model>',
-    'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
-  )
-  .option(
-    '--output <path>',
-    'Write enriched JSON to a file instead of stdout (standalone mode only)'
-  )
-  .action(enrichStandalone)
 
 program
   .command('encode')
   .description('Encode seeded+enriched resorts into embeddings')
+  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
+  .requiredOption('--enriched <path>', 'Path to enriched JSONL file')
+  .requiredOption('--encoded <path>', 'Path to encoded JSONL file')
   .action(encode)
 
 program
@@ -1754,6 +1874,10 @@ program
   .description(
     'Build resort-data.jsonl from the intersection of seeded, enriched, and encoded files'
   )
+  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
+  .requiredOption('--enriched <path>', 'Path to enriched JSONL file')
+  .requiredOption('--encoded <path>', 'Path to encoded JSONL file')
+  .requiredOption('--output <path>', 'Path to output resort-data JSONL file')
   .action(build)
 
 program

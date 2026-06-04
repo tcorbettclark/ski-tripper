@@ -1,19 +1,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-export const SEEDED_PATH = path.join(process.cwd(), 'resorts', 'seeded.jsonl')
-export const ENRICHED_PATH = path.join(
-  process.cwd(),
-  'resorts',
-  'enriched.jsonl'
-)
-export const ENCODED_PATH = path.join(process.cwd(), 'resorts', 'encoded.jsonl')
-export const OUTPUT_PATH = path.join(
-  process.cwd(),
-  'public',
-  'resort-data.jsonl'
-)
-
 export function readJsonl<T>(filePath: string): T[] {
   if (!fs.existsSync(filePath)) return []
   const content = fs.readFileSync(filePath, 'utf-8').trim()
