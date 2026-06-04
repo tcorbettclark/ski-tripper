@@ -18,17 +18,8 @@ export interface SeededResort {
 export interface EnrichedResort {
   id: string
   description: string
-  latitude: string
-  longitude: string
-  summitAltitude: number
-  baseAltitude: number
   nearestAirport: string
   transferTime: string
-  pisteKm: number
-  beginnerPct: number
-  intermediatePct: number
-  advancedPct: number
-  liftCount: number
   snowReliability: string
   skiSeasonMonths: string
   websites: string[]

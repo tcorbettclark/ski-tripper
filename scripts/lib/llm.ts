@@ -110,16 +110,17 @@ export const WEB_SEARCH_TOOL_DEFINITION = {
   },
 }
 
-export const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given source text from web searches, extract factual data about the ski resort into a JSON object matching this schema:
+export const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given source text from web searches, extract data about the ski resort into a JSON object matching this schema:
 
 {SCHEMA}
 
 Rules:
-- Extract only information that is explicitly stated in the source text
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
-- If a value is not found in the text, set it to null — never fabricate data or guess specific numbers
-- For altitude, the summitAltitude must be HIGHER than the baseAltitude
-- For piste percentages (beginnerPct, intermediatePct, advancedPct), use the first reasonable estimate from the source text. Don't deliberate or reconsider — pick and move on
+- For description, websites, and linkedResortsDescription: extract only information that is explicitly stated in the source text
+- For nearestAirport, transferTime, snowReliability, and skiSeasonMonths: you may infer the answer from the source text using common knowledge. For example, if the text says "80km from Geneva", you should output GVA; if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
+- For description: write 4-6 detailed paragraphs in an informative travel-guide style. You MUST cover all of the following topics where the source text provides information: (1) terrain difficulty and character, (2) off-piste quality, (3) value — expensive or budget-friendly, (4) suitability for families vs groups, (5) apres-ski and nightlife, (6) whether the resort is picturesque or purpose-built, (7) lift system quality and age, (8) overall atmosphere. Be specific — avoid vague filler like "offers something for everyone" or "great for all abilities". If the source text lacks detail on a topic, skip that topic rather than padding with generalities
+- If a value truly cannot be determined even with reasonable inference, set it to null
+- For websites, include every relevant URL found in the source text; do not attempt to consolidate or deduplicate
 - Return valid JSON only, no explanatory text`
 
 export const LLM_USER_PROMPT = (
@@ -134,10 +135,11 @@ ${sourceText}`
 export function buildJsonSchema(): JSONSchema.JSONSchema {
   const nullable = (
     schema: JSONSchema.JSONSchema & { description?: string },
-    desc: string
+    desc: string,
+    hint?: string
   ): JSONSchema.JSONSchema => ({
     anyOf: [schema, { type: 'null' }],
-    description: `${desc}, or null if not found`,
+    description: hint ? `${desc}. ${hint}` : `${desc}, or null if not found`,
   })
 
   return {
@@ -145,51 +147,30 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
     properties: {
       description: nullable(
         { type: 'string' },
-        'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights'
-      ),
-      summitAltitude: nullable(
-        { type: 'integer' },
-        'Summit altitude in metres above sea level'
-      ),
-      baseAltitude: nullable(
-        { type: 'integer' },
-        'Base altitude in metres above sea level'
+        'A detailed description (4-6 paragraphs) of the ski resort covering: terrain difficulty and character; off-piste quality; whether it is expensive or budget-friendly; suitability for families vs groups; quality of apres-ski and nightlife; whether the resort is picturesque or purpose-built; lift system quality and age; and overall atmosphere and highlights. Write in an informative travel-guide style. Be specific and detailed — vague filler like "offers something for everyone" is useless.'
       ),
       nearestAirport: nullable(
         { type: 'string' },
-        'IATA code of the nearest airport, e.g. "GVA"'
+        'IATA code of the nearest airport, e.g. "GVA"',
+        'Infer from context if the airport name or city is mentioned'
       ),
       transferTime: nullable(
         { type: 'string' },
-        'Transfer time from airport, e.g. "2h 00m"'
+        'Transfer time from airport, e.g. "2h 00m"',
+        'Infer from distance or transport details if exact time is not given'
       ),
-      pisteKm: nullable(
-        { type: 'integer' },
-        'Total groomed piste length in kilometres'
-      ),
-      beginnerPct: nullable(
-        { type: 'integer' },
-        'Approximate percentage of beginner (blue) piste, e.g. 25'
-      ),
-      intermediatePct: nullable(
-        { type: 'integer' },
-        'Approximate percentage of intermediate (red) piste, e.g. 50'
-      ),
-      advancedPct: nullable(
-        { type: 'integer' },
-        'Approximate percentage of advanced (black) piste, e.g. 25'
-      ),
-      liftCount: nullable({ type: 'integer' }, 'Number of ski lifts'),
       snowReliability: nullable(
         {
           type: 'string',
           enum: ['high', 'medium', 'low'],
         },
-        'Snow reliability rating (high/medium/low)'
+        'Snow reliability rating (high/medium/low)',
+        'Infer from altitude, glacier cover, or snow history descriptions'
       ),
       skiSeasonMonths: nullable(
         { type: 'string' },
-        'Typical ski season, e.g. "Dec-Apr"'
+        'Typical ski season, e.g. "Dec-Apr"',
+        'Infer from opening/closing dates or general season descriptions'
       ),
       websites: nullable(
         {

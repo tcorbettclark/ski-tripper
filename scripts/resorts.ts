@@ -28,7 +28,6 @@ import {
   streamThinking,
 } from './lib/llm'
 import { ANSI_BOLD, ANSI_DIM, ANSI_RESET, log, logSummary } from './lib/log'
-import { normalisePistePercentages as normalisePercentages } from './lib/normalisePistePercentages'
 import { loadOpenSkiMapData } from './lib/openski-map'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
@@ -48,43 +47,15 @@ const EXA_SOURCED_NUM_RESULTS = 4
 const EXA_BROAD_NUM_RESULTS = 4
 const EXA_MAX_CHARS = 8000 as const
 const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
-  `Official website and ski area information for ${resortName} ski resort in ${country}, including piste difficulty breakdown, lift status, altitude, nearest airport, transfer time, and resort facilities`
-
-const EXA_COORDS_QUERY = (resortName: string, country: string) =>
-  `Location and geographic coordinates of ${resortName} ski resort in ${country}`
-
-const COORDS_SCHEMA = {
-  type: 'object' as const,
-  properties: {
-    latitude: {
-      type: 'string',
-      description: 'Latitude as a string, e.g. "46.0939"',
-    },
-    longitude: {
-      type: 'string',
-      description: 'Longitude as a string, e.g. "7.0765"',
-    },
-  },
-  required: ['latitude', 'longitude'],
-}
+  `Ski resort review and guide for ${resortName} in ${country}, including terrain difficulty, off-piste, apres-ski, nightlife, family suitability, value, lift quality, resort atmosphere, nearest airport, and transfer time`
 
 const enrichSchema = z.object({
   description: z
     .string()
     .nullable()
     .describe(
-      'A few paragraphs describing the ski resort, its terrain, atmosphere, and highlights'
+      'A detailed description (4-6 paragraphs) of the ski resort covering: terrain difficulty and character; off-piste quality; whether it is expensive or budget-friendly; suitability for families vs groups; quality of apres-ski and nightlife; whether the resort is picturesque or purpose-built; lift system quality and age; and overall atmosphere and highlights'
     ),
-  summitAltitude: z.coerce
-    .number()
-    .int()
-    .nullable()
-    .describe('Summit altitude in metres above sea level'),
-  baseAltitude: z.coerce
-    .number()
-    .int()
-    .nullable()
-    .describe('Base altitude in metres above sea level'),
   nearestAirport: z
     .string()
     .nullable()
@@ -93,27 +64,6 @@ const enrichSchema = z.object({
     .string()
     .nullable()
     .describe('Transfer time from airport, e.g. "2h 00m"'),
-  pisteKm: z.coerce
-    .number()
-    .int()
-    .nullable()
-    .describe('Total groomed piste length in kilometres'),
-  beginnerPct: z.coerce
-    .number()
-    .int()
-    .nullable()
-    .describe('Approximate percentage of beginner (blue) piste, e.g. 25'),
-  intermediatePct: z.coerce
-    .number()
-    .int()
-    .nullable()
-    .describe('Approximate percentage of intermediate (red) piste, e.g. 50'),
-  advancedPct: z.coerce
-    .number()
-    .int()
-    .nullable()
-    .describe('Approximate percentage of advanced (black) piste, e.g. 25'),
-  liftCount: z.coerce.number().int().nullable().describe('Number of ski lifts'),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
     .nullable()
@@ -142,17 +92,10 @@ type ResolvedEnrichData = {
   [K in keyof EnrichData]: NonNullable<EnrichData[K]>
 }
 
-const enrichDefaults: Record<string, string | number | string[]> = {
+const enrichDefaults: Record<string, string | string[]> = {
   description: '',
-  summitAltitude: 0,
-  baseAltitude: 0,
   nearestAirport: '',
   transferTime: '',
-  pisteKm: 0,
-  beginnerPct: 0,
-  intermediatePct: 0,
-  advancedPct: 0,
-  liftCount: 0,
   snowReliability: '',
   skiSeasonMonths: '',
   websites: [],
@@ -171,11 +114,10 @@ function withDefaults(data: EnrichData): ResolvedEnrichData {
 
 function isLowQualityValue(
   key: keyof EnrichData,
-  value: string | number | string[] | null
+  value: string | string[] | null
 ): boolean {
   if (value === null) return true
   if (value === enrichDefaults[key]) return true
-  if (typeof value === 'number' && value <= 0) return true
   if (typeof value === 'string' && value.trim() === '') return true
   if (Array.isArray(value) && value.length === 0) return true
   return false
@@ -186,7 +128,7 @@ function hasLowQualityFields(entry: EnrichedResort): boolean {
   for (const key of fields) {
     if (
       key in entry &&
-      isLowQualityValue(key, entry[key] as string | number | string[] | null)
+      isLowQualityValue(key, entry[key] as string | string[] | null)
     ) {
       return true
     }
@@ -200,7 +142,7 @@ function listLowQualityFields(entry: EnrichedResort): string[] {
   for (const key of fields) {
     if (
       key in entry &&
-      isLowQualityValue(key, entry[key] as string | number | string[] | null)
+      isLowQualityValue(key, entry[key] as string | string[] | null)
     ) {
       result.push(key)
     }
@@ -208,182 +150,39 @@ function listLowQualityFields(entry: EnrichedResort): string[] {
   return result
 }
 
-const SEADED_FIELDS = new Set([
-  'latitude',
-  'longitude',
-  'summitAltitude',
-  'baseAltitude',
-  'pisteKm',
-  'liftCount',
-  'websites',
-  'beginnerPct',
-  'intermediatePct',
-  'advancedPct',
-])
-
 function mergeEnriched(
   existing: EnrichedResort,
   newData: ResolvedEnrichData,
-  coords: Coordinates | null,
-  seeded: SeededResort | undefined
+  seeded: SeededResort
 ): EnrichedResort {
   const merged = { ...existing }
   const fields = Object.keys(enrichDefaults) as (keyof EnrichData)[]
   for (const key of fields) {
-    const oldValue = existing[key] as string | number | string[] | null
+    const oldValue = existing[key] as string | string[] | null
     const isOldLow = isLowQualityValue(key, oldValue)
     if (isOldLow) {
-      const isSeededField = SEADED_FIELDS.has(key)
-      if (isSeededField && seeded) {
-        const seededValue = seeded[key as keyof SeededResort] as
-          | string
-          | number
-          | string[]
-        if (typeof seededValue === 'number' && seededValue > 0) {
-          ;(merged[key] as typeof seededValue) = seededValue
-          continue
-        }
-        if (typeof seededValue === 'string' && seededValue.trim() !== '') {
-          ;(merged[key] as typeof seededValue) = seededValue
-          continue
-        }
-        if (Array.isArray(seededValue) && seededValue.length > 0) {
-          ;(merged[key] as typeof seededValue) = seededValue
-          continue
-        }
+      if (key === 'websites') {
+        const mergedWebsites = cleanUrls([
+          ...seeded.websites,
+          ...newData.websites,
+        ])
+        merged.websites = mergedWebsites
+      } else {
+        ;(merged[key] as (typeof newData)[typeof key]) = newData[key]
       }
-      ;(merged[key] as (typeof newData)[typeof key]) = newData[key]
-    }
-  }
-  if (coords) {
-    if (
-      !existing.latitude ||
-      existing.latitude.trim() === '' ||
-      existing.latitude === '0'
-    ) {
-      merged.latitude = coords.latitude
-    }
-    if (
-      !existing.longitude ||
-      existing.longitude.trim() === '' ||
-      existing.longitude === '0'
-    ) {
-      merged.longitude = coords.longitude
     }
   }
   return merged
-}
-
-function normalisePistePercentages(
-  data: ResolvedEnrichData
-): ResolvedEnrichData {
-  const { beginnerPct, intermediatePct, advancedPct } = normalisePercentages(
-    data.beginnerPct,
-    data.intermediatePct,
-    data.advancedPct
-  )
-  return { ...data, beginnerPct, intermediatePct, advancedPct }
-}
-
-interface Coordinates {
-  latitude: string
-  longitude: string
-}
-
-async function fetchCoordinates(
-  resortName: string,
-  country: string
-): Promise<Coordinates | null> {
-  log('info', 'enrich', 'Fetching coordinates from Exa...', 1)
-  try {
-    const [sourcedResponse, broadResponse] = await Promise.all([
-      getExa().search(EXA_COORDS_QUERY(resortName, country), {
-        type: 'deep-lite',
-        numResults: 3,
-        useAutoprompt: true,
-        includeDomains: [...ENRICH_SOURCE_WEBSITES],
-        contents: { text: { maxCharacters: 2000 } },
-        outputSchema: COORDS_SCHEMA,
-      }),
-      getExa().search(EXA_COORDS_QUERY(resortName, country), {
-        type: 'deep-lite',
-        numResults: 3,
-        useAutoprompt: true,
-        contents: { text: { maxCharacters: 2000 } },
-        outputSchema: COORDS_SCHEMA,
-      }),
-    ])
-
-    const output = (sourcedResponse.output?.content ??
-      broadResponse.output?.content) as
-      | { latitude: string; longitude: string }
-      | undefined
-    if (output?.latitude && output?.longitude) {
-      log(
-        'success',
-        'enrich',
-        `Coordinates: ${output.latitude}, ${output.longitude}`,
-        1
-      )
-      return { latitude: output.latitude, longitude: output.longitude }
-    }
-  } catch (err) {
-    log('warn', 'enrich', `Deep search for coordinates failed: ${err}`, 1)
-  }
-
-  log('warn', 'enrich', 'No coordinates found, falling back to text search', 1)
-  try {
-    const results = await getExa().search(
-      EXA_COORDS_QUERY(resortName, country),
-      {
-        type: 'auto',
-        numResults: 3,
-        useAutoprompt: true,
-        contents: {
-          text: { maxCharacters: 2000 },
-          highlights: {
-            query: 'latitude longitude coordinates',
-            maxCharacters: 1000,
-          },
-        },
-      }
-    )
-
-    const coordRegex = /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/
-    for (const result of results.results) {
-      const textToSearch = [
-        ...(result.highlights ?? []),
-        result.text ?? '',
-      ].join(' ')
-      const match = textToSearch.match(coordRegex)
-      if (match) {
-        log(
-          'success',
-          'enrich',
-          `Coordinates (from text): ${match[1]}, ${match[2]}`,
-          1
-        )
-        return { latitude: match[1], longitude: match[2] }
-      }
-    }
-  } catch (err) {
-    log('warn', 'enrich', `Fallback coordinate search failed: ${err}`, 1)
-  }
-
-  log('error', 'enrich', 'Could not determine coordinates', 1)
-  return null
 }
 
 async function enrichResort(
   resortName: string,
   country: string,
   model: string
-): Promise<{ data: ResolvedEnrichData; coords: Coordinates | null } | null> {
+): Promise<ResolvedEnrichData | null> {
   const responseCodec = jsonCodec(enrichSchema)
 
   log('info', 'enrich', `Enriching "${resortName}" via Exa+LLM`)
-
-  const coords = await fetchCoordinates(resortName, country)
 
   log('info', 'enrich', 'Fetching source text from Exa...', 1)
   const [sourcedResults, broadResults] = await Promise.all([
@@ -511,20 +310,7 @@ async function enrichResort(
   log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
   const defaulted = withDefaults(result)
   defaulted.websites = cleanUrls(defaulted.websites)
-  const normalised = normalisePistePercentages(defaulted)
-  if (
-    normalised.beginnerPct !== result.beginnerPct ||
-    normalised.intermediatePct !== result.intermediatePct ||
-    normalised.advancedPct !== result.advancedPct
-  ) {
-    log(
-      'info',
-      'enrich',
-      `Normalised piste %: ${result.beginnerPct}/${result.intermediatePct}/${result.advancedPct} -> ${normalised.beginnerPct}/${normalised.intermediatePct}/${normalised.advancedPct}`,
-      1
-    )
-  }
-  return { data: normalised, coords }
+  return defaulted
 }
 
 function displayEnrichedData(
@@ -532,7 +318,7 @@ function displayEnrichedData(
   country: string,
   region: string,
   data: ResolvedEnrichData,
-  coords: Coordinates | null
+  seeded: SeededResort
 ) {
   console.log()
   const location = region ? `${country}, ${region}` : country
@@ -540,11 +326,11 @@ function displayEnrichedData(
     `  ${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}(${location})${ANSI_RESET}`
   )
   console.log()
-  const coordsStr = coords
-    ? `${coords.latitude}, ${coords.longitude}`
-    : 'unknown'
-  logSummary('Coordinates', coordsStr, 2)
-  logSummary('Altitude', `${data.baseAltitude}m - ${data.summitAltitude}m`, 2)
+  logSummary(
+    'Altitude',
+    `${seeded.baseAltitude}m - ${seeded.summitAltitude}m`,
+    2
+  )
   logSummary(
     'Airport',
     data.nearestAirport
@@ -552,16 +338,16 @@ function displayEnrichedData(
       : 'unknown',
     2
   )
-  logSummary('Piste', `${data.pisteKm} km`, 2)
-  logSummary('Beginner', `${data.beginnerPct}%`, 2)
-  logSummary('Intermediate', `${data.intermediatePct}%`, 2)
-  logSummary('Advanced', `${data.advancedPct}%`, 2)
-  logSummary('Lifts', `${data.liftCount}`, 2)
+  logSummary('Piste', `${seeded.pisteKm} km`, 2)
+  logSummary('Beginner', `${seeded.beginnerPct}%`, 2)
+  logSummary('Intermediate', `${seeded.intermediatePct}%`, 2)
+  logSummary('Advanced', `${seeded.advancedPct}%`, 2)
+  logSummary('Lifts', `${seeded.liftCount}`, 2)
   logSummary('Snow', data.snowReliability, 2)
   logSummary('Season', data.skiSeasonMonths, 2)
   logSummary('Websites', data.websites.join(', '), 2)
   logSummary('Linked Resorts', data.linkedResortsDescription, 2)
-  logSummary('Description', `${data.description.slice(0, 100)}...`, 2)
+  logSummary('Description', `${data.description.slice(0, 200)}...`, 2)
 }
 
 async function confirmEnrichedData(
@@ -569,19 +355,18 @@ async function confirmEnrichedData(
   country: string,
   region: string,
   data: ResolvedEnrichData,
-  coords: Coordinates | null,
+  seeded: SeededResort,
   autoAccept: boolean
 ): Promise<{
   accepted: boolean
   data: ResolvedEnrichData
-  coords: Coordinates | null
   autoAcceptRest: boolean
 }> {
   if (autoAccept) {
-    return { accepted: true, data, coords, autoAcceptRest: true }
+    return { accepted: true, data, autoAcceptRest: true }
   }
 
-  displayEnrichedData(resortName, country, region, data, coords)
+  displayEnrichedData(resortName, country, region, data, seeded)
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -593,21 +378,21 @@ async function confirmEnrichedData(
     const trimmed = answer.trim().toLowerCase()
 
     if (trimmed === 'y' || trimmed === '') {
-      return { accepted: true, data, coords, autoAcceptRest: false }
+      return { accepted: true, data, autoAcceptRest: false }
     }
 
     if (trimmed === 'auto') {
       log('info', 'enrich', 'Auto-accepting all remaining resorts.', 1)
-      return { accepted: true, data, coords, autoAcceptRest: true }
+      return { accepted: true, data, autoAcceptRest: true }
     }
 
     if (trimmed === 'skip') {
-      return { accepted: false, data, coords, autoAcceptRest: false }
+      return { accepted: false, data, autoAcceptRest: false }
     }
 
     if (trimmed === 'quit') {
       log('warn', 'enrich', 'Stopping enrichment.', 1)
-      return { accepted: false, data, coords, autoAcceptRest: false }
+      return { accepted: false, data, autoAcceptRest: false }
     }
 
     if (trimmed === 'modify') {
@@ -637,10 +422,10 @@ async function confirmEnrichedData(
         }
       }
 
-      return { accepted: true, data: modified, coords, autoAcceptRest: false }
+      return { accepted: true, data: modified, autoAcceptRest: false }
     }
 
-    return { accepted: true, data, coords, autoAcceptRest: false }
+    return { accepted: true, data, autoAcceptRest: false }
   } finally {
     rl.close()
   }
@@ -648,26 +433,16 @@ async function confirmEnrichedData(
 
 function toEnrichedEntry(
   seededResort: SeededResort,
-  data: ResolvedEnrichData,
-  coords: Coordinates | null
+  data: ResolvedEnrichData
 ): EnrichedResort {
   return {
     id: seededResort.id,
     description: data.description,
-    latitude: coords?.latitude ?? seededResort.latitude,
-    longitude: coords?.longitude ?? seededResort.longitude,
-    summitAltitude: data.summitAltitude || seededResort.summitAltitude,
-    baseAltitude: data.baseAltitude || seededResort.baseAltitude,
     nearestAirport: data.nearestAirport,
     transferTime: data.transferTime,
-    pisteKm: data.pisteKm || seededResort.pisteKm,
-    beginnerPct: data.beginnerPct || seededResort.beginnerPct,
-    intermediatePct: data.intermediatePct || seededResort.intermediatePct,
-    advancedPct: data.advancedPct || seededResort.advancedPct,
-    liftCount: data.liftCount || seededResort.liftCount,
     snowReliability: data.snowReliability as 'high' | 'medium' | 'low' | '',
     skiSeasonMonths: data.skiSeasonMonths,
-    websites: data.websites.length > 0 ? data.websites : seededResort.websites,
+    websites: cleanUrls([...seededResort.websites, ...data.websites]),
     linkedResortsDescription: data.linkedResortsDescription,
   }
 }
@@ -833,8 +608,8 @@ async function enrich(options: {
       seededResort.resortName,
       seededResort.country,
       seededResort.region,
-      result.data,
-      result.coords,
+      result,
+      seededResort,
       autoAccept
     )
     autoAccept = confirmed.autoAcceptRest
@@ -842,21 +617,12 @@ async function enrich(options: {
     if (confirmed.accepted) {
       let enrichedEntry: EnrichedResort
       if (reEnrichMode && existing && mode === 'fill') {
-        const merged = mergeEnriched(
-          existing,
-          confirmed.data,
-          confirmed.coords,
-          seededResort
-        )
+        const merged = mergeEnriched(existing, confirmed.data, seededResort)
         const lowFields = listLowQualityFields(existing)
         log('info', 'enrich', `Filled fields: ${lowFields.join(', ')}`, 1)
         enrichedEntry = merged
       } else {
-        enrichedEntry = toEnrichedEntry(
-          seededResort,
-          confirmed.data,
-          confirmed.coords
-        )
+        enrichedEntry = toEnrichedEntry(seededResort, confirmed.data)
       }
       enrichedById.set(seededResort.id, enrichedEntry)
       enrichedCount++
@@ -1098,20 +864,20 @@ function build() {
         country: s.country,
         region: s.region,
         description: e.description,
-        latitude: e.latitude || s.latitude,
-        longitude: e.longitude || s.longitude,
-        summitAltitude: e.summitAltitude || s.summitAltitude,
-        baseAltitude: e.baseAltitude || s.baseAltitude,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        summitAltitude: s.summitAltitude,
+        baseAltitude: s.baseAltitude,
         nearestAirport: e.nearestAirport,
         transferTime: e.transferTime,
-        pisteKm: e.pisteKm || s.pisteKm,
-        beginnerPct: e.beginnerPct || s.beginnerPct,
-        intermediatePct: e.intermediatePct || s.intermediatePct,
-        advancedPct: e.advancedPct || s.advancedPct,
-        liftCount: e.liftCount || s.liftCount,
+        pisteKm: s.pisteKm,
+        beginnerPct: s.beginnerPct,
+        intermediatePct: s.intermediatePct,
+        advancedPct: s.advancedPct,
+        liftCount: s.liftCount,
         snowReliability: e.snowReliability,
         skiSeasonMonths: e.skiSeasonMonths,
-        websites: e.websites.length > 0 ? e.websites : s.websites,
+        websites: cleanUrls([...s.websites, ...e.websites]),
         linkedResortsDescription: e.linkedResortsDescription,
         embedding: enc.embedding,
       }
