@@ -21,9 +21,7 @@ export default function Footer() {
   const visibilityStyle =
     visibility === 'hidden'
       ? { opacity: 0, pointerEvents: 'none' as const }
-      : visibility === 'peek'
-        ? { opacity: 0.4 }
-        : { opacity: 1 }
+      : { opacity: 1 }
 
   return (
     <>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type Visibility = 'visible' | 'hidden' | 'peek'
+type Visibility = 'visible' | 'hidden'
 
 export default function useAutoHideFooter(): Visibility {
   const [visibility, setVisibility] = useState<Visibility>('visible')
@@ -34,7 +34,7 @@ export default function useAutoHideFooter(): Visibility {
     scrollTimeout.current = setTimeout(() => {
       scrolling.current = false
       scrollTimeout.current = null
-      setVisibility(isAtBottom() ? 'visible' : 'peek')
+      setVisibility('visible')
     }, 1500)
   }, [isAtBottom])
 

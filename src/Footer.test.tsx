@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { render, screen } from '@testing-library/react'
 
-let footerVisibility: 'visible' | 'hidden' | 'peek' = 'visible'
+let footerVisibility: 'visible' | 'hidden' = 'visible'
 
 mock.module('./useAutoHideFooter', () => ({
   default: () => footerVisibility,
@@ -35,11 +35,11 @@ describe('Footer', () => {
     expect(footer.style.pointerEvents).toBe('none')
   })
 
-  it('is partially visible (peek) when scroll stops mid-page', () => {
-    footerVisibility = 'peek'
+  it('is fully opaque when not scrolling', () => {
+    footerVisibility = 'visible'
     render(<Footer />)
     const footer = screen.getByRole('contentinfo')
-    expect(footer.style.opacity).toBe('0.4')
+    expect(footer.style.opacity).toBe('1')
   })
 
   it('background is opaque bgPrimary (never transparent)', () => {
