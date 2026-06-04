@@ -11,8 +11,6 @@ mock.module('./resortSearch', () => ({
   searchResorts: mock(
     async (_query: string, resorts: ResortWithEmbedding[]) => resorts
   ),
-  cosineSimilarity: mock(() => 1),
-  SIMILARITY_THRESHOLD: 0.3,
 }))
 
 const user = { $id: 'user-1', name: 'Alice' }
@@ -218,8 +216,6 @@ describe('Resorts', () => {
       getIsModelReady: mock(() => false),
       onModelReady: mock(() => {}),
       searchResorts: mock(async () => []),
-      cosineSimilarity: mock(() => 1),
-      SIMILARITY_THRESHOLD: 0.3,
     }))
   })
 })
