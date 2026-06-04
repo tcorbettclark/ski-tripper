@@ -297,7 +297,7 @@ const styles = {
   proposalCard: {
     padding: '12px 14px',
     background: colors.bgCard,
-    border: `1px solid ${mix('--color-textSecondary', 0.12)}`,
+    border: borders.card,
     borderRadius: '10px',
     display: 'flex',
     justifyContent: 'space-between',
@@ -345,7 +345,7 @@ const styles = {
   },
   countZero: {
     fontSize: fontSizes.base,
-    color: mix('--color-textSecondary', 0.4),
+    color: colors.textSecondary,
     fontWeight: '600',
     minWidth: '16px',
     textAlign: 'center',

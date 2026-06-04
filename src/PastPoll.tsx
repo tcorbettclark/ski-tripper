@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import PollResults from './PollResults'
-import { borders, colors, fontSizes, fonts, formStyles } from './theme'
+import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Poll, Proposal, Vote } from './types.d.ts'
 import { formatDate, formatDateTime } from './utils'
 
@@ -119,6 +119,7 @@ const styles = {
     padding: '10px 14px',
     borderRadius: '6px',
     borderLeft: `3px solid ${colors.accent}`,
+    background: mix('--color-accent', 0.06),
     marginBottom: '12px',
   },
   outcomeContent: {
