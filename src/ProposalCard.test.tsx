@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ProposalCard from './ProposalCard'
 import type { Discussion, Proposal } from './types.d.ts'
@@ -875,17 +875,12 @@ describe('ProposalCard', () => {
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
-    const accommodationEditButton = screen.getByRole('button', {
-      name: 'Edit accommodation Hotel',
-    })
+    await user.click(
+      screen.getByRole('button', { name: 'Delete accommodation Hotel' })
+    )
 
-    await user.click(accommodationEditButton)
-
-    const accommodationDeleteButton = screen.getAllByRole('button', {
-      name: 'Delete',
-    })[0]
-
-    await user.click(accommodationDeleteButton)
+    const dialog = screen.getByRole('dialog', { name: 'Delete Accommodation?' })
+    await user.click(within(dialog).getByRole('button', { name: 'Delete' }))
 
     await screen.findByText('delete failed')
   })

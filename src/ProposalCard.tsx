@@ -133,6 +133,8 @@ export default function ProposalCard({
   const [deletingAccommodationId, setDeletingAccommodationId] = useState<
     string | null
   >(null)
+  const [confirmDeleteAccommodationId, setConfirmDeleteAccommodationId] =
+    useState<string | null>(null)
   const [deletingAccommodationError, setDeletingAccommodationError] = useState<
     string | null
   >(null)
@@ -257,6 +259,7 @@ export default function ProposalCard({
     try {
       await deleteAccommodation(accommodationId, userId)
       setDeletingAccommodationId(null)
+      setConfirmDeleteAccommodationId(null)
       handleAccommodationsChanged()
     } catch (err) {
       setDeletingAccommodationId(null)
@@ -435,26 +438,24 @@ export default function ProposalCard({
                     </DetailField>
                   </div>
                 )}
-                <div>
-                  {proposal.description && (
-                    <DetailField
-                      label="Description"
-                      value={proposal.description}
-                    />
-                  )}
-                  {canAct && (
-                    <div style={styles.editButtonRow}>
-                      <button
-                        type="button"
-                        onClick={() => setIsEditing(true)}
-                        style={styles.accommodationEditButton}
-                        aria-label="Edit proposal"
-                      >
-                        Edit
-                      </button>
-                    </div>
-                  )}
-                </div>
+                {proposal.description && (
+                  <DetailField
+                    label="Description"
+                    value={proposal.description}
+                  />
+                )}
+                {canAct && (
+                  <div style={styles.editButtonRow}>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      style={styles.accommodationEditButton}
+                      aria-label="Edit proposal"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -478,11 +479,7 @@ export default function ProposalCard({
                     onCancel={() => {
                       setEditingAccommodationId(null)
                       setAccommodationError(null)
-                      setDeletingAccommodationError(null)
                     }}
-                    onDelete={() => handleDeleteAccommodation(acc.$id)}
-                    deleting={deletingAccommodationId === acc.$id}
-                    deleteError={deletingAccommodationError}
                     error={accommodationError}
                   />
                 ) : (
@@ -520,6 +517,16 @@ export default function ProposalCard({
                       </div>
                       {canAct && (
                         <div style={styles.accommodationItemActions}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setConfirmDeleteAccommodationId(acc.$id)
+                            }
+                            style={styles.accommodationDeleteButton}
+                            aria-label={`Delete accommodation ${acc.name}`}
+                          >
+                            Delete
+                          </button>
                           <button
                             type="button"
                             onClick={() => {
@@ -752,6 +759,61 @@ export default function ProposalCard({
           </div>
         </div>
       )}
+
+      {confirmDeleteAccommodationId && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-acc-confirm-title"
+          style={styles.backdrop}
+          onClick={() => setConfirmDeleteAccommodationId(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setConfirmDeleteAccommodationId(null)
+          }}
+        >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: stops click propagation from modal card */}
+          <div
+            role="presentation"
+            style={styles.confirmCard}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <h4 id="delete-acc-confirm-title" style={styles.confirmTitle}>
+              Delete Accommodation?
+            </h4>
+            <p style={styles.confirmText}>
+              Are you sure you want to delete this accommodation? This cannot be
+              undone.
+            </p>
+            <div style={styles.confirmActions}>
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteAccommodationId(null)}
+                style={styles.cancelButton}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  handleDeleteAccommodation(confirmDeleteAccommodationId!)
+                }
+                disabled={
+                  deletingAccommodationId === confirmDeleteAccommodationId
+                }
+                style={styles.confirmDeleteButton}
+              >
+                {deletingAccommodationId === confirmDeleteAccommodationId
+                  ? 'Deleting…'
+                  : 'Delete'}
+              </button>
+            </div>
+            {deletingAccommodationError && (
+              <p style={formStyles.error}>{deletingAccommodationError}</p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -760,9 +822,6 @@ function AccommodationEditForm({
   initialData,
   onSave,
   onCancel,
-  onDelete,
-  deleting,
-  deleteError,
   error,
 }: {
   initialData?: { name: string; url: string; cost: string; description: string }
@@ -773,9 +832,6 @@ function AccommodationEditForm({
     description?: string
   }) => void
   onCancel: () => void
-  onDelete?: () => void
-  deleting?: boolean
-  deleteError?: string | null
   error: string | null
 }) {
   const [name, setName] = useState(initialData?.name ?? '')
@@ -864,18 +920,7 @@ function AccommodationEditForm({
         </div>
       </div>
       {error && <p style={formStyles.error}>{error}</p>}
-      {deleteError && <p style={formStyles.error}>{deleteError}</p>}
       <div style={accFormStyles.actions}>
-        {onDelete && (
-          <button
-            type="button"
-            onClick={onDelete}
-            disabled={deleting}
-            style={accFormStyles.deleteButton}
-          >
-            {deleting ? 'Deleting…' : 'Delete'}
-          </button>
-        )}
         <div style={accFormStyles.actionsRight}>
           <button
             type="submit"
@@ -961,8 +1006,6 @@ const styles = {
     overflowY: 'auto' as const,
     flex: '1 1 auto',
     minHeight: 0,
-    display: 'flex',
-    flexDirection: 'column' as const,
   },
   tabActive: {
     padding: '10px 20px',
@@ -993,7 +1036,6 @@ const styles = {
     gridTemplateColumns: '1fr 1fr',
     gap: '18px',
   },
-
   accommodationsSection: {
     paddingTop: '10px',
     marginBottom: '10px',
@@ -1007,7 +1049,7 @@ const styles = {
   },
   accommodationItem: {
     display: 'flex',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     marginTop: '18px',
   },
   editButtonRow: {
@@ -1021,6 +1063,7 @@ const styles = {
   },
   accommodationItemActions: {
     display: 'flex',
+    gap: '6px',
     flexShrink: 0,
     alignSelf: 'flex-end',
   },
@@ -1030,6 +1073,18 @@ const styles = {
     border: borders.muted,
     background: 'transparent',
     color: colors.textSecondary,
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    fontWeight: '500',
+    cursor: 'pointer',
+    letterSpacing: '0.03em',
+  },
+  accommodationDeleteButton: {
+    padding: '4px 10px',
+    borderRadius: '4px',
+    border: `1px solid ${mix('--color-error', 0.3)}`,
+    background: 'transparent',
+    color: colors.error,
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
     fontWeight: '500',
@@ -1277,17 +1332,6 @@ const accFormStyles = {
     border: borders.muted,
     background: 'transparent',
     color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    fontWeight: '500',
-    cursor: 'pointer',
-  },
-  deleteButton: {
-    padding: '6px 16px',
-    borderRadius: '5px',
-    border: `1px solid ${mix('--color-error', 0.3)}`,
-    background: 'transparent',
-    color: colors.error,
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     fontWeight: '500',
