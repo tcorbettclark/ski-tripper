@@ -497,7 +497,7 @@ export default function Overview({
               <p style={overviewStyles.empty}>No participants</p>
             ) : (
               <div style={overviewStyles.participantGrid}>
-                <style>{`.participant-grid-row-clickable:hover { background: ${colors.bgInput}; cursor: pointer; }`}</style>
+                <style>{`.participant-grid-row-clickable:hover { background: ${mix('--color-accent', 0.15)}; cursor: pointer; }`}</style>
                 {sortedParticipants.map((p) => {
                   const prefs = preferencesMap[p.participantUserId]
                   const isCurrentUser =

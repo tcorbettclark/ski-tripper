@@ -11,7 +11,7 @@ import {
   onModelReady,
   searchResorts,
 } from './resortSearch'
-import { borders, colors, detailStyles, fonts, formStyles } from './theme'
+import { borders, colors, detailStyles, fonts, formStyles, mix } from './theme'
 import type { ResortWithEmbedding } from './types.d.ts'
 import { ensureUrlScheme, sanitizeUrl } from './utils'
 
@@ -387,7 +387,7 @@ export default function Resorts({
       </div>
 
       <div style={resortsStyles.tableContainer}>
-        <style>{`.resorts-table tr:hover td { background: ${colors.bgInput}; cursor: pointer; }`}</style>
+        <style>{`.resorts-table tr:hover td { background: ${mix('--color-accent', 0.15)}; cursor: pointer; }`}</style>
         <TableVirtuoso
           data={filteredResorts}
           components={{

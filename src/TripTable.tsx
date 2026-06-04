@@ -1,6 +1,6 @@
 import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
 import TripRow from './TripRow'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, mix } from './theme'
 import type { Trip } from './types.d.ts'
 
 interface TripTableProps {
@@ -23,7 +23,8 @@ export default function TripTable({
   }
 
   return (
-    <table style={styles.table}>
+    <table className="trip-table" style={styles.table}>
+      <style>{`.trip-table tr:hover td { background: ${mix('--color-accent', 0.15)}; color: ${colors.textPrimary}; }`}</style>
       <thead>
         <tr>
           <th style={styles.th}>Description</th>
