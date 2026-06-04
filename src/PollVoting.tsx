@@ -302,6 +302,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    boxShadow: '0 2px 12px var(--color-shadow)',
   },
   proposalName: { fontSize: fontSizes.base, color: colors.textData },
   infoButtonWrap: { display: 'flex', alignItems: 'center', gap: '4px' },

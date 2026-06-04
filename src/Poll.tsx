@@ -408,6 +408,7 @@ const styles = {
     padding: '24px',
     background: colors.bgCard,
     marginBottom: '24px',
+    boxShadow: '0 2px 12px var(--color-shadow)',
   },
   pollHeader: {
     display: 'flex',

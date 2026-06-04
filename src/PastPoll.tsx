@@ -84,6 +84,7 @@ const styles = {
     border: borders.card,
     borderRadius: '14px',
     padding: '24px',
+    boxShadow: '0 2px 12px var(--color-shadow)',
   },
   header: {
     display: 'flex',
