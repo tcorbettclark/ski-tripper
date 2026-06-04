@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { account as _account } from './backend'
 import Field from './Field'
-import SnowflakeParticles from './SnowflakeParticles'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
 
@@ -53,7 +52,6 @@ export default function ResetPasswordForm({
         position: 'relative',
       }}
     >
-      <SnowflakeParticles />
       <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
         <ThemeToggle />
       </div>

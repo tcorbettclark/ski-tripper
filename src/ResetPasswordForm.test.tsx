@@ -3,10 +3,6 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ResetPasswordForm from './ResetPasswordForm'
 
-mock.module('./SnowflakeParticles', () => ({
-  default: () => null,
-}))
-
 const noop = () => {}
 
 function renderResetPasswordForm(props = {}) {

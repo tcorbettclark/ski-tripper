@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import SnowflakeParticles from './SnowflakeParticles'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, formStyles } from './theme'
 
@@ -40,7 +39,6 @@ export default function EmailVerifyScreen({
         position: 'relative',
       }}
     >
-      <SnowflakeParticles />
       <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
         <ThemeToggle />
       </div>
