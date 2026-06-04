@@ -66,13 +66,13 @@
   --color-hotel: #409068;
   --color-chalet: #4a68a8;
   --color-guesthouse: #8a7050;
-  --color-slide0: #0284c7;
-  --color-slide1: #2a9e9e;
-  --color-slide2: #5aaa5a;
-  --color-slide3: #c4a830;
-  --color-slide4: #c07030;
-  --color-slide5: #c04060;
-  --color-slide6: #8060b0;
+  --color-slide0: #005f99;
+  --color-slide1: #0a7070;
+  --color-slide2: #1e6e1e;
+  --color-slide3: #7a6500;
+  --color-slide4: #8a4e18;
+  --color-slide5: #9a2040;
+  --color-slide6: #5c3d8a;
 }
 
 /* react-day-picker theme overrides */
