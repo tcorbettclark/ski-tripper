@@ -339,7 +339,7 @@ const sectionStyles = {
     marginLeft: '8px',
   },
   commentBubble: {
-    background: mix('--color-accent', 0.06),
+    background: mix('--color-accent', 0.1),
     border: borders.subtle,
     borderRadius: '10px',
     padding: '12px 14px',

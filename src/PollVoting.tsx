@@ -321,7 +321,7 @@ const styles = {
     height: '28px',
     borderRadius: '50%',
     border: `1.5px solid ${mix('--color-accent', 0.5)}`,
-    background: mix('--color-accent', 0.08),
+    background: mix('--color-accent', 0.15),
     color: colors.accent,
     fontSize: '16px',
     cursor: 'pointer',

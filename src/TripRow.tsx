@@ -69,7 +69,7 @@ const styles = {
     transition: 'background 0.15s, border-left 0.15s',
   },
   trHovered: {
-    background: mix('--color-accent', 0.08),
+    background: mix('--color-accent', 0.15),
   },
   td: {
     padding: '14px 16px',

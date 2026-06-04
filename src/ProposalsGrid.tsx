@@ -359,7 +359,7 @@ const styles = {
     borderRadius: '8px 8px 0 0',
     border: 'none',
     borderBottom: `2px solid ${colors.accent}`,
-    background: mix('--color-accent', 0.08),
+    background: mix('--color-accent', 0.15),
     color: colors.accent,
     fontFamily: fonts.body,
     fontSize: '13px',

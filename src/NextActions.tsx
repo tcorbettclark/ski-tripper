@@ -15,10 +15,8 @@ import { formatDate } from './utils'
 interface Action {
   label: string
   tab: 'resorts' | 'proposals' | 'poll'
-  /** When navigating to the proposals tab, this pre-selects the DRAFT/SUBMITTED/REJECTED sub-tab. */
   statusFilter?: StatusFilter
   icon: React.ReactNode
-  highlight?: boolean
 }
 
 interface NextActionsProps {
@@ -51,7 +49,6 @@ function buildActions(props: NextActionsProps): Action[] {
       tab: 'proposals',
       statusFilter: 'DRAFT',
       icon: <Send size={16} />,
-      highlight: true,
     })
   }
 
@@ -69,7 +66,6 @@ function buildActions(props: NextActionsProps): Action[] {
       label: `Create a poll from ${props.submittedCount} proposal${props.submittedCount !== 1 ? 's' : ''}`,
       tab: 'poll',
       icon: <BarChart3 size={16} />,
-      highlight: true,
     })
   }
 
@@ -78,7 +74,6 @@ function buildActions(props: NextActionsProps): Action[] {
       label: `Vote in the active poll (ends ${formatDate(props.activePoll.endDate)})`,
       tab: 'poll',
       icon: <Vote size={16} />,
-      highlight: true,
     })
   }
 
@@ -128,36 +123,11 @@ export default function NextActions(props: NextActionsProps) {
             onClick={() =>
               props.onNavigateToTab(action.tab, action.statusFilter)
             }
-            style={{
-              ...nextActionsStyles.card,
-              ...(action.highlight ? nextActionsStyles.cardHighlight : {}),
-            }}
+            style={nextActionsStyles.card}
           >
-            <span
-              style={{
-                ...nextActionsStyles.iconWrap,
-                ...(action.highlight
-                  ? nextActionsStyles.iconWrapHighlight
-                  : {}),
-              }}
-            >
-              {action.icon}
-            </span>
-            <span
-              style={{
-                ...nextActionsStyles.label,
-                ...(action.highlight ? nextActionsStyles.labelHighlight : {}),
-              }}
-            >
-              {action.label}
-            </span>
-            <ArrowRight
-              size={14}
-              style={{
-                ...nextActionsStyles.arrow,
-                ...(action.highlight ? nextActionsStyles.arrowHighlight : {}),
-              }}
-            />
+            <span style={nextActionsStyles.iconWrap}>{action.icon}</span>
+            <span style={nextActionsStyles.label}>{action.label}</span>
+            <ArrowRight size={14} style={nextActionsStyles.arrow} />
           </button>
         ))}
       </div>
@@ -207,7 +177,7 @@ const nextActionsStyles = {
     padding: '12px 16px',
     borderRadius: '8px',
     border: borders.card,
-    background: colors.bgCard,
+    background: `linear-gradient(135deg, ${mix('--color-accent', 0.15)} 0%, ${mix('--color-accent', 0.05)} 100%)`,
     color: colors.textPrimary,
     fontFamily: fonts.body,
     fontSize: '13px',
@@ -216,10 +186,6 @@ const nextActionsStyles = {
     textAlign: 'left' as const,
     transition: 'border-color 0.15s, background 0.15s',
   },
-  cardHighlight: {
-    border: `1px solid ${mix('--color-accent', 0.22)}`,
-    background: `linear-gradient(135deg, ${mix('--color-accent', 0.08)} 0%, ${mix('--color-accent', 0.02)} 100%)`,
-  },
   iconWrap: {
     display: 'flex',
     alignItems: 'center',
@@ -227,27 +193,16 @@ const nextActionsStyles = {
     width: '28px',
     height: '28px',
     borderRadius: '6px',
-    background: mix('--color-textSecondary', 0.12),
-    color: colors.textSecondary,
-    flexShrink: 0,
-  },
-  iconWrapHighlight: {
     background: mix('--color-accent', 0.15),
     color: colors.accent,
+    flexShrink: 0,
   },
   label: {
     flex: 1,
     lineHeight: '1.4',
   },
-  labelHighlight: {
-    color: colors.textPrimary,
-  },
   arrow: {
     flexShrink: 0,
-    color: colors.textSecondary,
-    opacity: 0.4,
-  },
-  arrowHighlight: {
     color: colors.accent,
     opacity: 0.7,
   },
