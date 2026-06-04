@@ -58,7 +58,7 @@ function renderApp(props = {}, { loggedIn = true } = {}) {
       listPolls={() => Promise.resolve({ polls: [] })}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
-      fetchResortData={() => Promise.resolve('')}
+      fetchResortDataWithAuth={() => Promise.resolve('')}
       {...props}
     />
   )
@@ -81,7 +81,7 @@ function renderAppWithTrip(props = {}, { loggedIn = true } = {}) {
       listPolls={() => Promise.resolve({ polls: [] })}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
-      fetchResortData={() => Promise.resolve('')}
+      fetchResortDataWithAuth={() => Promise.resolve('')}
       {...props}
     />
   )
@@ -116,24 +116,27 @@ describe('App', () => {
   })
 
   it('does not fetch resort data before login', async () => {
-    const mockFetchResortData = mock(() => Promise.resolve(''))
+    const mockFetchResortDataWithAuth = mock(() => Promise.resolve(''))
     renderApp(
-      { hasSession: () => false, fetchResortData: mockFetchResortData },
+      {
+        hasSession: () => false,
+        fetchResortDataWithAuth: mockFetchResortDataWithAuth,
+      },
       { loggedIn: false }
     )
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /sign in/i }))
     })
-    expect(mockFetchResortData).not.toHaveBeenCalled()
+    expect(mockFetchResortDataWithAuth).not.toHaveBeenCalled()
   })
 
   it('fetches resort data after login', async () => {
-    const mockFetchResortData = mock(() => Promise.resolve(''))
-    renderApp({ fetchResortData: mockFetchResortData })
+    const mockFetchResortDataWithAuth = mock(() => Promise.resolve(''))
+    renderApp({ fetchResortDataWithAuth: mockFetchResortDataWithAuth })
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /test user/i }))
     })
-    expect(mockFetchResortData).toHaveBeenCalled()
+    expect(mockFetchResortDataWithAuth).toHaveBeenCalled()
   })
 
   it('shows the user menu when authenticated', async () => {
@@ -292,7 +295,7 @@ describe('App', () => {
         listPolls={() => Promise.resolve({ polls: [] })}
         getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
         getPreferences={() => Promise.resolve(defaultPreferences)}
-        fetchResortData={() => Promise.resolve('')}
+        fetchResortDataWithAuth={() => Promise.resolve('')}
       />
     )
 

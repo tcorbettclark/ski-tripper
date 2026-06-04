@@ -42,16 +42,30 @@ const RESORTS_BUCKET_ID = process.env
   .PUBLIC_APPWRITE_RESORTS_BUCKET_ID as string
 const RESORTS_FILE_ID = process.env.PUBLIC_APPWRITE_RESORTS_FILE_ID as string
 
-export async function fetchResortData(): Promise<string> {
-  const response = await client.call(
-    'GET',
-    new URL(
-      `${process.env.PUBLIC_APPWRITE_ENDPOINT as string}/storage/buckets/${RESORTS_BUCKET_ID}/files/${RESORTS_FILE_ID}/view`
-    ),
-    { 'content-type': 'application/json' },
-    { project: process.env.PUBLIC_APPWRITE_PROJECT_ID as string }
-  )
-  return typeof response === 'string' ? response : JSON.stringify(response)
+export function getResortDataUrl(): string {
+  return storage.getFileView({
+    bucketId: RESORTS_BUCKET_ID,
+    fileId: RESORTS_FILE_ID,
+  })
+}
+
+export async function fetchResortDataWithAuth(): Promise<string> {
+  const url = getResortDataUrl()
+  const headers: Record<string, string> = {
+    'X-Appwrite-Project': process.env.PUBLIC_APPWRITE_PROJECT_ID as string,
+  }
+  const cookieFallback = window.localStorage.getItem('cookieFallback')
+  if (cookieFallback) {
+    headers['X-Fallback-Cookies'] = cookieFallback
+  }
+  const response = await fetch(url, {
+    credentials: 'include',
+    headers,
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to fetch resort data: ${response.status}`)
+  }
+  return response.text()
 }
 
 function toRow<T extends { $id: string }>(row: Models.Row): T {
