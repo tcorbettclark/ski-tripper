@@ -564,18 +564,16 @@ export default function ProposalCard({
           )}
 
           {!previewMode && activeTab === 'discussion' && (
-            <div style={styles.section}>
-              <DiscussionSection
-                proposalId={proposal.$id}
-                userId={userId}
-                userName={userName}
-                onCommentsChanged={() => {
-                  listDiscussion(proposal.$id)
-                    .then((rows) => setDiscussionCount(rows.length))
-                    .catch(onAuthError)
-                }}
-              />
-            </div>
+            <DiscussionSection
+              proposalId={proposal.$id}
+              userId={userId}
+              userName={userName}
+              onCommentsChanged={() => {
+                listDiscussion(proposal.$id)
+                  .then((rows) => setDiscussionCount(rows.length))
+                  .catch(onAuthError)
+              }}
+            />
           )}
         </div>
 
@@ -963,6 +961,8 @@ const styles = {
     overflowY: 'auto' as const,
     flex: '1 1 auto',
     minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column' as const,
   },
   tabActive: {
     padding: '10px 20px',

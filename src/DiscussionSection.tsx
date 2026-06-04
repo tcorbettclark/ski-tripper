@@ -123,7 +123,7 @@ export default function DiscussionSection({
   }
 
   return (
-    <>
+    <div style={sectionStyles.container}>
       <div ref={listRef} style={sectionStyles.commentList}>
         {loading && <p style={sectionStyles.loading}>Loading…</p>}
         {error && <p style={formStyles.error}>{error}</p>}
@@ -294,13 +294,18 @@ export default function DiscussionSection({
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
 
 const sectionStyles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    height: '100%',
+  },
   commentList: {
-    maxHeight: '300px',
+    flex: '1 1 auto',
     overflowY: 'auto' as const,
     display: 'flex',
     flexDirection: 'column' as const,
@@ -444,7 +449,10 @@ const sectionStyles = {
     cursor: 'pointer',
   },
   inputArea: {
-    paddingTop: '12px',
+    borderTop: borders.subtle,
+    paddingTop: '14px',
+    paddingBottom: '14px',
+    flexShrink: 0,
   },
   inputRow: {
     display: 'flex',
