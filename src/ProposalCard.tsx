@@ -108,10 +108,11 @@ export default function ProposalCard({
 }: ProposalCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [discussionCollapsed, setDiscussionCollapsed] = useState(true)
+  const [activeTab, setActiveTab] = useState<
+    'proposal' | 'accommodations' | 'discussion'
+  >('proposal')
   const [discussionCount, setDiscussionCount] = useState(0)
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
-  const [proposalCollapsed, setProposalCollapsed] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
@@ -122,7 +123,6 @@ export default function ProposalCard({
   const [rejectError, setRejectError] = useState<string | null>(null)
   const [revertError, setRevertError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [accommodationCollapsed, setAccommodationCollapsed] = useState(false)
   const [editingAccommodationId, setEditingAccommodationId] = useState<
     string | null
   >(null)
@@ -326,20 +326,276 @@ export default function ProposalCard({
         </div>
 
         {!previewMode && (
-          <div style={styles.section}>
+          <div style={styles.tabs}>
             <button
               type="button"
-              onClick={() => setDiscussionCollapsed((c) => !c)}
-              style={styles.sectionHeader}
+              onClick={() => setActiveTab('proposal')}
+              style={
+                activeTab === 'proposal' ? styles.tabActive : styles.tabInactive
+              }
             >
-              <span style={styles.sectionTitle}>
-                Discussion {discussionCount > 0 && `(${discussionCount})`}
-              </span>
-              <span style={styles.collapseIcon}>
-                {discussionCollapsed ? '+' : '−'}
-              </span>
+              Proposal
             </button>
-            {!discussionCollapsed && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('accommodations')}
+              style={
+                activeTab === 'accommodations'
+                  ? styles.tabActive
+                  : styles.tabInactive
+              }
+            >
+              Accommodations{' '}
+              {accommodations.length > 0 && `(${accommodations.length})`}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('discussion')}
+              style={
+                activeTab === 'discussion'
+                  ? styles.tabActive
+                  : styles.tabInactive
+              }
+            >
+              Discussion {discussionCount > 0 && `(${discussionCount})`}
+            </button>
+          </div>
+        )}
+
+        <div style={previewMode ? undefined : styles.tabContent}>
+          <div style={styles.section}>
+            {(previewMode || activeTab === 'proposal') && (
+              <>
+                <div style={styles.grid}>
+                  <DetailField
+                    label="Start Date"
+                    value={formatDate(proposal.startDate)}
+                  />
+                  <DetailField
+                    label="End Date"
+                    value={formatDate(proposal.endDate)}
+                  />
+                  <DetailField
+                    label="Altitude Range"
+                    value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
+                  />
+                  <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
+                  <DetailField label="Piste Breakdown">
+                    <PisteBreakdown
+                      beginnerPct={proposal.beginnerPct}
+                      intermediatePct={proposal.intermediatePct}
+                      advancedPct={proposal.advancedPct}
+                    />
+                  </DetailField>
+                  <DetailField
+                    label="Lifts"
+                    value={String(proposal.liftCount)}
+                  />
+                  <DetailField
+                    label="Snow Reliability"
+                    value={
+                      snowReliabilityLabels[proposal.snowReliability] ??
+                      proposal.snowReliability
+                    }
+                  />
+                  <DetailField
+                    label="Ski Season"
+                    value={proposal.skiSeasonMonths}
+                  />
+                  <DetailField
+                    label="Nearest Airport"
+                    value={proposal.nearestAirport}
+                  />
+                  <DetailField
+                    label="Transfer Time"
+                    value={proposal.transferTime}
+                  />
+                  {proposal.websites && proposal.websites.length > 0 && (
+                    <DetailField
+                      label="Websites"
+                      style={{ gridColumn: 'span 2' }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '2px',
+                        }}
+                      >
+                        {proposal.websites.map((url) => (
+                          <a
+                            key={url}
+                            href={sanitizeUrl(ensureUrlScheme(url))}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              ...detailStyles.websiteLink,
+                              textDecoration:
+                                hoveredWebsite === url ? 'underline' : 'none',
+                            }}
+                            onMouseEnter={() => setHoveredWebsite(url)}
+                            onMouseLeave={() => setHoveredWebsite(null)}
+                          >
+                            {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
+                          </a>
+                        ))}
+                      </div>
+                    </DetailField>
+                  )}
+                </div>
+                {proposal.linkedResortsDescription && (
+                  <div style={styles.descriptionSection}>
+                    <DetailField label="Linked Resorts">
+                      <p style={detailStyles.descriptionText}>
+                        {proposal.linkedResortsDescription}
+                      </p>
+                    </DetailField>
+                  </div>
+                )}
+                <div
+                  style={{
+                    ...styles.accommodationItem,
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <div
+                    style={{
+                      ...styles.accommodationItemContent,
+                      maxWidth: '75%',
+                    }}
+                  >
+                    {proposal.description && (
+                      <DetailField
+                        label="Description"
+                        value={proposal.description}
+                      />
+                    )}
+                  </div>
+                  {canAct && (
+                    <div style={styles.accommodationItemActions}>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(true)}
+                        style={styles.accommodationEditButton}
+                        aria-label="Edit proposal"
+                      >
+                        Edit
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {!previewMode && activeTab === 'accommodations' && (
+            <div style={styles.section}>
+              {accommodations.length === 0 && !addingAccommodation && (
+                <p style={styles.noAccommodations}>No accommodations yet.</p>
+              )}
+              {accommodations.map((acc, index) =>
+                editingAccommodationId === acc.$id ? (
+                  <AccommodationEditForm
+                    key={acc.$id}
+                    initialData={{
+                      name: acc.name,
+                      url: acc.url,
+                      cost: acc.cost,
+                      description: acc.description,
+                    }}
+                    onSave={(data) => handleEditAccommodation(acc.$id, data)}
+                    onCancel={() => {
+                      setEditingAccommodationId(null)
+                      setAccommodationError(null)
+                      setDeletingAccommodationError(null)
+                    }}
+                    onDelete={() => handleDeleteAccommodation(acc.$id)}
+                    deleting={deletingAccommodationId === acc.$id}
+                    deleteError={deletingAccommodationError}
+                    error={accommodationError}
+                  />
+                ) : (
+                  <div key={acc.$id}>
+                    <div style={styles.accommodationItem}>
+                      <div style={styles.accommodationItemContent}>
+                        <div style={styles.grid}>
+                          <DetailField
+                            label="Name"
+                            value={
+                              acc.url && isValidUrl(acc.url)
+                                ? undefined
+                                : acc.name || '—'
+                            }
+                          >
+                            {acc.url && isValidUrl(acc.url) && (
+                              <a
+                                href={sanitizeUrl(acc.url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={styles.accommodationLink}
+                              >
+                                {acc.name || '—'}
+                              </a>
+                            )}
+                          </DetailField>
+                          <DetailField label="Cost" value={acc.cost} />
+                          <div style={{ gridColumn: '1/-1', maxWidth: '75%' }}>
+                            <DetailField
+                              label="Description"
+                              value={acc.description}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {canAct && (
+                        <div style={styles.accommodationItemActions}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingAccommodationId(acc.$id)
+                              setAccommodationError(null)
+                            }}
+                            style={styles.accommodationEditButton}
+                            aria-label={`Edit accommodation ${acc.name}`}
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {(isDraft || index < accommodations.length - 1) && (
+                      <hr style={styles.accommodationDivider} />
+                    )}
+                  </div>
+                )
+              )}
+              {addingAccommodation && (
+                <AccommodationEditForm
+                  onSave={handleAddAccommodation}
+                  onCancel={() => {
+                    setAddingAccommodation(false)
+                    setAccommodationError(null)
+                  }}
+                  error={accommodationError}
+                />
+              )}
+              {canAct && !addingAccommodation && accommodations.length < 5 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddingAccommodation(true)
+                    setAccommodationError(null)
+                  }}
+                  style={styles.addAccommodationButton}
+                >
+                  + Add Accommodation
+                </button>
+              )}
+            </div>
+          )}
+
+          {!previewMode && activeTab === 'discussion' && (
+            <div style={styles.section}>
               <DiscussionSection
                 proposalId={proposal.$id}
                 userId={userId}
@@ -350,267 +606,9 @@ export default function ProposalCard({
                     .catch(onAuthError)
                 }}
               />
-            )}
-          </div>
-        )}
-
-        <div style={styles.section}>
-          {!previewMode && (
-            <button
-              type="button"
-              onClick={() => setProposalCollapsed((c) => !c)}
-              style={styles.sectionHeader}
-            >
-              <span style={styles.sectionTitle}>Proposal</span>
-              <span style={styles.collapseIcon}>
-                {proposalCollapsed ? '+' : '−'}
-              </span>
-            </button>
-          )}
-          {(previewMode || !proposalCollapsed) && (
-            <>
-              <div style={styles.grid}>
-                <DetailField
-                  label="Start Date"
-                  value={formatDate(proposal.startDate)}
-                />
-                <DetailField
-                  label="End Date"
-                  value={formatDate(proposal.endDate)}
-                />
-                <DetailField
-                  label="Altitude Range"
-                  value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
-                />
-                <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
-                <DetailField label="Piste Breakdown">
-                  <PisteBreakdown
-                    beginnerPct={proposal.beginnerPct}
-                    intermediatePct={proposal.intermediatePct}
-                    advancedPct={proposal.advancedPct}
-                  />
-                </DetailField>
-                <DetailField label="Lifts" value={String(proposal.liftCount)} />
-                <DetailField
-                  label="Snow Reliability"
-                  value={
-                    snowReliabilityLabels[proposal.snowReliability] ??
-                    proposal.snowReliability
-                  }
-                />
-                <DetailField
-                  label="Ski Season"
-                  value={proposal.skiSeasonMonths}
-                />
-                <DetailField
-                  label="Nearest Airport"
-                  value={proposal.nearestAirport}
-                />
-                <DetailField
-                  label="Transfer Time"
-                  value={proposal.transferTime}
-                />
-                {proposal.websites && proposal.websites.length > 0 && (
-                  <DetailField
-                    label="Websites"
-                    style={{ gridColumn: 'span 2' }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '2px',
-                      }}
-                    >
-                      {proposal.websites.map((url) => (
-                        <a
-                          key={url}
-                          href={sanitizeUrl(ensureUrlScheme(url))}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            ...detailStyles.websiteLink,
-                            textDecoration:
-                              hoveredWebsite === url ? 'underline' : 'none',
-                          }}
-                          onMouseEnter={() => setHoveredWebsite(url)}
-                          onMouseLeave={() => setHoveredWebsite(null)}
-                        >
-                          {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
-                        </a>
-                      ))}
-                    </div>
-                  </DetailField>
-                )}
-              </div>
-              {proposal.linkedResortsDescription && (
-                <div style={styles.descriptionSection}>
-                  <DetailField label="Linked Resorts">
-                    <p style={detailStyles.descriptionText}>
-                      {proposal.linkedResortsDescription}
-                    </p>
-                  </DetailField>
-                </div>
-              )}
-              <div
-                style={{
-                  ...styles.accommodationItem,
-                  justifyContent: 'space-between',
-                }}
-              >
-                <div
-                  style={{
-                    ...styles.accommodationItemContent,
-                    maxWidth: '75%',
-                  }}
-                >
-                  {proposal.description && (
-                    <DetailField
-                      label="Description"
-                      value={proposal.description}
-                    />
-                  )}
-                </div>
-                {canAct && (
-                  <div style={styles.accommodationItemActions}>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      style={styles.accommodationEditButton}
-                      aria-label="Edit proposal"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                )}
-              </div>
-            </>
+            </div>
           )}
         </div>
-
-        {!previewMode && (
-          <div style={styles.section}>
-            <button
-              type="button"
-              onClick={() => setAccommodationCollapsed((c) => !c)}
-              style={styles.sectionHeader}
-            >
-              <span style={styles.sectionTitle}>Accommodations</span>
-              <span style={styles.collapseIcon}>
-                {accommodationCollapsed ? '+' : '−'}
-              </span>
-            </button>
-            {!accommodationCollapsed && (
-              <>
-                {accommodations.length === 0 && !addingAccommodation && (
-                  <p style={styles.noAccommodations}>No accommodations yet.</p>
-                )}
-                {accommodations.map((acc, index) =>
-                  editingAccommodationId === acc.$id ? (
-                    <AccommodationEditForm
-                      key={acc.$id}
-                      initialData={{
-                        name: acc.name,
-                        url: acc.url,
-                        cost: acc.cost,
-                        description: acc.description,
-                      }}
-                      onSave={(data) => handleEditAccommodation(acc.$id, data)}
-                      onCancel={() => {
-                        setEditingAccommodationId(null)
-                        setAccommodationError(null)
-                        setDeletingAccommodationError(null)
-                      }}
-                      onDelete={() => handleDeleteAccommodation(acc.$id)}
-                      deleting={deletingAccommodationId === acc.$id}
-                      deleteError={deletingAccommodationError}
-                      error={accommodationError}
-                    />
-                  ) : (
-                    <div key={acc.$id}>
-                      <div style={styles.accommodationItem}>
-                        <div style={styles.accommodationItemContent}>
-                          <div style={styles.grid}>
-                            <DetailField
-                              label="Name"
-                              value={
-                                acc.url && isValidUrl(acc.url)
-                                  ? undefined
-                                  : acc.name || '—'
-                              }
-                            >
-                              {acc.url && isValidUrl(acc.url) && (
-                                <a
-                                  href={sanitizeUrl(acc.url)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={styles.accommodationLink}
-                                >
-                                  {acc.name || '—'}
-                                </a>
-                              )}
-                            </DetailField>
-                            <DetailField label="Cost" value={acc.cost} />
-                            <div
-                              style={{ gridColumn: '1/-1', maxWidth: '75%' }}
-                            >
-                              <DetailField
-                                label="Description"
-                                value={acc.description}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        {canAct && (
-                          <div style={styles.accommodationItemActions}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingAccommodationId(acc.$id)
-                                setAccommodationError(null)
-                              }}
-                              style={styles.accommodationEditButton}
-                              aria-label={`Edit accommodation ${acc.name}`}
-                            >
-                              Edit
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      {(isDraft || index < accommodations.length - 1) && (
-                        <hr style={styles.accommodationDivider} />
-                      )}
-                    </div>
-                  )
-                )}
-                {addingAccommodation && (
-                  <AccommodationEditForm
-                    onSave={handleAddAccommodation}
-                    onCancel={() => {
-                      setAddingAccommodation(false)
-                      setAccommodationError(null)
-                    }}
-                    error={accommodationError}
-                  />
-                )}
-                {canAct &&
-                  !addingAccommodation &&
-                  accommodations.length < 5 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAddingAccommodation(true)
-                        setAccommodationError(null)
-                      }}
-                      style={styles.addAccommodationButton}
-                    >
-                      + Add Accommodation
-                    </button>
-                  )}
-              </>
-            )}
-          </div>
-        )}
 
         {!previewMode && hasActions && (
           <div style={styles.actions}>
@@ -906,6 +904,9 @@ const styles = {
     border: borders.card,
     borderRadius: '14px',
     padding: '24px',
+    height: '80vh',
+    display: 'flex',
+    flexDirection: 'column' as const,
   },
   previewCard: {
     background: colors.bgCard,
@@ -917,6 +918,7 @@ const styles = {
     display: 'flex',
     alignItems: 'flex-start',
     gap: '12px',
+    flexShrink: 0,
   },
   headerRight: {
     fontFamily: fonts.display,
@@ -948,33 +950,42 @@ const styles = {
     paddingTop: '10px',
     marginBottom: '10px',
   },
-
-  sectionHeader: {
+  tabs: {
     display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: '6px',
-    width: '100%',
-    background: 'none',
+    gap: '4px',
+    marginBottom: '0',
+    borderBottom: borders.subtle,
+    paddingBottom: '0',
+    flexShrink: 0,
+  },
+  tabContent: {
+    overflowY: 'auto' as const,
+    flex: '1 1 auto',
+    minHeight: 0,
+  },
+  tabActive: {
+    padding: '10px 20px',
+    borderRadius: '8px 8px 0 0',
     border: 'none',
-    paddingBottom: '8px',
-    marginBottom: '12px',
-    cursor: 'pointer',
-    padding: '0 0 8px 0',
-  },
-  sectionTitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    fontWeight: '500' as const,
-    color: colors.textSecondary,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase' as const,
-  },
-  collapseIcon: {
+    borderBottom: `2px solid ${colors.accent}`,
+    background: mix('--color-accent', 0.15),
+    color: colors.accent,
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
+    fontWeight: '600' as const,
+    cursor: 'pointer',
+  },
+  tabInactive: {
+    padding: '10px 20px',
+    borderRadius: '8px 8px 0 0',
+    border: 'none',
+    borderBottom: '2px solid transparent',
+    background: 'transparent',
     color: colors.textSecondary,
-    lineHeight: 1,
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    fontWeight: '500' as const,
+    cursor: 'pointer',
   },
   grid: {
     display: 'grid',
@@ -1048,6 +1059,7 @@ const styles = {
     flexWrap: 'wrap' as const,
     padding: '10px 0',
     borderTop: borders.subtle,
+    flexShrink: 0,
   },
   actionsRight: {
     display: 'flex',

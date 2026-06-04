@@ -471,7 +471,7 @@ describe('ProposalCard', () => {
     expect(onDeleted).not.toHaveBeenCalled()
   })
 
-  it('shows discussion count in collapsible section header', async () => {
+  it('shows discussion count in tab', async () => {
     const comments: Discussion[] = [
       {
         $id: 'd-1',
@@ -508,7 +508,8 @@ describe('ProposalCard', () => {
     expect(screen.getByText(/\(1\)/)).toBeDefined()
   })
 
-  it('renders accommodations in collapsible section', () => {
+  it('renders accommodations in tab', async () => {
+    const user = userEvent.setup()
     const accommodations = [
       {
         $id: 'acc-1',
@@ -533,12 +534,14 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.getByText('Accommodations')).toBeDefined()
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
     expect(screen.getByText(/Chalet Mont Blanc/)).toBeDefined()
     expect(screen.getByText('€150/night')).toBeDefined()
   })
 
-  it('shows add accommodation button for owner of DRAFT', () => {
+  it('shows add accommodation button for owner of DRAFT', async () => {
+    const user = userEvent.setup()
     render(
       <ProposalCard
         proposal={baseProposal}
@@ -549,12 +552,15 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
     expect(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     ).toBeDefined()
   })
 
-  it('hides add accommodation button for non-owner', () => {
+  it('hides add accommodation button for non-owner', async () => {
+    const user = userEvent.setup()
     render(
       <ProposalCard
         proposal={baseProposal}
@@ -565,12 +571,15 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
     expect(
       screen.queryByRole('button', { name: '+ Add Accommodation' })
     ).toBeNull()
   })
 
-  it('hides add accommodation button for SUBMITTED proposal', () => {
+  it('hides add accommodation button for SUBMITTED proposal', async () => {
+    const user = userEvent.setup()
     const submittedProposal = { ...baseProposal, state: 'SUBMITTED' as const }
     render(
       <ProposalCard
@@ -582,12 +591,14 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
     expect(
       screen.queryByRole('button', { name: '+ Add Accommodation' })
     ).toBeNull()
   })
 
-  it('toggles accommodation section collapse', async () => {
+  it('switches to accommodations tab and shows count', async () => {
     const user = userEvent.setup()
     const accommodations = [
       {
@@ -613,18 +624,14 @@ describe('ProposalCard', () => {
       />
     )
 
-    expect(screen.getByText('€100/night')).toBeDefined()
+    expect(screen.getByText(/\(1\)/)).toBeDefined()
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
-    expect(screen.queryByText('€100/night')).toBeNull()
-
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
-
-    expect(screen.getByText('€100/night')).toBeDefined()
+    expect(await screen.findByText('€100/night')).toBeDefined()
   })
 
-  it('shows edit button on accommodations for owner of DRAFT', () => {
+  it('shows edit button on accommodations for owner of DRAFT', async () => {
     const accommodations = [
       {
         $id: 'acc-1',
@@ -637,6 +644,7 @@ describe('ProposalCard', () => {
         description: '',
       },
     ]
+    const user = userEvent.setup()
 
     render(
       <ProposalCard
@@ -649,13 +657,15 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
     const accommodationEditButtons = screen.getAllByRole('button', {
       name: /Edit accommodation/,
     })
     expect(accommodationEditButtons.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('hides accommodation edit/delete buttons for non-owner', () => {
+  it('hides accommodation edit/delete buttons for non-owner', async () => {
     const accommodations = [
       {
         $id: 'acc-1',
@@ -668,6 +678,7 @@ describe('ProposalCard', () => {
         description: '',
       },
     ]
+    const user = userEvent.setup()
 
     render(
       <ProposalCard
@@ -679,6 +690,8 @@ describe('ProposalCard', () => {
         accommodations={accommodations}
       />
     )
+
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
     expect(
       screen.queryByRole('button', { name: /Edit accommodation/ })
@@ -705,6 +718,7 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -741,6 +755,7 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -775,6 +790,7 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -809,6 +825,7 @@ describe('ProposalCard', () => {
       />
     )
 
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -856,6 +873,8 @@ describe('ProposalCard', () => {
     })
 
     const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
+
     const accommodationEditButton = screen.getByRole('button', {
       name: 'Edit accommodation Hotel',
     })
@@ -869,5 +888,49 @@ describe('ProposalCard', () => {
     await user.click(accommodationDeleteButton)
 
     await screen.findByText('delete failed')
+  })
+
+  it('defaults to proposal tab showing proposal details', () => {
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+      />
+    )
+
+    expect(screen.getByText('600 km')).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Proposal' })).toBeDefined()
+  })
+
+  it('switches to discussion tab and shows discussion section', async () => {
+    const listDiscussion = mock(async () => [])
+    const user = userEvent.setup()
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        userName="Alice"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+        listDiscussion={listDiscussion}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: /Discussion/ }))
+
+    expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()
   })
 })
