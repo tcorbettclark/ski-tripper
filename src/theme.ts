@@ -54,7 +54,7 @@ export const fonts = {
 }
 
 export const borders = {
-  subtle: `1px solid ${mix('--color-textSecondary', 0.1)}`,
+  subtle: `1px solid ${mix('--color-textSecondary', 0.3)}`,
   card: `1px solid ${mix('--color-accent', 0.14)}`,
   muted: `1px solid ${mix('--color-accent', 0.18)}`,
   accent: `1px solid ${mix('--color-accent', 0.3)}`,

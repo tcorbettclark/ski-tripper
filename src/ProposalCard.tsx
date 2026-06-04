@@ -266,23 +266,6 @@ export default function ProposalCard({
     }
   }
 
-  if (isEditing) {
-    return (
-      <div style={styles.card}>
-        <EditProposalForm
-          proposal={proposal}
-          userId={userId}
-          onUpdated={(updated) => {
-            onUpdated(updated)
-            setIsEditing(false)
-          }}
-          onCancel={() => setIsEditing(false)}
-          updateProposal={updateProposal}
-        />
-      </div>
-    )
-  }
-
   return (
     <>
       <div style={previewMode ? styles.previewCard : styles.card}>
@@ -452,27 +435,15 @@ export default function ProposalCard({
                     </DetailField>
                   </div>
                 )}
-                <div
-                  style={{
-                    ...styles.accommodationItem,
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <div
-                    style={{
-                      ...styles.accommodationItemContent,
-                      maxWidth: '75%',
-                    }}
-                  >
-                    {proposal.description && (
-                      <DetailField
-                        label="Description"
-                        value={proposal.description}
-                      />
-                    )}
-                  </div>
+                <div>
+                  {proposal.description && (
+                    <DetailField
+                      label="Description"
+                      value={proposal.description}
+                    />
+                  )}
                   {canAct && (
-                    <div style={styles.accommodationItemActions}>
+                    <div style={styles.editButtonRow}>
                       <button
                         type="button"
                         onClick={() => setIsEditing(true)}
@@ -753,6 +724,38 @@ export default function ProposalCard({
           </div>
         </div>
       )}
+
+      {isEditing && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit proposal"
+          style={styles.backdrop}
+          onClick={() => setIsEditing(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setIsEditing(false)
+          }}
+        >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: stops click propagation from modal card */}
+          <div
+            role="presentation"
+            style={styles.editDialog}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <EditProposalForm
+              proposal={proposal}
+              userId={userId}
+              onUpdated={(updated) => {
+                onUpdated(updated)
+                setIsEditing(false)
+              }}
+              onCancel={() => setIsEditing(false)}
+              updateProposal={updateProposal}
+            />
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -1008,6 +1011,11 @@ const styles = {
     justifyContent: 'flex-end',
     marginTop: '18px',
   },
+  editButtonRow: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '8px',
+  },
   accommodationItemContent: {
     flex: 1,
     minWidth: 0,
@@ -1172,6 +1180,17 @@ const styles = {
     fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
+  },
+  editDialog: {
+    background: colors.bgCard,
+    border: borders.card,
+    borderRadius: '14px',
+    padding: '24px',
+    maxHeight: '85vh',
+    overflowY: 'auto',
+    width: '90vw',
+    maxWidth: '600px',
+    boxShadow: '0 24px 80px var(--color-shadow)',
   },
   buttonDisabled: {
     opacity: 0.4,
