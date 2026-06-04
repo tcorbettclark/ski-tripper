@@ -1,4 +1,4 @@
-import { colors, fonts } from './theme'
+import { colors, fonts, mix } from './theme'
 import type { Poll, Proposal, Vote } from './types.d.ts'
 
 interface PollResultsProps {
@@ -77,7 +77,7 @@ const styles = {
   },
   label: { fontSize: '14px', color: colors.textData },
   barTrack: {
-    background: 'rgba(59,189,232,0.1)',
+    background: mix('--color-accent', 0.1),
     borderRadius: '3px',
     height: '6px',
     overflow: 'hidden',

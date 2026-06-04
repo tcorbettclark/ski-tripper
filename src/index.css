@@ -1,9 +1,40 @@
 @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap");
 
-/* react-day-picker dark theme overrides */
+:root,
+[data-theme="dark"] {
+  --color-accent: #3bbde8;
+  --color-bgPrimary: #07111f;
+  --color-bgCard: #0d1e30;
+  --color-bgInput: #060f1b;
+  --color-textPrimary: #edf6fc;
+  --color-textSecondary: #6a94ae;
+  --color-textData: #b0cedf;
+  --color-error: #ff6b6b;
+  --color-overlay: rgba(4, 12, 24, 0.85);
+  --color-shadow: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] {
+  --color-accent: #0284c7;
+  --color-bgPrimary: #f8fafc;
+  --color-bgCard: #ffffff;
+  --color-bgInput: #f1f5f9;
+  --color-textPrimary: #0f172a;
+  --color-textSecondary: #64748b;
+  --color-textData: #475569;
+  --color-error: #dc2626;
+  --color-overlay: rgba(0, 0, 0, 0.4);
+  --color-shadow: rgba(0, 0, 0, 0.15);
+}
+
+/* react-day-picker theme overrides */
 .rdp-root {
-  --rdp-accent-color: #3bbde8;
-  --rdp-accent-background-color: rgba(59, 189, 232, 0.12);
+  --rdp-accent-color: var(--color-accent);
+  --rdp-accent-background-color: color-mix(
+    in srgb,
+    var(--color-accent) 12%,
+    transparent
+  );
   --rdp-day-height: 30px;
   --rdp-day-width: 30px;
   --rdp-day_button-height: 28px;
@@ -13,12 +44,16 @@
   --rdp-nav_button-width: 1.75rem;
   --rdp-nav-height: 2rem;
   --rdp-months-gap: 1rem;
-  --rdp-range_middle-background-color: rgba(59, 189, 232, 0.12);
-  --rdp-range_start-color: #07111f;
-  --rdp-range_end-color: #07111f;
-  --rdp-range_start-date-background-color: #3bbde8;
-  --rdp-range_end-date-background-color: #3bbde8;
-  --rdp-today-color: #3bbde8;
+  --rdp-range_middle-background-color: color-mix(
+    in srgb,
+    var(--color-accent) 12%,
+    transparent
+  );
+  --rdp-range_start-color: var(--color-bgPrimary);
+  --rdp-range_end-color: var(--color-bgPrimary);
+  --rdp-range_start-date-background-color: var(--color-accent);
+  --rdp-range_end-date-background-color: var(--color-accent);
+  --rdp-today-color: var(--color-accent);
   --rdp-weekday-opacity: 0.7;
   --rdp-week_number-opacity: 0.5;
   --rdp-outside-opacity: 0.3;
@@ -28,20 +63,20 @@
 }
 
 .rdp-root .rdp-chevron {
-  fill: #edf6fc;
+  fill: var(--color-textPrimary);
 }
 
 .rdp-root .rdp-day_button:disabled {
-  color: rgba(106, 148, 174, 0.4);
+  color: color-mix(in srgb, var(--color-textSecondary) 40%, transparent);
   cursor: not-allowed;
 }
 
 .rdp-root .rdp-caption_label {
-  color: #edf6fc;
+  color: var(--color-textPrimary);
 }
 
 .rdp-root .rdp-day_button:not(:disabled):hover {
-  background-color: rgba(59, 189, 232, 0.15);
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
 }
 
 .rdp-root .rdp-selected {
@@ -56,8 +91,8 @@
 
 html,
 body {
-  background: #07111f;
-  color: #edf6fc;
+  background: var(--color-bgPrimary);
+  color: var(--color-textPrimary);
 }
 
 body {

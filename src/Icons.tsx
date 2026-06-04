@@ -1,10 +1,12 @@
+import { colors, mix } from './theme'
+
 interface IconProps {
   size?: number
   color?: string
   dim?: boolean
 }
 
-const dimColor = 'rgba(100,190,230,0.14)'
+const dimColor = mix('--color-textSecondary', 0.14)
 const dimOpacity = 0.2
 
 function emojiStyle(size: number, color: string, dim: boolean | undefined) {
@@ -28,7 +30,7 @@ function EmojiIcon({
     <span
       role="img"
       aria-label={label}
-      style={emojiStyle(size, color ?? '#3bbde8', dim)}
+      style={emojiStyle(size, color ?? colors.accent, dim)}
     >
       {children}
     </span>
@@ -37,7 +39,7 @@ function EmojiIcon({
 
 export function SkiIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <EmojiIcon size={size} color={color ?? '#3bbde8'} dim={dim} label="Ski">
+    <EmojiIcon size={size} color={color ?? colors.accent} dim={dim} label="Ski">
       ⛷️
     </EmojiIcon>
   )
@@ -68,7 +70,7 @@ export function BlackSlopeIcon({ size = 12, color, dim }: IconProps) {
       <polygon
         points="8,1 15,8 8,15 1,8"
         fill={dim ? dimColor : (color ?? '#404040')}
-        stroke={dim ? 'none' : '#edf6fc'}
+        stroke={dim ? 'none' : colors.textPrimary}
         strokeWidth="1.5"
       />
     </svg>

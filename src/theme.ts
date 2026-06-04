@@ -1,12 +1,16 @@
 export const colors = {
-  accent: '#3bbde8',
-  bgPrimary: '#07111f',
-  bgCard: '#0d1e30',
-  bgInput: '#060f1b',
-  textPrimary: '#edf6fc',
-  textSecondary: '#6a94ae',
-  textData: '#b0cedf',
-  error: '#ff6b6b',
+  accent: 'var(--color-accent)',
+  bgPrimary: 'var(--color-bgPrimary)',
+  bgCard: 'var(--color-bgCard)',
+  bgInput: 'var(--color-bgInput)',
+  textPrimary: 'var(--color-textPrimary)',
+  textSecondary: 'var(--color-textSecondary)',
+  textData: 'var(--color-textData)',
+  error: 'var(--color-error)',
+}
+
+export function mix(token: string, opacity: number): string {
+  return `color-mix(in srgb, var(${token}) ${opacity * 100}%, transparent)`
 }
 
 export const fonts = {
@@ -16,10 +20,10 @@ export const fonts = {
 }
 
 export const borders = {
-  subtle: '1px solid rgba(100,190,230,0.1)',
-  card: '1px solid rgba(100,190,230,0.12)',
-  muted: '1px solid rgba(100,190,230,0.15)',
-  accent: '1px solid rgba(59,189,232,0.3)',
+  subtle: `1px solid ${mix('--color-textSecondary', 0.1)}`,
+  card: `1px solid ${mix('--color-textSecondary', 0.12)}`,
+  muted: `1px solid ${mix('--color-textSecondary', 0.15)}`,
+  accent: `1px solid ${mix('--color-accent', 0.3)}`,
 }
 
 export const formStyles = {
@@ -72,7 +76,7 @@ export const authStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     background:
-      'linear-gradient(160deg, #040c18 0%, #081626 35%, #0c1e32 65%, #07111f 100%)',
+      'linear-gradient(160deg, var(--color-bgPrimary) 0%, var(--color-bgCard) 50%, var(--color-bgPrimary) 100%)',
     padding: '24px',
   },
   card: {
@@ -84,7 +88,7 @@ export const authStyles = {
     width: '100%',
     maxWidth: '420px',
     border: borders.card,
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,189,232,0.04)',
+    boxShadow: `0 24px 80px var(--color-shadow), 0 0 0 1px ${mix('--color-accent', 0.04)}`,
   },
   brandName: {
     fontFamily: fonts.body,

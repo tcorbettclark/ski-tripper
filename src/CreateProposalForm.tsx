@@ -499,7 +499,7 @@ const styles = {
     maxHeight: '240px',
     overflowY: 'auto' as const,
     width: '100%',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+    boxShadow: '0 8px 24px var(--color-shadow)',
   },
   suggestion: {
     padding: '10px 14px',

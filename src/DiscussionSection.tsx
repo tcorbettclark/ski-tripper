@@ -6,7 +6,7 @@ import {
   listDiscussion as _listDiscussion,
   updateDiscussionComment as _updateDiscussionComment,
 } from './backend'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, fonts, formStyles, mix } from './theme'
 import type { Discussion } from './types.d'
 import { formatRelativeTime } from './utils'
 
@@ -339,7 +339,7 @@ const sectionStyles = {
     marginLeft: '8px',
   },
   commentBubble: {
-    background: 'rgba(59,189,232,0.06)',
+    background: mix('--color-accent', 0.06),
     border: borders.subtle,
     borderRadius: '10px',
     padding: '12px 14px',
@@ -363,7 +363,7 @@ const sectionStyles = {
     borderRadius: '3px',
     fontSize: '10px',
     fontWeight: '700',
-    background: 'rgba(59,189,232,0.2)',
+    background: mix('--color-accent', 0.2),
     color: colors.accent,
     letterSpacing: '0.05em',
   },
@@ -464,7 +464,7 @@ const sectionStyles = {
   postButton: {
     padding: '6px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(59,189,232,0.3)',
+    border: `1px solid ${mix('--color-accent', 0.3)}`,
     background: 'transparent',
     color: colors.accent,
     fontFamily: fonts.body,
@@ -477,9 +477,9 @@ const sectionStyles = {
   postButtonDisabled: {
     padding: '6px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(59,189,232,0.3)',
+    border: `1px solid ${mix('--color-accent', 0.3)}`,
     background: 'transparent',
-    color: 'rgba(59,189,232,0.4)',
+    color: mix('--color-accent', 0.4),
     fontFamily: fonts.body,
     fontSize: '12px',
     fontWeight: '500',
@@ -490,7 +490,7 @@ const sectionStyles = {
   backdrop: {
     position: 'fixed' as const,
     inset: 0,
-    background: 'rgba(4,12,24,0.85)',
+    background: 'var(--color-overlay)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -502,7 +502,7 @@ const sectionStyles = {
     borderRadius: '14px',
     padding: '28px 32px',
     maxWidth: '400px',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+    boxShadow: '0 24px 80px var(--color-shadow)',
   },
   confirmTitle: {
     fontFamily: fonts.display,

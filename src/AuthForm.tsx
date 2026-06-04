@@ -5,6 +5,7 @@ import Field from './Field'
 import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
 import SnowflakeParticles from './SnowflakeParticles'
+import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
 
 interface AuthFormProps {
@@ -98,6 +99,9 @@ export default function AuthForm({
       }}
     >
       <SnowflakeParticles />
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
+        <ThemeToggle />
+      </div>
       <p
         style={{
           ...authStyles.brandName,

@@ -25,7 +25,7 @@ import {
   SnowboardIcon,
 } from './Icons'
 import NextActions from './NextActions'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, fonts, formStyles, mix } from './theme'
 import type {
   Participant,
   Poll,
@@ -301,7 +301,7 @@ export default function Overview({
           key: 'slopes',
           label: 'Slopes',
           value: prefs.timeSlopes,
-          color: '#3bbde8',
+          color: colors.accent,
         },
         {
           key: 'eating',
@@ -742,7 +742,7 @@ const overviewStyles = {
   cellEmpty: {
     fontFamily: fonts.body,
     fontSize: '12px',
-    color: 'rgba(100,190,230,0.2)',
+    color: mix('--color-textSecondary', 0.2),
   },
   iconRow: {
     display: 'inline-flex',
@@ -776,7 +776,7 @@ const overviewStyles = {
     width: '36px',
     height: '3px',
     borderRadius: '2px',
-    background: 'rgba(100,190,230,0.1)',
+    background: mix('--color-textSecondary', 0.1),
     overflow: 'hidden',
   },
   timeMeterFill: {

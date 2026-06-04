@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SnowflakeParticles from './SnowflakeParticles'
-import { authStyles, formStyles } from './theme'
+import ThemeToggle from './ThemeToggle'
+import { authStyles, colors, formStyles } from './theme'
 
 interface EmailVerifyScreenProps {
   email: string
@@ -40,6 +41,9 @@ export default function EmailVerifyScreen({
       }}
     >
       <SnowflakeParticles />
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
+        <ThemeToggle />
+      </div>
       <div style={authStyles.card}>
         <h1 style={authStyles.title}>Verify your email</h1>
         <p style={verifyStyles.message}>We sent a verification link to</p>
@@ -84,26 +88,26 @@ const verifyStyles = {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '15px',
     fontWeight: 'bold',
-    color: '#e0f0ff',
+    color: colors.textPrimary,
     textAlign: 'center' as const,
     margin: '8px 0',
   } as const,
   message: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0',
   } as const,
   followUp: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0 0 24px 0',
   } as const,
   resent: {
-    color: '#3bbde8',
+    color: colors.accent,
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '13px',
     margin: '0 0 12px 0',

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, fonts, formStyles, mix } from './theme'
 import type { Accommodation, Poll, Proposal, Vote } from './types.d.ts'
 
 interface PollVotingProps {
@@ -297,7 +297,7 @@ const styles = {
   proposalCard: {
     padding: '12px 14px',
     background: colors.bgCard,
-    border: '1px solid rgba(100,190,230,0.12)',
+    border: `1px solid ${mix('--color-textSecondary', 0.12)}`,
     borderRadius: '10px',
     display: 'flex',
     justifyContent: 'space-between',
@@ -320,8 +320,8 @@ const styles = {
     width: '28px',
     height: '28px',
     borderRadius: '50%',
-    border: '1.5px solid rgba(59,189,232,0.5)',
-    background: 'rgba(59,189,232,0.08)',
+    border: `1.5px solid ${mix('--color-accent', 0.5)}`,
+    background: mix('--color-accent', 0.08),
     color: colors.accent,
     fontSize: '16px',
     cursor: 'pointer',
@@ -344,7 +344,7 @@ const styles = {
   },
   countZero: {
     fontSize: '14px',
-    color: 'rgba(106,148,174,0.4)',
+    color: mix('--color-textSecondary', 0.4),
     fontWeight: '600',
     minWidth: '16px',
     textAlign: 'center',
@@ -385,7 +385,7 @@ const popupStyles = {
   touchBackdrop: {
     position: 'fixed' as const,
     inset: 0,
-    background: 'rgba(4,12,24,0.6)',
+    background: 'var(--color-overlay)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -401,7 +401,7 @@ const popupStyles = {
     width: '800px',
     maxHeight: '70vh',
     overflow: 'auto',
-    boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
+    boxShadow: '0 16px 48px var(--color-shadow)',
     pointerEvents: 'auto' as const,
     transform: 'scale(0.75)',
     transformOrigin: 'top left',

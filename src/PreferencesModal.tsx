@@ -90,7 +90,7 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'rgba(0,0,0,0.5)',
+    background: 'var(--color-overlay)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -105,7 +105,7 @@ const styles = {
     maxWidth: '520px',
     maxHeight: '85vh',
     overflowY: 'auto' as const,
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+    boxShadow: '0 24px 80px var(--color-shadow)',
   },
   panelHeader: {
     display: 'flex',

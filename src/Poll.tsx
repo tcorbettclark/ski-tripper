@@ -13,7 +13,7 @@ import {
 import PastPoll from './PastPoll'
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, fonts, formStyles, mix } from './theme'
 import type {
   Accommodation,
   Poll as PollType,
@@ -432,7 +432,7 @@ const styles = {
   closePollButton: {
     padding: '7px 18px',
     borderRadius: '6px',
-    border: '1px solid rgba(255,107,107,0.3)',
+    border: `1px solid ${mix('--color-error', 0.3)}`,
     background: 'transparent',
     color: colors.error,
     fontFamily: fonts.body,

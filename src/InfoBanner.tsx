@@ -9,7 +9,7 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { colors, fonts } from './theme'
+import { colors, fonts, mix } from './theme'
 
 const slideColors = [
   '#3bbde8',
@@ -175,7 +175,7 @@ const bannerStyles = {
     width: '6px',
     height: '6px',
     borderRadius: '50%',
-    background: 'rgba(100,190,230,0.25)',
+    background: mix('--color-textSecondary', 0.25),
     display: 'inline-block',
   },
   pauseIcon: {

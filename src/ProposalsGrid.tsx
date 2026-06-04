@@ -11,7 +11,7 @@ import {
   updateProposal as _updateProposal,
 } from './backend'
 import ProposalCard from './ProposalCard'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, mix } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
 
 export type StatusFilter = 'DRAFT' | 'SUBMITTED' | 'REJECTED'
@@ -344,7 +344,7 @@ const styles = {
     width: '16px',
     height: '16px',
     borderRadius: '50%',
-    background: '#fff',
+    background: 'var(--color-bgPrimary)',
     transition: 'left 0.2s',
   },
   tabs: {
@@ -359,7 +359,7 @@ const styles = {
     borderRadius: '8px 8px 0 0',
     border: 'none',
     borderBottom: `2px solid ${colors.accent}`,
-    background: 'rgba(59,189,232,0.08)',
+    background: mix('--color-accent', 0.08),
     color: colors.accent,
     fontFamily: fonts.body,
     fontSize: '13px',

@@ -17,7 +17,7 @@ import DetailField from './DetailField'
 import DiscussionSection from './DiscussionSection'
 import EditProposalForm from './EditProposalForm'
 import PisteBreakdown from './PisteBreakdown'
-import { borders, colors, detailStyles, fonts, formStyles } from './theme'
+import { borders, colors, detailStyles, fonts, formStyles, mix } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
 import { ensureUrlScheme, formatDate, isValidUrl, sanitizeUrl } from './utils'
 
@@ -1013,7 +1013,7 @@ const styles = {
   addAccommodationButton: {
     padding: '8px 16px',
     borderRadius: '6px',
-    border: '1px solid rgba(59,189,232,0.3)',
+    border: `1px solid ${mix('--color-accent', 0.3)}`,
     background: 'transparent',
     color: colors.accent,
     fontFamily: fonts.body,
@@ -1062,7 +1062,7 @@ const styles = {
   deleteButton: {
     padding: '6px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(255,107,107,0.3)',
+    border: `1px solid ${mix('--color-error', 0.3)}`,
     background: 'transparent',
     color: colors.error,
     fontFamily: fonts.body,
@@ -1074,7 +1074,7 @@ const styles = {
   rejectButton: {
     padding: '6px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(255,107,107,0.3)',
+    border: `1px solid ${mix('--color-error', 0.3)}`,
     background: 'transparent',
     color: colors.error,
     fontFamily: fonts.body,
@@ -1086,7 +1086,7 @@ const styles = {
   revertButton: {
     padding: '6px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(59,189,232,0.3)',
+    border: `1px solid ${mix('--color-accent', 0.3)}`,
     background: 'transparent',
     color: colors.accent,
     fontFamily: fonts.body,
@@ -1099,7 +1099,7 @@ const styles = {
   backdrop: {
     position: 'fixed' as const,
     inset: 0,
-    background: 'rgba(4,12,24,0.85)',
+    background: 'var(--color-overlay)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1111,7 +1111,7 @@ const styles = {
     borderRadius: '14px',
     padding: '28px 32px',
     maxWidth: '400px',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+    boxShadow: '0 24px 80px var(--color-shadow)',
   },
   confirmTitle: {
     fontFamily: fonts.display,
@@ -1247,7 +1247,7 @@ const accFormStyles = {
   deleteButton: {
     padding: '6px 16px',
     borderRadius: '5px',
-    border: '1px solid rgba(255,107,107,0.3)',
+    border: `1px solid ${mix('--color-error', 0.3)}`,
     background: 'transparent',
     color: colors.error,
     fontFamily: fonts.body,

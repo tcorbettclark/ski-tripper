@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrandTitle, HamburgerIcon } from './Icons'
-import { authStyles, borders, colors, fonts, formStyles } from './theme'
+import ThemeToggle from './ThemeToggle'
+import { authStyles, borders, colors, fonts, formStyles, mix } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
 import { formatCountdown } from './utils'
 
@@ -296,6 +297,7 @@ export default function Header({
           <>
             <div style={headerStyles.mobileRight}>
               <span style={headerStyles.userNameSmall}>{userName}</span>
+              <ThemeToggle />
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((o) => !o)}
@@ -343,12 +345,15 @@ export default function Header({
             )}
           </>
         ) : (
-          <UserMenu
-            userName={userName}
-            onLogout={onLogout}
-            logoutError={logoutError}
-            onOpenPreferences={onOpenPreferences}
-          />
+          <div style={headerStyles.rightControls}>
+            <ThemeToggle />
+            <UserMenu
+              userName={userName}
+              onLogout={onLogout}
+              logoutError={logoutError}
+              onOpenPreferences={onOpenPreferences}
+            />
+          </div>
         )}
       </header>
     )
@@ -362,6 +367,7 @@ export default function Header({
         </span>
         <div style={headerStyles.mobileRight}>
           <span style={headerStyles.userNameSmall}>{userName}</span>
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => setMobileMenuOpen((o) => !o)}
@@ -412,7 +418,10 @@ export default function Header({
         onTripDetailTabChange={onTripDetailTabChange}
         activePollEndDate={activePollEndDate}
       />
-      {userMenu}
+      <div style={headerStyles.rightControls}>
+        <ThemeToggle />
+        {userMenu}
+      </div>
     </header>
   )
 }
@@ -425,7 +434,7 @@ const headerStyles = {
     padding: '0 16px',
     height: '64px',
     borderBottom: borders.subtle,
-    background: 'rgba(7,17,31,0.98)',
+    background: 'color-mix(in srgb, var(--color-bgPrimary) 98%, transparent)',
     position: 'sticky' as const,
     top: 0,
     zIndex: 100,
@@ -448,6 +457,11 @@ const headerStyles = {
     alignItems: 'center',
     gap: '12px',
   },
+  rightControls: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
   centerTabs: {
     display: 'flex',
     gap: '4px',
@@ -468,7 +482,7 @@ const headerStyles = {
     padding: '6px 16px',
     borderRadius: '6px',
     border: 'none',
-    background: 'rgba(59,189,232,0.12)',
+    background: mix('--color-accent', 0.12),
     color: colors.accent,
     fontFamily: fonts.body,
     fontSize: '13px',
@@ -508,7 +522,7 @@ const headerStyles = {
     borderRadius: '8px',
     padding: '4px 0',
     minWidth: '140px',
-    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    boxShadow: '0 8px 32px var(--color-shadow)',
     zIndex: 200,
   },
   userMenuItem: {
@@ -557,7 +571,7 @@ const headerStyles = {
     borderBottom: borders.subtle,
     padding: '4px 0',
     zIndex: 200,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+    boxShadow: '0 8px 32px var(--color-shadow)',
   },
   mobileMenuItem: {
     display: 'block',

@@ -7,6 +7,18 @@
     <title>Ski Tripper</title>
   </head>
   <body>
+    <script>
+      (() => {
+        var t = localStorage.getItem('theme');
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.dataset.theme = t;
+        } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+          document.documentElement.dataset.theme = 'light';
+        } else {
+          document.documentElement.dataset.theme = 'dark';
+        }
+      })();
+    </script>
     <div id="root"></div>
     <link rel="stylesheet" href="/main.css" />
     <script type="module" src="/main.js"></script>

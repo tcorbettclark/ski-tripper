@@ -26,7 +26,7 @@ import type { StatusFilter } from './ProposalsGrid'
 import ResetPasswordForm from './ResetPasswordForm'
 import Resorts from './Resorts'
 import Trips from './Trips'
-import { colors, fonts } from './theme'
+import { colors, fonts, mix } from './theme'
 import type { Preferences, ResortWithEmbedding, Trip } from './types.d.ts'
 import useAuth from './useAuth'
 
@@ -367,7 +367,7 @@ export default function App({
         <div
           style={{
             background: colors.bgCard,
-            border: '1px solid rgba(100,190,230,0.12)',
+            border: `1px solid ${mix('--color-textSecondary', 0.12)}`,
             borderRadius: '16px',
             padding: '48px 44px',
             width: '100%',

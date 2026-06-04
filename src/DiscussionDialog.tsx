@@ -6,7 +6,7 @@ import {
   listDiscussion as _listDiscussion,
   updateDiscussionComment as _updateDiscussionComment,
 } from './backend'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, fonts, formStyles, mix } from './theme'
 import type { Discussion } from './types.d'
 import { formatRelativeTime } from './utils'
 
@@ -330,7 +330,7 @@ const styles = {
   backdrop: {
     position: 'fixed' as const,
     inset: 0,
-    background: 'rgba(4,12,24,0.85)',
+    background: 'var(--color-overlay)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -345,7 +345,7 @@ const styles = {
     maxHeight: '80vh',
     display: 'flex',
     flexDirection: 'column' as const,
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+    boxShadow: '0 24px 80px var(--color-shadow)',
   },
   header: {
     display: 'flex',
@@ -410,7 +410,7 @@ const styles = {
     marginLeft: '8px',
   },
   commentBubble: {
-    background: 'rgba(59,189,232,0.06)',
+    background: mix('--color-accent', 0.06),
     border: borders.subtle,
     borderRadius: '10px',
     padding: '12px 14px',
@@ -434,7 +434,7 @@ const styles = {
     borderRadius: '3px',
     fontSize: '10px',
     fontWeight: '700',
-    background: 'rgba(59,189,232,0.2)',
+    background: mix('--color-accent', 0.2),
     color: colors.accent,
     letterSpacing: '0.05em',
   },
@@ -548,7 +548,7 @@ const styles = {
     padding: '10px 20px',
     borderRadius: '7px',
     border: 'none',
-    background: 'rgba(59,189,232,0.3)',
+    background: mix('--color-accent', 0.3),
     color: colors.bgPrimary,
     fontFamily: fonts.body,
     fontSize: '13px',
@@ -561,7 +561,7 @@ const styles = {
     borderRadius: '14px',
     padding: '28px 32px',
     maxWidth: '400px',
-    boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+    boxShadow: '0 24px 80px var(--color-shadow)',
   },
   confirmTitle: {
     fontFamily: fonts.display,

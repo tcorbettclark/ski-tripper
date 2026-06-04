@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
-import { colors, fonts } from './theme'
+import { colors, fonts, mix } from './theme'
 import type { Trip } from './types.d.ts'
 
 interface TripRowProps {
@@ -42,7 +42,7 @@ export default function TripRow({
         ...styles.tr,
         ...(hovered ? styles.trHovered : {}),
         borderLeft: hovered
-          ? '3px solid rgba(59,189,232,0.5)'
+          ? `3px solid ${mix('--color-accent', 0.5)}`
           : '3px solid transparent',
       }}
       onClick={() => onSelectTrip(trip.$id)}
@@ -64,12 +64,12 @@ export default function TripRow({
 
 const styles = {
   tr: {
-    borderBottom: '1px solid rgba(100,190,230,0.07)',
+    borderBottom: `1px solid ${mix('--color-textSecondary', 0.07)}`,
     cursor: 'pointer',
     transition: 'background 0.15s, border-left 0.15s',
   },
   trHovered: {
-    background: 'rgba(59,189,232,0.08)',
+    background: mix('--color-accent', 0.08),
   },
   td: {
     padding: '14px 16px',

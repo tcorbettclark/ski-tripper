@@ -1,4 +1,4 @@
-import { fonts } from './theme'
+import { fonts, mix } from './theme'
 
 const PISTE_COLOURS = {
   beginner: '#4A90D9',
@@ -46,7 +46,7 @@ export default function PisteBreakdown({
                 width: `${widthPct}%`,
                 background: bar.colour,
                 border: isBlackBar
-                  ? '1px solid rgba(255, 255, 255, 0.6)'
+                  ? `1px solid ${mix('--color-textPrimary', 0.6)}`
                   : 'none',
               }}
             />
@@ -54,7 +54,9 @@ export default function PisteBreakdown({
               <span
                 style={{
                   ...defaultStyles.pctLabel,
-                  color: isBlackBar ? 'rgba(255, 255, 255, 0.6)' : bar.colour,
+                  color: isBlackBar
+                    ? mix('--color-textPrimary', 0.6)
+                    : bar.colour,
                 }}
               >
                 {bar.pct}%

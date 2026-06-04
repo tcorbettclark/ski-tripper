@@ -8,7 +8,7 @@ import {
   Vote,
 } from 'lucide-react'
 import type { StatusFilter } from './ProposalsGrid'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fonts, mix } from './theme'
 import type { Poll } from './types.d.ts'
 import { formatDate } from './utils'
 
@@ -183,7 +183,7 @@ const nextActionsStyles = {
     width: '22px',
     height: '22px',
     borderRadius: '6px',
-    background: 'rgba(59,189,232,0.12)',
+    background: mix('--color-accent', 0.12),
     color: colors.accent,
   },
   heading: {
@@ -217,9 +217,8 @@ const nextActionsStyles = {
     transition: 'border-color 0.15s, background 0.15s',
   },
   cardHighlight: {
-    border: `1px solid rgba(59,189,232,0.22)`,
-    background:
-      'linear-gradient(135deg, rgba(59,189,232,0.08) 0%, rgba(59,189,232,0.02) 100%)',
+    border: `1px solid ${mix('--color-accent', 0.22)}`,
+    background: `linear-gradient(135deg, ${mix('--color-accent', 0.08)} 0%, ${mix('--color-accent', 0.02)} 100%)`,
   },
   iconWrap: {
     display: 'flex',
@@ -228,12 +227,12 @@ const nextActionsStyles = {
     width: '28px',
     height: '28px',
     borderRadius: '6px',
-    background: 'rgba(106,148,174,0.12)',
+    background: mix('--color-textSecondary', 0.12),
     color: colors.textSecondary,
     flexShrink: 0,
   },
   iconWrapHighlight: {
-    background: 'rgba(59,189,232,0.15)',
+    background: mix('--color-accent', 0.15),
     color: colors.accent,
   },
   label: {

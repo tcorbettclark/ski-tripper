@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { account as _account } from './backend'
 import Field from './Field'
 import SnowflakeParticles from './SnowflakeParticles'
-import { authStyles, formStyles } from './theme'
+import ThemeToggle from './ThemeToggle'
+import { authStyles, colors, formStyles } from './theme'
 
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void
@@ -42,6 +43,9 @@ export default function ForgotPasswordForm({
       }}
     >
       <SnowflakeParticles />
+      <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
+        <ThemeToggle />
+      </div>
       <div style={authStyles.card}>
         <h1 style={authStyles.title}>Reset password</h1>
         {sent ? (
@@ -112,14 +116,14 @@ const forgotStyles = {
   message: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '14px',
-    color: '#6a94ae',
+    color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0 0 8px 0',
   } as const,
   email: {
     fontFamily: "'DM Sans', sans-serif",
     fontSize: '15px',
-    color: '#edf6fc',
+    color: colors.textPrimary,
     fontWeight: '600',
     margin: '0 0 8px 0',
   } as const,
