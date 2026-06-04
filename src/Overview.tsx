@@ -701,7 +701,7 @@ const overviewStyles = {
     flexWrap: 'wrap' as const,
     alignItems: 'center',
     gap: '0 20px',
-    padding: '10px 0',
+    padding: '10px 16px',
     borderBottom: borders.subtle,
     minWidth: 0,
   },
