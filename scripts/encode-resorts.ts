@@ -198,7 +198,7 @@ async function encode() {
   )
 
   const extractor = await pipeline('feature-extraction', MODEL_ID, {
-    dtype: 'fp32',
+    dtype: 'uint8',
   })
 
   log('success', 'encode', 'Model loaded.')
