@@ -3,6 +3,16 @@ export interface SeededResort {
   resortName: string
   country: string
   region: string
+  latitude: string
+  longitude: string
+  summitAltitude: number
+  baseAltitude: number
+  pisteKm: number
+  liftCount: number
+  websites: string[]
+  beginnerPct: number
+  intermediatePct: number
+  advancedPct: number
 }
 
 export interface EnrichedResort {
