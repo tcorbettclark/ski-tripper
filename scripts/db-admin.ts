@@ -6,9 +6,13 @@ import { Command } from 'commander'
 import type { Models, TablesDB } from 'node-appwrite'
 import {
   Client as NodeClient,
+  Storage as NodeStorage,
   TablesDB as NodeTablesDB,
+  Permission,
   Query,
+  Role,
 } from 'node-appwrite'
+import { InputFile } from 'node-appwrite/file'
 
 const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
 const TRIPS_TABLE_ID = process.env.PUBLIC_APPWRITE_TRIPS_TABLE_ID as string
@@ -24,7 +28,10 @@ const ACCOMMODATIONS_TABLE_ID = process.env
   .PUBLIC_APPWRITE_ACCOMMODATIONS_TABLE_ID as string
 const DISCUSSION_TABLE_ID = process.env
   .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
-const RESORTS_TABLE_ID = process.env.PUBLIC_APPWRITE_RESORTS_TABLE_ID as string
+
+const RESORTS_BUCKET_ID = process.env
+  .PUBLIC_APPWRITE_RESORTS_BUCKET_ID as string
+const RESORTS_FILE_ID = process.env.PUBLIC_APPWRITE_RESORTS_FILE_ID as string
 
 export const TABLE_IDS = {
   accommodations: ACCOMMODATIONS_TABLE_ID,
@@ -33,7 +40,6 @@ export const TABLE_IDS = {
   polls: POLLS_TABLE_ID,
   preferences: PREFERENCES_TABLE_ID,
   proposals: PROPOSALS_TABLE_ID,
-  resorts: RESORTS_TABLE_ID,
   trips: TRIPS_TABLE_ID,
   votes: VOTES_TABLE_ID,
 } as const
@@ -46,6 +52,7 @@ const adminClient = new NodeClient()
   .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
 
 export const adminTablesDb = new NodeTablesDB(adminClient)
+export const adminStorage = new NodeStorage(adminClient)
 
 async function listAllRows(
   tableId: string,
@@ -198,5 +205,38 @@ program
   .command('reset')
   .description('Delete all rows from all tables')
   .action(reset)
+
+program
+  .command('upload-resorts')
+  .requiredOption('-f, --file <path>', 'path to resort-data.jsonl file')
+  .description(
+    'Upload resort data to Appwrite Storage (overwrites existing file)'
+  )
+  .action(async (options) => {
+    const filePath = resolve(options.file)
+    try {
+      await stat(filePath)
+    } catch {
+      console.error(`Error: File '${filePath}' does not exist.`)
+      process.exit(1)
+    }
+    try {
+      await adminStorage.deleteFile({
+        bucketId: RESORTS_BUCKET_ID,
+        fileId: RESORTS_FILE_ID,
+      })
+      console.log('Deleted existing file...')
+    } catch {
+      // File doesn't exist yet, that's fine
+    }
+    console.log(`Uploading resort data from '${filePath}'...`)
+    await adminStorage.createFile({
+      bucketId: RESORTS_BUCKET_ID,
+      fileId: RESORTS_FILE_ID,
+      file: InputFile.fromPath(filePath, 'resort-data.jsonl'),
+      permissions: [Permission.read(Role.any())],
+    })
+    console.log('Upload complete!')
+  })
 
 program.parse()

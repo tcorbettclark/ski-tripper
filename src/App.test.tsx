@@ -58,6 +58,7 @@ function renderApp(props = {}, { loggedIn = true } = {}) {
       listPolls={() => Promise.resolve({ polls: [] })}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
+      getResortDataUrl={() => 'data:text/plain,'}
       {...props}
     />
   )
@@ -80,6 +81,7 @@ function renderAppWithTrip(props = {}, { loggedIn = true } = {}) {
       listPolls={() => Promise.resolve({ polls: [] })}
       getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
       getPreferences={() => Promise.resolve(defaultPreferences)}
+      getResortDataUrl={() => 'data:text/plain,'}
       {...props}
     />
   )
@@ -269,6 +271,7 @@ describe('App', () => {
         listPolls={() => Promise.resolve({ polls: [] })}
         getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
         getPreferences={() => Promise.resolve(defaultPreferences)}
+        getResortDataUrl={() => 'data:text/plain,'}
       />
     )
 

@@ -6,6 +6,7 @@ import {
   createPreferences as _createPreferences,
   getCoordinatorParticipant as _getCoordinatorParticipant,
   getPreferences as _getPreferences,
+  getResortDataUrl as _getResortDataUrl,
   hasSession as _hasSession,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
@@ -71,6 +72,7 @@ interface AppProps {
     secret: string,
     password: string
   ) => Promise<unknown>
+  getResortDataUrl?: () => string
 }
 
 const defaultAccountGet = () => _account.get()
@@ -89,6 +91,7 @@ const defaultUpdateRecovery = (
   secret: string,
   password: string
 ) => _account.updateRecovery(userId, secret, password)
+const defaultGetResortDataUrl = _getResortDataUrl
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -105,6 +108,7 @@ export default function App({
   createPreferences = defaultCreatePreferences,
   updateTrip = defaultUpdateTrip,
   updateRecovery = defaultUpdateRecovery,
+  getResortDataUrl = defaultGetResortDataUrl,
 }: AppProps) {
   const {
     user,
@@ -147,27 +151,23 @@ export default function App({
   const autoSelectedRef = useRef(false)
 
   useEffect(() => {
-    try {
-      const data = '/resort-data.jsonl'
-      fetch(data)
-        .then((r) => r.text())
-        .then((text) => {
-          if (!text.trim()) {
-            setResorts([])
-            return
-          }
-          const parsed = text
-            .trim()
-            .split('\n')
-            .filter(Boolean)
-            .map((line) => JSON.parse(line) as ResortWithEmbedding)
-          setResorts(parsed)
-        })
-        .catch(() => setResorts([]))
-    } catch {
-      setResorts([])
-    }
-  }, [])
+    const url = getResortDataUrl()
+    fetch(url)
+      .then((r) => r.text())
+      .then((text) => {
+        if (!text.trim()) {
+          setResorts([])
+          return
+        }
+        const parsed = text
+          .trim()
+          .split('\n')
+          .filter(Boolean)
+          .map((line) => JSON.parse(line) as ResortWithEmbedding)
+        setResorts(parsed)
+      })
+      .catch(() => setResorts([]))
+  }, [getResortDataUrl])
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)

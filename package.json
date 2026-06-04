@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "dev": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --watch & bun server.js",
-    "build": "bun run build-resort-data && bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --minify && cp index.html dist/ && cp -r public/flags dist/flags",
+    "build": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --minify && cp index.html dist/ && cp -r public/flags dist/flags",
     "preview": "bun server.js",
     "test": "bun test --max-concurrency 1",
     "test:watch": "bun test --watch --max-concurrency 1",

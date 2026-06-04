@@ -6,6 +6,7 @@ import {
   Permission,
   Query,
   Role,
+  Storage,
   TablesDB,
 } from 'appwrite'
 import type {
@@ -34,7 +35,19 @@ const client = new Client()
 
 export const account = new Account(client)
 export const tablesDb = new TablesDB(client)
+export const storage = new Storage(client)
 export default client
+
+const RESORTS_BUCKET_ID = process.env
+  .PUBLIC_APPWRITE_RESORTS_BUCKET_ID as string
+const RESORTS_FILE_ID = process.env.PUBLIC_APPWRITE_RESORTS_FILE_ID as string
+
+export function getResortDataUrl(): string {
+  return storage.getFileView({
+    bucketId: RESORTS_BUCKET_ID,
+    fileId: RESORTS_FILE_ID,
+  })
+}
 
 function toRow<T extends { $id: string }>(row: Models.Row): T {
   if (!row || typeof (row as { $id?: unknown }).$id !== 'string') {
