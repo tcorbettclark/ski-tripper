@@ -460,11 +460,11 @@ export default function ProposalCard({
           </div>
 
           {!previewMode && activeTab === 'accommodations' && (
-            <div style={styles.section}>
+            <div style={styles.accommodationsSection}>
               {accommodations.length === 0 && !addingAccommodation && (
                 <p style={styles.noAccommodations}>No accommodations yet.</p>
               )}
-              {accommodations.map((acc, index) =>
+              {accommodations.map((acc) =>
                 editingAccommodationId === acc.$id ? (
                   <AccommodationEditForm
                     key={acc.$id}
@@ -534,9 +534,7 @@ export default function ProposalCard({
                         </div>
                       )}
                     </div>
-                    {(isDraft || index < accommodations.length - 1) && (
-                      <hr style={styles.accommodationDivider} />
-                    )}
+                    <hr style={styles.accommodationDivider} />
                   </div>
                 )
               )}
@@ -997,7 +995,8 @@ const styles = {
   },
 
   accommodationsSection: {
-    marginBottom: '20px',
+    paddingTop: '10px',
+    marginBottom: '10px',
   },
   noAccommodations: {
     fontFamily: fonts.body,
