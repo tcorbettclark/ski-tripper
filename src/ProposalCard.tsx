@@ -951,6 +951,7 @@ const styles = {
     height: '80vh',
     display: 'flex',
     flexDirection: 'column' as const,
+    boxShadow: '0 2px 12px var(--color-shadow)',
   },
   previewCard: {
     background: colors.bgCard,
