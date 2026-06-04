@@ -146,7 +146,7 @@ Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - For description, websites, and linkedResortsDescription: extract only information that is explicitly stated in the source text
 - For nearestAirport, transferTime, snowReliability, and skiSeasonMonths: you may infer the answer from the source text using common knowledge. For example, if the text says "80km from Geneva", you should output GVA; if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
-- For description: write 4-6 detailed paragraphs in an informative travel-guide style. You MUST cover all of the following topics where the source text provides information: (1) terrain difficulty and character, (2) off-piste quality, (3) value — expensive or budget-friendly, (4) suitability for families vs groups, (5) apres-ski and nightlife, (6) whether the resort is picturesque or purpose-built, (7) lift system quality and age, (8) overall atmosphere. Be specific — avoid vague filler like "offers something for everyone" or "great for all abilities". If the source text lacks detail on a topic, skip that topic rather than padding with generalities
+- For description: write 4-6 paragraphs as a narrative travel-guide overview. Do NOT repeat facts provided in the user prompt (altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, linkedResortsDescription). The description should add softer, qualitative information that structured data cannot capture. Where the source text provides detail, cover: (1) terrain character and feel rather than raw stats, (2) off-piste quality, (3) value — expensive or budget-friendly, (4) suitability for families vs groups, (5) apres-ski and nightlife, (6) whether the resort is picturesque or purpose-built, (7) lift system quality and age, (8) overall atmosphere. Be specific — avoid vague filler like "offers something for everyone" or "great for all abilities". If the source text lacks detail on a topic, skip that topic rather than padding with generalities
 - If a value truly cannot be determined even with reasonable inference, set it to null
 - For websites, include every relevant URL found in the source text; do not attempt to consolidate or deduplicate
 - Return valid JSON only, no explanatory text`
@@ -154,11 +154,16 @@ Rules:
 export const LLM_USER_PROMPT = (
   resortName: string,
   country: string,
-  sourceText: string
-) =>
-  `Extract ski resort data for "${resortName}" in ${country} from the following source text:
+  sourceText: string,
+  knownFacts?: string
+) => {
+  const factsSection = knownFacts
+    ? `\n\nKnown facts already captured (do NOT repeat these in the description field):\n${knownFacts}\n`
+    : ''
+  return `Extract ski resort data for "${resortName}" in ${country} from the following source text:${factsSection}
 
 ${sourceText}`
+}
 
 export function buildJsonSchema(): JSONSchema.JSONSchema {
   const nullable = (
@@ -175,7 +180,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
     properties: {
       description: nullable(
         { type: 'string' },
-        'A detailed description (4-6 paragraphs) of the ski resort covering: terrain difficulty and character; off-piste quality; whether it is expensive or budget-friendly; suitability for families vs groups; quality of apres-ski and nightlife; whether the resort is picturesque or purpose-built; lift system quality and age; and overall atmosphere and highlights. Write in an informative travel-guide style. Be specific and detailed — vague filler like "offers something for everyone" is useless.'
+        'A narrative description (4-6 paragraphs) adding qualitative, softer information not already provided in the user prompt. Do NOT repeat facts like altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, or linkedResortsDescription. Instead cover: terrain character and feel; off-piste quality; value and budget-friendliness; family vs group suitability; apres-ski and nightlife; whether picturesque or purpose-built; lift system quality; overall atmosphere. Be specific — vague filler like "offers something for everyone" is useless.'
       ),
       nearestAirport: nullable(
         { type: 'string' },

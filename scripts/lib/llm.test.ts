@@ -95,4 +95,15 @@ describe('LLM prompts', () => {
     expect(prompt).toContain('France')
     expect(prompt).toContain('some source text')
   })
+
+  it('LLM_USER_PROMPT includes known facts when provided', () => {
+    const prompt = LLM_USER_PROMPT(
+      'Chamonix',
+      'France',
+      'source text',
+      '  pisteKm: 110'
+    )
+    expect(prompt).toContain('Known facts already captured')
+    expect(prompt).toContain('pisteKm: 110')
+  })
 })

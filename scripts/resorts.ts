@@ -178,7 +178,8 @@ function mergeEnriched(
 async function enrichResort(
   resortName: string,
   country: string,
-  model: string
+  model: string,
+  seeded: SeededResort
 ): Promise<ResolvedEnrichData | null> {
   const responseCodec = jsonCodec(enrichSchema)
 
@@ -264,7 +265,23 @@ async function enrichResort(
     JSON.stringify(buildJsonSchema(), null, 2)
   )
 
-  const userPrompt = LLM_USER_PROMPT(resortName, country, sourceText)
+  const knownFacts = `  resortName: ${seeded.resortName}
+  country: ${seeded.country}
+  region: ${seeded.region}
+  baseAltitude: ${seeded.baseAltitude}m
+  summitAltitude: ${seeded.summitAltitude}m
+  pisteKm: ${seeded.pisteKm}
+  liftCount: ${seeded.liftCount}
+  beginnerPct: ${seeded.beginnerPct}%
+  intermediatePct: ${seeded.intermediatePct}%
+  advancedPct: ${seeded.advancedPct}%`
+
+  const userPrompt = LLM_USER_PROMPT(
+    resortName,
+    country,
+    sourceText,
+    knownFacts
+  )
 
   log('info', 'enrich', 'Streaming LLM extraction...', 1)
   const stream = await ollama.chat({
@@ -591,7 +608,8 @@ async function enrich(options: {
     const result = await enrichResort(
       seededResort.resortName,
       seededResort.country,
-      model
+      model,
+      seededResort
     )
     if (!result) {
       log(
