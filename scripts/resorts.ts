@@ -1835,7 +1835,11 @@ program
     '--batches <number>',
     'Maximum number of LLM batch calls (stops early if no new resorts found)'
   )
-  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
+  .option(
+    '--seeded <path>',
+    'Path to seeded JSONL file',
+    'resorts/seeded.jsonl'
+  )
   .option(
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
@@ -1855,8 +1859,16 @@ program
   .description(
     'Enrich seeded resorts with detailed data using LLM and Exa search'
   )
-  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
-  .requiredOption('--enriched <path>', 'Path to enriched JSONL file')
+  .option(
+    '--seeded <path>',
+    'Path to seeded JSONL file',
+    'resorts/seeded.jsonl'
+  )
+  .option(
+    '--enriched <path>',
+    'Path to enriched JSONL file',
+    'resorts/enriched.jsonl'
+  )
   .option(
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
@@ -1879,9 +1891,21 @@ program
 program
   .command('encode')
   .description('Encode seeded+enriched resorts into embeddings')
-  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
-  .requiredOption('--enriched <path>', 'Path to enriched JSONL file')
-  .requiredOption('--encoded <path>', 'Path to encoded JSONL file')
+  .option(
+    '--seeded <path>',
+    'Path to seeded JSONL file',
+    'resorts/seeded.jsonl'
+  )
+  .option(
+    '--enriched <path>',
+    'Path to enriched JSONL file',
+    'resorts/enriched.jsonl'
+  )
+  .option(
+    '--encoded <path>',
+    'Path to encoded JSONL file',
+    'resorts/encoded.jsonl'
+  )
   .action(encode)
 
 program
@@ -1889,10 +1913,26 @@ program
   .description(
     'Build resort-data.jsonl from the intersection of seeded, enriched, and encoded files'
   )
-  .requiredOption('--seeded <path>', 'Path to seeded JSONL file')
-  .requiredOption('--enriched <path>', 'Path to enriched JSONL file')
-  .requiredOption('--encoded <path>', 'Path to encoded JSONL file')
-  .requiredOption('--output <path>', 'Path to output resort-data JSONL file')
+  .option(
+    '--seeded <path>',
+    'Path to seeded JSONL file',
+    'resorts/seeded.jsonl'
+  )
+  .option(
+    '--enriched <path>',
+    'Path to enriched JSONL file',
+    'resorts/enriched.jsonl'
+  )
+  .option(
+    '--encoded <path>',
+    'Path to encoded JSONL file',
+    'resorts/encoded.jsonl'
+  )
+  .option(
+    '--output <path>',
+    'Path to output resort-data JSONL file',
+    'resorts/all.jsonl'
+  )
   .action(build)
 
 program
@@ -1900,7 +1940,11 @@ program
   .description(
     'Upload resort data to Appwrite Storage (overwrites existing file)'
   )
-  .requiredOption('-f, --file <path>', 'path to resort-data.jsonl file')
+  .option(
+    '-f, --file <path>',
+    'path to resort-data.jsonl file',
+    'resorts/all.jsonl'
+  )
   .action(async (options) => {
     await uploadResorts(options.file)
   })
