@@ -180,7 +180,7 @@ export const detailStyles = {
   descriptionText: {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
-    color: colors.textPrimary,
+    color: colors.textData,
     lineHeight: '1.6',
     margin: '4px 0 0',
   },

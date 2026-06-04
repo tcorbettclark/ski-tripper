@@ -1006,7 +1006,7 @@ const resortsStyles = {
   detailGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '12px',
+    gap: '18px',
     marginBottom: '16px',
   },
   countryFlag: {
@@ -1021,6 +1021,7 @@ const resortsStyles = {
     height: '14px',
   },
   detailDescriptionSection: {
+    marginTop: '6px',
     marginBottom: '16px',
   },
   proposeButton: {

@@ -29,11 +29,12 @@ const styles = {
     color: colors.textSecondary,
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
-    marginBottom: '4px',
+    marginBottom: '7px',
   },
   fieldValue: {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
+    fontWeight: '600',
     color: colors.textData,
     lineHeight: '1.5',
   },

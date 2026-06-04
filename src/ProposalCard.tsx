@@ -922,7 +922,7 @@ const styles = {
     fontFamily: fonts.display,
     fontSize: fontSizes.xl,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: colors.textSecondary,
     marginLeft: 'auto',
     fontStyle: 'italic',
   },
@@ -935,7 +935,7 @@ const styles = {
     verticalAlign: 'middle',
   },
   descriptionSection: {
-    marginTop: '12px',
+    marginTop: '18px',
     marginBottom: '8px',
   },
   flag: {
@@ -979,7 +979,7 @@ const styles = {
   grid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '12px',
+    gap: '18px',
   },
 
   accommodationsSection: {
@@ -995,7 +995,7 @@ const styles = {
   accommodationItem: {
     display: 'flex',
     justifyContent: 'flex-end',
-    marginTop: '12px',
+    marginTop: '18px',
   },
   accommodationItemContent: {
     flex: 1,
@@ -1181,7 +1181,7 @@ const accFormStyles = {
   grid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '10px',
+    gap: '16px',
   },
   field: {
     display: 'flex',
