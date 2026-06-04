@@ -2,6 +2,7 @@
 
 :root,
 [data-theme="dark"] {
+  color-scheme: dark;
   --color-accent: #3bbde8;
   --color-bgPrimary: #07111f;
   --color-bgCard: #0d1e30;
@@ -15,6 +16,7 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
   --color-accent: #0284c7;
   --color-bgPrimary: #eef4fd;
   --color-bgCard: #f7faff;
