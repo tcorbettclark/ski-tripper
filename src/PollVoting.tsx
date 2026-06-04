@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
-import { borders, colors, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Accommodation, Poll, Proposal, Vote } from './types.d.ts'
 
 interface PollVotingProps {
@@ -303,13 +303,13 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  proposalName: { fontSize: '14px', color: colors.textData },
+  proposalName: { fontSize: fontSizes.base, color: colors.textData },
   infoButtonWrap: { display: 'flex', alignItems: 'center', gap: '4px' },
   infoButton: {
     background: 'none',
     border: 'none',
     color: colors.textSecondary,
-    fontSize: '16px',
+    fontSize: fontSizes.md,
     cursor: 'pointer',
     padding: '4px',
     opacity: 0.6,
@@ -323,7 +323,7 @@ const styles = {
     border: `1.5px solid ${mix('--color-accent', 0.5)}`,
     background: mix('--color-accent', 0.15),
     color: colors.accent,
-    fontSize: '16px',
+    fontSize: fontSizes.md,
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
@@ -336,14 +336,14 @@ const styles = {
     cursor: 'default',
   },
   count: {
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.accent,
     fontWeight: '600',
     minWidth: '16px',
     textAlign: 'center',
   },
   countZero: {
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: mix('--color-textSecondary', 0.4),
     fontWeight: '600',
     minWidth: '16px',
@@ -356,7 +356,7 @@ const styles = {
     paddingTop: '14px',
     borderTop: borders.subtle,
   },
-  footerText: { fontSize: '12px', color: colors.textSecondary },
+  footerText: { fontSize: fontSizes.sm, color: colors.textSecondary },
   saveButton: {
     padding: '7px 20px',
     borderRadius: '6px',
@@ -364,7 +364,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -413,7 +413,7 @@ const popupStyles = {
     background: 'none',
     border: 'none',
     color: colors.textSecondary,
-    fontSize: '24px',
+    fontSize: fontSizes.xl,
     cursor: 'pointer',
     lineHeight: '1',
     padding: '0',

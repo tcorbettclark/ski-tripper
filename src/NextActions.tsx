@@ -8,7 +8,7 @@ import {
   Vote,
 } from 'lucide-react'
 import type { StatusFilter } from './ProposalsGrid'
-import { borders, colors, fonts, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
 import type { Poll } from './types.d.ts'
 import { formatDate } from './utils'
 
@@ -158,7 +158,7 @@ const nextActionsStyles = {
   },
   heading: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: '0.08em',
@@ -180,7 +180,7 @@ const nextActionsStyles = {
     background: `linear-gradient(135deg, ${mix('--color-accent', 0.15)} 0%, ${mix('--color-accent', 0.05)} 100%)`,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '500',
     cursor: 'pointer',
     textAlign: 'left' as const,

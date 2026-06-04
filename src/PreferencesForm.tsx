@@ -3,7 +3,7 @@ import {
   createPreferences as _createPreferences,
   updatePreferences as _updatePreferences,
 } from './backend'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, fontSizes, fonts, formStyles } from './theme'
 import type { Preferences } from './types.d'
 import { parseJsonArray } from './utils'
 
@@ -261,7 +261,7 @@ const styles = {
   },
   groupLabel: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: '0.08em',
@@ -278,7 +278,7 @@ const styles = {
     gap: '8px',
     cursor: 'pointer',
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textPrimary,
   },
   checkbox: {
@@ -289,7 +289,7 @@ const styles = {
   },
   checkboxText: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textPrimary,
   },
   sliders: {
@@ -304,7 +304,7 @@ const styles = {
   },
   sliderLabel: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textData,
     minWidth: '90px',
   },
@@ -314,7 +314,7 @@ const styles = {
   },
   sliderValue: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.accent,
     minWidth: '40px',
     textAlign: 'right' as const,
@@ -327,12 +327,12 @@ const styles = {
   },
   totalLabel: {
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
   },
   totalValue: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     fontWeight: '600',
   },
   textInput: {
@@ -342,7 +342,7 @@ const styles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none' as const,
   },
   actions: {

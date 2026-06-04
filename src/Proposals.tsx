@@ -17,7 +17,7 @@ import {
 import CreateProposalForm from './CreateProposalForm'
 import type { StatusFilter } from './ProposalsGrid'
 import ProposalsGrid from './ProposalsGrid'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fontSizes, fonts } from './theme'
 import type { Accommodation, Proposal, ResortWithEmbedding } from './types.d.ts'
 
 interface ProposalsProps {
@@ -330,14 +330,14 @@ const styles = {
     fontFamily: fonts.body,
     padding: '80px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
   },
   promptMessage: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
     padding: '40px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
   },
   toolbar: {
     display: 'flex',
@@ -349,7 +349,7 @@ const styles = {
   },
   heading: {
     fontFamily: fonts.display,
-    fontSize: '30px',
+    fontSize: fontSizes['2xl'],
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -366,7 +366,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
     letterSpacing: '0.02em',

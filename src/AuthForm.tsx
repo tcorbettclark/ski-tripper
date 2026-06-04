@@ -5,7 +5,7 @@ import Field from './Field'
 import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
 import ThemeToggle from './ThemeToggle'
-import { authStyles, formStyles } from './theme'
+import { authStyles, fontSizes, formStyles } from './theme'
 
 interface AuthFormProps {
   mode?: 'login' | 'signup'
@@ -160,7 +160,7 @@ export default function AuthForm({
               <button
                 type="button"
                 onClick={onForgotPassword}
-                style={{ ...authStyles.switchLink, fontSize: '12px' }}
+                style={{ ...authStyles.switchLink, fontSize: fontSizes.sm }}
               >
                 Forgot password?
               </button>

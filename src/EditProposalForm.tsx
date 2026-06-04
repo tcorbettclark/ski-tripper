@@ -3,7 +3,14 @@ import { updateProposal as _updateProposal } from './backend'
 import { COUNTRIES } from './countries'
 import DateRangeField from './DateRangeField'
 import Field from './Field'
-import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
+import {
+  borders,
+  colors,
+  fieldStyles,
+  fontSizes,
+  fonts,
+  formStyles,
+} from './theme'
 import type { Proposal } from './types.d'
 import { ensureUrlScheme, isValidUrl } from './utils'
 
@@ -296,7 +303,7 @@ const styles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
     resize: 'vertical',
     minHeight: '80px',
@@ -314,7 +321,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: formStyles.saveButton.fontFamily,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -325,7 +332,7 @@ const styles = {
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: formStyles.cancelButton.fontFamily,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '500',
     cursor: 'pointer',
   },

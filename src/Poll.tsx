@@ -13,7 +13,7 @@ import {
 import PastPoll from './PastPoll'
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
-import { borders, colors, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type {
   Accommodation,
   Poll as PollType,
@@ -377,7 +377,7 @@ const styles = {
     fontFamily: fonts.body,
     padding: '80px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
   },
   toolbar: {
     display: 'flex',
@@ -389,7 +389,7 @@ const styles = {
   },
   heading: {
     fontFamily: fonts.display,
-    fontSize: '30px',
+    fontSize: fontSizes['2xl'],
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -400,7 +400,7 @@ const styles = {
     fontFamily: fonts.body,
     padding: '40px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
   },
   pollPanel: {
     border: borders.card,
@@ -417,7 +417,7 @@ const styles = {
   },
   pollStatus: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.accent,
     letterSpacing: '0.05em',
@@ -425,7 +425,7 @@ const styles = {
   },
   pollDates: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
     margin: '4px 0 0',
   },
@@ -436,7 +436,7 @@ const styles = {
     background: 'transparent',
     color: colors.error,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '500',
     cursor: 'pointer',
   },
@@ -448,7 +448,7 @@ const styles = {
   },
   outcomeLabel: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.textPrimary,
   },
@@ -459,7 +459,7 @@ const styles = {
     borderRadius: '6px',
     border: borders.subtle,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     resize: 'vertical',
   },
   outcomeActions: {
@@ -473,7 +473,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -484,7 +484,7 @@ const styles = {
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '500',
     cursor: 'pointer',
   },
@@ -502,7 +502,7 @@ const styles = {
   },
   activeVotesHeading: {
     fontFamily: fonts.display,
-    fontSize: '16px',
+    fontSize: fontSizes.md,
     fontWeight: '600',
     color: colors.textSecondary,
     margin: '0 0 12px',
@@ -521,18 +521,18 @@ const styles = {
     borderRadius: '6px',
     border: borders.subtle,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     textAlign: 'center',
   },
   daysLabel: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textSecondary,
     marginRight: '16px',
   },
   label: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textPrimary,
     marginRight: '8px',
   },
@@ -543,7 +543,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -554,7 +554,7 @@ const styles = {
   },
   pastHeading: {
     fontFamily: fonts.display,
-    fontSize: '20px',
+    fontSize: fontSizes.lg,
     fontWeight: '600',
     color: colors.textSecondary,
     margin: '0 0 16px',

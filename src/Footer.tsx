@@ -1,7 +1,7 @@
 import { AlertTriangle, Bug } from 'lucide-react'
 import { useRef, useState } from 'react'
 import packageJson from '../package.json' with { type: 'json' }
-import { colors, fonts } from './theme'
+import { colors, fontSizes, fonts } from './theme'
 import useAutoHideFooter from './useAutoHideFooter'
 
 const VERSION = packageJson.version
@@ -93,7 +93,7 @@ const footerStyles = {
     gap: '8px',
     padding: '16px 16px',
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
     position: 'fixed' as const,
     bottom: 0,
@@ -123,7 +123,7 @@ const footerStyles = {
     background: colors.error,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     padding: '3px 8px',
     borderRadius: '4px',

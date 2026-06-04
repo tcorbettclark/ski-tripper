@@ -26,7 +26,7 @@ import type { StatusFilter } from './ProposalsGrid'
 import ResetPasswordForm from './ResetPasswordForm'
 import Resorts from './Resorts'
 import Trips from './Trips'
-import { colors, fonts, mix } from './theme'
+import { colors, fontSizes, fonts, mix } from './theme'
 import type { Preferences, ResortWithEmbedding, Trip } from './types.d.ts'
 import useAuth from './useAuth'
 
@@ -377,7 +377,7 @@ export default function App({
           <h2
             style={{
               fontFamily: fonts.display,
-              fontSize: '28px',
+              fontSize: fontSizes['2xl'],
               fontWeight: '600',
               color: colors.textPrimary,
               marginBottom: '8px',
@@ -389,7 +389,7 @@ export default function App({
           <p
             style={{
               fontFamily: fonts.body,
-              fontSize: '14px',
+              fontSize: fontSizes.base,
               color: colors.textSecondary,
               marginBottom: '32px',
             }}

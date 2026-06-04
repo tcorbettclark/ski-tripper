@@ -11,7 +11,7 @@ import {
   updateProposal as _updateProposal,
 } from './backend'
 import ProposalCard from './ProposalCard'
-import { borders, colors, fonts, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
 import type { Accommodation, Proposal } from './types.d.ts'
 
 export type StatusFilter = 'DRAFT' | 'SUBMITTED' | 'REJECTED'
@@ -288,7 +288,7 @@ const styles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
   },
   myProposalsLabel: {
@@ -299,7 +299,7 @@ const styles = {
   },
   myProposalsLabelText: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '500',
     color: colors.textSecondary,
   },
@@ -362,7 +362,7 @@ const styles = {
     background: mix('--color-accent', 0.15),
     color: colors.accent,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -374,7 +374,7 @@ const styles = {
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '500',
     cursor: 'pointer',
   },
@@ -388,7 +388,7 @@ const styles = {
     fontFamily: fonts.body,
     padding: '60px 40px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
     fontStyle: 'italic',
   },
   emptySearch: {
@@ -396,6 +396,6 @@ const styles = {
     fontFamily: fonts.body,
     padding: '40px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
   },
 } as const

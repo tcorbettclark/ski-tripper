@@ -11,7 +11,15 @@ import {
   onModelReady,
   searchResorts,
 } from './resortSearch'
-import { borders, colors, detailStyles, fonts, formStyles, mix } from './theme'
+import {
+  borders,
+  colors,
+  detailStyles,
+  fontSizes,
+  fonts,
+  formStyles,
+  mix,
+} from './theme'
 import type { ResortWithEmbedding } from './types.d.ts'
 import { ensureUrlScheme, sanitizeUrl } from './utils'
 
@@ -808,7 +816,7 @@ const resortsStyles = {
   },
   heading: {
     fontFamily: fonts.display,
-    fontSize: '30px',
+    fontSize: fontSizes['2xl'],
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -822,14 +830,14 @@ const resortsStyles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },
   noResortsText: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     margin: 0,
   },
   filtersGrid: {
@@ -855,7 +863,7 @@ const resortsStyles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
   },
   searchInputDisabled: {
@@ -869,7 +877,7 @@ const resortsStyles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
     cursor: 'pointer',
   },
@@ -881,7 +889,7 @@ const resortsStyles = {
   },
   sliderLabel: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
     letterSpacing: '0.04em',
     textTransform: 'uppercase' as const,
@@ -897,7 +905,7 @@ const resortsStyles = {
     background: 'transparent',
     color: colors.accent,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     whiteSpace: 'nowrap' as const,
   },
@@ -910,7 +918,7 @@ const resortsStyles = {
   },
   resultCount: {
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
     marginBottom: '12px',
   },
@@ -928,7 +936,7 @@ const resortsStyles = {
   th: {
     padding: '12px 16px',
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: '0.06em',
@@ -944,7 +952,7 @@ const resortsStyles = {
   td: {
     padding: '10px 16px',
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textData,
     whiteSpace: 'nowrap' as const,
     overflow: 'hidden',
@@ -990,7 +998,7 @@ const resortsStyles = {
     background: 'none',
     border: 'none',
     color: colors.textSecondary,
-    fontSize: '24px',
+    fontSize: fontSizes.xl,
     cursor: 'pointer',
     padding: '4px 8px',
     lineHeight: 1,
@@ -1022,7 +1030,7 @@ const resortsStyles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     fontWeight: '600',
     cursor: 'pointer',
     width: '100%',
@@ -1045,7 +1053,7 @@ const resortsStyles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -1056,7 +1064,7 @@ const resortsStyles = {
     background: 'transparent',
     color: colors.accent,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -1067,14 +1075,14 @@ const resortsStyles = {
   },
   proposalFormTitle: {
     fontFamily: fonts.display,
-    fontSize: '18px',
+    fontSize: fontSizes.lg,
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
   },
   proposalFormSubtitle: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
     margin: '-12px 0 0',
   },
@@ -1090,7 +1098,7 @@ const resortsStyles = {
   },
   proposalFormLabel: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: '0.04em',
@@ -1103,7 +1111,7 @@ const resortsStyles = {
     background: colors.bgCard,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
   },
   proposalFormTextarea: {
@@ -1113,7 +1121,7 @@ const resortsStyles = {
     background: colors.bgCard,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
     resize: 'vertical' as const,
   },

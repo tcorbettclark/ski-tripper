@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrandTitle, HamburgerIcon } from './Icons'
 import ThemeToggle from './ThemeToggle'
-import { authStyles, borders, colors, fonts, formStyles, mix } from './theme'
+import {
+  authStyles,
+  borders,
+  colors,
+  fontSizes,
+  fonts,
+  formStyles,
+  mix,
+} from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
 import { formatCountdown } from './utils'
 
@@ -290,7 +298,7 @@ export default function Header({
   if (view === 'tripList') {
     return (
       <header style={headerStyles.bar}>
-        <span style={{ ...authStyles.brandName, fontSize: '22px' }}>
+        <span style={{ ...authStyles.brandName, fontSize: fontSizes.xl }}>
           <BrandTitle fontSize="22px" />
         </span>
         {isSmall ? (
@@ -362,7 +370,7 @@ export default function Header({
   if (isSmall) {
     return (
       <header style={headerStyles.bar}>
-        <span style={{ ...authStyles.brandName, fontSize: '18px' }}>
+        <span style={{ ...authStyles.brandName, fontSize: fontSizes.lg }}>
           <BrandTitle fontSize="18px" />
         </span>
         <div style={headerStyles.mobileRight}>
@@ -445,7 +453,7 @@ const headerStyles = {
     border: 'none',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     cursor: 'pointer',
     padding: '6px 12px',
     borderRadius: '6px',
@@ -473,7 +481,7 @@ const headerStyles = {
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '500',
     cursor: 'pointer',
     letterSpacing: '0.02em',
@@ -485,7 +493,7 @@ const headerStyles = {
     background: mix('--color-accent', 0.12),
     color: colors.accent,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
     letterSpacing: '0.02em',
@@ -501,7 +509,7 @@ const headerStyles = {
     border: 'none',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     letterSpacing: '0.02em',
     cursor: 'pointer',
     padding: '6px 8px',
@@ -509,7 +517,7 @@ const headerStyles = {
     transition: 'color 0.15s',
   },
   triangle: {
-    fontSize: '10px',
+    fontSize: fontSizes.xs,
     lineHeight: 1,
   },
   userMenuDropdown: {
@@ -533,7 +541,7 @@ const headerStyles = {
     background: 'none',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     cursor: 'pointer',
     textAlign: 'left' as const,
     letterSpacing: '0.02em',
@@ -546,7 +554,7 @@ const headerStyles = {
   userNameSmall: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     letterSpacing: '0.02em',
   },
   hamburgerButton: {
@@ -556,7 +564,7 @@ const headerStyles = {
     cursor: 'pointer',
     padding: '6px',
     borderRadius: '6px',
-    fontSize: '20px',
+    fontSize: fontSizes.lg,
     lineHeight: 1,
   },
   hamburgerIcon: {
@@ -581,7 +589,7 @@ const headerStyles = {
     background: 'none',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     cursor: 'pointer',
     textAlign: 'left' as const,
     letterSpacing: '0.02em',

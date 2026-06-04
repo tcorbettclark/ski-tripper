@@ -9,7 +9,7 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { colors, fonts, mix } from './theme'
+import { colors, fontSizes, fonts, mix } from './theme'
 
 const slideColorKeys: (keyof typeof colors)[] = [
   'slide0',
@@ -165,7 +165,7 @@ const bannerStyles = {
   },
   text: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     lineHeight: '1.5',
     margin: '4px auto 12px auto',
     width: '80%',
@@ -189,7 +189,7 @@ const bannerStyles = {
     position: 'absolute' as const,
     bottom: '0',
     right: '0',
-    fontSize: '10px',
+    fontSize: fontSizes.xs,
     lineHeight: '1',
     color: colors.textSecondary,
     opacity: '0.5',

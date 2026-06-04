@@ -7,7 +7,14 @@ import {
 import { COUNTRIES } from './countries'
 import DateRangeField from './DateRangeField'
 import Field from './Field'
-import { borders, colors, fieldStyles, fonts, formStyles } from './theme'
+import {
+  borders,
+  colors,
+  fieldStyles,
+  fontSizes,
+  fonts,
+  formStyles,
+} from './theme'
 import type { ResortWithEmbedding } from './types.d'
 import { ensureUrlScheme, isValidUrl } from './utils'
 
@@ -513,17 +520,17 @@ const styles = {
     border: 'none',
     background: 'transparent',
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
   },
   suggestionName: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textPrimary,
     fontWeight: '500' as const,
   },
   suggestionDetail: {
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
   },
   textarea: {
@@ -533,7 +540,7 @@ const styles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
     resize: 'vertical',
     minHeight: '80px',

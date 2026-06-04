@@ -1,4 +1,4 @@
-import { colors, fonts } from './theme'
+import { colors, fontSizes, fonts } from './theme'
 
 interface DetailFieldProps {
   label: string
@@ -24,7 +24,7 @@ export default function DetailField({
 const styles = {
   fieldLabel: {
     fontFamily: fonts.body,
-    fontSize: '10px',
+    fontSize: fontSizes.xs,
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: '0.08em',
@@ -33,7 +33,7 @@ const styles = {
   },
   fieldValue: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textData,
     lineHeight: '1.5',
   },

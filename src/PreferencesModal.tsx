@@ -1,7 +1,7 @@
 import { X } from 'lucide-react'
 import { useState } from 'react'
 import PreferencesForm from './PreferencesForm'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fontSizes, fonts } from './theme'
 import type { Preferences } from './types.d'
 
 interface PreferencesModalProps {
@@ -115,7 +115,7 @@ const styles = {
   },
   panelTitle: {
     fontFamily: fonts.display,
-    fontSize: '30px',
+    fontSize: fontSizes['2xl'],
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,

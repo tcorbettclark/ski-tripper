@@ -6,7 +6,7 @@ import {
   listDiscussion as _listDiscussion,
   updateDiscussionComment as _updateDiscussionComment,
 } from './backend'
-import { borders, colors, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Discussion } from './types.d'
 import { formatRelativeTime } from './utils'
 
@@ -356,7 +356,7 @@ const styles = {
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: '20px',
+    fontSize: fontSizes.lg,
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -381,14 +381,14 @@ const styles = {
   loading: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     textAlign: 'center' as const,
     margin: '32px 0',
   },
   empty: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     textAlign: 'center' as const,
     fontStyle: 'italic',
     margin: '32px 0',
@@ -400,13 +400,13 @@ const styles = {
   systemMessageBody: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     fontStyle: 'italic',
   },
   systemMessageTimestamp: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     marginLeft: '8px',
   },
   commentBubble: {
@@ -423,7 +423,7 @@ const styles = {
   },
   commentAuthor: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.textPrimary,
   },
@@ -432,7 +432,7 @@ const styles = {
     marginLeft: '6px',
     padding: '1px 5px',
     borderRadius: '3px',
-    fontSize: '10px',
+    fontSize: fontSizes.xs,
     fontWeight: '700',
     background: mix('--color-accent', 0.2),
     color: colors.accent,
@@ -440,7 +440,7 @@ const styles = {
   },
   commentTimestamp: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
   },
   commentActions: {
@@ -468,7 +468,7 @@ const styles = {
   },
   commentBody: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textData,
     margin: 0,
     lineHeight: '1.5',
@@ -485,7 +485,7 @@ const styles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
     resize: 'vertical' as const,
   },
@@ -500,7 +500,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -511,7 +511,7 @@ const styles = {
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     cursor: 'pointer',
   },
   inputArea: {
@@ -530,7 +530,7 @@ const styles = {
     background: colors.bgInput,
     color: colors.textPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     outline: 'none',
   },
   postButton: {
@@ -540,7 +540,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -551,7 +551,7 @@ const styles = {
     background: mix('--color-accent', 0.3),
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'not-allowed',
   },
@@ -565,14 +565,14 @@ const styles = {
   },
   confirmTitle: {
     fontFamily: fonts.display,
-    fontSize: '20px',
+    fontSize: fontSizes.lg,
     fontWeight: '600',
     color: colors.textPrimary,
     margin: '0 0 12px 0',
   },
   confirmText: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textSecondary,
     margin: '0 0 24px 0',
     lineHeight: '1.5',
@@ -589,7 +589,7 @@ const styles = {
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     cursor: 'pointer',
   },
   confirmDeleteButton: {
@@ -599,7 +599,7 @@ const styles = {
     background: colors.error,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },

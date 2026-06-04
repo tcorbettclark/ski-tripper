@@ -25,7 +25,7 @@ import {
   SnowboardIcon,
 } from './Icons'
 import NextActions from './NextActions'
-import { borders, colors, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type {
   Participant,
   Poll,
@@ -591,7 +591,7 @@ const overviewStyles = {
   },
   heading: {
     fontFamily: fonts.display,
-    fontSize: '30px',
+    fontSize: fontSizes['2xl'],
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -603,7 +603,7 @@ const overviewStyles = {
   },
   sectionHeading: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: '0.08em',
@@ -621,7 +621,7 @@ const overviewStyles = {
 
   codeValue: {
     fontFamily: fonts.mono,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.accent,
     letterSpacing: '0.04em',
   },
@@ -639,17 +639,17 @@ const overviewStyles = {
   },
   hint: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
   },
   coordinatorLabel: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
   },
   coordinatorNames: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textPrimary,
   },
   copyButton: {
@@ -663,7 +663,7 @@ const overviewStyles = {
   },
   copyFeedback: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
     marginLeft: '4px',
   },
@@ -680,13 +680,13 @@ const overviewStyles = {
   loading: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     margin: 0,
   },
   empty: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     margin: 0,
   },
   participantGrid: {
@@ -741,7 +741,7 @@ const overviewStyles = {
   },
   cellEmpty: {
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.sm,
     color: mix('--color-textSecondary', 0.2),
   },
   iconRow: {
@@ -751,12 +751,12 @@ const overviewStyles = {
   },
   cellAspectLabel: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     color: colors.textData,
   },
   participantName: {
     fontFamily: fonts.body,
-    fontSize: '15px',
+    fontSize: fontSizes.md,
     color: colors.textPrimary,
   },
   timeMeters: {
@@ -769,7 +769,7 @@ const overviewStyles = {
     alignItems: 'center',
     gap: '2px',
     fontFamily: fonts.body,
-    fontSize: '10px',
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
   },
   timeMeterTrack: {

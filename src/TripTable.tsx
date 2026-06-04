@@ -1,6 +1,6 @@
 import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
 import TripRow from './TripRow'
-import { borders, colors, fonts, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
 import type { Trip } from './types.d.ts'
 
 interface TripTableProps {
@@ -51,14 +51,14 @@ const styles = {
     fontFamily: fonts.body,
     padding: '60px 40px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
     fontStyle: 'italic',
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
   },
   th: {
     textAlign: 'left',
@@ -66,7 +66,7 @@ const styles = {
     background: colors.bgCard,
     borderBottom: borders.subtle,
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     fontWeight: '500',
     color: colors.textSecondary,
     letterSpacing: '0.1em',

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { account as _account } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
-import { authStyles, colors, formStyles } from './theme'
+import { authStyles, colors, fontSizes, formStyles } from './theme'
 
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void
@@ -113,14 +113,14 @@ export default function ForgotPasswordForm({
 const forgotStyles = {
   message: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0 0 8px 0',
   } as const,
   email: {
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: '15px',
+    fontSize: fontSizes.md,
     color: colors.textPrimary,
     fontWeight: '600',
     margin: '0 0 8px 0',

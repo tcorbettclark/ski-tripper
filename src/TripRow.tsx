@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
-import { colors, fonts, mix } from './theme'
+import { colors, fontSizes, fonts, mix } from './theme'
 import type { Trip } from './types.d.ts'
 
 interface TripRowProps {
@@ -56,7 +56,7 @@ const styles = {
     color: colors.textData,
     verticalAlign: 'top',
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     lineHeight: '1.5',
     transition: 'background 0.15s, color 0.15s',
   },

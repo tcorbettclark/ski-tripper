@@ -1,5 +1,5 @@
 import { Component, type ReactNode } from 'react'
-import { colors, fonts } from './theme'
+import { colors, fontSizes, fonts } from './theme'
 
 interface ErrorBoundaryProps {
   children?: ReactNode
@@ -56,18 +56,18 @@ const styles = {
     textAlign: 'center',
   },
   emoji: {
-    fontSize: '48px',
+    fontSize: fontSizes['3xl'],
     margin: '0 0 16px',
   },
   heading: {
     fontFamily: fonts.display,
-    fontSize: '24px',
+    fontSize: fontSizes.xl,
     fontWeight: '600',
     color: colors.textPrimary,
     margin: '0 0 12px',
   },
   message: {
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textSecondary,
     margin: '0 0 24px',
   },
@@ -78,7 +78,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
   },

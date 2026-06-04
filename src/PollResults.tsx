@@ -1,4 +1,4 @@
-import { colors, fonts, mix } from './theme'
+import { colors, fontSizes, fonts, mix } from './theme'
 import type { Poll, Proposal, Vote } from './types.d.ts'
 
 interface PollResultsProps {
@@ -62,7 +62,7 @@ export default function PollResults({
 const styles = {
   container: { fontFamily: fonts.body },
   header: {
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: '0.1em',
@@ -75,7 +75,7 @@ const styles = {
     gap: '10px',
     marginBottom: '10px',
   },
-  label: { fontSize: '14px', color: colors.textData },
+  label: { fontSize: fontSizes.base, color: colors.textData },
   barTrack: {
     background: mix('--color-accent', 0.1),
     borderRadius: '3px',
@@ -88,7 +88,7 @@ const styles = {
     borderRadius: '3px',
   },
   total: {
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.accent,
     fontWeight: '600',
     minWidth: '24px',

@@ -36,6 +36,17 @@ export function mix(token: string, opacity: number): string {
   return `color-mix(in srgb, var(${token}) ${opacity * 100}%, transparent)`
 }
 
+export const fontSizes = {
+  xs: '12px',
+  sm: '13px',
+  base: '14px',
+  md: '16px',
+  lg: '20px',
+  xl: '24px',
+  '2xl': '30px',
+  '3xl': '40px',
+} as const
+
 export const fonts = {
   body: "'DM Sans', sans-serif",
   display: "'Cormorant Garamond', Georgia, serif",
@@ -53,7 +64,7 @@ export const formStyles = {
   error: {
     color: colors.error,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     margin: 0,
   },
   primaryButton: {
@@ -64,10 +75,7 @@ export const formStyles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '15px',
-    fontWeight: '600',
-    cursor: 'pointer',
-    letterSpacing: '0.02em',
+    fontSize: fontSizes.md,
   },
   cancelButton: {
     padding: '10px 16px',
@@ -76,7 +84,7 @@ export const formStyles = {
     background: 'transparent',
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     cursor: 'pointer',
   },
   saveButton: {
@@ -86,7 +94,7 @@ export const formStyles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     fontWeight: '600',
     cursor: 'pointer',
   },
@@ -115,7 +123,7 @@ export const authStyles = {
   },
   brandName: {
     fontFamily: fonts.body,
-    fontSize: '12px',
+    fontSize: fontSizes.xs,
     fontWeight: '500',
     letterSpacing: '0.45em',
     color: colors.accent,
@@ -124,7 +132,7 @@ export const authStyles = {
   title: {
     fontFamily: fonts.display,
     marginBottom: '32px',
-    fontSize: '38px',
+    fontSize: fontSizes['3xl'],
     fontWeight: '600',
     color: colors.textPrimary,
     lineHeight: '1.1',
@@ -137,7 +145,7 @@ export const authStyles = {
   switchText: {
     marginTop: '28px',
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
     textAlign: 'center' as const,
   },
@@ -148,7 +156,7 @@ export const authStyles = {
     fontFamily: fonts.body,
     fontWeight: '500',
     cursor: 'pointer',
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     padding: '0',
   },
 }
@@ -156,7 +164,7 @@ export const authStyles = {
 export const detailStyles = {
   title: {
     fontFamily: fonts.display,
-    fontSize: '22px',
+    fontSize: fontSizes.xl,
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -166,12 +174,12 @@ export const detailStyles = {
   },
   websiteLink: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.accent,
   },
   descriptionText: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textPrimary,
     lineHeight: '1.6',
     margin: '4px 0 0',
@@ -187,7 +195,7 @@ export const fieldStyles = {
     },
     label: {
       fontFamily: fonts.body,
-      fontSize: '11px',
+      fontSize: fontSizes.xs,
       fontWeight: '500',
       color: colors.textSecondary,
       letterSpacing: '0.08em',
@@ -201,7 +209,7 @@ export const fieldStyles = {
       background: colors.bgInput,
       color: colors.textPrimary,
       fontFamily: fonts.body,
-      fontSize: '14px',
+      fontSize: fontSizes.base,
       outline: 'none' as const,
     },
   },
@@ -214,7 +222,7 @@ export const fieldStyles = {
     },
     label: {
       fontFamily: fonts.body,
-      fontSize: '11px',
+      fontSize: fontSizes.xs,
       fontWeight: '500',
       color: colors.textSecondary,
       letterSpacing: '0.08em',
@@ -227,7 +235,7 @@ export const fieldStyles = {
       background: colors.bgInput,
       color: colors.textPrimary,
       fontFamily: fonts.body,
-      fontSize: '15px',
+      fontSize: fontSizes.md,
       outline: 'none' as const,
     },
   },

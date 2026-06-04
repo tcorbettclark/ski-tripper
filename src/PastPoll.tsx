@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import PollResults from './PollResults'
-import { borders, colors, fonts, formStyles } from './theme'
+import { borders, colors, fontSizes, fonts, formStyles } from './theme'
 import type { Poll, Proposal, Vote } from './types.d.ts'
 import { formatDate, formatDateTime } from './utils'
 
@@ -93,7 +93,7 @@ const styles = {
   },
   status: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.textSecondary,
     letterSpacing: '0.05em',
@@ -101,13 +101,13 @@ const styles = {
   },
   dates: {
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
   },
   loading: {
     color: colors.textSecondary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     margin: '10px 0 0',
   },
   outcomeBox: {
@@ -125,14 +125,14 @@ const styles = {
     minWidth: 0,
   },
   outcomeIcon: {
-    fontSize: '16px',
+    fontSize: fontSizes.md,
     color: colors.accent,
     lineHeight: '1.5',
     flexShrink: 0,
   },
   outcomeLabel: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     fontWeight: '600',
     color: colors.accent,
     letterSpacing: '0.08em',
@@ -140,14 +140,14 @@ const styles = {
   },
   outcomeText: {
     fontFamily: fonts.body,
-    fontSize: '14px',
+    fontSize: fontSizes.base,
     color: colors.textPrimary,
     margin: 0,
     lineHeight: '1.5',
   },
   outcomeMeta: {
     fontFamily: fonts.body,
-    fontSize: '11px',
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
     alignSelf: 'flex-end',
     whiteSpace: 'nowrap',

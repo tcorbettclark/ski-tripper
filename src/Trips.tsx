@@ -9,7 +9,7 @@ import {
 import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'
-import { borders, colors, fonts } from './theme'
+import { borders, colors, fontSizes, fonts } from './theme'
 import type { Trip } from './types.d.ts'
 
 interface TripsProps {
@@ -122,7 +122,7 @@ const styles = {
     fontFamily: fonts.body,
     padding: '80px',
     textAlign: 'center',
-    fontSize: '15px',
+    fontSize: fontSizes.md,
   },
   toolbar: {
     display: 'flex',
@@ -134,7 +134,7 @@ const styles = {
   },
   heading: {
     fontFamily: fonts.display,
-    fontSize: '30px',
+    fontSize: fontSizes['2xl'],
     fontWeight: '600',
     color: colors.textPrimary,
     margin: 0,
@@ -151,7 +151,7 @@ const styles = {
     background: colors.accent,
     color: colors.bgPrimary,
     fontFamily: fonts.body,
-    fontSize: '13px',
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     cursor: 'pointer',
     letterSpacing: '0.02em',

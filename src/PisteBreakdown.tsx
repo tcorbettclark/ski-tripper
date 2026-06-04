@@ -1,4 +1,4 @@
-import { colors, fonts } from './theme'
+import { colors, fontSizes, fonts } from './theme'
 
 interface PisteBreakdownProps {
   beginnerPct: number
@@ -77,7 +77,7 @@ const defaultStyles = {
   },
   pctLabel: {
     fontFamily: fonts.body,
-    fontSize: '10px',
+    fontSize: fontSizes.xs,
   },
 }
 
