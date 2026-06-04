@@ -37,5 +37,6 @@ const styles = {
     fontWeight: '600',
     color: colors.textData,
     lineHeight: '1.5',
+    whiteSpace: 'pre-line' as const,
   },
 } as const
