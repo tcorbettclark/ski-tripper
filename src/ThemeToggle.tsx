@@ -1,9 +1,5 @@
 import { Moon, Sun } from 'lucide-react'
-import { useEffect, useState } from 'react'
-
-function getTheme(): 'dark' | 'light' {
-  return (document.documentElement.dataset.theme as 'dark' | 'light') || 'dark'
-}
+import useTheme from './useTheme'
 
 function setTheme(theme: 'dark' | 'light') {
   document.documentElement.dataset.theme = theme
@@ -11,22 +7,10 @@ function setTheme(theme: 'dark' | 'light') {
 }
 
 export default function ThemeToggle() {
-  const [theme, setThemeState] = useState<'dark' | 'light'>(getTheme())
-
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setThemeState(getTheme())
-    })
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-theme'],
-    })
-    return () => observer.disconnect()
-  }, [])
+  const theme = useTheme()
 
   function toggle() {
     const next = theme === 'dark' ? 'light' : 'dark'
-    setThemeState(next)
     setTheme(next)
   }
 
