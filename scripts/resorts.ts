@@ -20,7 +20,7 @@ import {
   buildJsonSchema,
   DEFAULT_MODEL,
   ENRICH_SOURCE_WEBSITES,
-  exa,
+  getExa,
   jsonCodec,
   LLM_SYSTEM_PROMPT,
   LLM_USER_PROMPT,
@@ -297,7 +297,7 @@ async function fetchCoordinates(
   log('info', 'enrich', 'Fetching coordinates from Exa...', 1)
   try {
     const [sourcedResponse, broadResponse] = await Promise.all([
-      exa.search(EXA_COORDS_QUERY(resortName, country), {
+      getExa().search(EXA_COORDS_QUERY(resortName, country), {
         type: 'deep-lite',
         numResults: 3,
         useAutoprompt: true,
@@ -305,7 +305,7 @@ async function fetchCoordinates(
         contents: { text: { maxCharacters: 2000 } },
         outputSchema: COORDS_SCHEMA,
       }),
-      exa.search(EXA_COORDS_QUERY(resortName, country), {
+      getExa().search(EXA_COORDS_QUERY(resortName, country), {
         type: 'deep-lite',
         numResults: 3,
         useAutoprompt: true,
@@ -333,18 +333,21 @@ async function fetchCoordinates(
 
   log('warn', 'enrich', 'No coordinates found, falling back to text search', 1)
   try {
-    const results = await exa.search(EXA_COORDS_QUERY(resortName, country), {
-      type: 'auto',
-      numResults: 3,
-      useAutoprompt: true,
-      contents: {
-        text: { maxCharacters: 2000 },
-        highlights: {
-          query: 'latitude longitude coordinates',
-          maxCharacters: 1000,
+    const results = await getExa().search(
+      EXA_COORDS_QUERY(resortName, country),
+      {
+        type: 'auto',
+        numResults: 3,
+        useAutoprompt: true,
+        contents: {
+          text: { maxCharacters: 2000 },
+          highlights: {
+            query: 'latitude longitude coordinates',
+            maxCharacters: 1000,
+          },
         },
-      },
-    })
+      }
+    )
 
     const coordRegex = /(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)/
     for (const result of results.results) {
@@ -384,7 +387,7 @@ async function enrichResort(
 
   log('info', 'enrich', 'Fetching source text from Exa...', 1)
   const [sourcedResults, broadResults] = await Promise.all([
-    exa.search(EXA_SEARCH_QUERY(resortName, country), {
+    getExa().search(EXA_SEARCH_QUERY(resortName, country), {
       type: 'auto',
       numResults: EXA_SOURCED_NUM_RESULTS,
       useAutoprompt: true,
@@ -394,7 +397,7 @@ async function enrichResort(
         highlights: true,
       },
     }),
-    exa.search(EXA_SEARCH_QUERY(resortName, country), {
+    getExa().search(EXA_SEARCH_QUERY(resortName, country), {
       type: 'auto',
       numResults: EXA_BROAD_NUM_RESULTS,
       useAutoprompt: true,

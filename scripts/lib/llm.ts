@@ -32,7 +32,15 @@ export const ollama = new Ollama({
   headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
 })
 
-export const exa = new Exa(process.env.EXA_API_KEY as string)
+let _exa: Exa | undefined
+export function getExa(): Exa {
+  if (!_exa) {
+    const apiKey = process.env.EXA_API_KEY
+    if (!apiKey) throw new Error('EXA_API_KEY environment variable is not set')
+    _exa = new Exa(apiKey)
+  }
+  return _exa
+}
 
 export function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   return z.codec(z.string(), schema, {
