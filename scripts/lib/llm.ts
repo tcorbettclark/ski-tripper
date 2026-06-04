@@ -42,16 +42,44 @@ export function getExa(): Exa {
   return _exa
 }
 
+// Try JSON.parse before aiJsonSafeParse. The LLM responses sometimes contain
+// curly/smart quotes (e.g. \u201C \u201D) inside string values like "sketchy".
+// aiJsonSafeParse's Unicode normalization converts these to ASCII double quotes,
+// breaking the JSON structure by introducing unescaped quotes inside strings.
+// This causes aiJsonSafeParse to fall back to extractJsonBlocks, which returns
+// the first parseable fragment — often just the websites array instead of the
+// full object. JSON.parse handles the original bytes correctly since Ollama
+// streams proper escaped quotes, so we try it first and only fall back to
+// aiJsonSafeParse for malformed JSON that needs repair.
+function extractJsonObject(jsonString: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(jsonString)
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      !Array.isArray(parsed)
+    ) {
+      return parsed
+    }
+  } catch {}
+
+  const parsed = aiJsonSafeParse<unknown>(jsonString)
+  if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return parsed as Record<string, unknown>
+  }
+  return null
+}
+
 export function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   return z.codec(z.string(), schema, {
     decode: (jsonString, ctx) => {
-      const parsed = aiJsonSafeParse<Record<string, unknown>>(jsonString)
+      const parsed = extractJsonObject(jsonString)
       if (parsed === null) {
         ctx.issues.push({
           code: 'invalid_format',
           format: 'json',
           input: jsonString,
-          message: 'Failed to extract valid JSON from LLM response',
+          message: 'Failed to extract valid JSON object from LLM response',
         })
         return z.NEVER as never
       }
