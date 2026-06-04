@@ -35,9 +35,10 @@ describe('readJsonl', () => {
     } catch {}
   })
 
-  it('returns empty array for non-existent file', () => {
-    const result = readJsonl(path.join(tmpDir, 'nonexistent.jsonl'))
-    expect(result).toEqual([])
+  it('throws for non-existent file', () => {
+    expect(() => readJsonl(path.join(tmpDir, 'nonexistent.jsonl'))).toThrow(
+      /file not found/i
+    )
   })
 
   it('returns empty array for empty file', () => {

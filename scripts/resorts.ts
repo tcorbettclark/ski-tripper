@@ -759,7 +759,9 @@ async function seed(options: {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
   const sources = options.sources ? SOURCE_WEBSITES : undefined
   const includeDomains = options.sources ? SOURCE_WEBSITES : undefined
-  const seededPath = options.seeded
+  const seededPath = path.resolve(options.seeded)
+
+  log('info', 'seed', `Seeded file: ${seededPath}`)
 
   if (!REGIONS.includes(region as (typeof REGIONS)[number])) {
     log(
@@ -1339,8 +1341,8 @@ async function enrich(options: {
   enriched: string
 }) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
-  const seededPath = options.seeded
-  const enrichedPath = options.enriched
+  const seededPath = path.resolve(options.seeded)
+  const enrichedPath = path.resolve(options.enriched)
   let mode: EnrichMode = 'new'
   if (options.all && options.fill) {
     log('error', 'enrich', 'Cannot use --fill and --all together. Pick one.')
@@ -1348,6 +1350,9 @@ async function enrich(options: {
   }
   if (options.all) mode = 'all'
   else if (options.fill) mode = 'fill'
+
+  log('info', 'enrich', `Seeded file: ${seededPath}`)
+  log('info', 'enrich', `Enriched file: ${enrichedPath}`)
 
   const seeded = readJsonl<SeededResort>(seededPath)
   if (seeded.length === 0) {
@@ -1561,9 +1566,13 @@ async function encode(options: {
   enriched: string
   encoded: string
 }) {
-  const seededPath = options.seeded
-  const enrichedPath = options.enriched
-  const encodedPath = options.encoded
+  const seededPath = path.resolve(options.seeded)
+  const enrichedPath = path.resolve(options.enriched)
+  const encodedPath = path.resolve(options.encoded)
+
+  log('info', 'encode', `Seeded file: ${seededPath}`)
+  log('info', 'encode', `Enriched file: ${enrichedPath}`)
+  log('info', 'encode', `Encoded file: ${encodedPath}`)
 
   const seeded = readJsonl<SeededResort>(seededPath)
   if (seeded.length === 0) {
@@ -1578,7 +1587,9 @@ async function encode(options: {
   const enriched = readJsonl<EnrichedResort>(enrichedPath)
   const enrichedById = new Map(enriched.map((r) => [r.id, r]))
 
-  const existingEncoded = readJsonl<EncodedResort>(encodedPath)
+  const existingEncoded = fs.existsSync(encodedPath)
+    ? readJsonl<EncodedResort>(encodedPath)
+    : []
   const encodedById = new Map(existingEncoded.map((r) => [r.id, r]))
 
   log(
@@ -1690,12 +1701,16 @@ function build(options: {
   encoded: string
   output: string
 }) {
-  const seededPath = options.seeded
-  const enrichedPath = options.enriched
-  const encodedPath = options.encoded
-  const outputPath = options.output
+  const seededPath = path.resolve(options.seeded)
+  const enrichedPath = path.resolve(options.enriched)
+  const encodedPath = path.resolve(options.encoded)
+  const outputPath = path.resolve(options.output)
 
   log('info', 'build', 'Building resort data file...')
+  log('info', 'build', `Seeded file: ${seededPath}`)
+  log('info', 'build', `Enriched file: ${enrichedPath}`)
+  log('info', 'build', `Encoded file: ${encodedPath}`)
+  log('info', 'build', `Output file: ${outputPath}`)
 
   const seeded = readJsonl<SeededResort>(seededPath)
   const enriched = readJsonl<EnrichedResort>(enrichedPath)

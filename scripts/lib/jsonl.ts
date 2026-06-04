@@ -2,8 +2,11 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 export function readJsonl<T>(filePath: string): T[] {
-  if (!fs.existsSync(filePath)) return []
-  const content = fs.readFileSync(filePath, 'utf-8').trim()
+  const resolved = path.resolve(filePath)
+  if (!fs.existsSync(resolved)) {
+    throw new Error(`File not found: ${resolved}`)
+  }
+  const content = fs.readFileSync(resolved, 'utf-8').trim()
   if (!content) return []
   return content
     .split('\n')
