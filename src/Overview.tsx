@@ -576,7 +576,7 @@ export default function Overview({
 
 const overviewStyles = {
   container: {
-    padding: '40px 24px',
+    padding: '40px 48px',
     maxWidth: '960px',
     margin: '0 auto',
     fontFamily: fonts.body,
