@@ -10,7 +10,7 @@ import {
   TIER_CLOSE,
   TIER_EXACT,
   TIER_FUZZY,
-} from './resortSearch'
+} from './resortSearchPure'
 import type { ResortWithEmbedding } from './types.d'
 
 function makeResort(
