@@ -1,10 +1,4 @@
-import { fonts, mix } from './theme'
-
-const PISTE_COLOURS = {
-  beginner: '#4A90D9',
-  intermediate: '#E53935',
-  advanced: '#212121',
-} as const
+import { colors, fonts } from './theme'
 
 interface PisteBreakdownProps {
   beginnerPct: number
@@ -23,13 +17,13 @@ export default function PisteBreakdown({
   if (total === 0) return null
 
   const bars = [
-    { label: 'Beginner', pct: beginnerPct, colour: PISTE_COLOURS.beginner },
+    { label: 'Beginner', pct: beginnerPct, colour: colors.pisteBeginner },
     {
       label: 'Intermediate',
       pct: intermediatePct,
-      colour: PISTE_COLOURS.intermediate,
+      colour: colors.pisteIntermediate,
     },
-    { label: 'Advanced', pct: advancedPct, colour: PISTE_COLOURS.advanced },
+    { label: 'Advanced', pct: advancedPct, colour: colors.pisteAdvanced },
   ]
 
   return (
@@ -37,7 +31,6 @@ export default function PisteBreakdown({
       {bars.map((bar) => {
         const widthPct = (bar.pct / total) * 100
         const tooltip = `${bar.label}: ${bar.pct}%`
-        const isBlackBar = bar.label === 'Advanced'
         return (
           <div key={bar.label} style={defaultStyles.barRow} title={tooltip}>
             <div
@@ -45,18 +38,13 @@ export default function PisteBreakdown({
                 ...(compact ? compactStyles.bar : defaultStyles.bar),
                 width: `${widthPct}%`,
                 background: bar.colour,
-                border: isBlackBar
-                  ? `1px solid ${mix('--color-textPrimary', 0.6)}`
-                  : 'none',
               }}
             />
             {!compact && bar.pct > 0 && (
               <span
                 style={{
                   ...defaultStyles.pctLabel,
-                  color: isBlackBar
-                    ? mix('--color-textPrimary', 0.6)
-                    : bar.colour,
+                  color: bar.colour,
                 }}
               >
                 {bar.pct}%

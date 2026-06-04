@@ -307,19 +307,19 @@ export default function Overview({
           key: 'eating',
           label: 'Eating',
           value: prefs.timeEating,
-          color: '#f0a050',
+          color: colors.timeEating,
         },
         {
           key: 'apres',
           label: 'Après',
           value: prefs.timeApres,
-          color: '#c070d0',
+          color: colors.timeApres,
         },
         {
           key: 'hotel',
           label: 'Hotel',
           value: prefs.timeHotel,
-          color: '#7090d0',
+          color: colors.timeHotel,
         },
       ]
       if (!timeSegments.some((s) => s.value > 0))

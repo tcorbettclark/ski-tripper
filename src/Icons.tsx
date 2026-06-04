@@ -49,7 +49,7 @@ export function SnowboardIcon({ size = 14, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
-      color={color ?? '#f0a050'}
+      color={color ?? colors.snowboard}
       dim={dim}
       label="Snowboard"
     >
@@ -69,7 +69,7 @@ export function BlackSlopeIcon({ size = 12, color, dim }: IconProps) {
     >
       <polygon
         points="8,1 15,8 8,15 1,8"
-        fill={dim ? dimColor : (color ?? '#404040')}
+        fill={dim ? dimColor : (color ?? colors.slopeBlack)}
         stroke={dim ? 'none' : colors.textPrimary}
         strokeWidth="1.5"
       />
@@ -77,7 +77,11 @@ export function BlackSlopeIcon({ size = 12, color, dim }: IconProps) {
   )
 }
 
-export function RedSlopeIcon({ size = 12, color = '#c40000', dim }: IconProps) {
+export function RedSlopeIcon({
+  size = 12,
+  color = colors.slopeRed,
+  dim,
+}: IconProps) {
   return (
     <svg
       width={size}
@@ -100,7 +104,7 @@ export function RedSlopeIcon({ size = 12, color = '#c40000', dim }: IconProps) {
 
 export function BlueSlopeIcon({
   size = 12,
-  color = '#0055a4',
+  color = colors.slopeBlue,
   dim,
 }: IconProps) {
   return (
@@ -117,7 +121,7 @@ export function BlueSlopeIcon({
 }
 
 export function OnPisteIcon({ size = 14, color, dim }: IconProps) {
-  const c = dim ? dimColor : (color ?? '#d4a017')
+  const c = dim ? dimColor : (color ?? colors.onPiste)
   return (
     <svg
       width={size}
@@ -143,7 +147,7 @@ export function OnPisteIcon({ size = 14, color, dim }: IconProps) {
 }
 
 export function OffPisteIcon({ size = 14, color, dim }: IconProps) {
-  const c = dim ? dimColor : (color ?? '#c070d0')
+  const c = dim ? dimColor : (color ?? colors.offPiste)
   return (
     <svg
       width={size}
@@ -169,7 +173,7 @@ export function FiveStarHotelIcon({ size = 14, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
-      color={color ?? '#e0a040'}
+      color={color ?? colors.hotel5Star}
       dim={dim}
       label="5-star hotel"
     >
@@ -180,7 +184,12 @@ export function FiveStarHotelIcon({ size = 14, color, dim }: IconProps) {
 
 export function HotelIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <EmojiIcon size={size} color={color ?? '#50b080'} dim={dim} label="Hotel">
+    <EmojiIcon
+      size={size}
+      color={color ?? colors.hotel}
+      dim={dim}
+      label="Hotel"
+    >
       🏨
     </EmojiIcon>
   )
@@ -188,7 +197,12 @@ export function HotelIcon({ size = 14, color, dim }: IconProps) {
 
 export function ChaletIcon({ size = 14, color, dim }: IconProps) {
   return (
-    <EmojiIcon size={size} color={color ?? '#7090d0'} dim={dim} label="Chalet">
+    <EmojiIcon
+      size={size}
+      color={color ?? colors.chalet}
+      dim={dim}
+      label="Chalet"
+    >
       🏡
     </EmojiIcon>
   )
@@ -198,7 +212,7 @@ export function GuesthouseIcon({ size = 14, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
-      color={color ?? '#a08860'}
+      color={color ?? colors.guesthouse}
       dim={dim}
       label="Guesthouse"
     >

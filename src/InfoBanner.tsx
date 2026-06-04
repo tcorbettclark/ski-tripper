@@ -11,14 +11,14 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { colors, fonts, mix } from './theme'
 
-const slideColors = [
-  '#3bbde8',
-  '#5ecfcf',
-  '#8be28a',
-  '#e2c94a',
-  '#e89a3b',
-  '#e26a7b',
-  '#b08be2',
+const slideColorKeys: (keyof typeof colors)[] = [
+  'slide0',
+  'slide1',
+  'slide2',
+  'slide3',
+  'slide4',
+  'slide5',
+  'slide6',
 ]
 
 const defaultSlides = [
@@ -103,14 +103,20 @@ export default function InfoBanner({
       >
         {(() => {
           const Icon = slides[active].icon
-          const color = slideColors[active % slideColors.length]
-          return <Icon size={20} color={color} style={bannerStyles.icon} />
+          const colorKey = slideColorKeys[active % slideColorKeys.length]
+          return (
+            <Icon
+              size={20}
+              color={colors[colorKey]}
+              style={bannerStyles.icon}
+            />
+          )
         })()}
         <div style={bannerStyles.textWrap}>
           <p
             style={{
               ...bannerStyles.text,
-              color: slideColors[active % slideColors.length],
+              color: colors[slideColorKeys[active % slideColorKeys.length]],
               whiteSpace: 'pre-line' as const,
             }}
           >
@@ -126,7 +132,8 @@ export default function InfoBanner({
                 i === active
                   ? {
                       ...bannerStyles.dot,
-                      background: slideColors[i % slideColors.length],
+                      background:
+                        colors[slideColorKeys[i % slideColorKeys.length]],
                     }
                   : bannerStyles.dot
               }

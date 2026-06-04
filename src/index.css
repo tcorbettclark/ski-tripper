@@ -13,6 +13,29 @@
   --color-error: #ff6b6b;
   --color-overlay: rgba(4, 12, 24, 0.85);
   --color-shadow: rgba(0, 0, 0, 0.6);
+  --color-pisteBeginner: #4a90d9;
+  --color-pisteIntermediate: #e53935;
+  --color-pisteAdvanced: #888888;
+  --color-timeEating: #f0a050;
+  --color-timeApres: #c070d0;
+  --color-timeHotel: #7090d0;
+  --color-snowboard: #f0a050;
+  --color-slopeBlack: #555555;
+  --color-slopeRed: #c40000;
+  --color-slopeBlue: #0055a4;
+  --color-onPiste: #d4a017;
+  --color-offPiste: #c070d0;
+  --color-hotel5Star: #e0a040;
+  --color-hotel: #50b080;
+  --color-chalet: #7090d0;
+  --color-guesthouse: #a08860;
+  --color-slide0: #3bbde8;
+  --color-slide1: #5ecfcf;
+  --color-slide2: #8be28a;
+  --color-slide3: #e2c94a;
+  --color-slide4: #e89a3b;
+  --color-slide5: #e26a7b;
+  --color-slide6: #b08be2;
 }
 
 [data-theme="light"] {
@@ -27,6 +50,29 @@
   --color-error: #dc2626;
   --color-overlay: rgba(0, 0, 0, 0.4);
   --color-shadow: rgba(0, 0, 0, 0.15);
+  --color-pisteBeginner: #3a78c0;
+  --color-pisteIntermediate: #cc2e2e;
+  --color-pisteAdvanced: #444444;
+  --color-timeEating: #cc8830;
+  --color-timeApres: #9a58a8;
+  --color-timeHotel: #4a68a8;
+  --color-snowboard: #cc8830;
+  --color-slopeBlack: #333333;
+  --color-slopeRed: #b80000;
+  --color-slopeBlue: #004488;
+  --color-onPiste: #b08810;
+  --color-offPiste: #9a58a8;
+  --color-hotel5Star: #c08830;
+  --color-hotel: #409068;
+  --color-chalet: #4a68a8;
+  --color-guesthouse: #8a7050;
+  --color-slide0: #0284c7;
+  --color-slide1: #2a9e9e;
+  --color-slide2: #5aaa5a;
+  --color-slide3: #c4a830;
+  --color-slide4: #c07030;
+  --color-slide5: #c04060;
+  --color-slide6: #8060b0;
 }
 
 /* react-day-picker theme overrides */
