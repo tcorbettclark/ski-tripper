@@ -19,7 +19,7 @@ const initPromise = (async () => {
   try {
     const { pipeline } = await import('@huggingface/transformers')
     const extractor = await pipeline('feature-extraction', MODEL_ID, {
-      dtype: 'fp32',
+      dtype: 'uint8',
     })
     embedder = async (text: string): Promise<number[]> => {
       const output = await extractor(text, {
