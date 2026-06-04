@@ -20,6 +20,7 @@ jobs:
       PUBLIC_APPWRITE_PREFERENCES_TABLE_ID: preferences
       PUBLIC_APPWRITE_POLLS_TABLE_ID: polls
       PUBLIC_APPWRITE_VOTES_TABLE_ID: votes
+      BUN_TEST: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v6

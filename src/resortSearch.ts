@@ -20,25 +20,31 @@ function notifyReady(): void {
   readyListeners.length = 0
 }
 
-const initPromise = (async () => {
-  try {
-    const { pipeline } = await import('@huggingface/transformers')
-    const extractor = await pipeline('feature-extraction', MODEL_ID, {
-      dtype: 'uint8',
-    })
-    embedder = async (text: string): Promise<number[]> => {
-      const output = await extractor(text, {
-        pooling: 'mean',
-        normalize: true,
-      })
-      return Array.from(output.data as Float32Array)
-    }
-    modelReady = true
-  } catch {
-    modelFailed = true
-  }
-  notifyReady()
-})()
+const initPromise =
+  typeof process !== 'undefined' && process.env.BUN_TEST
+    ? (async () => {
+        modelFailed = true
+        notifyReady()
+      })()
+    : (async () => {
+        try {
+          const { pipeline } = await import('@huggingface/transformers')
+          const extractor = await pipeline('feature-extraction', MODEL_ID, {
+            dtype: 'uint8',
+          })
+          embedder = async (text: string): Promise<number[]> => {
+            const output = await extractor(text, {
+              pooling: 'mean',
+              normalize: true,
+            })
+            return Array.from(output.data as Float32Array)
+          }
+          modelReady = true
+        } catch {
+          modelFailed = true
+        }
+        notifyReady()
+      })()
 
 export function initSearchModel(): void {
   initPromise.catch(() => {})

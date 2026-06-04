@@ -1,2 +1,5 @@
 [test]
 preload = ["./src/test-setup.js"]
+
+[test.env]
+BUN_TEST = "1"
