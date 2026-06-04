@@ -310,7 +310,6 @@ const styles = {
   },
   slider: {
     flex: 1,
-    accentColor: colors.accent,
     cursor: 'pointer',
   },
   sliderValue: {

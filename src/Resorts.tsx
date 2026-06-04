@@ -888,7 +888,6 @@ const resortsStyles = {
   },
   slider: {
     width: '140px',
-    accentColor: colors.accent,
   },
 
   clearButton: {
