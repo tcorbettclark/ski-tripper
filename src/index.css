@@ -16,11 +16,11 @@
 
 [data-theme="light"] {
   --color-accent: #0284c7;
-  --color-bgPrimary: #f8fafc;
-  --color-bgCard: #ffffff;
-  --color-bgInput: #f1f5f9;
+  --color-bgPrimary: #eef4fd;
+  --color-bgCard: #f7faff;
+  --color-bgInput: #e8f0fa;
   --color-textPrimary: #0f172a;
-  --color-textSecondary: #64748b;
+  --color-textSecondary: #5a7290;
   --color-textData: #475569;
   --color-error: #dc2626;
   --color-overlay: rgba(0, 0, 0, 0.4);
@@ -93,6 +93,11 @@ html,
 body {
   background: var(--color-bgPrimary);
   color: var(--color-textPrimary);
+}
+
+[data-theme="light"] body {
+  background: linear-gradient(160deg, #eef4fd 0%, #f7faff 50%, #eef4fd 100%);
+  background-attachment: fixed;
 }
 
 body {
