@@ -38,6 +38,7 @@ import {
   WEB_SEARCH_TOOL_DEFINITION,
 } from './lib/llm'
 import { ANSI_BOLD, ANSI_DIM, ANSI_RESET, log, logSummary } from './lib/log'
+import { normalisePistePercentages as normalisePercentages } from './lib/normalisePistePercentages'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
 function slugify(name: string, region: string, country: string): string {
@@ -288,31 +289,12 @@ function withDefaults(data: EnrichData): ResolvedEnrichData {
 function normalisePistePercentages(
   data: ResolvedEnrichData
 ): ResolvedEnrichData {
-  const b = data.beginnerPct
-  const i = data.intermediatePct
-  const a = data.advancedPct
-  const total = b + i + a
-  if (total === 0) return data
-
-  const ub = (b / total) * 100
-  const ui = (i / total) * 100
-  const ua = (a / total) * 100
-
-  const round5 = (n: number) => Math.round(n / 5) * 5
-  const rb = round5(ub)
-  const ri = round5(ui)
-  const ra = round5(ua)
-
-  if (rb + ri + ra === 100) {
-    return { ...data, beginnerPct: rb, intermediatePct: ri, advancedPct: ra }
-  }
-
-  return {
-    ...data,
-    beginnerPct: Math.round(ub),
-    intermediatePct: Math.round(ui),
-    advancedPct: Math.round(ua),
-  }
+  const { beginnerPct, intermediatePct, advancedPct } = normalisePercentages(
+    data.beginnerPct,
+    data.intermediatePct,
+    data.advancedPct
+  )
+  return { ...data, beginnerPct, intermediatePct, advancedPct }
 }
 
 interface Coordinates {
