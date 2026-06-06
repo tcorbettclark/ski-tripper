@@ -4,10 +4,15 @@ import useTheme from './useTheme'
 function setTheme(theme: 'dark' | 'light') {
   document.documentElement.dataset.theme = theme
   localStorage.setItem('theme', theme)
-  const meta = document.querySelector(
+  let meta = document.querySelector(
     'meta[name=color-scheme]'
   ) as HTMLMetaElement | null
-  if (meta) meta.content = theme
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.name = 'color-scheme'
+    document.head.appendChild(meta)
+  }
+  meta.content = theme
 }
 
 export default function ThemeToggle() {
