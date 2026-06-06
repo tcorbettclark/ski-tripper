@@ -94,7 +94,7 @@ describe('PreferencesModal', () => {
       )
     })
 
-    const input = screen.getByPlaceholderText(/great après-ski scene/i)
+    const input = screen.getByPlaceholderText(/tell us what matters most/i)
     await ue.clear(input)
     await ue.type(input, 'Updated value')
 

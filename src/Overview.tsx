@@ -1,5 +1,5 @@
 import type { Models } from 'appwrite'
-import { Check, Copy, Pencil } from 'lucide-react'
+import { Check, Copy, Heart, Pencil, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import {
   getCoordinatorParticipant as _getCoordinatorParticipant,
@@ -103,6 +103,12 @@ export default function Overview({
   const [codeCopyError, setCodeCopyError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [editingDescription, setEditingDescription] = useState(false)
+  const [aspectPopup, setAspectPopup] = useState<{
+    userId: string
+    text: string
+    x: number
+    y: number
+  } | null>(null)
 
   const mountedRef = useRef(true)
 
@@ -229,7 +235,8 @@ export default function Overview({
 
   function renderPreferenceCell(
     prefs: Preferences | null | undefined,
-    column: string
+    column: string,
+    participantUserId?: string
   ) {
     if (!prefs) return <span style={overviewStyles.cellEmpty}>—</span>
 
@@ -357,12 +364,36 @@ export default function Overview({
     if (column === 'aspect') {
       if (!prefs.mostImportantAspect)
         return <span style={overviewStyles.cellEmpty}>—</span>
+      const isOpen = aspectPopup?.userId === participantUserId
       return (
-        <span title={prefs.mostImportantAspect}>
-          <span style={overviewStyles.cellAspectLabel}>
-            {prefs.mostImportantAspect}
-          </span>
-        </span>
+        <button
+          type="button"
+          data-aspect-toggle={participantUserId}
+          onClick={(e) => {
+            e.stopPropagation()
+            if (!participantUserId) return
+            if (isOpen) {
+              setAspectPopup(null)
+            } else {
+              const rect = e.currentTarget.getBoundingClientRect()
+              setAspectPopup({
+                userId: participantUserId,
+                text: prefs.mostImportantAspect,
+                x: rect.right + 8,
+                y: rect.top,
+              })
+            }
+          }}
+          style={{
+            ...overviewStyles.aspectToggleButton,
+            opacity: isOpen ? 1 : 0.7,
+          }}
+          title="Show description"
+          aria-label="Show description"
+          aria-expanded={isOpen}
+        >
+          <Heart size={14} />
+        </button>
       )
     }
 
@@ -411,6 +442,19 @@ export default function Overview({
         setCodeCopyError('Failed to copy')
       })
   }
+
+  useEffect(() => {
+    if (!aspectPopup) return
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement
+      if (target.closest('[data-aspect-popup]')) return
+      if (target.closest('[data-aspect-toggle]')) return
+      if (!mountedRef.current) return
+      setAspectPopup(null)
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [aspectPopup])
 
   return (
     <div style={overviewStyles.container}>
@@ -503,53 +547,58 @@ export default function Overview({
                   const isCurrentUser =
                     p.participantUserId === user.$id && !!onOpenPreferences
                   return (
-                    // biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally
-                    <div
-                      key={p.$id}
-                      className={
-                        isCurrentUser
-                          ? 'participant-grid-row-clickable'
-                          : undefined
-                      }
-                      style={overviewStyles.gridRow}
-                      onClick={isCurrentUser ? onOpenPreferences : undefined}
-                      onKeyDown={
-                        isCurrentUser
-                          ? (e) => {
-                              if (e.key === 'Enter') onOpenPreferences()
-                            }
-                          : undefined
-                      }
-                      tabIndex={isCurrentUser ? 0 : undefined}
-                      role={isCurrentUser ? 'button' : undefined}
-                    >
-                      <span
-                        style={{
-                          ...(isCurrentUser
-                            ? overviewStyles.nameCellClickable
-                            : overviewStyles.nameCell),
-                          flex: '0 0 auto',
-                          minWidth: colWidths.name,
-                        }}
+                    <div key={p.$id}>
+                      {/* biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally */}
+                      <div
+                        className={
+                          isCurrentUser
+                            ? 'participant-grid-row-clickable'
+                            : undefined
+                        }
+                        style={overviewStyles.gridRow}
+                        onClick={isCurrentUser ? onOpenPreferences : undefined}
+                        onKeyDown={
+                          isCurrentUser
+                            ? (e) => {
+                                if (e.key === 'Enter') onOpenPreferences()
+                              }
+                            : undefined
+                        }
+                        tabIndex={isCurrentUser ? 0 : undefined}
+                        role={isCurrentUser ? 'button' : undefined}
                       >
-                        <span style={overviewStyles.participantName}>
-                          {p.participantUserName}
-                        </span>
-                      </span>
-                      {prefColumns.map((col) => (
                         <span
-                          key={col}
                           style={{
                             ...(isCurrentUser
-                              ? overviewStyles.gridCellClickable
-                              : overviewStyles.gridCell),
+                              ? overviewStyles.nameCellClickable
+                              : overviewStyles.nameCell),
                             flex: '0 0 auto',
-                            minWidth: colWidths[col],
+                            minWidth: colWidths.name,
                           }}
                         >
-                          {renderPreferenceCell(prefs, col)}
+                          <span style={overviewStyles.participantName}>
+                            {p.participantUserName}
+                          </span>
                         </span>
-                      ))}
+                        {prefColumns.map((col) => (
+                          <span
+                            key={col}
+                            style={{
+                              ...(isCurrentUser
+                                ? overviewStyles.gridCellClickable
+                                : overviewStyles.gridCell),
+                              flex: '0 0 auto',
+                              minWidth: colWidths[col],
+                            }}
+                          >
+                            {renderPreferenceCell(
+                              prefs,
+                              col,
+                              p.participantUserId
+                            )}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )
                 })}
@@ -570,6 +619,30 @@ export default function Overview({
         isCoordinator={isCoordinator}
         onNavigateToTab={onNavigateToTab}
       />
+
+      {aspectPopup && (
+        <div
+          data-aspect-popup
+          style={{
+            ...overviewStyles.aspectPopup,
+            top: aspectPopup.y,
+            left: Math.min(aspectPopup.x, window.innerWidth - 260),
+          }}
+        >
+          <div style={overviewStyles.aspectPopupHeader}>
+            <Heart size={12} style={overviewStyles.aspectPopupIcon} />
+            <button
+              type="button"
+              onClick={() => setAspectPopup(null)}
+              style={overviewStyles.aspectPopupClose}
+              aria-label="Close"
+            >
+              <X size={12} />
+            </button>
+          </div>
+          <span style={overviewStyles.aspectPopupText}>{aspectPopup.text}</span>
+        </div>
+      )}
     </div>
   )
 }
@@ -749,10 +822,55 @@ const overviewStyles = {
     gap: '2px',
     alignItems: 'center',
   },
-  cellAspectLabel: {
+  aspectToggleButton: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.accent,
+    padding: '2px',
+    lineHeight: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aspectPopup: {
+    position: 'fixed' as const,
+    zIndex: 1000,
+    background: colors.bgCard,
+    border: borders.accent,
+    borderRadius: '8px',
+    padding: '10px 12px',
+    maxWidth: '240px',
+    minWidth: '160px',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
+  },
+  aspectPopupHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '6px',
+  },
+  aspectPopupIcon: {
+    color: colors.accent,
+  },
+  aspectPopupClose: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: colors.textSecondary,
+    padding: '2px',
+    lineHeight: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aspectPopupText: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
+    fontSize: fontSizes.sm,
     color: colors.textData,
+    lineHeight: '1.5',
+    whiteSpace: 'pre-line' as const,
+    wordBreak: 'break-word' as const,
   },
   participantName: {
     fontFamily: fonts.body,

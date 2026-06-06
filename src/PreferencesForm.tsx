@@ -212,15 +212,15 @@ export default function PreferencesForm({
 
       <div style={styles.group}>
         <label htmlFor="mostImportantAspect" style={styles.groupLabel}>
-          Most Important Aspect
+          What kind of holiday do you like?
         </label>
-        <input
+        <textarea
           id="mostImportantAspect"
-          type="text"
           value={mostImportantAspect}
           onChange={(e) => setMostImportantAspect(e.target.value)}
-          placeholder="e.g. Great après-ski scene"
-          style={styles.textInput}
+          placeholder="Tell us what matters most to you on a ski trip — the more detail the better! For example: &quot;I love long lunches in mountain restaurants, good snow, and lively après-ski&quot;"
+          rows={4}
+          style={styles.textareaInput}
         />
       </div>
 
@@ -344,6 +344,18 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
     outline: 'none' as const,
+  },
+  textareaInput: {
+    padding: '10px 14px',
+    borderRadius: '7px',
+    border: borders.card,
+    background: colors.bgInput,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: fontSizes.base,
+    outline: 'none' as const,
+    resize: 'vertical' as const,
+    minHeight: '80px',
   },
   actions: {
     display: 'flex',

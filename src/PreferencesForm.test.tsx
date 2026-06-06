@@ -30,7 +30,7 @@ describe('PreferencesForm', () => {
     expect(screen.getByText('Piste')).toBeDefined()
     expect(screen.getByText('Time Allocation')).toBeDefined()
     expect(screen.getByText('Accommodation')).toBeDefined()
-    expect(screen.getByText('Most Important Aspect')).toBeDefined()
+    expect(screen.getByText('What kind of holiday do you like?')).toBeDefined()
   })
 
   it('toggles checkboxes', async () => {
@@ -84,7 +84,7 @@ describe('PreferencesForm', () => {
     await ue.click(screen.getByLabelText('Chalet'))
 
     await ue.type(
-      screen.getByPlaceholderText(/great après-ski scene/i),
+      screen.getByPlaceholderText(/tell us what matters most/i),
       'Good snow'
     )
 
@@ -115,8 +115,8 @@ describe('PreferencesForm', () => {
     })
 
     await ue.type(
-      screen.getByPlaceholderText(/great après-ski scene/i),
-      ' Updated'
+      screen.getByPlaceholderText(/tell us what matters most/i),
+      'Good snow'
     )
 
     await ue.click(screen.getByRole('button', { name: /update preferences/i }))
@@ -148,7 +148,7 @@ describe('PreferencesForm', () => {
     await ue.click(screen.getByLabelText('On-Piste'))
     await ue.click(screen.getByLabelText('Chalet'))
     await ue.type(
-      screen.getByPlaceholderText(/great après-ski scene/i),
+      screen.getByPlaceholderText(/tell us what matters most/i),
       'Good snow'
     )
 

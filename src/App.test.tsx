@@ -366,7 +366,7 @@ describe('App', () => {
     })
 
     await ue.type(
-      screen.getByPlaceholderText(/great après-ski scene/i),
+      screen.getByPlaceholderText(/tell us what matters most/i),
       'Good snow'
     )
 

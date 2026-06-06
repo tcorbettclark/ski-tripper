@@ -308,13 +308,31 @@ describe('Overview', () => {
     })
   })
 
-  it('shows most important aspect with snowflake icon and label', async () => {
+  it('shows most important aspect popup on heart click and closes on X or outside click', async () => {
+    const eventUser = userEvent.setup()
     await act(async () => {
       renderOverview()
     })
     await waitFor(() => {
-      expect(screen.getByTitle('Snow quality')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /show description/i })
+      ).toBeTruthy()
+    })
+    expect(screen.queryByText('Snow quality')).toBeNull()
+
+    await eventUser.click(
+      screen.getByRole('button', { name: /show description/i })
+    )
+
+    await waitFor(() => {
       expect(screen.getByText('Snow quality')).toBeTruthy()
+      expect(screen.getByRole('button', { name: /close/i })).toBeTruthy()
+    })
+
+    await eventUser.click(screen.getByRole('button', { name: /close/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByText('Snow quality')).toBeNull()
     })
   })
 
@@ -687,7 +705,9 @@ describe('Overview', () => {
       />
     )
     await waitFor(() => {
-      expect(screen.getByTitle('Snow quality')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /show description/i })
+      ).toBeTruthy()
     })
 
     const updatedPrefs: Preferences = {
@@ -726,8 +746,7 @@ describe('Overview', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByTitle('Powder')).toBeTruthy()
-      expect(screen.queryByTitle('Snow quality')).toBeNull()
+      expect(screen.queryByText('Snow quality')).toBeNull()
     })
   })
 })
