@@ -164,31 +164,26 @@ describe('Resorts', () => {
     expect(screen.getByText('Season')).toBeTruthy()
   })
 
-  it('disables clear filters button when no filters are active', () => {
+  it('does not show clear location button when no location filters are active', () => {
     render(<Resorts {...defaultProps()} />)
     expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
 
-    const clearButton = screen.getByRole('button', {
-      name: /clear filters/i,
-    }) as HTMLButtonElement
-    expect(clearButton).toBeTruthy()
-    expect(clearButton.disabled).toBe(true)
+    expect(screen.queryByRole('button', { name: /clear location/i })).toBeNull()
   })
 
-  it('enables clear filters button when country filter is active', async () => {
+  it('shows clear location button when country filter is active', async () => {
     render(<Resorts {...defaultProps()} />)
 
     const franceButton = screen.getByTitle('France')
     fireEvent.click(franceButton)
 
     const clearButton = screen.getByRole('button', {
-      name: /clear filters/i,
+      name: /clear location/i,
     }) as HTMLButtonElement
     expect(clearButton).toBeTruthy()
-    expect(clearButton.disabled).toBe(false)
   })
 
-  it('clears filters when clear button is clicked', async () => {
+  it('clears location filters when clear button is clicked', async () => {
     const eventUser = userEvent.setup()
     render(<Resorts {...defaultProps()} />)
 
@@ -196,7 +191,7 @@ describe('Resorts', () => {
     await eventUser.click(franceButton)
 
     await eventUser.click(
-      screen.getByRole('button', { name: /clear filters/i })
+      screen.getByRole('button', { name: /clear location/i })
     )
 
     expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
@@ -340,7 +335,7 @@ describe('Resorts', () => {
     expect(group.querySelector('span')!.textContent).toBe('1 hr 20 mins')
   })
 
-  it('resets transfer time to Any when clear filters is clicked', async () => {
+  it('resets transfer time to Any when clear transport filters is clicked', async () => {
     const eventUser = userEvent.setup()
     render(<Resorts {...defaultProps()} />)
 
@@ -352,7 +347,7 @@ describe('Resorts', () => {
     })
 
     await eventUser.click(
-      screen.getByRole('button', { name: /clear filters/i })
+      screen.getByRole('button', { name: /clear transport/i })
     )
 
     await waitFor(() => {
@@ -362,16 +357,16 @@ describe('Resorts', () => {
     expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
   })
 
-  it('enables clear filters when transfer time filter is active', () => {
+  it('shows clear transport button when transfer time filter is active', () => {
     render(<Resorts {...defaultProps()} />)
 
     const slider = screen.getByLabelText(/max transfer time/i)
     fireEvent.change(slider, { target: { value: '60' } })
 
     const clearButton = screen.getByRole('button', {
-      name: /clear filters/i,
+      name: /clear transport/i,
     }) as HTMLButtonElement
-    expect(clearButton.disabled).toBe(false)
+    expect(clearButton).toBeTruthy()
   })
 
   it('filters resorts by piste profile - advanced shows resort where advanced is plurality', async () => {
@@ -417,16 +412,16 @@ describe('Resorts', () => {
     })
   })
 
-  it('enables clear filters when piste profile filter is active', () => {
+  it('shows clear slope and terrain button when piste profile filter is active', () => {
     render(<Resorts {...defaultProps()} />)
 
     const beginnerButton = screen.getByRole('button', { name: 'Beginner' })
     fireEvent.click(beginnerButton)
 
     const clearButton = screen.getByRole('button', {
-      name: /clear filters/i,
+      name: /clear slope and terrain/i,
     }) as HTMLButtonElement
-    expect(clearButton.disabled).toBe(false)
+    expect(clearButton).toBeTruthy()
   })
 
   it('displays all resorts passed as props', () => {

@@ -320,14 +320,28 @@ export default function Resorts({
     [tripId, user.$id]
   )
 
-  const clearFilters = useCallback(() => {
+  const clearLocationFilters = useCallback(() => {
     setCountryFilter(new Set())
     setRegionFilter(new Set())
+  }, [])
+
+  const clearSlopeFilters = useCallback(() => {
     setMinPisteKm(0)
     setMinPeakHeight(0)
-    setMaxTransferTime(maxTransferTimeFromData)
     setPisteProfiles(new Set())
+  }, [])
+
+  const clearTransportFilters = useCallback(() => {
+    setMaxTransferTime(maxTransferTimeFromData)
   }, [maxTransferTimeFromData])
+
+  const hasLocationFilters = countryFilter.size > 0 || regionFilter.size > 0
+
+  const hasSlopeFilters =
+    minPisteKm > 0 || minPeakHeight > 0 || pisteProfiles.size > 0
+
+  const hasTransportFilters =
+    maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData
 
   if (resorts.length === 0) {
     return (
@@ -373,14 +387,6 @@ export default function Resorts({
         return ''
     }
   }
-
-  const hasActiveFilters =
-    countryFilter.size > 0 ||
-    regionFilter.size > 0 ||
-    minPisteKm > 0 ||
-    minPeakHeight > 0 ||
-    (maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData) ||
-    pisteProfiles.size > 0
 
   function trophyIcon(score: number): 'gold' | 'silver' | 'bronze' | null {
     if (score >= TROPHY_GOLD_THRESHOLD) return 'gold'
@@ -439,6 +445,16 @@ export default function Resorts({
         </div>
         <fieldset style={resortsStyles.filterGroup}>
           <legend style={resortsStyles.filterGroupLabel}>Location</legend>
+          {hasLocationFilters && (
+            <button
+              type="button"
+              onClick={clearLocationFilters}
+              style={resortsStyles.groupClearButton}
+              aria-label="Clear location filters"
+            >
+              ×
+            </button>
+          )}
           <div style={resortsStyles.filterRow}>
             <TagCloud
               commonItems={countryTagItems.common}
@@ -458,6 +474,16 @@ export default function Resorts({
           <legend style={resortsStyles.filterGroupLabel}>
             Slope &amp; terrain
           </legend>
+          {hasSlopeFilters && (
+            <button
+              type="button"
+              onClick={clearSlopeFilters}
+              style={resortsStyles.groupClearButton}
+              aria-label="Clear slope and terrain filters"
+            >
+              ×
+            </button>
+          )}
           <div style={resortsStyles.filterRow}>
             <div style={resortsStyles.sliderGroup}>
               <label
@@ -550,6 +576,16 @@ export default function Resorts({
         </fieldset>
         <fieldset style={resortsStyles.filterGroup}>
           <legend style={resortsStyles.filterGroupLabel}>Transport</legend>
+          {hasTransportFilters && (
+            <button
+              type="button"
+              onClick={clearTransportFilters}
+              style={resortsStyles.groupClearButton}
+              aria-label="Clear transport filters"
+            >
+              ×
+            </button>
+          )}
           <div style={resortsStyles.filterRow}>
             <div style={resortsStyles.sliderGroup}>
               <label
@@ -581,21 +617,6 @@ export default function Resorts({
             </div>
           </div>
         </fieldset>
-        <div style={resortsStyles.clearFiltersRow}>
-          <button
-            type="button"
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
-            style={{
-              ...resortsStyles.clearButton,
-              ...(hasActiveFilters
-                ? resortsStyles.clearButtonEnabled
-                : resortsStyles.clearButtonDisabled),
-            }}
-          >
-            Clear filters
-          </button>
-        </div>
       </div>
 
       <div style={resortsStyles.resultCount}>
@@ -1132,6 +1153,7 @@ const resortsStyles = {
     padding: '14px 16px',
     background: 'transparent',
     margin: 0,
+    position: 'relative' as const,
   },
   filterGroupLabel: {
     fontFamily: fonts.body,
@@ -1142,15 +1164,24 @@ const resortsStyles = {
     textTransform: 'uppercase' as const,
     padding: '0 6px',
   },
+  groupClearButton: {
+    position: 'absolute' as const,
+    top: '12px',
+    right: '12px',
+    background: 'none',
+    border: 'none',
+    color: colors.textSecondary,
+    fontSize: fontSizes.base,
+    cursor: 'pointer',
+    padding: '0 4px',
+    marginLeft: '6px',
+    lineHeight: 1,
+  },
   filterRow: {
     display: 'flex',
     alignItems: 'flex-end',
     gap: '12px',
     flexWrap: 'wrap' as const,
-  },
-  clearFiltersRow: {
-    display: 'flex',
-    justifyContent: 'flex-end' as const,
   },
   filterSelect: {
     padding: '10px 12px',
@@ -1212,24 +1243,6 @@ const resortsStyles = {
     transition: 'background 0.15s, color 0.15s',
   },
 
-  clearButton: {
-    padding: '10px 16px',
-    borderRadius: '7px',
-    border: `1px solid ${colors.accent}`,
-    background: 'transparent',
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    fontWeight: '600',
-    whiteSpace: 'nowrap' as const,
-  },
-  clearButtonDisabled: {
-    opacity: 0.4,
-    cursor: 'default',
-  },
-  clearButtonEnabled: {
-    cursor: 'pointer',
-  },
   resultCount: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
