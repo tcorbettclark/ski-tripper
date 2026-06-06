@@ -1,3 +1,4 @@
+import { Gavel } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import PollResults from './PollResults'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
@@ -56,7 +57,7 @@ export default function PastPoll({
       </div>
       {poll.outcome && (
         <div style={styles.outcomeBox}>
-          <span style={styles.outcomeIcon}>✔</span>
+          <Gavel size={16} style={styles.outcomeIcon} />
           <div style={styles.outcomeContent}>
             <span style={styles.outcomeLabel}>Outcome</span>
             <p style={styles.outcomeText}>{poll.outcome}</p>
