@@ -263,7 +263,7 @@ export default function PreferencesForm({
           ))}
         </div>
         <div style={styles.totalRow}>
-          <span style={styles.totalLabel}>Total:</span>
+          <div style={styles.totalDivider} />
           <span
             style={{
               ...styles.totalValue,
@@ -409,19 +409,21 @@ const styles = {
   },
   totalRow: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
+    flexDirection: 'column' as const,
+    alignItems: 'flex-end',
     marginTop: '4px',
   },
-  totalLabel: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textSecondary,
+  totalDivider: {
+    width: '40px',
+    borderTop: `1px solid ${mix('--color-textSecondary', 0.3)}`,
+    marginBottom: '2px',
   },
   totalValue: {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
     fontWeight: '600',
+    minWidth: '40px',
+    textAlign: 'right' as const,
   },
   textInput: {
     padding: '10px 14px',
