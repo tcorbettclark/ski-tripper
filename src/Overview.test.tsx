@@ -759,9 +759,9 @@ it('copies invite code to clipboard when copy button is clicked', async () => {
   await waitFor(() => {
     expect(screen.getByText('blue-mountain-lodge'))
   })
-  await fireEvent.click(
-    screen.getByRole('button', { name: /copy invite code/i })
-  )
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /copy invite code/i }))
+  })
   expect(writeText).toHaveBeenCalledWith('blue-mountain-lodge')
   await waitFor(() => {
     expect(screen.getByText('Copied!'))
@@ -776,9 +776,9 @@ it('shows error when copy fails', async () => {
   await waitFor(() => {
     expect(screen.getByText('blue-mountain-lodge'))
   })
-  await fireEvent.click(
-    screen.getByRole('button', { name: /copy invite code/i })
-  )
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /copy invite code/i }))
+  })
   await waitFor(() => {
     expect(screen.getByText('Failed to copy'))
   })
