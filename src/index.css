@@ -36,6 +36,7 @@
   --color-slide4: #e89a3b;
   --color-slide5: #e26a7b;
   --color-slide6: #b08be2;
+  --color-slide7: #e88b6a;
 }
 
 [data-theme="light"] {
@@ -73,6 +74,7 @@
   --color-slide4: #8a4e18;
   --color-slide5: #9a2040;
   --color-slide6: #5c3d8a;
+  --color-slide7: #8a4e30;
 }
 
 /* react-day-picker theme overrides */

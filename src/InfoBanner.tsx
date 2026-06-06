@@ -7,6 +7,7 @@ import {
   Snowflake,
   ThumbsUp,
   UserPlus,
+  Users,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { colors, fontSizes, fonts, mix } from './theme'
@@ -19,6 +20,7 @@ const slideColorKeys: (keyof typeof colors)[] = [
   'slide4',
   'slide5',
   'slide6',
+  'slide7',
 ]
 
 const defaultSlides = [
@@ -28,7 +30,11 @@ const defaultSlides = [
   },
   {
     icon: UserPlus,
-    text: 'Signup with your email, set your skiing/snowboarding holiday preferences, and create or join a trip via a simple three-word code.',
+    text: 'Signup with your email and set your skiing/snowboarding holiday preferences.',
+  },
+  {
+    icon: Users,
+    text: 'Create or join a trip via a simple three-word code.',
   },
   {
     icon: Mountain,

@@ -30,6 +30,7 @@ export const colors = {
   slide4: 'var(--color-slide4)',
   slide5: 'var(--color-slide5)',
   slide6: 'var(--color-slide6)',
+  slide7: 'var(--color-slide7)',
 }
 
 export function mix(token: string, opacity: number): string {
