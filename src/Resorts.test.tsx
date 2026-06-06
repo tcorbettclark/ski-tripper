@@ -2,6 +2,7 @@ import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Resorts from './Resorts'
+import type { ScoredResort } from './resortSearch'
 import type { ResortWithEmbedding } from './types.d.ts'
 
 mock.module('./resortSearch', () => ({
@@ -9,7 +10,10 @@ mock.module('./resortSearch', () => ({
   getIsModelReady: mock(() => true),
   onModelReady: mock((cb: () => void) => cb()),
   searchResorts: mock(
-    async (_query: string, resorts: ResortWithEmbedding[]) => resorts
+    async (
+      _query: string,
+      resorts: ResortWithEmbedding[]
+    ): Promise<ScoredResort[]> => resorts
   ),
 }))
 

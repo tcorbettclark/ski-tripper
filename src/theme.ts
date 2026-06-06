@@ -31,6 +31,9 @@ export const colors = {
   slide5: 'var(--color-slide5)',
   slide6: 'var(--color-slide6)',
   slide7: 'var(--color-slide7)',
+  medalGold: 'var(--color-medalGold)',
+  medalSilver: 'var(--color-medalSilver)',
+  medalBronze: 'var(--color-medalBronze)',
 }
 
 export function mix(token: string, opacity: number): string {

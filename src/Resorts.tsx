@@ -1,16 +1,22 @@
-import { MapPin } from 'lucide-react'
+import { MapPin, Trophy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import { getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
 import DetailField from './DetailField'
 import PisteBreakdown from './PisteBreakdown'
+import type { ScoredResort } from './resortSearch'
 import {
   getIsModelReady,
   initSearchModel,
   onModelReady,
   searchResorts,
 } from './resortSearch'
+import {
+  TROPHY_BRONZE_THRESHOLD,
+  TROPHY_GOLD_THRESHOLD,
+  TROPHY_SILVER_THRESHOLD,
+} from './resortSearchPure'
 import {
   borders,
   colors,
@@ -56,9 +62,9 @@ export default function Resorts({
   const [selectedResort, setSelectedResort] =
     useState<ResortWithEmbedding | null>(null)
   const [modelReady, setModelReady] = useState(getIsModelReady())
-  const [searchResults, setSearchResults] = useState<
-    ResortWithEmbedding[] | null
-  >(null)
+  const [searchResults, setSearchResults] = useState<ScoredResort[] | null>(
+    null
+  )
 
   useEffect(() => {
     onModelReady(() => setModelReady(getIsModelReady()))
@@ -114,12 +120,12 @@ export default function Resorts({
     [resorts]
   )
 
-  const filteredResorts = useMemo(() => {
+  const filteredResorts: ScoredResort[] = useMemo(() => {
     if (searchResults !== null) {
       return searchResults
     }
 
-    let result = resorts
+    let result: ScoredResort[] = resorts
 
     if (countryFilter) {
       result = result.filter((r) => r.country === countryFilter)
@@ -277,6 +283,25 @@ export default function Resorts({
 
   const hasActiveFilters =
     countryFilter || regionFilter || minPisteKm > 0 || minPeakHeight > 0
+
+  function trophyIcon(score: number): 'gold' | 'silver' | 'bronze' | null {
+    if (score >= TROPHY_GOLD_THRESHOLD) return 'gold'
+    if (score >= TROPHY_SILVER_THRESHOLD) return 'silver'
+    if (score >= TROPHY_BRONZE_THRESHOLD) return 'bronze'
+    return null
+  }
+
+  function trophyColorVariant(variant: 'gold' | 'silver' | 'bronze'): string {
+    if (variant === 'gold') return colors.medalGold
+    if (variant === 'silver') return colors.medalSilver
+    return colors.medalBronze
+  }
+
+  function matchDotColor(score: number): string {
+    const trophy = trophyIcon(score)
+    if (trophy) return trophyColorVariant(trophy)
+    return mix('--color-accent', Math.min(score * 1.4, 1))
+  }
 
   return (
     <div style={resortsStyles.container}>
@@ -436,7 +461,41 @@ export default function Resorts({
                   tabIndex={col.key === 'resortName' ? 0 : -1}
                 >
                   {col.key === 'resortName' ? (
-                    resort.resortName
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {resort.score != null && (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            width: `${6 + resort.score * 10}px`,
+                            height: `${6 + resort.score * 10}px`,
+                            minWidth: '6px',
+                            minHeight: '6px',
+                            borderRadius: '50%',
+                            background: matchDotColor(resort.score),
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      {resort.resortName}
+                      {resort.score != null &&
+                        trophyIcon(resort.score) != null && (
+                          <Trophy
+                            size={14}
+                            style={{
+                              color: trophyColorVariant(
+                                trophyIcon(resort.score)!
+                              ),
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                    </span>
                   ) : col.key === 'country' &&
                     resort.country &&
                     getCountryFlagUrl(resort.country) ? (

@@ -37,6 +37,9 @@
   --color-slide5: #e26a7b;
   --color-slide6: #b08be2;
   --color-slide7: #e88b6a;
+  --color-medalGold: #ffd700;
+  --color-medalSilver: #c0c0c0;
+  --color-medalBronze: #cd7f32;
 }
 
 [data-theme="light"] {
@@ -75,6 +78,9 @@
   --color-slide5: #9a2040;
   --color-slide6: #5c3d8a;
   --color-slide7: #8a4e30;
+  --color-medalGold: #c5a000;
+  --color-medalSilver: #8a8a8a;
+  --color-medalBronze: #a06528;
 }
 
 /* react-day-picker theme overrides */
