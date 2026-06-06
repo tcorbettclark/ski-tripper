@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Resorts from './Resorts'
 import type { ScoredResort } from './resortSearch'
@@ -195,6 +195,93 @@ describe('Resorts', () => {
     await waitFor(() => {
       expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
     })
+  })
+
+  it('filters resorts by max transfer time', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/max transfer time/i)
+    fireEvent.change(slider, { target: { value: '60' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('displays formatted transfer time in slider label', () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/max transfer time/i)
+    fireEvent.change(slider, { target: { value: '80' } })
+
+    expect(screen.getByText(/1 hr 20 mins/)).toBeTruthy()
+  })
+
+  it('enables clear filters when transfer time filter is active', () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/max transfer time/i)
+    fireEvent.change(slider, { target: { value: '60' } })
+
+    const clearButton = screen.getByRole('button', {
+      name: /clear filters/i,
+    }) as HTMLButtonElement
+    expect(clearButton.disabled).toBe(false)
+  })
+
+  it('filters resorts by piste profile - advanced shows resort where advanced is plurality', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const advancedButton = screen.getByRole('button', { name: 'Advanced' })
+    fireEvent.click(advancedButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('filters resorts by piste profile - intermediate+advanced shows all where combined beats each other', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const intermediateButton = screen.getByRole('button', {
+      name: 'Intermediate',
+    })
+    const advancedButton = screen.getByRole('button', { name: 'Advanced' })
+    fireEvent.click(intermediateButton)
+    fireEvent.click(advancedButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('toggles piste profile off when clicking same button again', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const advancedButton = screen.getByRole('button', { name: 'Advanced' })
+    fireEvent.click(advancedButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+
+    fireEvent.click(advancedButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('enables clear filters when piste profile filter is active', () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const beginnerButton = screen.getByRole('button', { name: 'Beginner' })
+    fireEvent.click(beginnerButton)
+
+    const clearButton = screen.getByRole('button', {
+      name: /clear filters/i,
+    }) as HTMLButtonElement
+    expect(clearButton.disabled).toBe(false)
   })
 
   it('displays all resorts passed as props', () => {

@@ -59,6 +59,8 @@ export default function Resorts({
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
   const [minPeakHeight, setMinPeakHeight] = useState(0)
+  const [maxTransferTime, setMaxTransferTime] = useState(0)
+  const [pisteProfiles, setPisteProfiles] = useState<Set<string>>(new Set())
   const [selectedResort, setSelectedResort] =
     useState<ResortWithEmbedding | null>(null)
   const [modelReady, setModelReady] = useState(getIsModelReady())
@@ -91,6 +93,17 @@ export default function Resorts({
       if (regionFilter && r.region !== regionFilter) return false
       if (minPisteKm > 0 && r.pisteKm < minPisteKm) return false
       if (minPeakHeight > 0 && r.summitAltitude < minPeakHeight) return false
+      if (maxTransferTime > 0 && r.transferTime > maxTransferTime) return false
+      if (pisteProfiles.size > 0) {
+        let sum = 0
+        if (pisteProfiles.has('beginner')) sum += r.beginnerPct
+        if (pisteProfiles.has('intermediate')) sum += r.intermediatePct
+        if (pisteProfiles.has('advanced')) sum += r.advancedPct
+        if (!pisteProfiles.has('beginner') && sum <= r.beginnerPct) return false
+        if (!pisteProfiles.has('intermediate') && sum <= r.intermediatePct)
+          return false
+        if (!pisteProfiles.has('advanced') && sum <= r.advancedPct) return false
+      }
       return true
     })
     searchResorts(searchQuery, filteredByDropdowns)
@@ -108,6 +121,8 @@ export default function Resorts({
     regionFilter,
     minPisteKm,
     minPeakHeight,
+    maxTransferTime,
+    pisteProfiles,
   ])
 
   const countryOptions = useMemo(
@@ -143,6 +158,24 @@ export default function Resorts({
       result = result.filter((r) => r.summitAltitude >= minPeakHeight)
     }
 
+    if (maxTransferTime > 0) {
+      result = result.filter((r) => r.transferTime <= maxTransferTime)
+    }
+
+    if (pisteProfiles.size > 0) {
+      result = result.filter((r) => {
+        let sum = 0
+        if (pisteProfiles.has('beginner')) sum += r.beginnerPct
+        if (pisteProfiles.has('intermediate')) sum += r.intermediatePct
+        if (pisteProfiles.has('advanced')) sum += r.advancedPct
+        if (!pisteProfiles.has('beginner') && sum <= r.beginnerPct) return false
+        if (!pisteProfiles.has('intermediate') && sum <= r.intermediatePct)
+          return false
+        if (!pisteProfiles.has('advanced') && sum <= r.advancedPct) return false
+        return true
+      })
+    }
+
     return result
   }, [
     resorts,
@@ -151,7 +184,14 @@ export default function Resorts({
     regionFilter,
     minPisteKm,
     minPeakHeight,
+    maxTransferTime,
+    pisteProfiles,
   ])
+
+  const maxTransferTimeFromData = useMemo(
+    () => Math.max(...resorts.map((r) => r.transferTime ?? 0)),
+    [resorts]
+  )
 
   const handleRowClick = useCallback((resort: ResortWithEmbedding) => {
     setSelectedResort(resort)
@@ -234,6 +274,8 @@ export default function Resorts({
     setRegionFilter('')
     setMinPisteKm(0)
     setMinPeakHeight(0)
+    setMaxTransferTime(0)
+    setPisteProfiles(new Set())
   }, [])
 
   if (resorts.length === 0) {
@@ -282,7 +324,12 @@ export default function Resorts({
   }
 
   const hasActiveFilters =
-    countryFilter || regionFilter || minPisteKm > 0 || minPeakHeight > 0
+    countryFilter ||
+    regionFilter ||
+    minPisteKm > 0 ||
+    minPeakHeight > 0 ||
+    maxTransferTime > 0 ||
+    pisteProfiles.size > 0
 
   function trophyIcon(score: number): 'gold' | 'silver' | 'bronze' | null {
     if (score >= TROPHY_GOLD_THRESHOLD) return 'gold'
@@ -310,35 +357,37 @@ export default function Resorts({
       </div>
 
       <div style={resortsStyles.filtersGrid}>
-        <input
-          type="text"
-          placeholder={
-            modelReady
-              ? 'Semantic search (more words are better)'
-              : 'Loading search model...'
-          }
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          disabled={!modelReady}
-          style={{
-            ...resortsStyles.searchInput,
-            ...(modelReady ? {} : resortsStyles.searchInputDisabled),
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => setSearchQuery('')}
-          disabled={!searchQuery}
-          style={{
-            ...resortsStyles.clearButton,
-            ...(searchQuery
-              ? resortsStyles.clearButtonEnabled
-              : resortsStyles.clearButtonDisabled),
-          }}
-        >
-          Clear search
-        </button>
-        <div style={resortsStyles.filterControls}>
+        <div style={resortsStyles.filterRow}>
+          <input
+            type="text"
+            placeholder={
+              modelReady
+                ? 'Semantic search (more words are better)'
+                : 'Loading search model...'
+            }
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            disabled={!modelReady}
+            style={{
+              ...resortsStyles.searchInput,
+              ...(modelReady ? {} : resortsStyles.searchInputDisabled),
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            disabled={!searchQuery}
+            style={{
+              ...resortsStyles.clearButton,
+              ...(searchQuery
+                ? resortsStyles.clearButtonEnabled
+                : resortsStyles.clearButtonDisabled),
+            }}
+          >
+            Clear search
+          </button>
+        </div>
+        <div style={resortsStyles.filterRow}>
           <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
@@ -363,6 +412,21 @@ export default function Resorts({
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={clearFilters}
+            disabled={!hasActiveFilters}
+            style={{
+              ...resortsStyles.clearButton,
+              ...(hasActiveFilters
+                ? resortsStyles.clearButtonEnabled
+                : resortsStyles.clearButtonDisabled),
+            }}
+          >
+            Clear filters
+          </button>
+        </div>
+        <div style={resortsStyles.filterRow}>
           <div style={resortsStyles.sliderGroup}>
             <label
               htmlFor="min-piste-km-slider"
@@ -399,20 +463,71 @@ export default function Resorts({
               style={resortsStyles.slider}
             />
           </div>
+          <div style={resortsStyles.sliderGroup}>
+            <label
+              htmlFor="max-transfer-time-slider"
+              style={resortsStyles.sliderLabel}
+            >
+              Max Transfer Time:{' '}
+              {maxTransferTime > 0
+                ? formatTransferTime(maxTransferTime)
+                : 'Any'}
+            </label>
+            <input
+              id="max-transfer-time-slider"
+              type="range"
+              min={0}
+              max={maxTransferTimeFromData}
+              step={5}
+              value={maxTransferTime}
+              onChange={(e) => setMaxTransferTime(Number(e.target.value))}
+              style={resortsStyles.slider}
+            />
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={clearFilters}
-          disabled={!hasActiveFilters}
-          style={{
-            ...resortsStyles.clearButton,
-            ...(hasActiveFilters
-              ? resortsStyles.clearButtonEnabled
-              : resortsStyles.clearButtonDisabled),
-          }}
-        >
-          Clear filters
-        </button>
+        <div style={resortsStyles.filterRow}>
+          <span style={resortsStyles.pisteProfileLabel}>Terrain:</span>
+          {[
+            {
+              value: 'beginner' as const,
+              label: 'Beginner',
+              colour: colors.pisteBeginner,
+            },
+            {
+              value: 'intermediate' as const,
+              label: 'Intermediate',
+              colour: colors.pisteIntermediate,
+            },
+            {
+              value: 'advanced' as const,
+              label: 'Advanced',
+              colour: colors.pisteAdvanced,
+            },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() =>
+                setPisteProfiles((prev) => {
+                  const next = new Set(prev)
+                  if (next.has(opt.value)) next.delete(opt.value)
+                  else next.add(opt.value)
+                  return next
+                })
+              }
+              style={{
+                ...resortsStyles.pisteProfileButton,
+                background: pisteProfiles.has(opt.value)
+                  ? opt.colour
+                  : 'transparent',
+                color: pisteProfiles.has(opt.value) ? '#fff' : opt.colour,
+                border: `1px solid ${opt.colour}`,
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div style={resortsStyles.resultCount}>
@@ -900,22 +1015,21 @@ const resortsStyles = {
     margin: 0,
   },
   filtersGrid: {
-    display: 'grid' as const,
-    gridTemplateColumns: '1fr auto',
-    gap: '8px 12px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '8px',
     marginBottom: '16px',
     justifyContent: 'center',
     width: 'fit-content',
     marginInline: 'auto',
   },
-  filterControls: {
+  filterRow: {
     display: 'flex',
     alignItems: 'flex-end',
     gap: '12px',
     flexWrap: 'wrap' as const,
   },
   searchInput: {
-    width: '100%',
     padding: '10px 16px',
     borderRadius: '8px',
     border: borders.card,
@@ -924,6 +1038,7 @@ const resortsStyles = {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
     outline: 'none',
+    width: '320px',
   },
   searchInputDisabled: {
     opacity: 0.5,
@@ -955,6 +1070,23 @@ const resortsStyles = {
   },
   slider: {
     width: '140px',
+  },
+  pisteProfileLabel: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.textSecondary,
+    letterSpacing: '0.04em',
+    textTransform: 'uppercase' as const,
+    alignSelf: 'center' as const,
+  },
+  pisteProfileButton: {
+    padding: '6px 14px',
+    borderRadius: '14px',
+    fontSize: fontSizes.sm,
+    fontFamily: fonts.body,
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'background 0.15s, color 0.15s',
   },
 
   clearButton: {
