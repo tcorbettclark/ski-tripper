@@ -59,7 +59,7 @@ export default function Resorts({
   const [regionFilter, setRegionFilter] = useState('')
   const [minPisteKm, setMinPisteKm] = useState(0)
   const [minPeakHeight, setMinPeakHeight] = useState(0)
-  const [maxTransferTime, setMaxTransferTime] = useState(0)
+  const [maxTransferTime, setMaxTransferTime] = useState(-1)
   const [pisteProfiles, setPisteProfiles] = useState<Set<string>>(new Set())
   const [selectedResort, setSelectedResort] =
     useState<ResortWithEmbedding | null>(null)
@@ -71,6 +71,17 @@ export default function Resorts({
   useEffect(() => {
     onModelReady(() => setModelReady(getIsModelReady()))
   }, [])
+
+  const maxTransferTimeFromData = useMemo(
+    () => Math.max(...resorts.map((r) => r.transferTime ?? 0)),
+    [resorts]
+  )
+
+  useEffect(() => {
+    if (maxTransferTime < 0 && maxTransferTimeFromData > 0) {
+      setMaxTransferTime(maxTransferTimeFromData)
+    }
+  }, [maxTransferTimeFromData, maxTransferTime])
 
   const [showProposalForm, setShowProposalForm] = useState(false)
   const [proposalError, setProposalError] = useState('')
@@ -93,7 +104,12 @@ export default function Resorts({
       if (regionFilter && r.region !== regionFilter) return false
       if (minPisteKm > 0 && r.pisteKm < minPisteKm) return false
       if (minPeakHeight > 0 && r.summitAltitude < minPeakHeight) return false
-      if (maxTransferTime > 0 && r.transferTime > maxTransferTime) return false
+      if (
+        maxTransferTime >= 0 &&
+        maxTransferTime < maxTransferTimeFromData &&
+        r.transferTime > maxTransferTime
+      )
+        return false
       if (pisteProfiles.size > 0) {
         let sum = 0
         if (pisteProfiles.has('beginner')) sum += r.beginnerPct
@@ -122,6 +138,7 @@ export default function Resorts({
     minPisteKm,
     minPeakHeight,
     maxTransferTime,
+    maxTransferTimeFromData,
     pisteProfiles,
   ])
 
@@ -158,7 +175,7 @@ export default function Resorts({
       result = result.filter((r) => r.summitAltitude >= minPeakHeight)
     }
 
-    if (maxTransferTime > 0) {
+    if (maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData) {
       result = result.filter((r) => r.transferTime <= maxTransferTime)
     }
 
@@ -185,13 +202,9 @@ export default function Resorts({
     minPisteKm,
     minPeakHeight,
     maxTransferTime,
+    maxTransferTimeFromData,
     pisteProfiles,
   ])
-
-  const maxTransferTimeFromData = useMemo(
-    () => Math.max(...resorts.map((r) => r.transferTime ?? 0)),
-    [resorts]
-  )
 
   const handleRowClick = useCallback((resort: ResortWithEmbedding) => {
     setSelectedResort(resort)
@@ -274,9 +287,9 @@ export default function Resorts({
     setRegionFilter('')
     setMinPisteKm(0)
     setMinPeakHeight(0)
-    setMaxTransferTime(0)
+    setMaxTransferTime(maxTransferTimeFromData)
     setPisteProfiles(new Set())
-  }, [])
+  }, [maxTransferTimeFromData])
 
   if (resorts.length === 0) {
     return (
@@ -328,7 +341,7 @@ export default function Resorts({
     regionFilter ||
     minPisteKm > 0 ||
     minPeakHeight > 0 ||
-    maxTransferTime > 0 ||
+    (maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData) ||
     pisteProfiles.size > 0
 
   function trophyIcon(score: number): 'gold' | 'silver' | 'bronze' | null {
@@ -432,7 +445,7 @@ export default function Resorts({
               htmlFor="min-piste-km-slider"
               style={resortsStyles.sliderLabel}
             >
-              Min Piste Km: {minPisteKm}
+              Min Piste Km
             </label>
             <input
               id="min-piste-km-slider"
@@ -444,13 +457,16 @@ export default function Resorts({
               onChange={(e) => setMinPisteKm(Number(e.target.value))}
               style={resortsStyles.slider}
             />
+            <span style={resortsStyles.sliderValue}>
+              {minPisteKm > 0 ? minPisteKm : 'Any'}
+            </span>
           </div>
           <div style={resortsStyles.sliderGroup}>
             <label
               htmlFor="min-peak-height-slider"
               style={resortsStyles.sliderLabel}
             >
-              Min Peak Height: {minPeakHeight}m
+              Min Peak Height
             </label>
             <input
               id="min-peak-height-slider"
@@ -462,16 +478,16 @@ export default function Resorts({
               onChange={(e) => setMinPeakHeight(Number(e.target.value))}
               style={resortsStyles.slider}
             />
+            <span style={resortsStyles.sliderValue}>
+              {minPeakHeight > 0 ? `${minPeakHeight}m` : 'Any'}
+            </span>
           </div>
           <div style={resortsStyles.sliderGroup}>
             <label
               htmlFor="max-transfer-time-slider"
               style={resortsStyles.sliderLabel}
             >
-              Max Transfer Time:{' '}
-              {maxTransferTime > 0
-                ? formatTransferTime(maxTransferTime)
-                : 'Any'}
+              Max Transfer Time
             </label>
             <input
               id="max-transfer-time-slider"
@@ -479,10 +495,17 @@ export default function Resorts({
               min={0}
               max={maxTransferTimeFromData}
               step={5}
-              value={maxTransferTime}
+              value={
+                maxTransferTime < 0 ? maxTransferTimeFromData : maxTransferTime
+              }
               onChange={(e) => setMaxTransferTime(Number(e.target.value))}
               style={resortsStyles.slider}
             />
+            <span style={resortsStyles.sliderValue}>
+              {maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData
+                ? formatTransferTime(maxTransferTime)
+                : 'Any'}
+            </span>
           </div>
         </div>
         <div style={resortsStyles.filterRow}>
@@ -1070,6 +1093,12 @@ const resortsStyles = {
   },
   slider: {
     width: '140px',
+  },
+  sliderValue: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.textSecondary,
+    letterSpacing: '0.02em',
   },
   pisteProfileLabel: {
     fontFamily: fonts.body,

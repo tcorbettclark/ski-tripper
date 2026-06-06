@@ -208,13 +208,47 @@ describe('Resorts', () => {
     })
   })
 
-  it('displays formatted transfer time in slider label', () => {
+  it('shows Any when transfer time slider is at maximum', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    await waitFor(() => {
+      const slider = screen.getByLabelText(/max transfer time/i)
+      const group = slider.closest('div')!
+      expect(group.querySelector('span')!.textContent).toBe('Any')
+    })
+    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+  })
+
+  it('displays formatted transfer time in slider value', () => {
     render(<Resorts {...defaultProps()} />)
 
     const slider = screen.getByLabelText(/max transfer time/i)
     fireEvent.change(slider, { target: { value: '80' } })
 
-    expect(screen.getByText(/1 hr 20 mins/)).toBeTruthy()
+    const group = slider.closest('div')!
+    expect(group.querySelector('span')!.textContent).toBe('1 hr 20 mins')
+  })
+
+  it('resets transfer time to Any when clear filters is clicked', async () => {
+    const eventUser = userEvent.setup()
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/max transfer time/i)
+    fireEvent.change(slider, { target: { value: '60' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+
+    await eventUser.click(
+      screen.getByRole('button', { name: /clear filters/i })
+    )
+
+    await waitFor(() => {
+      const group = screen.getByLabelText(/max transfer time/i).closest('div')!
+      expect(group.querySelector('span')!.textContent).toBe('Any')
+    })
+    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
   })
 
   it('enables clear filters when transfer time filter is active', () => {
