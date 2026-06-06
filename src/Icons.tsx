@@ -6,21 +6,21 @@ interface IconProps {
   dim?: boolean
 }
 
-const dimColor = mix('--color-textSecondary', 0.14)
-const dimOpacity = 0.2
+const svgDimColor = mix('--color-textSecondary', 0.4)
+const emojiDimOpacity = 0.4
 
 function emojiStyle(size: number, color: string, dim: boolean | undefined) {
   return {
     fontSize: size,
     lineHeight: 1,
-    color: dim ? dimColor : color,
+    color: color,
+    opacity: dim ? emojiDimOpacity : undefined,
     filter: dim ? 'grayscale(1)' : undefined,
-    opacity: dim ? dimOpacity : undefined,
   }
 }
 
 function EmojiIcon({
-  size = 14,
+  size = 18,
   color,
   dim,
   label,
@@ -37,7 +37,7 @@ function EmojiIcon({
   )
 }
 
-export function SkiIcon({ size = 14, color, dim }: IconProps) {
+export function SkiIcon({ size = 18, color, dim }: IconProps) {
   return (
     <EmojiIcon size={size} color={color ?? colors.accent} dim={dim} label="Ski">
       ⛷️
@@ -45,7 +45,7 @@ export function SkiIcon({ size = 14, color, dim }: IconProps) {
   )
 }
 
-export function SnowboardIcon({ size = 14, color, dim }: IconProps) {
+export function SnowboardIcon({ size = 18, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
@@ -58,7 +58,7 @@ export function SnowboardIcon({ size = 14, color, dim }: IconProps) {
   )
 }
 
-export function BlackSlopeIcon({ size = 12, color, dim }: IconProps) {
+export function BlackSlopeIcon({ size = 16, color, dim }: IconProps) {
   return (
     <svg
       width={size}
@@ -69,7 +69,7 @@ export function BlackSlopeIcon({ size = 12, color, dim }: IconProps) {
     >
       <polygon
         points="8,1 15,8 8,15 1,8"
-        fill={dim ? dimColor : (color ?? colors.slopeBlack)}
+        fill={dim ? svgDimColor : (color ?? colors.slopeBlack)}
         stroke={dim ? 'none' : colors.textPrimary}
         strokeWidth="1.5"
       />
@@ -78,7 +78,7 @@ export function BlackSlopeIcon({ size = 12, color, dim }: IconProps) {
 }
 
 export function RedSlopeIcon({
-  size = 12,
+  size = 16,
   color = colors.slopeRed,
   dim,
 }: IconProps) {
@@ -96,14 +96,14 @@ export function RedSlopeIcon({
         width="14"
         height="14"
         rx="2"
-        fill={dim ? dimColor : color}
+        fill={dim ? svgDimColor : color}
       />
     </svg>
   )
 }
 
 export function BlueSlopeIcon({
-  size = 12,
+  size = 16,
   color = colors.slopeBlue,
   dim,
 }: IconProps) {
@@ -115,13 +115,13 @@ export function BlueSlopeIcon({
       role="img"
       aria-label="Blue slope"
     >
-      <circle cx="8" cy="8" r="7" fill={dim ? dimColor : color} />
+      <circle cx="8" cy="8" r="7" fill={dim ? svgDimColor : color} />
     </svg>
   )
 }
 
-export function OnPisteIcon({ size = 14, color, dim }: IconProps) {
-  const c = dim ? dimColor : (color ?? colors.onPiste)
+export function OnPisteIcon({ size = 24, color, dim }: IconProps) {
+  const c = dim ? svgDimColor : (color ?? colors.onPiste)
   return (
     <svg
       width={size}
@@ -146,8 +146,8 @@ export function OnPisteIcon({ size = 14, color, dim }: IconProps) {
   )
 }
 
-export function OffPisteIcon({ size = 14, color, dim }: IconProps) {
-  const c = dim ? dimColor : (color ?? colors.offPiste)
+export function OffPisteIcon({ size = 24, color, dim }: IconProps) {
+  const c = dim ? svgDimColor : (color ?? colors.offPiste)
   return (
     <svg
       width={size}
@@ -169,7 +169,7 @@ export function OffPisteIcon({ size = 14, color, dim }: IconProps) {
   )
 }
 
-export function FiveStarHotelIcon({ size = 14, color, dim }: IconProps) {
+export function FiveStarHotelIcon({ size = 18, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
@@ -182,7 +182,7 @@ export function FiveStarHotelIcon({ size = 14, color, dim }: IconProps) {
   )
 }
 
-export function HotelIcon({ size = 14, color, dim }: IconProps) {
+export function HotelIcon({ size = 18, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
@@ -195,7 +195,7 @@ export function HotelIcon({ size = 14, color, dim }: IconProps) {
   )
 }
 
-export function ChaletIcon({ size = 14, color, dim }: IconProps) {
+export function ChaletIcon({ size = 18, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
@@ -208,7 +208,7 @@ export function ChaletIcon({ size = 14, color, dim }: IconProps) {
   )
 }
 
-export function GuesthouseIcon({ size = 14, color, dim }: IconProps) {
+export function GuesthouseIcon({ size = 18, color, dim }: IconProps) {
   return (
     <EmojiIcon
       size={size}
