@@ -1,9 +1,22 @@
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import {
   createPreferences as _createPreferences,
   updatePreferences as _updatePreferences,
 } from './backend'
-import { borders, colors, fontSizes, fonts, formStyles } from './theme'
+import {
+  BlackSlopeIcon,
+  BlueSlopeIcon,
+  ChaletIcon,
+  FiveStarHotelIcon,
+  GuesthouseIcon,
+  HotelIcon,
+  OffPisteIcon,
+  OnPisteIcon,
+  RedSlopeIcon,
+  SkiIcon,
+  SnowboardIcon,
+} from './Icons'
+import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Preferences } from './types.d'
 import { parseJsonArray } from './utils'
 
@@ -133,23 +146,39 @@ export default function PreferencesForm({
     label: string,
     options: string[],
     selected: string[],
-    setter: (v: string[]) => void
+    setter: (v: string[]) => void,
+    icons?: ((dim: boolean) => ReactNode)[]
   ) {
     return (
       <div style={styles.group}>
         <span style={styles.groupLabel}>{label}</span>
         <div style={styles.checkboxRow}>
-          {options.map((opt) => (
-            <label key={opt} style={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={selected.includes(opt)}
-                onChange={() => toggleOption(opt, selected, setter)}
-                style={styles.checkbox}
-              />
-              <span style={styles.checkboxText}>{opt}</span>
-            </label>
-          ))}
+          {options.map((opt, i) => {
+            const checked = selected.includes(opt)
+            return (
+              <label key={opt} style={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleOption(opt, selected, setter)}
+                  style={styles.checkbox}
+                />
+                {icons?.[i] && (
+                  <span style={styles.checkboxIcon}>{icons[i](!checked)}</span>
+                )}
+                <span
+                  style={{
+                    ...styles.checkboxText,
+                    color: checked
+                      ? colors.textPrimary
+                      : mix('--color-textSecondary', 0.6),
+                  }}
+                >
+                  {opt}
+                </span>
+              </label>
+            )
+          })}
         </div>
       </div>
     )
@@ -161,15 +190,27 @@ export default function PreferencesForm({
         'Ski / Snowboard',
         skiSnowboardOptions,
         skiSnowboard,
-        setSkiSnowboard
+        setSkiSnowboard,
+        [
+          (dim) => <SkiIcon dim={dim} hidden />,
+          (dim) => <SnowboardIcon dim={dim} hidden />,
+        ]
       )}
       {renderCheckboxGroup(
         'Difficulty',
         difficultyOptions,
         difficulty,
-        setDifficulty
+        setDifficulty,
+        [
+          (dim) => <BlackSlopeIcon dim={dim} hidden />,
+          (dim) => <RedSlopeIcon dim={dim} hidden />,
+          (dim) => <BlueSlopeIcon dim={dim} hidden />,
+        ]
       )}
-      {renderCheckboxGroup('Piste', pisteOptions, piste, setPiste)}
+      {renderCheckboxGroup('Piste', pisteOptions, piste, setPiste, [
+        (dim) => <OnPisteIcon dim={dim} hidden />,
+        (dim) => <OffPisteIcon dim={dim} hidden />,
+      ])}
 
       <div style={styles.group}>
         <span style={styles.groupLabel}>Time Allocation</span>
@@ -207,7 +248,13 @@ export default function PreferencesForm({
         'Accommodation',
         accommodationOptions,
         accommodation,
-        setAccommodation
+        setAccommodation,
+        [
+          (dim) => <FiveStarHotelIcon dim={dim} hidden />,
+          (dim) => <HotelIcon dim={dim} hidden />,
+          (dim) => <ChaletIcon dim={dim} hidden />,
+          (dim) => <GuesthouseIcon dim={dim} hidden />,
+        ]
       )}
 
       <div style={styles.group}>
@@ -291,6 +338,10 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
     color: colors.textPrimary,
+  },
+  checkboxIcon: {
+    display: 'inline-flex',
+    alignItems: 'center',
   },
   sliders: {
     display: 'flex',

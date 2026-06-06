@@ -39,7 +39,9 @@ describe('PreferencesForm', () => {
       render(<PreferencesForm userId="user-1" onSaved={mock(() => {})} />)
     })
 
-    const skiCheckbox = screen.getByLabelText('Ski') as HTMLInputElement
+    const skiCheckbox = screen.getByRole('checkbox', {
+      name: 'Ski',
+    }) as HTMLInputElement
     expect(skiCheckbox.checked).toBe(false)
     await ue.click(skiCheckbox)
     expect(skiCheckbox.checked).toBe(true)
@@ -78,10 +80,10 @@ describe('PreferencesForm', () => {
     })
 
     // Check a few boxes
-    await ue.click(screen.getByLabelText('Ski'))
-    await ue.click(screen.getByLabelText('Red'))
-    await ue.click(screen.getByLabelText('On-Piste'))
-    await ue.click(screen.getByLabelText('Chalet'))
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Red' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'On-Piste' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Chalet' }))
 
     await ue.type(
       screen.getByPlaceholderText(/tell us what matters most/i),
@@ -143,10 +145,10 @@ describe('PreferencesForm', () => {
       )
     })
 
-    await ue.click(screen.getByLabelText('Ski'))
-    await ue.click(screen.getByLabelText('Red'))
-    await ue.click(screen.getByLabelText('On-Piste'))
-    await ue.click(screen.getByLabelText('Chalet'))
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Red' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'On-Piste' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Chalet' }))
     await ue.type(
       screen.getByPlaceholderText(/tell us what matters most/i),
       'Good snow'
