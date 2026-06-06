@@ -7,8 +7,6 @@ import {
   type NodeProps,
   Position,
   ReactFlow,
-  ReactFlowProvider,
-  useReactFlow,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import {
@@ -20,7 +18,7 @@ import {
   Send,
   Vote,
 } from 'lucide-react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { StatusFilter } from './ProposalsGrid'
 import { colors, fontSizes, fonts, mix } from './theme'
 import type { Poll } from './types.d.ts'
@@ -594,10 +592,13 @@ const nodeTypes = {
   guideNode: FlowNode,
 }
 
-const NODE_W = 200
-const CIRCLE_R = 240
-const CIRCLE_CX = 300
-const CIRCLE_CY = 260
+const nodePositions: Record<string, { x: number; y: number }> = {
+  resorts: { x: 200, y: 0 },
+  drafts: { x: 400, y: 200 },
+  submitted: { x: 400, y: 400 },
+  poll: { x: 0, y: 400 },
+  results: { x: 0, y: 200 },
+}
 
 const edgeRoutes: Record<
   string,
@@ -615,65 +616,28 @@ const edgeRoutes: Record<
     sourceHandle: 'source-left',
     targetHandle: 'target-right',
   },
-  'poll-results': { sourceHandle: 'source-top', targetHandle: 'target-bottom' },
+  'poll-results': {
+    sourceHandle: 'source-top',
+    targetHandle: 'target-bottom',
+  },
   'results-drafts-return': {
     sourceHandle: 'source-right',
     targetHandle: 'target-left',
   },
 }
 
-function AutoFitView({
-  containerRef,
-}: {
-  containerRef: React.RefObject<HTMLDivElement | null>
-}) {
-  const { fitView } = useReactFlow()
-
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-
-    let rafId: number
-    let timeoutId: ReturnType<typeof setTimeout>
-
-    const scheduleFitView = () => {
-      clearTimeout(timeoutId)
-      cancelAnimationFrame(rafId)
-      timeoutId = setTimeout(() => {
-        rafId = requestAnimationFrame(() =>
-          fitView({ padding: 0.15, duration: 200 })
-        )
-      }, 200)
-    }
-
-    const observer = new ResizeObserver(scheduleFitView)
-    observer.observe(el)
-    return () => {
-      observer.disconnect()
-      clearTimeout(timeoutId)
-      cancelAnimationFrame(rafId)
-    }
-  }, [fitView, containerRef])
-
-  return null
-}
-
 export default function ActionGuide(props: ActionGuideProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
   const guideNodes = buildGuideNodes(props)
   const showReturnPath = props.closedPollCount > 0 || props.approvedCount > 0
 
   const flowNodes: Node<GuideNodeData>[] = useMemo(
     () =>
-      guideNodes.map((node, i) => {
-        const angle = (i / guideNodes.length) * 2 * Math.PI - Math.PI / 2
+      guideNodes.map((node) => {
+        const pos = nodePositions[node.nodeId] ?? { x: 0, y: 0 }
         return {
           id: node.nodeId,
           type: 'guideNode' as const,
-          position: {
-            x: CIRCLE_CX + CIRCLE_R * Math.cos(angle) - NODE_W / 2,
-            y: CIRCLE_CY + CIRCLE_R * Math.sin(angle) - 40,
-          },
+          position: pos,
           data: node,
           draggable: false,
         }
@@ -728,35 +692,42 @@ export default function ActionGuide(props: ActionGuideProps) {
     []
   )
 
+  const handleInit = useCallback(
+    (instance: {
+      fitView: (opts: { padding: number; duration: number }) => void
+    }) => {
+      requestAnimationFrame(() => {
+        instance.fitView({ padding: 0.15, duration: 0 })
+      })
+    },
+    []
+  )
+
   return (
     <section style={actionGuideStyles.container}>
       <div style={actionGuideStyles.header}>
         <BarChart3 size={16} style={{ color: colors.accent }} />
         <h3 style={actionGuideStyles.heading}>What's Next</h3>
       </div>
-      <div ref={containerRef} style={actionGuideStyles.flowWrap}>
-        <ReactFlowProvider>
-          <AutoFitView containerRef={containerRef} />
-          <ReactFlow
-            nodes={flowNodes}
-            edges={flowEdges}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            defaultEdgeOptions={defaultEdgeOptions}
-            fitView
-            fitViewOptions={{ padding: 0.15 }}
-            nodesDraggable={false}
-            nodesConnectable={false}
-            panOnDrag={false}
-            panOnScroll={false}
-            zoomOnScroll={false}
-            zoomOnDoubleClick={false}
-            zoomOnPinch={false}
-            preventScrolling={false}
-            proOptions={{ hideAttribution: true }}
-            style={{ width: '100%', height: '100%' }}
-          />
-        </ReactFlowProvider>
+      <div style={actionGuideStyles.flowWrap}>
+        <ReactFlow
+          nodes={flowNodes}
+          edges={flowEdges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          defaultEdgeOptions={defaultEdgeOptions}
+          onInit={handleInit}
+          nodesDraggable={false}
+          nodesConnectable={false}
+          panOnDrag={false}
+          panOnScroll={false}
+          zoomOnScroll={false}
+          zoomOnDoubleClick={false}
+          zoomOnPinch={false}
+          preventScrolling={false}
+          proOptions={{ hideAttribution: true }}
+          style={{ width: '100%', height: '100%' }}
+        />
       </div>
     </section>
   )
