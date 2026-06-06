@@ -27,7 +27,7 @@ import {
   mix,
 } from './theme'
 import type { ResortWithEmbedding } from './types.d.ts'
-import { ensureUrlScheme, sanitizeUrl } from './utils'
+import { ensureUrlScheme, formatTransferTime, sanitizeUrl } from './utils'
 
 initSearchModel()
 
@@ -637,7 +637,7 @@ export default function Resorts({
                   />
                   <DetailField
                     label="Transfer Time"
-                    value={selectedResort.transferTime}
+                    value={formatTransferTime(selectedResort.transferTime)}
                   />
                   {selectedResort.websites &&
                     selectedResort.websites.length > 0 && (

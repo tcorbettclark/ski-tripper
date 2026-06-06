@@ -27,7 +27,13 @@ import {
   mix,
 } from './theme'
 import type { Accommodation, Discussion, Proposal } from './types.d.ts'
-import { ensureUrlScheme, formatDate, isValidUrl, sanitizeUrl } from './utils'
+import {
+  ensureUrlScheme,
+  formatDate,
+  formatTransferTime,
+  isValidUrl,
+  sanitizeUrl,
+} from './utils'
 
 const snowReliabilityLabels: Record<string, string> = {
   high: 'High',
@@ -394,7 +400,7 @@ export default function ProposalCard({
                   />
                   <DetailField
                     label="Transfer Time"
-                    value={proposal.transferTime}
+                    value={formatTransferTime(proposal.transferTime)}
                   />
                   {proposal.websites && proposal.websites.length > 0 && (
                     <DetailField

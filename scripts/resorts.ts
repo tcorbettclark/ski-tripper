@@ -61,9 +61,9 @@ const enrichSchema = z.object({
     .nullable()
     .describe('IATA code of the nearest airport, e.g. "GVA"'),
   transferTime: z
-    .string()
+    .number()
     .nullable()
-    .describe('Transfer time from airport, e.g. "2h 00m"'),
+    .describe('Transfer time from airport in minutes, e.g. 120'),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
     .nullable()
@@ -92,14 +92,23 @@ type ResolvedEnrichData = {
   [K in keyof EnrichData]: NonNullable<EnrichData[K]>
 }
 
-const enrichDefaults: Record<string, string | string[]> = {
+const enrichDefaults: Record<string, string | string[] | number> = {
   description: '',
   nearestAirport: '',
-  transferTime: '',
+  transferTime: 0,
   snowReliability: '',
   skiSeasonMonths: '',
   websites: [],
   linkedResortsDescription: '',
+}
+
+function formatTransferTime(minutes: number): string {
+  if (minutes <= 0) return '0 mins'
+  const hrs = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hrs === 0) return mins === 1 ? '1 min' : `${mins} mins`
+  if (mins === 0) return hrs === 1 ? '1 hr' : `${hrs} hrs`
+  return `${hrs} hr${hrs > 1 ? 's' : ''} ${mins} min${mins > 1 ? 's' : ''}`
 }
 
 function withDefaults(data: EnrichData): ResolvedEnrichData {
@@ -351,7 +360,7 @@ function displayEnrichedData(
   logSummary(
     'Airport',
     data.nearestAirport
-      ? `${data.nearestAirport} (${data.transferTime})`
+      ? `${data.nearestAirport} (${data.transferTime ? formatTransferTime(data.transferTime) : 'unknown'})`
       : 'unknown',
     2
   )

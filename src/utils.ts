@@ -78,6 +78,15 @@ export function parseJsonNumberArray(value: string | number[]): number[] {
   return []
 }
 
+export function formatTransferTime(minutes: number): string {
+  if (minutes <= 0) return '0 mins'
+  const hrs = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  if (hrs === 0) return mins === 1 ? '1 min' : `${mins} mins`
+  if (mins === 0) return hrs === 1 ? '1 hr' : `${hrs} hrs`
+  return `${hrs} hr${hrs > 1 ? 's' : ''} ${mins} min${mins > 1 ? 's' : ''}`
+}
+
 export function formatRelativeTime(iso: string) {
   const date = dayjs(iso)
   const diffDays = dayjs().diff(date, 'day')

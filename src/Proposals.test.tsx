@@ -21,7 +21,7 @@ const sampleProposals = [
     summitAltitude: 3456,
     baseAltitude: 1850,
     nearestAirport: 'GVA',
-    transferTime: '2h',
+    transferTime: 120,
     pisteKm: 300,
     beginnerPct: 0,
     intermediatePct: 0,

@@ -49,7 +49,7 @@ interface ProposalsProps {
         summitAltitude: number
         baseAltitude: number
         nearestAirport: string
-        transferTime: string
+        transferTime: number
         pisteKm: number
         beginnerPct: number
         intermediatePct: number

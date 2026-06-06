@@ -23,7 +23,7 @@ const sampleResorts: ResortWithEmbedding[] = [
     summitAltitude: 3330,
     baseAltitude: 1850,
     nearestAirport: 'GVA',
-    transferTime: '1h 30m',
+    transferTime: 90,
     pisteKm: 300,
     beginnerPct: 0,
     intermediatePct: 0,
@@ -46,7 +46,7 @@ const sampleResorts: ResortWithEmbedding[] = [
     summitAltitude: 2280,
     baseAltitude: 675,
     nearestAirport: 'YVR',
-    transferTime: '2h',
+    transferTime: 120,
     pisteKm: 200,
     beginnerPct: 0,
     intermediatePct: 0,
@@ -133,7 +133,7 @@ describe('CreateProposalForm', () => {
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
     fill('nearestAirport', 'GVA')
-    fill('transferTime', '1h 30m')
+    fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('beginnerPct', '0')
     fill('intermediatePct', '0')
@@ -190,7 +190,7 @@ describe('CreateProposalForm', () => {
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
     fill('nearestAirport', 'GVA')
-    fill('transferTime', '1h 30m')
+    fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
     fill('snowReliability', 'high')
@@ -227,7 +227,7 @@ describe('CreateProposalForm', () => {
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
     fill('nearestAirport', 'GVA')
-    fill('transferTime', '1h 30m')
+    fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
     fill('snowReliability', 'high')
@@ -275,7 +275,7 @@ describe('CreateProposalForm', () => {
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
     fill('nearestAirport', 'GVA')
-    fill('transferTime', '1h 30m')
+    fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
     fill('snowReliability', 'high')
@@ -314,7 +314,7 @@ describe('CreateProposalForm', () => {
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
     fill('nearestAirport', 'GVA')
-    fill('transferTime', '1h 30m')
+    fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
     fill('snowReliability', 'high')

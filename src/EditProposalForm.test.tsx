@@ -16,7 +16,7 @@ const sampleProposal: Proposal = {
   startDate: '2024-01-01',
   endDate: '2024-01-07',
   nearestAirport: 'GVA',
-  transferTime: '2h 30m',
+  transferTime: 150,
   country: 'France',
   region: 'Alps',
   summitAltitude: 3456,

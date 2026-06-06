@@ -145,7 +145,7 @@ export const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given sou
 Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - For description, websites, and linkedResortsDescription: extract only information that is explicitly stated in the source text
-- For nearestAirport, transferTime, snowReliability, and skiSeasonMonths: you may infer the answer from the source text using common knowledge. For example, if the text says "80km from Geneva", you should output GVA; if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
+- For nearestAirport, transferTime, snowReliability, and skiSeasonMonths: you may infer the answer from the source text using common knowledge. For example, if the text says "80km from Geneva", you should output GVA; if the transfer takes 2 hours, output 120 for transferTime (in minutes); if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
 - For description: write 4-6 paragraphs as a narrative travel-guide overview. Do NOT repeat facts provided in the user prompt (altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, linkedResortsDescription). The description should add softer, qualitative information that structured data cannot capture. Where the source text provides detail, cover: (1) terrain character and feel rather than raw stats, (2) off-piste quality, (3) value — expensive or budget-friendly, (4) suitability for families vs groups, (5) apres-ski and nightlife, (6) whether the resort is picturesque or purpose-built, (7) lift system quality and age, (8) overall atmosphere. Be specific — avoid vague filler like "offers something for everyone" or "great for all abilities". If the source text lacks detail on a topic, skip that topic rather than padding with generalities
 - If a value truly cannot be determined even with reasonable inference, set it to null
 - For websites, include every relevant URL found in the source text; do not attempt to consolidate or deduplicate
@@ -188,8 +188,8 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         'Infer from context if the airport name or city is mentioned'
       ),
       transferTime: nullable(
-        { type: 'string' },
-        'Transfer time from airport, e.g. "2h 00m"',
+        { type: 'integer' },
+        'Transfer time from airport in minutes, e.g. 120',
         'Infer from distance or transport details if exact time is not given'
       ),
       snowReliability: nullable(

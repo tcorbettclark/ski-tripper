@@ -46,7 +46,7 @@ function createMockProposal(overrides: Partial<Proposal> = {}): Proposal {
     startDate: '2026-03-29T00:00:00.000Z',
     endDate: '2026-04-05T00:00:00.000Z',
     nearestAirport: 'GVA',
-    transferTime: '1h',
+    transferTime: 60,
     country: 'France',
     region: 'Alps',
     summitAltitude: 3842,

@@ -23,7 +23,7 @@ const baseProposal: Proposal = {
   startDate: '2024-01-01',
   endDate: '2024-01-07',
   nearestAirport: 'TEST',
-  transferTime: '1 hour',
+  transferTime: 60,
   country: 'Test Country',
   region: 'Alps',
   summitAltitude: 3000,

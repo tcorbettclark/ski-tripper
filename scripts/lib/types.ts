@@ -19,7 +19,7 @@ export interface EnrichedResort {
   id: string
   description: string
   nearestAirport: string
-  transferTime: string
+  transferTime: number
   snowReliability: string
   skiSeasonMonths: string
   websites: string[]

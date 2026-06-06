@@ -4,6 +4,7 @@ import {
   formatDate,
   formatRelativeTime,
   formatTimeRemaining,
+  formatTransferTime,
 } from './utils'
 
 const OriginalDate = Date
@@ -71,6 +72,36 @@ describe('formatRelativeTime', () => {
 
   it('falls back to formatDate for older dates (>= 3 days)', () => {
     expect(formatRelativeTime('2026-05-01T12:00:00Z')).toBe('Fri 01 May 2026')
+  })
+})
+
+describe('formatTransferTime', () => {
+  it('formats minutes only', () => {
+    expect(formatTransferTime(30)).toBe('30 mins')
+  })
+
+  it('formats single minute', () => {
+    expect(formatTransferTime(1)).toBe('1 min')
+  })
+
+  it('formats hours only', () => {
+    expect(formatTransferTime(120)).toBe('2 hrs')
+  })
+
+  it('formats single hour', () => {
+    expect(formatTransferTime(60)).toBe('1 hr')
+  })
+
+  it('formats hours and minutes', () => {
+    expect(formatTransferTime(90)).toBe('1 hr 30 mins')
+  })
+
+  it('formats hours with singular minute', () => {
+    expect(formatTransferTime(61)).toBe('1 hr 1 min')
+  })
+
+  it('formats 0 minutes', () => {
+    expect(formatTransferTime(0)).toBe('0 mins')
   })
 })
 

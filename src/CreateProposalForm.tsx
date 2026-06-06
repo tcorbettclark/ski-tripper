@@ -39,7 +39,7 @@ interface CreateProposalFormProps {
         summitAltitude: number
         baseAltitude: number
         nearestAirport: string
-        transferTime: string
+        transferTime: number
         pisteKm: number
         beginnerPct: number
         intermediatePct: number
@@ -105,7 +105,7 @@ function resortToFormFields(
     summitAltitude: resort.summitAltitude ? String(resort.summitAltitude) : '',
     baseAltitude: resort.baseAltitude ? String(resort.baseAltitude) : '',
     nearestAirport: resort.nearestAirport,
-    transferTime: resort.transferTime,
+    transferTime: resort.transferTime ? String(resort.transferTime) : '',
     pisteKm: resort.pisteKm ? String(resort.pisteKm) : '',
     beginnerPct: resort.beginnerPct ? String(resort.beginnerPct) : '',
     intermediatePct: resort.intermediatePct
@@ -216,7 +216,7 @@ export default function CreateProposalForm({
           summitAltitude: Number(form.summitAltitude),
           baseAltitude: Number(form.baseAltitude),
           nearestAirport: form.nearestAirport,
-          transferTime: form.transferTime,
+          transferTime: Number(form.transferTime),
           pisteKm: Number(form.pisteKm),
           beginnerPct: Number(form.beginnerPct),
           intermediatePct: Number(form.intermediatePct),
@@ -345,12 +345,13 @@ export default function CreateProposalForm({
         placeholder="e.g. GVA"
       />
       <Field
-        label="Transfer Time"
+        label="Transfer Time (mins)"
         name="transferTime"
+        type="number"
         value={form.transferTime}
         onChange={handleChange}
         required
-        placeholder="e.g. 1h 30m"
+        placeholder="e.g. 90"
       />
       <Field
         label="Piste Km"

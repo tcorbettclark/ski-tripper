@@ -40,7 +40,7 @@ export default function EditProposalForm({
     summitAltitude: proposal.summitAltitude?.toString() || '',
     baseAltitude: proposal.baseAltitude?.toString() || '',
     nearestAirport: proposal.nearestAirport || '',
-    transferTime: proposal.transferTime || '',
+    transferTime: proposal.transferTime?.toString() || '',
     pisteKm: proposal.pisteKm?.toString() || '',
     beginnerPct: proposal.beginnerPct?.toString() || '',
     intermediatePct: proposal.intermediatePct?.toString() || '',
@@ -86,6 +86,7 @@ export default function EditProposalForm({
               .map((u) => u.trim())
               .filter((u) => u && isValidUrl(ensureUrlScheme(u)))
           : [],
+        transferTime: Number(form.transferTime),
         summitAltitude: Number(form.summitAltitude),
         baseAltitude: Number(form.baseAltitude),
         pisteKm: Number(form.pisteKm),
@@ -156,12 +157,13 @@ export default function EditProposalForm({
         placeholder="e.g. GVA"
       />
       <Field
-        label="Transfer Time"
+        label="Transfer Time (mins)"
         name="transferTime"
+        type="number"
         value={form.transferTime}
         onChange={handleChange}
         required
-        placeholder="e.g. 1h 30m"
+        placeholder="e.g. 90"
       />
       <Field
         label="Piste Km"
