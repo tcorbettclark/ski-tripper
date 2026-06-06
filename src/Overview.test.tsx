@@ -749,4 +749,18 @@ describe('Overview', () => {
       expect(screen.queryByText('Snow quality')).toBeNull()
     })
   })
+
+  it('uses current user name from user prop instead of stale participant name', async () => {
+    const updatedUser = {
+      $id: 'user-1',
+      name: 'Alice Updated',
+      email: 'alice@example.com',
+    } as Models.User
+    await act(async () => {
+      renderOverview({ user: updatedUser })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Alice Updated')).toBeTruthy()
+    })
+  })
 })

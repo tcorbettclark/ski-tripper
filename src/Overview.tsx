@@ -419,11 +419,18 @@ export default function Overview({
     aspect: '90px',
   }
 
-  const sortedParticipants = [...participants].sort((a, b) => {
-    if (a.role === 'coordinator' && b.role !== 'coordinator') return -1
-    if (a.role !== 'coordinator' && b.role === 'coordinator') return 1
-    return 0
-  })
+  const sortedParticipants = [...participants]
+    .map((p) => {
+      if (p.participantUserId === user.$id) {
+        return { ...p, participantUserName: user.name || user.email }
+      }
+      return p
+    })
+    .sort((a, b) => {
+      if (a.role === 'coordinator' && b.role !== 'coordinator') return -1
+      if (a.role !== 'coordinator' && b.role === 'coordinator') return 1
+      return 0
+    })
 
   function handleCopyCode() {
     if (!trip.code) return

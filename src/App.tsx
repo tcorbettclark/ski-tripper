@@ -217,11 +217,16 @@ export default function App({
     setRefreshProposalsKey((k) => k + 1)
   }, [user, loadTrips])
 
+  const preferencesFetchedRef = useRef(false)
+
   useEffect(() => {
     if (!user) {
       setPreferences(null)
+      preferencesFetchedRef.current = false
       return
     }
+    if (preferencesFetchedRef.current) return
+    preferencesFetchedRef.current = true
     setCheckingPreferences(true)
     getPreferences(user.$id)
       .then((prefs) => {

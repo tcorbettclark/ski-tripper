@@ -330,6 +330,19 @@ describe('App', () => {
     await screen.findByText('Logout failed')
   })
 
+  it('does not re-fetch preferences when user object changes after initial load', async () => {
+    let callCount = 0
+    const mockGetPreferences = mock(() => {
+      callCount++
+      return Promise.resolve(defaultPreferences)
+    })
+    renderApp({ getPreferences: mockGetPreferences })
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /test user/i }))
+    })
+    expect(callCount).toBe(1)
+  })
+
   it('shows preferences blocker when user has no preferences', async () => {
     renderApp({
       getPreferences: () => Promise.resolve(null),
