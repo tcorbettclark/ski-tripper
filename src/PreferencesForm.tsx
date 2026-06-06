@@ -158,12 +158,17 @@ export default function PreferencesForm({
     options: string[],
     selected: string[],
     setter: (v: string[]) => void,
-    icons?: ((dim: boolean) => ReactNode)[]
+    icons?: ((dim: boolean) => ReactNode)[],
+    layout: 'inline' | 'stacked' = 'inline'
   ) {
     return (
       <div style={styles.group}>
         <span style={styles.groupLabel}>{label}</span>
-        <div style={styles.checkboxRow}>
+        <div
+          style={
+            layout === 'stacked' ? styles.checkboxStacked : styles.checkboxRow
+          }
+        >
           {options.map((opt, i) => {
             const checked = selected.includes(opt)
             return (
@@ -280,7 +285,8 @@ export default function PreferencesForm({
           (dim) => <HotelIcon dim={dim} hidden />,
           (dim) => <ChaletIcon dim={dim} hidden />,
           (dim) => <GuesthouseIcon dim={dim} hidden />,
-        ]
+        ],
+        'stacked'
       )}
 
       <div style={styles.group}>
@@ -343,7 +349,12 @@ const styles = {
   checkboxRow: {
     display: 'flex',
     flexWrap: 'wrap' as const,
-    gap: '14px',
+    gap: '40px',
+  },
+  checkboxStacked: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '12px',
   },
   checkboxLabel: {
     display: 'flex',
