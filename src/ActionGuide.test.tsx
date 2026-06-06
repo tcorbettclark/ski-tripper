@@ -129,7 +129,6 @@ const defaultProps = {
   activePoll: undefined,
   userVotedInActivePoll: false,
   isCoordinator: false,
-  participantCount: 4,
   onNavigateToTab: mock((_tab: string, _statusFilter?: string) => {}),
 }
 
@@ -262,15 +261,6 @@ describe('ActionGuide', () => {
     })
     await waitFor(() => {
       expect(screen.getByText('2 past polls')).toBeTruthy()
-    })
-  })
-
-  it('shows participant count', async () => {
-    await act(async () => {
-      renderActionGuide({ participantCount: 5 })
-    })
-    await waitFor(() => {
-      expect(screen.getByText('5 skiers')).toBeTruthy()
     })
   })
 

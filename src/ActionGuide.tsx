@@ -59,7 +59,6 @@ interface ActionGuideProps {
   activePoll: Poll | undefined
   userVotedInActivePoll: boolean
   isCoordinator: boolean
-  participantCount: number
   onNavigateToTab: (
     tab: 'resorts' | 'proposals' | 'poll',
     statusFilter?: StatusFilter
@@ -734,10 +733,6 @@ export default function ActionGuide(props: ActionGuideProps) {
       <div style={actionGuideStyles.header}>
         <BarChart3 size={16} style={{ color: colors.accent }} />
         <h3 style={actionGuideStyles.heading}>What's Next</h3>
-        <span style={actionGuideStyles.participants}>
-          {props.participantCount} skier
-          {props.participantCount !== 1 ? 's' : ''}
-        </span>
       </div>
       <div ref={containerRef} style={actionGuideStyles.flowWrap}>
         <ReactFlowProvider>
@@ -787,12 +782,7 @@ const actionGuideStyles = {
     textTransform: 'uppercase' as const,
     margin: 0,
   },
-  participants: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: mix('--color-textSecondary', 0.6),
-    marginLeft: 'auto',
-  },
+
   flowWrap: {
     width: '100%',
     height: 'clamp(320px, 55vh, 600px)',

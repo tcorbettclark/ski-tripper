@@ -625,7 +625,6 @@ export default function Overview({
         activePoll={activePoll}
         userVotedInActivePoll={userVotedInActivePoll}
         isCoordinator={isCoordinator}
-        participantCount={participants.length}
         onNavigateToTab={onNavigateToTab}
       />
 
