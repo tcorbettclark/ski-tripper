@@ -1,3 +1,13 @@
+export const COMMON_COUNTRIES = [
+  'United States',
+  'Japan',
+  'Italy',
+  'Austria',
+  'Canada',
+  'France',
+  'Switzerland',
+] as const
+
 export const COUNTRY_CODES: Record<string, string> = {
   Andorra: 'AD',
   Argentina: 'AR',

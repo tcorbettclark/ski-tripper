@@ -18,4 +18,13 @@ export const REGIONS = [
   'Tatra Mountains',
 ] as const
 
+export const COMMON_REGIONS: readonly Region[] = [
+  'Alps',
+  'Appalachians',
+  'Japanese Alps',
+  'Carpathians',
+  'Rockies (US)',
+  'Scandinavia',
+]
+
 export type Region = (typeof REGIONS)[number]

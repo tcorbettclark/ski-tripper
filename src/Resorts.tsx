@@ -1,10 +1,11 @@
 import { MapPin, Trophy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
-import { getCountryFlagUrl } from './countries'
+import { COMMON_COUNTRIES, COUNTRIES, getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
 import DetailField from './DetailField'
 import PisteBreakdown from './PisteBreakdown'
+import { COMMON_REGIONS, REGIONS } from './regions'
 import type { ScoredResort } from './resortSearch'
 import {
   getIsModelReady,
@@ -17,6 +18,7 @@ import {
   TROPHY_GOLD_THRESHOLD,
   TROPHY_SILVER_THRESHOLD,
 } from './resortSearchPure'
+import TagCloud from './TagCloud'
 import {
   borders,
   colors,
@@ -55,8 +57,8 @@ export default function Resorts({
   onAuthError = NOOP_AUTH_ERROR,
 }: ResortsProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [countryFilter, setCountryFilter] = useState('')
-  const [regionFilter, setRegionFilter] = useState('')
+  const [countryFilter, setCountryFilter] = useState<Set<string>>(new Set())
+  const [regionFilter, setRegionFilter] = useState<Set<string>>(new Set())
   const [minPisteKm, setMinPisteKm] = useState(0)
   const [minPeakHeight, setMinPeakHeight] = useState(0)
   const [maxTransferTime, setMaxTransferTime] = useState(-1)
@@ -100,8 +102,8 @@ export default function Resorts({
       return
     }
     const filteredByDropdowns = resorts.filter((r) => {
-      if (countryFilter && r.country !== countryFilter) return false
-      if (regionFilter && r.region !== regionFilter) return false
+      if (countryFilter.size > 0 && !countryFilter.has(r.country)) return false
+      if (regionFilter.size > 0 && !regionFilter.has(r.region)) return false
       if (minPisteKm > 0 && r.pisteKm < minPisteKm) return false
       if (minPeakHeight > 0 && r.summitAltitude < minPeakHeight) return false
       if (
@@ -142,15 +144,51 @@ export default function Resorts({
     pisteProfiles,
   ])
 
-  const countryOptions = useMemo(
-    () => [...new Set(resorts.map((r) => r.country).filter(Boolean))].sort(),
-    [resorts]
-  )
+  const toggleCountry = useCallback((country: string) => {
+    setCountryFilter((prev) => {
+      const next = new Set(prev)
+      if (next.has(country)) next.delete(country)
+      else next.add(country)
+      return next
+    })
+  }, [])
 
-  const regionOptions = useMemo(
-    () => [...new Set(resorts.map((r) => r.region).filter(Boolean))].sort(),
-    [resorts]
-  )
+  const toggleRegion = useCallback((region: string) => {
+    setRegionFilter((prev) => {
+      const next = new Set(prev)
+      if (next.has(region)) next.delete(region)
+      else next.add(region)
+      return next
+    })
+  }, [])
+
+  const countryTagItems = useMemo(() => {
+    const common = COMMON_COUNTRIES.map((c) => ({
+      key: c,
+      label: c,
+      imageUrl: getCountryFlagUrl(c),
+    }))
+    const commonSet = new Set<string>(COMMON_COUNTRIES)
+    const uncommon = COUNTRIES.filter((c) => !commonSet.has(c)).map((c) => ({
+      key: c,
+      label: c,
+      imageUrl: getCountryFlagUrl(c),
+    }))
+    return { common, uncommon }
+  }, [])
+
+  const regionTagItems = useMemo(() => {
+    const commonSet = new Set(COMMON_REGIONS)
+    const common = COMMON_REGIONS.map((r) => ({
+      key: r,
+      label: r,
+    }))
+    const uncommon = REGIONS.filter((r) => !commonSet.has(r)).map((r) => ({
+      key: r,
+      label: r,
+    }))
+    return { common, uncommon }
+  }, [])
 
   const filteredResorts: ScoredResort[] = useMemo(() => {
     if (searchResults !== null) {
@@ -159,12 +197,12 @@ export default function Resorts({
 
     let result: ScoredResort[] = resorts
 
-    if (countryFilter) {
-      result = result.filter((r) => r.country === countryFilter)
+    if (countryFilter.size > 0) {
+      result = result.filter((r) => countryFilter.has(r.country))
     }
 
-    if (regionFilter) {
-      result = result.filter((r) => r.region === regionFilter)
+    if (regionFilter.size > 0) {
+      result = result.filter((r) => regionFilter.has(r.region))
     }
 
     if (minPisteKm > 0) {
@@ -283,8 +321,8 @@ export default function Resorts({
   )
 
   const clearFilters = useCallback(() => {
-    setCountryFilter('')
-    setRegionFilter('')
+    setCountryFilter(new Set())
+    setRegionFilter(new Set())
     setMinPisteKm(0)
     setMinPeakHeight(0)
     setMaxTransferTime(maxTransferTimeFromData)
@@ -337,8 +375,8 @@ export default function Resorts({
   }
 
   const hasActiveFilters =
-    countryFilter ||
-    regionFilter ||
+    countryFilter.size > 0 ||
+    regionFilter.size > 0 ||
     minPisteKm > 0 ||
     minPeakHeight > 0 ||
     (maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData) ||
@@ -401,30 +439,20 @@ export default function Resorts({
           </button>
         </div>
         <div style={resortsStyles.filterRow}>
-          <select
-            value={countryFilter}
-            onChange={(e) => setCountryFilter(e.target.value)}
-            style={resortsStyles.filterSelect}
-          >
-            <option value="">All Countries</option>
-            {countryOptions.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <select
-            value={regionFilter}
-            onChange={(e) => setRegionFilter(e.target.value)}
-            style={resortsStyles.filterSelect}
-          >
-            <option value="">All Regions</option>
-            {regionOptions.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
+          <TagCloud
+            commonItems={countryTagItems.common}
+            uncommonItems={countryTagItems.uncommon}
+            selectedKeys={countryFilter}
+            onToggle={toggleCountry}
+          />
+        </div>
+        <div style={resortsStyles.filterRow}>
+          <TagCloud
+            commonItems={regionTagItems.common}
+            uncommonItems={regionTagItems.uncommon}
+            selectedKeys={regionFilter}
+            onToggle={toggleRegion}
+          />
           <button
             type="button"
             onClick={clearFilters}

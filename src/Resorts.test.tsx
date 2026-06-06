@@ -108,14 +108,45 @@ describe('Resorts', () => {
     expect(screen.getByText('No resorts available')).toBeTruthy()
   })
 
-  it('renders heading and filters', () => {
+  it('renders heading and search input', () => {
     render(<Resorts {...defaultProps()} />)
     expect(screen.getByText('Resorts Catalog')).toBeTruthy()
     expect(
       screen.getByPlaceholderText('Semantic search (more words are better)')
     ).toBeTruthy()
-    expect(screen.getByDisplayValue('All Countries')).toBeTruthy()
-    expect(screen.getByDisplayValue('All Regions')).toBeTruthy()
+  })
+
+  it('renders country tag cloud with common countries', () => {
+    render(<Resorts {...defaultProps()} />)
+    expect(screen.getByTitle('France')).toBeTruthy()
+    expect(screen.getByTitle('Canada')).toBeTruthy()
+    expect(screen.getByTitle('Switzerland')).toBeTruthy()
+    expect(screen.getByTitle('Austria')).toBeTruthy()
+    expect(screen.getByTitle('United States')).toBeTruthy()
+    expect(screen.getByTitle('Japan')).toBeTruthy()
+    expect(screen.getByTitle('Italy')).toBeTruthy()
+  })
+
+  it('renders region tag cloud with common regions', () => {
+    render(<Resorts {...defaultProps()} />)
+    expect(screen.getByTitle('Alps')).toBeTruthy()
+    expect(screen.getByTitle('Appalachians')).toBeTruthy()
+    expect(screen.getByTitle('Japanese Alps')).toBeTruthy()
+    expect(screen.getByTitle('Carpathians')).toBeTruthy()
+    expect(screen.getByTitle('Rockies (US)')).toBeTruthy()
+    expect(screen.getByTitle('Scandinavia')).toBeTruthy()
+  })
+
+  it('renders more countries link for uncommon countries', () => {
+    render(<Resorts {...defaultProps()} />)
+    const moreLinks = screen.getAllByRole('button', { name: /\+\d+ more/ })
+    expect(moreLinks.length).toBe(2)
+  })
+
+  it('renders more regions link for uncommon regions', () => {
+    render(<Resorts {...defaultProps()} />)
+    const moreButtons = screen.getAllByRole('button', { name: /\+\d+ more/ })
+    expect(moreButtons.length).toBeGreaterThanOrEqual(2)
   })
 
   it('shows result count', () => {
@@ -133,20 +164,6 @@ describe('Resorts', () => {
     expect(screen.getByText('Season')).toBeTruthy()
   })
 
-  it('renders country filter options from data', () => {
-    render(<Resorts {...defaultProps()} />)
-    const countrySelect = screen.getByDisplayValue('All Countries')
-    const options = countrySelect.querySelectorAll('option')
-    expect(options.length).toBe(4)
-  })
-
-  it('renders region filter options from data', () => {
-    render(<Resorts {...defaultProps()} />)
-    const regionSelect = screen.getByDisplayValue('All Regions')
-    const options = regionSelect.querySelectorAll('option')
-    expect(options.length).toBe(3)
-  })
-
   it('disables clear filters button when no filters are active', () => {
     render(<Resorts {...defaultProps()} />)
     expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
@@ -158,12 +175,11 @@ describe('Resorts', () => {
     expect(clearButton.disabled).toBe(true)
   })
 
-  it('enables clear filters button when filters are active', async () => {
-    const eventUser = userEvent.setup()
+  it('enables clear filters button when country filter is active', async () => {
     render(<Resorts {...defaultProps()} />)
 
-    const countrySelect = screen.getByDisplayValue('All Countries')
-    await eventUser.selectOptions(countrySelect, 'Canada')
+    const franceButton = screen.getByTitle('France')
+    fireEvent.click(franceButton)
 
     const clearButton = screen.getByRole('button', {
       name: /clear filters/i,
@@ -176,8 +192,9 @@ describe('Resorts', () => {
     const eventUser = userEvent.setup()
     render(<Resorts {...defaultProps()} />)
 
-    const countrySelect = screen.getByDisplayValue('All Countries')
-    await eventUser.selectOptions(countrySelect, 'Canada')
+    const franceButton = screen.getByTitle('France')
+    await eventUser.click(franceButton)
+
     await eventUser.click(
       screen.getByRole('button', { name: /clear filters/i })
     )
@@ -185,12 +202,106 @@ describe('Resorts', () => {
     expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
   })
 
-  it('shows filtered result count when country filter is applied', async () => {
+  it('filters resorts by single country using tag cloud', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const canadaButton = screen.getByTitle('Canada')
+    fireEvent.click(canadaButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('filters resorts by multiple countries using OR logic', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const franceButton = screen.getByTitle('France')
+    const canadaButton = screen.getByTitle('Canada')
+    fireEvent.click(franceButton)
+    fireEvent.click(canadaButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('2 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('deselects country tag when clicked again', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const franceButton = screen.getByTitle('France')
+    fireEvent.click(franceButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+
+    fireEvent.click(franceButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('filters resorts by single region using tag cloud', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const alpsButton = screen.getByTitle('Alps')
+    fireEvent.click(alpsButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('2 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('filters resorts by uncommon region after expanding more', async () => {
     const eventUser = userEvent.setup()
     render(<Resorts {...defaultProps()} />)
 
-    const countrySelect = screen.getByDisplayValue('All Countries')
-    await eventUser.selectOptions(countrySelect, 'Canada')
+    await eventUser.click(
+      screen.getAllByRole('button', { name: /\+\d+ more/ })[1]
+    )
+    const rockiesButton = screen.getByTitle('Rockies (Canadian)')
+    fireEvent.click(rockiesButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('shows uncommon countries when more is clicked', async () => {
+    const eventUser = userEvent.setup()
+    render(<Resorts {...defaultProps()} />)
+
+    expect(screen.queryByTitle('Czechia')).toBeNull()
+
+    await eventUser.click(
+      screen.getAllByRole('button', { name: /\+\d+ more/ })[0]
+    )
+
+    expect(screen.getByTitle('Czechia')).toBeTruthy()
+  })
+
+  it('hides uncommon countries when less is clicked', async () => {
+    const eventUser = userEvent.setup()
+    render(<Resorts {...defaultProps()} />)
+
+    await eventUser.click(
+      screen.getAllByRole('button', { name: /\+\d+ more/ })[0]
+    )
+    expect(screen.getByTitle('Czechia')).toBeTruthy()
+
+    await eventUser.click(screen.getByRole('button', { name: /less/i }))
+    expect(screen.queryByTitle('Czechia')).toBeNull()
+  })
+
+  it('combines country and region filters', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const franceButton = screen.getByTitle('France')
+    const alpsButton = screen.getByTitle('Alps')
+    fireEvent.click(franceButton)
+    fireEvent.click(alpsButton)
 
     await waitFor(() => {
       expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
