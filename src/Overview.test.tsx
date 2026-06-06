@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
 import type { ReactNode } from 'react'
 import Overview from './Overview'
@@ -810,7 +811,7 @@ it('updates displayed preferences when onPreferencesUpdated is called', async ()
     />
   )
   await waitFor(() => {
-    expect(screen.getByTitle('Snow quality')).toBeTruthy()
+    expect(screen.getByTitle('Ski')).toBeTruthy()
   })
 
   const updatedPrefs: Preferences = {
@@ -849,8 +850,8 @@ it('updates displayed preferences when onPreferencesUpdated is called', async ()
   })
 
   await waitFor(() => {
-    expect(screen.getByTitle('Powder')).toBeTruthy()
-    expect(screen.queryByTitle('Snow quality')).toBeNull()
+    expect(screen.getAllByTitle('Snowboard')).toHaveLength(2)
+    expect(screen.queryByTitle('Ski')).toBeNull()
   })
 })
 
