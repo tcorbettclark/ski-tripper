@@ -541,7 +541,7 @@ export default function Overview({
               <p style={overviewStyles.empty}>No participants</p>
             ) : (
               <div style={overviewStyles.participantGrid}>
-                <style>{`.participant-grid-row-clickable:hover { background: ${mix('--color-accent', 0.15)}; cursor: pointer; }`}</style>
+                <style>{`.participant-name-cell { background: var(--color-bgCard); transition: background 0.15s; } .participant-grid-row-clickable { transition: background 0.15s; } .participant-grid-row-clickable:hover { background: color-mix(in srgb, var(--color-accent) 25%, transparent); cursor: pointer; } .participant-grid-row-clickable:hover .participant-name-cell { background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bgCard)); }`}</style>
                 {sortedParticipants.map((p) => {
                   const prefs = preferencesMap[p.participantUserId]
                   const isCurrentUser =
@@ -568,6 +568,7 @@ export default function Overview({
                         role={isCurrentUser ? 'button' : undefined}
                       >
                         <span
+                          className="participant-name-cell"
                           style={{
                             ...(isCurrentUser
                               ? overviewStyles.nameCellClickable
@@ -671,7 +672,7 @@ const overviewStyles = {
     letterSpacing: '-0.01em',
   },
   section: {
-    marginTop: '48px',
+    marginTop: '32px',
     marginBottom: '32px',
   },
   sectionHeading: {
@@ -687,7 +688,6 @@ const overviewStyles = {
     background: colors.bgCard,
     border: borders.card,
     borderRadius: '10px',
-    padding: '20px 24px',
     overflow: 'hidden' as const,
     minWidth: 0,
   },
@@ -766,30 +766,31 @@ const overviewStyles = {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: 0,
-    minWidth: 0,
-    overflow: 'hidden' as const,
+    overflowX: 'auto' as const,
   },
   gridRow: {
     display: 'flex',
-    flexWrap: 'wrap' as const,
+    flexShrink: 0,
     alignItems: 'center',
     gap: '0 20px',
     padding: '10px 16px',
-    borderBottom: borders.subtle,
-    minWidth: 0,
+    minWidth: '560px',
   },
 
   nameCellClickable: {
     cursor: 'pointer',
-    background: 'none',
     border: 'none',
     padding: 0,
+    paddingRight: '8px',
     font: 'inherit',
     color: 'inherit',
     textAlign: 'left' as const,
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
+    position: 'sticky' as const,
+    left: 0,
+    zIndex: 1,
   },
   gridCellClickable: {
     cursor: 'pointer',
@@ -806,6 +807,10 @@ const overviewStyles = {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
+    paddingRight: '8px',
+    position: 'sticky' as const,
+    left: 0,
+    zIndex: 1,
   },
   gridCell: {
     display: 'flex',

@@ -24,7 +24,7 @@ export default function TripTable({
 
   return (
     <table className="trip-table" style={styles.table}>
-      <style>{`.trip-table tr:hover td { background: ${mix('--color-accent', 0.15)}; color: ${colors.textPrimary}; }`}</style>
+      <style>{`.trip-table tr:hover td { background: ${mix('--color-accent', 0.25)}; color: ${colors.textPrimary}; }`}</style>
       <thead>
         <tr>
           <th style={styles.th}>Description</th>

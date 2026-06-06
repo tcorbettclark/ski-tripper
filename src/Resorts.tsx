@@ -624,7 +624,7 @@ export default function Resorts({
       </div>
 
       <div style={resortsStyles.tableContainer}>
-        <style>{`.resorts-table tr:hover td { background: ${mix('--color-accent', 0.15)}; cursor: pointer; }`}</style>
+        <style>{`.resorts-table tr:hover td { background: ${mix('--color-accent', 0.25)}; cursor: pointer; }`}</style>
         <TableVirtuoso
           data={filteredResorts}
           components={{
