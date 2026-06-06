@@ -1,9 +1,11 @@
 import {
   cosineSimilarity,
   lexicalBoost,
-  SIMILARITY_THRESHOLD,
-  scoreResort,
+  relevanceScore,
 } from './resortSearchPure'
+
+export type ScoredResort = ResortWithEmbedding & { score?: number }
+
 import type { ResortWithEmbedding } from './types.d'
 
 const MODEL_ID = 'Xenova/multi-qa-MiniLM-L6-cos-v1'
@@ -62,12 +64,12 @@ export function onModelReady(callback: () => void): void {
   }
 }
 
-export { cosineSimilarity, lexicalBoost, SIMILARITY_THRESHOLD, scoreResort }
+export { cosineSimilarity, lexicalBoost, relevanceScore }
 
 export async function searchResorts(
   query: string,
   resorts: ResortWithEmbedding[]
-): Promise<ResortWithEmbedding[]> {
+): Promise<ScoredResort[]> {
   if (!query.trim()) {
     return resorts
   }
@@ -84,10 +86,8 @@ export async function searchResorts(
     .map((resort) => {
       const cosine = cosineSimilarity(embedding, resort.embedding)
       const boost = lexicalBoost(trimmed, resort)
-      const score = scoreResort(cosine, boost)
-      return { resort, score }
+      const score = relevanceScore(cosine, boost)
+      return { ...resort, score }
     })
-    .filter((r) => r.score >= SIMILARITY_THRESHOLD)
-    .sort((a, b) => b.score - a.score)
-    .map((r) => r.resort)
+    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
 }

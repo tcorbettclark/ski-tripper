@@ -5,11 +5,13 @@ import {
   lexicalBoost,
   RATIO_CLOSE,
   RATIO_FUZZY,
-  SIMILARITY_THRESHOLD,
-  scoreResort,
+  relevanceScore,
   TIER_CLOSE,
   TIER_EXACT,
   TIER_FUZZY,
+  TROPHY_BRONZE_THRESHOLD,
+  TROPHY_GOLD_THRESHOLD,
+  TROPHY_SILVER_THRESHOLD,
 } from './resortSearchPure'
 import type { ResortWithEmbedding } from './types.d'
 
@@ -80,12 +82,6 @@ describe('cosineSimilarity', () => {
   })
 })
 
-describe('SIMILARITY_THRESHOLD', () => {
-  it('is 0.3', () => {
-    expect(SIMILARITY_THRESHOLD).toBe(0.3)
-  })
-})
-
 describe('lexicalBoost', () => {
   const chamonix = makeResort({
     resortName: 'Chamonix',
@@ -98,40 +94,81 @@ describe('lexicalBoost', () => {
     region: 'Valais',
   })
 
-  it('returns exact tier for exact word match on name', () => {
+  it('returns exact tier for query word matching full resort name', () => {
     expect(lexicalBoost('chamonix', chamonix)).toBe(TIER_EXACT)
+  })
+
+  it('is case-insensitive for resort name match', () => {
     expect(lexicalBoost('CHAMONIX', chamonix)).toBe(TIER_EXACT)
   })
 
-  it('returns close tier for minor typo (distance 1)', () => {
+  it('returns close tier for minor typo matching full resort name', () => {
     expect(lexicalBoost('chamonx', chamonix)).toBe(TIER_CLOSE)
   })
 
-  it('returns fuzzy tier for distance 2 typo', () => {
+  it('returns fuzzy tier for distance 2 typo matching full resort name', () => {
     expect(lexicalBoost('chamonc', chamonix)).toBe(TIER_FUZZY)
   })
 
-  it('returns exact tier for exact country word match', () => {
-    expect(lexicalBoost('France', chamonix)).toBe(TIER_EXACT)
+  it('matches exact country phrase from query', () => {
+    expect(lexicalBoost('france', chamonix)).toBe(TIER_EXACT)
   })
 
-  it('returns close tier for close country word match', () => {
-    expect(lexicalBoost('Switzerlnd', zermatt)).toBe(TIER_CLOSE)
+  it('matches close country phrase from query', () => {
+    expect(lexicalBoost('switzerlnd', zermatt)).toBe(TIER_CLOSE)
   })
 
-  it('returns exact tier for exact region word match', () => {
-    expect(lexicalBoost('Valais', zermatt)).toBe(TIER_EXACT)
+  it('matches exact region phrase from query', () => {
+    expect(lexicalBoost('valais', zermatt)).toBe(TIER_EXACT)
   })
 
-  it('returns 0 for short unrelated words not close to any field word', () => {
+  it('returns 0 when no query word matches any field phrase', () => {
+    expect(lexicalBoost('banff', chamonix)).toBe(0)
+  })
+
+  it('returns 0 for empty query', () => {
+    expect(lexicalBoost('', chamonix)).toBe(0)
+  })
+
+  it('returns 0 for short unrelated query word not matching any field phrase', () => {
     expect(lexicalBoost('a', chamonix)).toBe(0)
   })
 
-  it('matches short plausible prefixes like Val against Valais', () => {
-    expect(lexicalBoost('Val', zermatt)).toBe(TIER_FUZZY)
+  it('short word like "la" does not strongly match long phrase "la plagne"', () => {
+    const laPlagne = makeResort({
+      resortName: 'La Plagne',
+      country: 'France',
+      region: 'Savoie',
+    })
+    const boost = lexicalBoost('la', laPlagne)
+    expect(boost).toBeLessThan(TIER_CLOSE)
   })
 
-  it('does not match short words like "in" against unrelated field words', () => {
+  it('word from multi-word resort name matches exactly at word level', () => {
+    const laPlagne = makeResort({
+      resortName: 'La Plagne',
+      country: 'France',
+      region: 'Savoie',
+    })
+    expect(lexicalBoost('plagne', laPlagne)).toBe(TIER_EXACT)
+  })
+
+  it('stacks when query word matches multiple field phrases', () => {
+    const valaisResort = makeResort({
+      resortName: 'Valais',
+      country: 'Switzerland',
+      region: 'Valais',
+    })
+    expect(lexicalBoost('valais', valaisResort)).toBe(TIER_EXACT + TIER_EXACT)
+  })
+
+  it('stacks when multiple query words match different field phrases', () => {
+    expect(lexicalBoost('Chamonix France', chamonix)).toBe(
+      TIER_EXACT + TIER_EXACT
+    )
+  })
+
+  it('does not match short query words like "in" against unrelated fields', () => {
     const resort = makeResort({
       resortName: 'Val Thorens',
       country: 'France',
@@ -140,49 +177,20 @@ describe('lexicalBoost', () => {
     expect(lexicalBoost('in', resort)).toBe(0)
   })
 
-  it('stacks boosts across fields for single-word query', () => {
-    const valaisResort = makeResort({
-      resortName: 'Valais Ski Area',
-      country: 'Switzerland',
-      region: 'Valais',
-    })
-    expect(lexicalBoost('valais', valaisResort)).toBe(TIER_EXACT + TIER_EXACT)
+  it('matches partial word at fuzzy threshold against phrase via word-level', () => {
+    expect(lexicalBoost('Val', zermatt)).toBe(TIER_FUZZY)
   })
 
-  it('averages boosts across multi-word query where all words match', () => {
-    expect(lexicalBoost('Chamonix France', chamonix)).toBe(
-      (TIER_EXACT + TIER_EXACT) / 2
-    )
-  })
-
-  it('dilutes boost when some words do not match', () => {
-    expect(lexicalBoost('ski France', chamonix)).toBe((0 + TIER_EXACT) / 2)
-  })
-
-  it('further dilutes boost when most words do not match', () => {
-    expect(lexicalBoost('ski resort France', chamonix)).toBe(
-      (0 + 0 + TIER_EXACT) / 3
-    )
-  })
-
-  it('returns small boost for multi-word query with one fuzzy match', () => {
-    expect(lexicalBoost('banff jasper', chamonix)).toBe(TIER_FUZZY / 2)
-  })
-
-  it('returns 0 for unrelated query', () => {
-    expect(lexicalBoost('banff', chamonix)).toBe(0)
-  })
-
-  it('returns 0 for empty query', () => {
-    expect(lexicalBoost('', chamonix)).toBe(0)
-  })
-
-  it('matches individual words in multi-word field names', () => {
+  it('matches hyphenated region substring at word level', () => {
     expect(lexicalBoost('Rhone', chamonix)).toBe(TIER_EXACT)
   })
 
-  it('tokenizes hyphenated region names into separate words', () => {
+  it('matches hyphenated region prefix at word level', () => {
     expect(lexicalBoost('Auvergne', chamonix)).toBe(TIER_EXACT)
+  })
+
+  it('matches full region phrase exactly', () => {
+    expect(lexicalBoost('Auvergne-Rhone-Alpes', chamonix)).toBe(TIER_EXACT)
   })
 })
 
@@ -194,34 +202,53 @@ describe('leven', () => {
   })
 })
 
-describe('scoreResort', () => {
-  it('adds boost to cosine', () => {
-    expect(scoreResort(0.4, 0.35)).toBeCloseTo(0.75, 5)
+describe('relevanceScore', () => {
+  it('returns a value between 0 and 1', () => {
+    const result = relevanceScore(0.8, 0.5)
+    expect(result).toBeGreaterThanOrEqual(0)
+    expect(result).toBeLessThanOrEqual(1)
   })
 
-  it('returns raw cosine for zero boost', () => {
-    expect(scoreResort(0.4, 0)).toBeCloseTo(0.4, 5)
+  it('returns raw cosine when no boost applies', () => {
+    expect(relevanceScore(0.8, 0)).toBeCloseTo(0.8, 5)
   })
 
-  it('allows lexical-only match with zero cosine to exceed threshold', () => {
-    expect(scoreResort(0, TIER_EXACT)).toBeCloseTo(TIER_EXACT, 5)
-    expect(scoreResort(0, TIER_EXACT) >= SIMILARITY_THRESHOLD).toBe(true)
+  it('gives meaningful score for lexical-only match with zero cosine', () => {
+    expect(relevanceScore(0, TIER_EXACT)).toBeCloseTo(TIER_EXACT, 5)
   })
 
-  it('combines low cosine with lexical boost to exceed threshold', () => {
-    const lowCosine = 0.15
-    expect(lowCosine < SIMILARITY_THRESHOLD).toBe(true)
-    expect(scoreResort(lowCosine, TIER_FUZZY) >= SIMILARITY_THRESHOLD).toBe(
-      true
-    )
+  it('combines cosine with lexical boost', () => {
+    expect(relevanceScore(0.15, TIER_FUZZY)).toBeCloseTo(0.15 + TIER_FUZZY, 5)
+  })
+
+  it('caps boost at 0.3', () => {
+    expect(relevanceScore(0.5, 1.0)).toBeCloseTo(0.8, 5)
+  })
+
+  it('caps at 1', () => {
+    expect(relevanceScore(1, 1)).toBe(1)
   })
 
   it('preserves ranking order: exact + high cosine > high cosine alone > fuzzy + low cosine', () => {
-    const bothHigh = scoreResort(0.8, TIER_EXACT)
-    const semanticOnly = scoreResort(0.8, 0)
-    const bothLow = scoreResort(0.25, TIER_FUZZY)
+    const bothHigh = relevanceScore(0.8, TIER_EXACT)
+    const semanticOnly = relevanceScore(0.8, 0)
+    const bothLow = relevanceScore(0.25, TIER_FUZZY)
     expect(bothHigh).toBeGreaterThan(semanticOnly)
     expect(semanticOnly).toBeGreaterThan(bothLow)
+  })
+})
+
+describe('trophy thresholds', () => {
+  it('TROPHY_GOLD_THRESHOLD is 0.8', () => {
+    expect(TROPHY_GOLD_THRESHOLD).toBe(0.8)
+  })
+
+  it('TROPHY_SILVER_THRESHOLD is 0.65', () => {
+    expect(TROPHY_SILVER_THRESHOLD).toBe(0.65)
+  })
+
+  it('TROPHY_BRONZE_THRESHOLD is 0.5', () => {
+    expect(TROPHY_BRONZE_THRESHOLD).toBe(0.5)
   })
 })
 
