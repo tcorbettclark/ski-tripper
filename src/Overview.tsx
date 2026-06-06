@@ -1,6 +1,7 @@
 import type { Models } from 'appwrite'
 import { Check, Copy, Heart, Pencil, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import ActionGuide from './ActionGuide'
 import {
   getCoordinatorParticipant as _getCoordinatorParticipant,
   getPreferences as _getPreferences,
@@ -24,7 +25,6 @@ import {
   SkiIcon,
   SnowboardIcon,
 } from './Icons'
-import NextActions from './NextActions'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type {
   Participant,
@@ -616,7 +616,7 @@ export default function Overview({
         )}
       </section>
 
-      <NextActions
+      <ActionGuide
         resortCount={resorts.length}
         draftCount={draftCount}
         submittedCount={submittedCount}
@@ -625,6 +625,7 @@ export default function Overview({
         activePoll={activePoll}
         userVotedInActivePoll={userVotedInActivePoll}
         isCoordinator={isCoordinator}
+        participantCount={participants.length}
         onNavigateToTab={onNavigateToTab}
       />
 

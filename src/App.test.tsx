@@ -305,7 +305,9 @@ describe('App', () => {
     await ue.click(screen.getByText('Alps adventure'))
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /^proposals$/i }))
+      expect(
+        screen.getAllByRole('button', { name: /^proposals$/i }).length
+      ).toBeGreaterThan(0)
     })
     await ue.click(screen.getByRole('button', { name: /my trips/i }))
 

@@ -224,3 +224,64 @@ input[type="range"]:focus-visible::-moz-range-thumb {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
+
+/* ActionGuide animations */
+@keyframes action-guide-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px
+      color-mix(in srgb, var(--color-accent) 15%, transparent);
+  }
+}
+
+@keyframes action-guide-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-accent) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px
+      color-mix(in srgb, var(--color-accent) 20%, transparent);
+  }
+}
+
+.action-guide-node-pulse {
+  animation: action-guide-pulse 2.5s ease-in-out infinite;
+}
+
+.action-guide-action-glow {
+  animation: action-guide-glow 2s ease-in-out infinite;
+}
+
+/* React Flow theme overrides for ActionGuide */
+.react-flow__background {
+  display: none;
+}
+
+.react-flow__controls {
+  display: none;
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__node {
+  pointer-events: auto;
+}
+
+.action-guide-node:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.action-guide-node:hover {
+  filter: brightness(1.05);
+}
