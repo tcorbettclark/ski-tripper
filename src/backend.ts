@@ -42,15 +42,25 @@ const RESORTS_BUCKET_ID = process.env
   .PUBLIC_APPWRITE_RESORTS_BUCKET_ID as string
 const RESORTS_FILE_ID = process.env.PUBLIC_APPWRITE_RESORTS_FILE_ID as string
 
-export function getResortDataUrl(): string {
-  return storage.getFileView({
+export function getResortDataUrl(updatedAt: number): string {
+  const url = storage.getFileView({
+    bucketId: RESORTS_BUCKET_ID,
+    fileId: RESORTS_FILE_ID,
+  })
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}_t=${updatedAt}`
+}
+
+export async function getResortFileMetadata(): Promise<Models.File> {
+  return storage.getFile({
     bucketId: RESORTS_BUCKET_ID,
     fileId: RESORTS_FILE_ID,
   })
 }
 
 export async function fetchResortDataWithAuth(): Promise<string> {
-  const url = getResortDataUrl()
+  const file = await getResortFileMetadata()
+  const url = getResortDataUrl(new Date(file.$updatedAt).getTime())
   const headers: Record<string, string> = {
     'X-Appwrite-Project': process.env.PUBLIC_APPWRITE_PROJECT_ID as string,
   }
