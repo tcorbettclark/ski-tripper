@@ -6,10 +6,12 @@ import type { Preferences } from './types.d'
 
 interface PreferencesModalProps {
   userId: string
+  userName: string
   initial: Preferences | null
   open: boolean
   onClose: () => void
   onSaved: (preferences: Preferences) => void
+  onNameUpdated?: () => void
   createPreferences?: (
     userId: string,
     data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
@@ -20,16 +22,20 @@ interface PreferencesModalProps {
       Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
     >
   ) => Promise<Preferences>
+  updateName?: (name: string) => Promise<unknown>
 }
 
 export default function PreferencesModal({
   userId,
+  userName,
   initial,
   open,
   onClose,
   onSaved,
+  onNameUpdated,
   createPreferences,
   updatePreferences,
+  updateName,
 }: PreferencesModalProps) {
   const [savedPreferences, setSavedPreferences] = useState<Preferences | null>(
     initial
@@ -68,15 +74,18 @@ export default function PreferencesModal({
         </div>
         <PreferencesForm
           userId={userId}
+          userName={userName}
           initial={savedPreferences ?? initial}
           onSaved={(prefs) => {
             setSavedPreferences(prefs)
             onSaved(prefs)
             onClose()
           }}
+          onNameUpdated={onNameUpdated}
           onCancel={onClose}
           createPreferences={createPreferences}
           updatePreferences={updatePreferences}
+          updateName={updateName}
         />
       </div>
     </div>

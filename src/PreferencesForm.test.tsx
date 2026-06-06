@@ -173,4 +173,134 @@ describe('PreferencesForm', () => {
     })
     expect(screen.getByRole('button', { name: /cancel/i })).toBeDefined()
   })
+
+  it('renders name field when updateName is provided', async () => {
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          userName="Alice"
+          onSaved={mock(() => {})}
+          updateName={mock(() => Promise.resolve({}))}
+        />
+      )
+    })
+    expect(screen.getByLabelText('Name')).toBeDefined()
+    expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe(
+      'Alice'
+    )
+  })
+
+  it('does not render name field when updateName is not provided', async () => {
+    await act(async () => {
+      render(<PreferencesForm userId="user-1" onSaved={mock(() => {})} />)
+    })
+    expect(screen.queryByLabelText('Name')).toBeNull()
+  })
+
+  it('calls updateName when name is changed and form is submitted', async () => {
+    const ue = userEvent.setup()
+    const mockUpdateName = mock(() => Promise.resolve({}))
+    const mockNameUpdated = mock(() => {})
+    const mockCreate = mock(() => Promise.resolve(defaultPreferences))
+
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          userName="Alice"
+          onSaved={mock(() => {})}
+          onNameUpdated={mockNameUpdated}
+          updateName={mockUpdateName}
+          createPreferences={mockCreate}
+        />
+      )
+    })
+
+    const nameInput = screen.getByLabelText('Name') as HTMLInputElement
+    await ue.clear(nameInput)
+    await ue.type(nameInput, 'Bob')
+
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      expect(mockUpdateName).toHaveBeenCalledWith('Bob')
+    })
+    await waitFor(() => {
+      expect(mockNameUpdated).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('does not call updateName when name is unchanged', async () => {
+    const ue = userEvent.setup()
+    const mockUpdateName = mock(() => Promise.resolve({}))
+    const mockCreate = mock(() => Promise.resolve(defaultPreferences))
+
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          userName="Alice"
+          onSaved={mock(() => {})}
+          updateName={mockUpdateName}
+          createPreferences={mockCreate}
+        />
+      )
+    })
+
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      expect(mockCreate).toHaveBeenCalledTimes(1)
+    })
+    expect(mockUpdateName).not.toHaveBeenCalled()
+  })
+
+  it('displays inline error when updateName fails', async () => {
+    const ue = userEvent.setup()
+    const mockUpdateName = mock(() =>
+      Promise.reject(new Error('Name update failed'))
+    )
+    const mockCreate = mock(() => Promise.resolve(defaultPreferences))
+
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          userName="Alice"
+          onSaved={mock(() => {})}
+          updateName={mockUpdateName}
+          createPreferences={mockCreate}
+        />
+      )
+    })
+
+    const nameInput = screen.getByLabelText('Name') as HTMLInputElement
+    await ue.clear(nameInput)
+    await ue.type(nameInput, 'Bob')
+
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Name update failed'))
+    })
+  })
+
+  it('name input uses autoComplete=name', async () => {
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          userName="Alice"
+          onSaved={mock(() => {})}
+          updateName={mock(() => Promise.resolve({}))}
+        />
+      )
+    })
+    const nameInput = screen.getByLabelText('Name') as HTMLInputElement
+    expect(nameInput.autocomplete).toBe('name')
+  })
 })

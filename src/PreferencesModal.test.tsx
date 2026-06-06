@@ -26,6 +26,7 @@ describe('PreferencesModal', () => {
       render(
         <PreferencesModal
           userId="user-1"
+          userName="Alice"
           initial={defaultPreferences}
           open={false}
           onClose={mock(() => {})}
@@ -41,6 +42,7 @@ describe('PreferencesModal', () => {
       render(
         <PreferencesModal
           userId="user-1"
+          userName="Alice"
           initial={defaultPreferences}
           open
           onClose={mock(() => {})}
@@ -53,6 +55,26 @@ describe('PreferencesModal', () => {
     expect(screen.getByDisplayValue('Good snow')).toBeDefined()
   })
 
+  it('renders name input with current name', async () => {
+    await act(async () => {
+      render(
+        <PreferencesModal
+          userId="user-1"
+          userName="Alice"
+          initial={defaultPreferences}
+          open
+          onClose={mock(() => {})}
+          onSaved={mock(() => {})}
+          updateName={mock(() => Promise.resolve({}))}
+        />
+      )
+    })
+    expect(screen.getByLabelText('Name')).toBeDefined()
+    expect((screen.getByLabelText('Name') as HTMLInputElement).value).toBe(
+      'Alice'
+    )
+  })
+
   it('closes when close button is clicked', async () => {
     const ue = userEvent.setup()
     const mockClose = mock(() => {})
@@ -60,6 +82,7 @@ describe('PreferencesModal', () => {
       render(
         <PreferencesModal
           userId="user-1"
+          userName="Alice"
           initial={defaultPreferences}
           open
           onClose={mockClose}
@@ -85,6 +108,7 @@ describe('PreferencesModal', () => {
       render(
         <PreferencesModal
           userId="user-1"
+          userName="Alice"
           initial={defaultPreferences}
           open
           onClose={mock(() => {})}
@@ -102,6 +126,43 @@ describe('PreferencesModal', () => {
 
     await waitFor(() => {
       expect(mockSaved).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('calls updateName and onNameUpdated when name changed and preferences saved', async () => {
+    const ue = userEvent.setup()
+    const mockSaved = mock(() => Promise.resolve(defaultPreferences))
+    const mockUpdateName = mock(() => Promise.resolve({}))
+    const mockNameUpdated = mock(() => {})
+    const mockUpdatePrefs = mock(() => Promise.resolve(defaultPreferences))
+
+    await act(async () => {
+      render(
+        <PreferencesModal
+          userId="user-1"
+          userName="Alice"
+          initial={defaultPreferences}
+          open
+          onClose={mock(() => {})}
+          onSaved={mockSaved}
+          onNameUpdated={mockNameUpdated}
+          updateName={mockUpdateName}
+          updatePreferences={mockUpdatePrefs}
+        />
+      )
+    })
+
+    const nameInput = screen.getByLabelText('Name') as HTMLInputElement
+    await ue.clear(nameInput)
+    await ue.type(nameInput, 'Bob')
+
+    await ue.click(screen.getByRole('button', { name: /update preferences/i }))
+
+    await waitFor(() => {
+      expect(mockUpdateName).toHaveBeenCalledWith('Bob')
+    })
+    await waitFor(() => {
+      expect(mockNameUpdated).toHaveBeenCalledTimes(1)
     })
   })
 })

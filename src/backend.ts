@@ -1264,6 +1264,13 @@ export async function getPreferences(
   return rows.length > 0 ? rows[0] : null
 }
 
+export async function updateName(
+  name: string,
+  acct: Account = account
+): Promise<Models.User> {
+  return acct.updateName({ name })
+}
+
 export async function createPreferences(
   userId: string,
   data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>,

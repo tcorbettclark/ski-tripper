@@ -34,7 +34,9 @@ const timeLabels = ['Slopes', 'Eating', 'Après', 'Hotel Chill']
 interface PreferencesFormProps {
   userId: string
   initial?: Preferences | null
+  userName?: string
   onSaved: (preferences: Preferences) => void
+  onNameUpdated?: () => void
   onCancel?: () => void
   createPreferences?: (
     userId: string,
@@ -46,15 +48,19 @@ interface PreferencesFormProps {
       Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
     >
   ) => Promise<Preferences>
+  updateName?: (name: string) => Promise<unknown>
 }
 
 export default function PreferencesForm({
   userId,
   initial,
+  userName = '',
   onSaved,
+  onNameUpdated,
   onCancel,
   createPreferences = _createPreferences,
   updatePreferences = _updatePreferences,
+  updateName: _updateName,
 }: PreferencesFormProps) {
   const initialSkiSnowboard = initial
     ? parseJsonArray(initial.skiSnowboard)
@@ -73,6 +79,7 @@ export default function PreferencesForm({
       ]
     : [20, 20, 20, 40]
 
+  const [name, setName] = useState(userName)
   const [skiSnowboard, setSkiSnowboard] =
     useState<string[]>(initialSkiSnowboard)
   const [difficulty, setDifficulty] = useState<string[]>(initialDifficulty)
@@ -134,6 +141,10 @@ export default function PreferencesForm({
       const result = initial
         ? await updatePreferences(userId, data)
         : await createPreferences(userId, data)
+      if (_updateName && name.trim() !== userName.trim()) {
+        await _updateName(name.trim())
+        onNameUpdated?.()
+      }
       onSaved(result)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -186,6 +197,21 @@ export default function PreferencesForm({
 
   return (
     <form onSubmit={handleSubmit} style={styles.form}>
+      {_updateName && (
+        <div style={styles.group}>
+          <label htmlFor="name" style={styles.groupLabel}>
+            Name
+          </label>
+          <input
+            id="name"
+            type="text"
+            autoComplete="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={styles.textInput}
+          />
+        </div>
+      )}
       {renderCheckboxGroup(
         'Ski / Snowboard',
         skiSnowboardOptions,

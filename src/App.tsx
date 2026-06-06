@@ -11,6 +11,7 @@ import {
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
   listTrips as _listTrips,
+  updateName as _updateName,
   updateTrip as _updateTrip,
 } from './backend'
 import EmailVerifyScreen from './EmailVerifyScreen'
@@ -73,6 +74,7 @@ interface AppProps {
     password: string
   ) => Promise<unknown>
   fetchResortDataWithAuth?: () => Promise<string>
+  updateName?: (name: string) => Promise<Models.User>
 }
 
 const defaultAccountGet = () => _account.get()
@@ -92,6 +94,7 @@ const defaultUpdateRecovery = (
   password: string
 ) => _account.updateRecovery(userId, secret, password)
 const defaultFetchResortDataWithAuth = _fetchResortDataWithAuth
+const defaultUpdateName = _updateName
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -109,6 +112,7 @@ export default function App({
   updateTrip = defaultUpdateTrip,
   updateRecovery = defaultUpdateRecovery,
   fetchResortDataWithAuth = defaultFetchResortDataWithAuth,
+  updateName = defaultUpdateName,
 }: AppProps) {
   const {
     user,
@@ -509,6 +513,7 @@ export default function App({
 
       <PreferencesModal
         userId={user.$id}
+        userName={user.name || user.email}
         initial={preferences}
         open={showPreferencesModal}
         onClose={() => setShowPreferencesModal(false)}
@@ -516,7 +521,11 @@ export default function App({
           setPreferences(prefs)
           setPreferencesUpdated({ userId: user.$id, preferences: prefs })
         }}
+        onNameUpdated={() => {
+          refreshUser()
+        }}
         createPreferences={createPreferences}
+        updateName={updateName}
       />
       <Footer />
     </div>
