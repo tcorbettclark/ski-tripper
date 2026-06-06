@@ -408,51 +408,180 @@ export default function Resorts({
       </div>
 
       <div style={resortsStyles.filtersGrid}>
-        <div style={resortsStyles.filterRow}>
-          <input
-            type="text"
-            placeholder={
-              modelReady
-                ? 'Semantic search (more words are better)'
-                : 'Loading search model...'
-            }
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            disabled={!modelReady}
-            style={{
-              ...resortsStyles.searchInput,
-              ...(modelReady ? {} : resortsStyles.searchInputDisabled),
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => setSearchQuery('')}
-            disabled={!searchQuery}
-            style={{
-              ...resortsStyles.clearButton,
-              ...(searchQuery
-                ? resortsStyles.clearButtonEnabled
-                : resortsStyles.clearButtonDisabled),
-            }}
-          >
-            Clear search
-          </button>
+        <div style={resortsStyles.searchRow}>
+          <div style={resortsStyles.searchInputWrapper}>
+            <input
+              type="text"
+              placeholder={
+                modelReady
+                  ? 'Semantic search (more words are better)'
+                  : 'Loading search model...'
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={!modelReady}
+              style={{
+                ...resortsStyles.searchInput,
+                ...(modelReady ? {} : resortsStyles.searchInputDisabled),
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={resortsStyles.searchClearButton}
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
-        <div style={resortsStyles.filterRow}>
-          <TagCloud
-            commonItems={countryTagItems.common}
-            uncommonItems={countryTagItems.uncommon}
-            selectedKeys={countryFilter}
-            onToggle={toggleCountry}
-          />
-        </div>
-        <div style={resortsStyles.filterRow}>
-          <TagCloud
-            commonItems={regionTagItems.common}
-            uncommonItems={regionTagItems.uncommon}
-            selectedKeys={regionFilter}
-            onToggle={toggleRegion}
-          />
+        <fieldset style={resortsStyles.filterGroup}>
+          <legend style={resortsStyles.filterGroupLabel}>Location</legend>
+          <div style={resortsStyles.filterRow}>
+            <TagCloud
+              commonItems={countryTagItems.common}
+              uncommonItems={countryTagItems.uncommon}
+              selectedKeys={countryFilter}
+              onToggle={toggleCountry}
+            />
+            <TagCloud
+              commonItems={regionTagItems.common}
+              uncommonItems={regionTagItems.uncommon}
+              selectedKeys={regionFilter}
+              onToggle={toggleRegion}
+            />
+          </div>
+        </fieldset>
+        <fieldset style={resortsStyles.filterGroup}>
+          <legend style={resortsStyles.filterGroupLabel}>
+            Slope &amp; terrain
+          </legend>
+          <div style={resortsStyles.filterRow}>
+            <div style={resortsStyles.sliderGroup}>
+              <label
+                htmlFor="min-piste-km-slider"
+                style={resortsStyles.sliderLabel}
+              >
+                Min Piste Km
+              </label>
+              <input
+                id="min-piste-km-slider"
+                type="range"
+                min={0}
+                max={600}
+                step={10}
+                value={minPisteKm}
+                onChange={(e) => setMinPisteKm(Number(e.target.value))}
+                style={resortsStyles.slider}
+              />
+              <span style={resortsStyles.sliderValue}>
+                {minPisteKm > 0 ? minPisteKm : 'Any'}
+              </span>
+            </div>
+            <div style={resortsStyles.sliderGroup}>
+              <label
+                htmlFor="min-peak-height-slider"
+                style={resortsStyles.sliderLabel}
+              >
+                Min Peak Height
+              </label>
+              <input
+                id="min-peak-height-slider"
+                type="range"
+                min={0}
+                max={5000}
+                step={100}
+                value={minPeakHeight}
+                onChange={(e) => setMinPeakHeight(Number(e.target.value))}
+                style={resortsStyles.slider}
+              />
+              <span style={resortsStyles.sliderValue}>
+                {minPeakHeight > 0 ? `${minPeakHeight}m` : 'Any'}
+              </span>
+            </div>
+            <div style={resortsStyles.terrainGroup}>
+              <span style={resortsStyles.pisteProfileLabel}>Terrain</span>
+              <div style={resortsStyles.terrainButtons}>
+                {[
+                  {
+                    value: 'beginner' as const,
+                    label: 'Beginner',
+                    colour: colors.pisteBeginner,
+                  },
+                  {
+                    value: 'intermediate' as const,
+                    label: 'Intermediate',
+                    colour: colors.pisteIntermediate,
+                  },
+                  {
+                    value: 'advanced' as const,
+                    label: 'Advanced',
+                    colour: colors.pisteAdvanced,
+                  },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() =>
+                      setPisteProfiles((prev) => {
+                        const next = new Set(prev)
+                        if (next.has(opt.value)) next.delete(opt.value)
+                        else next.add(opt.value)
+                        return next
+                      })
+                    }
+                    style={{
+                      ...resortsStyles.pisteProfileButton,
+                      background: pisteProfiles.has(opt.value)
+                        ? opt.colour
+                        : 'transparent',
+                      color: pisteProfiles.has(opt.value) ? '#fff' : opt.colour,
+                      border: `1px solid ${opt.colour}`,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </fieldset>
+        <fieldset style={resortsStyles.filterGroup}>
+          <legend style={resortsStyles.filterGroupLabel}>Transport</legend>
+          <div style={resortsStyles.filterRow}>
+            <div style={resortsStyles.sliderGroup}>
+              <label
+                htmlFor="max-transfer-time-slider"
+                style={resortsStyles.sliderLabel}
+              >
+                Max Transfer Time
+              </label>
+              <input
+                id="max-transfer-time-slider"
+                type="range"
+                min={0}
+                max={maxTransferTimeFromData}
+                step={5}
+                value={
+                  maxTransferTime < 0
+                    ? maxTransferTimeFromData
+                    : maxTransferTime
+                }
+                onChange={(e) => setMaxTransferTime(Number(e.target.value))}
+                style={resortsStyles.slider}
+              />
+              <span style={resortsStyles.sliderValue}>
+                {maxTransferTime >= 0 &&
+                maxTransferTime < maxTransferTimeFromData
+                  ? formatTransferTime(maxTransferTime)
+                  : 'Any'}
+              </span>
+            </div>
+          </div>
+        </fieldset>
+        <div style={resortsStyles.clearFiltersRow}>
           <button
             type="button"
             onClick={clearFilters}
@@ -466,118 +595,6 @@ export default function Resorts({
           >
             Clear filters
           </button>
-        </div>
-        <div style={resortsStyles.filterRow}>
-          <div style={resortsStyles.sliderGroup}>
-            <label
-              htmlFor="min-piste-km-slider"
-              style={resortsStyles.sliderLabel}
-            >
-              Min Piste Km
-            </label>
-            <input
-              id="min-piste-km-slider"
-              type="range"
-              min={0}
-              max={600}
-              step={10}
-              value={minPisteKm}
-              onChange={(e) => setMinPisteKm(Number(e.target.value))}
-              style={resortsStyles.slider}
-            />
-            <span style={resortsStyles.sliderValue}>
-              {minPisteKm > 0 ? minPisteKm : 'Any'}
-            </span>
-          </div>
-          <div style={resortsStyles.sliderGroup}>
-            <label
-              htmlFor="min-peak-height-slider"
-              style={resortsStyles.sliderLabel}
-            >
-              Min Peak Height
-            </label>
-            <input
-              id="min-peak-height-slider"
-              type="range"
-              min={0}
-              max={5000}
-              step={100}
-              value={minPeakHeight}
-              onChange={(e) => setMinPeakHeight(Number(e.target.value))}
-              style={resortsStyles.slider}
-            />
-            <span style={resortsStyles.sliderValue}>
-              {minPeakHeight > 0 ? `${minPeakHeight}m` : 'Any'}
-            </span>
-          </div>
-          <div style={resortsStyles.sliderGroup}>
-            <label
-              htmlFor="max-transfer-time-slider"
-              style={resortsStyles.sliderLabel}
-            >
-              Max Transfer Time
-            </label>
-            <input
-              id="max-transfer-time-slider"
-              type="range"
-              min={0}
-              max={maxTransferTimeFromData}
-              step={5}
-              value={
-                maxTransferTime < 0 ? maxTransferTimeFromData : maxTransferTime
-              }
-              onChange={(e) => setMaxTransferTime(Number(e.target.value))}
-              style={resortsStyles.slider}
-            />
-            <span style={resortsStyles.sliderValue}>
-              {maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData
-                ? formatTransferTime(maxTransferTime)
-                : 'Any'}
-            </span>
-          </div>
-        </div>
-        <div style={resortsStyles.filterRow}>
-          <span style={resortsStyles.pisteProfileLabel}>Terrain:</span>
-          {[
-            {
-              value: 'beginner' as const,
-              label: 'Beginner',
-              colour: colors.pisteBeginner,
-            },
-            {
-              value: 'intermediate' as const,
-              label: 'Intermediate',
-              colour: colors.pisteIntermediate,
-            },
-            {
-              value: 'advanced' as const,
-              label: 'Advanced',
-              colour: colors.pisteAdvanced,
-            },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() =>
-                setPisteProfiles((prev) => {
-                  const next = new Set(prev)
-                  if (next.has(opt.value)) next.delete(opt.value)
-                  else next.add(opt.value)
-                  return next
-                })
-              }
-              style={{
-                ...resortsStyles.pisteProfileButton,
-                background: pisteProfiles.has(opt.value)
-                  ? opt.colour
-                  : 'transparent',
-                color: pisteProfiles.has(opt.value) ? '#fff' : opt.colour,
-                border: `1px solid ${opt.colour}`,
-              }}
-            >
-              {opt.label}
-            </button>
-          ))}
         </div>
       </div>
 
@@ -1068,20 +1085,20 @@ const resortsStyles = {
   filtersGrid: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '8px',
+    gap: '16px',
     marginBottom: '16px',
-    justifyContent: 'center',
-    width: 'fit-content',
-    marginInline: 'auto',
   },
-  filterRow: {
+  searchRow: {
     display: 'flex',
-    alignItems: 'flex-end',
-    gap: '12px',
-    flexWrap: 'wrap' as const,
+    justifyContent: 'center',
+  },
+  searchInputWrapper: {
+    position: 'relative' as const,
+    display: 'inline-flex',
+    alignItems: 'center',
   },
   searchInput: {
-    padding: '10px 16px',
+    padding: '10px 32px 10px 16px',
     borderRadius: '8px',
     border: borders.card,
     background: colors.bgInput,
@@ -1089,11 +1106,50 @@ const resortsStyles = {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
     outline: 'none',
-    width: '320px',
+    width: '340px',
   },
   searchInputDisabled: {
     opacity: 0.5,
     cursor: 'not-allowed',
+  },
+  searchClearButton: {
+    position: 'absolute' as const,
+    right: '8px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    color: colors.textSecondary,
+    fontSize: fontSizes.lg,
+    cursor: 'pointer',
+    padding: '0 4px',
+    lineHeight: 1,
+  },
+  filterGroup: {
+    border: borders.subtle,
+    borderRadius: '8px',
+    padding: '14px 16px',
+    background: 'transparent',
+    margin: 0,
+  },
+  filterGroupLabel: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: '0.06em',
+    textTransform: 'uppercase' as const,
+    padding: '0 6px',
+  },
+  filterRow: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '12px',
+    flexWrap: 'wrap' as const,
+  },
+  clearFiltersRow: {
+    display: 'flex',
+    justifyContent: 'flex-end' as const,
   },
   filterSelect: {
     padding: '10px 12px',
@@ -1109,7 +1165,7 @@ const resortsStyles = {
   sliderGroup: {
     display: 'flex',
     flexDirection: 'column' as const,
-    gap: '2px',
+    gap: '4px',
     minWidth: '140px',
   },
   sliderLabel: {
@@ -1134,7 +1190,16 @@ const resortsStyles = {
     color: colors.textSecondary,
     letterSpacing: '0.04em',
     textTransform: 'uppercase' as const,
-    alignSelf: 'center' as const,
+  },
+  terrainGroup: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+    alignItems: 'center' as const,
+  },
+  terrainButtons: {
+    display: 'flex',
+    gap: '6px',
   },
   pisteProfileButton: {
     padding: '6px 14px',
