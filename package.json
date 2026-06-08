@@ -42,7 +42,6 @@
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
     "@huggingface/transformers": "^4.2.0",
-    "@xyflow/react": "^12.11.0",
     "appwrite": "^25.2.0",
     "dayjs": "^1.11.21",
     "leven": "^4.1.0",

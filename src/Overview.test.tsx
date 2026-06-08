@@ -2,7 +2,6 @@ import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Models } from 'appwrite'
-import type { ReactNode } from 'react'
 import Overview from './Overview'
 import type {
   Participant,
@@ -13,108 +12,6 @@ import type {
   Trip,
   Vote,
 } from './types.d.ts'
-
-mock.module('@xyflow/react', () => {
-  function MockReactFlow({
-    nodes,
-  }: {
-    nodes: Array<{ data: Record<string, unknown> }>
-  }) {
-    return (
-      <div data-testid="react-flow">
-        {nodes.map((node) => {
-          const nodeId = String(node.data.nodeId ?? '')
-          const status = String(node.data.status ?? '')
-          const title = node.data.title ? String(node.data.title) : ''
-          const subtitle = node.data.subtitle ? String(node.data.subtitle) : ''
-          const stats = Array.isArray(node.data.stats)
-            ? (node.data.stats as string[])
-            : []
-          const actions = Array.isArray(node.data.actions)
-            ? (node.data.actions as Array<{
-                label: string
-                tab: string
-                statusFilter?: string
-              }>)
-            : []
-          const selfActions = Array.isArray(node.data.selfActions)
-            ? (node.data.selfActions as Array<{
-                label: string
-                tab: string
-                statusFilter?: string
-              }>)
-            : []
-          const onNavigateToTab = node.data.onNavigateToTab as
-            | ((tab: string, statusFilter?: string) => void)
-            | undefined
-          const tabMap: Record<string, string> = {
-            resorts: 'resorts',
-            drafts: 'proposals',
-            submitted: 'proposals',
-            poll: 'poll',
-            results: 'poll',
-          }
-          return (
-            <div key={nodeId} data-node={nodeId} data-status={status}>
-              <button
-                type="button"
-                onClick={() => {
-                  const primary = actions[0]
-                  if (primary)
-                    onNavigateToTab?.(primary.tab, primary.statusFilter)
-                  else onNavigateToTab?.(tabMap[nodeId])
-                }}
-              >
-                {title}
-              </button>
-              {subtitle && <span>{subtitle}</span>}
-              {stats.map((s) => (
-                <span key={s}>{s}</span>
-              ))}
-              {actions.map((a) => (
-                <button
-                  key={a.label}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onNavigateToTab?.(a.tab, a.statusFilter)
-                  }}
-                >
-                  {a.label}
-                </button>
-              ))}
-              {selfActions.length > 0 && <span>↻</span>}
-              {selfActions.map((a) => (
-                <button
-                  key={a.label}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onNavigateToTab?.(a.tab, a.statusFilter)
-                  }}
-                >
-                  {a.label}
-                </button>
-              ))}
-            </div>
-          )
-        })}
-      </div>
-    ) as ReactNode
-  }
-  return {
-    ReactFlow: MockReactFlow,
-    getSmoothStepPath: () => ['', 0, 0, ''],
-    EdgeProps: {},
-    NodeProps: {},
-    Node: {},
-    Edge: {},
-    useNodesState: () => [[], () => {}, undefined],
-    useEdgesState: () => [[], () => {}, undefined],
-    useOnSelectionChange: () => {},
-    BaseEdge: () => null,
-  }
-})
 
 const user = { $id: 'user-1', name: 'Alice' } as Models.User
 
@@ -429,10 +326,10 @@ describe('Overview', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Snow quality')).toBeTruthy()
-      expect(screen.getByRole('button', { name: /close/i })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy()
     })
 
-    await eventUser.click(screen.getByRole('button', { name: /close/i }))
+    await eventUser.click(screen.getByRole('button', { name: 'Close' }))
 
     await waitFor(() => {
       expect(screen.queryByText('Snow quality')).toBeNull()

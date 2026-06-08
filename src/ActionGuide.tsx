@@ -1,15 +1,4 @@
 import {
-  type Edge,
-  type EdgeProps,
-  getBezierPath,
-  Handle,
-  type Node,
-  type NodeProps,
-  Position,
-  ReactFlow,
-} from '@xyflow/react'
-import '@xyflow/react/dist/style.css'
-import {
   BarChart3,
   CheckCircle,
   type LucideIcon,
@@ -18,7 +7,7 @@ import {
   Send,
   Vote,
 } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import type { StatusFilter } from './ProposalsGrid'
 import { colors, fontSizes, fonts, mix } from './theme'
 import type { Poll } from './types.d.ts'
@@ -33,7 +22,7 @@ interface ActionChip {
   variant: 'primary' | 'secondary'
 }
 
-interface GuideNodeData extends Record<string, unknown> {
+interface GuideNodeData {
   nodeId: string
   icon: LucideIcon
   title: string
@@ -261,55 +250,15 @@ const statusText: Record<NodeStatus, string> = {
   completed: colors.textPrimary,
 }
 
-function FlowEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  data,
-}: EdgeProps & { data?: { status?: NodeStatus } }) {
-  const [edgePath] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  })
-  const status = data?.status ?? 'pending'
-  const isActive = status === 'active' || status === 'completed'
-  const strokeColor = isActive
-    ? 'var(--color-accent)'
-    : 'color-mix(in srgb, var(--color-textSecondary) 25%, transparent)'
-  const strokeWidth = isActive ? 2 : 1.5
-
-  return (
-    <>
-      <path
-        id={id}
-        d={edgePath}
-        fill="none"
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
-        strokeDasharray={isActive ? undefined : '5 3'}
-      />
-      {isActive && (
-        <circle r="3" fill="var(--color-accent)">
-          <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
-        </circle>
-      )}
-    </>
-  )
+const tabMap: Record<string, 'resorts' | 'proposals' | 'poll'> = {
+  resorts: 'resorts',
+  drafts: 'proposals',
+  submitted: 'proposals',
+  poll: 'poll',
+  results: 'poll',
 }
 
-const edgeTypes = {
-  statusFlow: FlowEdge,
-}
-
-function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
+function GuideNode({ data }: { data: GuideNodeData }) {
   const {
     icon: Icon,
     title,
@@ -327,14 +276,6 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
   const colorToken = nodeSlideColor[nodeId] ?? '--color-palette0'
   const bgColor = mix(colorToken, 0.25)
   const borderColor = mix(colorToken, 0.35)
-
-  const tabMap: Record<string, 'resorts' | 'proposals' | 'poll'> = {
-    resorts: 'resorts',
-    drafts: 'proposals',
-    submitted: 'proposals',
-    poll: 'poll',
-    results: 'poll',
-  }
 
   return (
     <div
@@ -355,57 +296,8 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
         flexDirection: 'column',
         gap: '4px',
         minWidth: '180px',
-        pointerEvents: 'auto',
       }}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        id="target-top"
-        style={hiddenHandleStyle}
-      />
-      <Handle
-        type="target"
-        position={Position.Bottom}
-        id="target-bottom"
-        style={hiddenHandleStyle}
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        id="target-left"
-        style={hiddenHandleStyle}
-      />
-      <Handle
-        type="target"
-        position={Position.Right}
-        id="target-right"
-        style={hiddenHandleStyle}
-      />
-      <Handle
-        type="source"
-        position={Position.Top}
-        id="source-top"
-        style={hiddenHandleStyle}
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        id="source-bottom"
-        style={hiddenHandleStyle}
-      />
-      <Handle
-        type="source"
-        position={Position.Left}
-        id="source-left"
-        style={hiddenHandleStyle}
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="source-right"
-        style={hiddenHandleStyle}
-      />
       <button
         type="button"
         onClick={() => {
@@ -582,103 +474,62 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
   )
 }
 
-const hiddenHandleStyle = { opacity: 0, width: 1, height: 1 }
-
-const nodeTypes = {
-  guideNode: FlowNode,
-}
-
-const nodePositions: Record<string, { x: number; y: number }> = {
-  resorts: { x: 0, y: 0 },
-  drafts: { x: 0, y: 150 },
-  submitted: { x: 0, y: 300 },
-  poll: { x: 0, y: 450 },
-  results: { x: 0, y: 600 },
-}
-
-const edgeRoutes: Record<
-  string,
-  { sourceHandle: string; targetHandle: string }
-> = {
-  'resorts-drafts': {
-    sourceHandle: 'source-bottom',
-    targetHandle: 'target-top',
-  },
-  'drafts-submitted': {
-    sourceHandle: 'source-bottom',
-    targetHandle: 'target-top',
-  },
-  'submitted-poll': {
-    sourceHandle: 'source-bottom',
-    targetHandle: 'target-top',
-  },
-  'poll-results': {
-    sourceHandle: 'source-bottom',
-    targetHandle: 'target-top',
-  },
+function FlowConnector({ status }: { status: NodeStatus }) {
+  const isActive = status === 'active' || status === 'completed'
+  const strokeColor = isActive
+    ? 'var(--color-accent)'
+    : 'color-mix(in srgb, var(--color-textSecondary) 50%, transparent)'
+  const strokeWidth = isActive ? 2 : 1.5
+  const dashArray = isActive ? undefined : '5 3'
+  return (
+    <svg
+      width="8"
+      height="32"
+      viewBox="0 0 8 32"
+      preserveAspectRatio="xMidYMid meet"
+      style={{ display: 'block', margin: '0 auto', flexShrink: 0 }}
+      aria-hidden="true"
+    >
+      <line
+        x1="4"
+        y1="0"
+        x2="4"
+        y2="32"
+        stroke={strokeColor}
+        strokeWidth={strokeWidth}
+        strokeDasharray={dashArray}
+      />
+      {isActive && (
+        <circle r="3" fill="var(--color-accent)">
+          <animateMotion dur="2s" repeatCount="indefinite" path="M4,0 L4,32" />
+        </circle>
+      )}
+      {!isActive && (
+        <circle r="1.5" fill={strokeColor}>
+          <animateMotion dur="4s" repeatCount="indefinite" path="M4,0 L4,32" />
+        </circle>
+      )}
+    </svg>
+  )
 }
 
 export default function ActionGuide(props: ActionGuideProps) {
   const guideNodes = buildGuideNodes(props)
 
-  const flowNodes: Node<GuideNodeData>[] = useMemo(
-    () =>
-      guideNodes.map((node) => {
-        const pos = nodePositions[node.nodeId] ?? { x: 0, y: 0 }
-        return {
-          id: node.nodeId,
-          type: 'guideNode' as const,
-          position: pos,
-          data: node,
-          draggable: false,
-        }
-      }),
-    [guideNodes]
-  )
-
-  const flowEdges: Edge[] = useMemo(() => {
-    const edges: Edge[] = []
+  const edges = useMemo(() => {
+    const result: Array<{ sourceStatus: NodeStatus }> = []
     for (let i = 0; i < guideNodes.length - 1; i++) {
       const source = guideNodes[i]
-      const target = guideNodes[i + 1]
-      const edgeId = `${source.nodeId}-${target.nodeId}`
       const edgeStatus: NodeStatus =
         source.status === 'completed'
           ? 'completed'
           : source.status === 'active'
             ? 'active'
             : 'pending'
-      const route = edgeRoutes[edgeId]
-      edges.push({
-        id: edgeId,
-        source: source.nodeId,
-        target: target.nodeId,
-        sourceHandle: route?.sourceHandle,
-        targetHandle: route?.targetHandle,
-        type: 'statusFlow',
-        data: { status: edgeStatus },
-      })
+      result.push({ sourceStatus: edgeStatus })
     }
-    return edges
+    return result
   }, [guideNodes])
-
-  const defaultEdgeOptions = useMemo(
-    () => ({
-      type: 'statusFlow' as const,
-    }),
-    []
-  )
-
-  const handleInit = useCallback(
-    (instance: {
-      fitView: (opts: { padding: number; duration: number }) => void
-    }) => {
-      requestAnimationFrame(() => {
-        instance.fitView({ padding: 0.15, duration: 0 })
-      })
-    },
-    []
-  )
 
   return (
     <section style={actionGuideStyles.container}>
@@ -687,25 +538,14 @@ export default function ActionGuide(props: ActionGuideProps) {
         <h3 style={actionGuideStyles.heading}>What's Next</h3>
       </div>
       <div style={actionGuideStyles.flowWrap}>
-        <ReactFlow
-          nodes={flowNodes}
-          edges={flowEdges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          defaultEdgeOptions={defaultEdgeOptions}
-          nodeOrigin={[0.5, 0]}
-          onInit={handleInit}
-          nodesDraggable={false}
-          nodesConnectable={false}
-          panOnDrag={false}
-          panOnScroll={false}
-          zoomOnScroll={false}
-          zoomOnDoubleClick={false}
-          zoomOnPinch={false}
-          preventScrolling={false}
-          proOptions={{ hideAttribution: true }}
-          style={{ width: '100%', height: '100%' }}
-        />
+        {guideNodes.map((node, i) => (
+          <div key={node.nodeId} style={actionGuideStyles.nodeWrap}>
+            <GuideNode data={node} />
+            {i < guideNodes.length - 1 && (
+              <FlowConnector status={edges[i].sourceStatus} />
+            )}
+          </div>
+        ))}
       </div>
     </section>
   )
@@ -731,10 +571,19 @@ const actionGuideStyles = {
     textTransform: 'uppercase' as const,
     margin: 0,
   },
-
   flowWrap: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    gap: '0',
     width: '100%',
-    height: 'clamp(320px, 55vh, 600px)',
-    position: 'relative' as const,
+    maxWidth: '320px',
+    margin: '0 auto',
+  },
+  nodeWrap: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    width: '100%',
   },
 } as const
