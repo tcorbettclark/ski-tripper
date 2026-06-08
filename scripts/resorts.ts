@@ -45,7 +45,7 @@ const adminStorage = new NodeStorage(adminClient)
 
 const EXA_SOURCED_NUM_RESULTS = 4
 const EXA_BROAD_NUM_RESULTS = 4
-const EXA_MAX_CHARS = 8000 as const
+const EXA_MAX_CHARS = 12000 as const
 const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
   `Ski resort review and guide for ${resortName} in ${country}, including terrain difficulty, off-piste, apres-ski, nightlife, family suitability, value, lift quality, resort atmosphere, nearest airport, and transfer time`
 
