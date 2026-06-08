@@ -13,3 +13,4 @@ localhost-key.pem
 localhost.pem
 resorts/
 public/resort-data.jsonl
+playground-dist/
