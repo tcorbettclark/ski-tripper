@@ -20,6 +20,7 @@ const sampleActivePoll: Poll = {
 const defaultProps = {
   resortCount: 3,
   draftCount: 0,
+  myDraftCount: 0,
   submittedCount: 0,
   approvedCount: 0,
   closedPollCount: 0,
@@ -161,23 +162,51 @@ describe('ActionGuide', () => {
     })
   })
 
-  it('shows self-loop actions on Drafts node', async () => {
+  it('shows Manage accommodations action when user has drafts', async () => {
     await act(async () => {
-      renderActionGuide({ draftCount: 1 })
+      renderActionGuide({ draftCount: 1, myDraftCount: 1 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Accommodations')).toBeTruthy()
+      expect(screen.getByText('Manage accommodations')).toBeTruthy()
+    })
+  })
+
+  it('shows Discuss self-action when any drafts exist', async () => {
+    await act(async () => {
+      renderActionGuide({ draftCount: 1, myDraftCount: 0 })
+    })
+    await waitFor(() => {
       expect(screen.getByText('Discuss')).toBeTruthy()
     })
   })
 
-  it('does not show self-loop actions when no drafts', async () => {
+  it('shows Submit action when user has drafts', async () => {
     await act(async () => {
-      renderActionGuide({ draftCount: 0 })
+      renderActionGuide({ draftCount: 1, myDraftCount: 1 })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Submit')).toBeTruthy()
+    })
+  })
+
+  it('does not show Submit when user has no drafts even if other drafts exist', async () => {
+    await act(async () => {
+      renderActionGuide({ draftCount: 2, myDraftCount: 0 })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Browse 2 drafts')).toBeTruthy()
+      expect(screen.queryByText('Submit')).toBeNull()
+      expect(screen.queryByText('Manage accommodations')).toBeNull()
+    })
+  })
+
+  it('does not show self-loop actions when no drafts at all', async () => {
+    await act(async () => {
+      renderActionGuide({ draftCount: 0, myDraftCount: 0 })
     })
     await waitFor(() => {
       expect(screen.getByText('Draft Proposals')).toBeTruthy()
-      expect(screen.queryByText('Accommodations')).toBeNull()
+      expect(screen.queryByText('Manage accommodations')).toBeNull()
       expect(screen.queryByText('Discuss')).toBeNull()
     })
   })

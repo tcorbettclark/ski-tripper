@@ -29,7 +29,6 @@ interface GuideNodeData {
   subtitle?: string
   stats: string[]
   actions: ActionChip[]
-  selfActions: ActionChip[]
   status: NodeStatus
   onNavigateToTab: (
     tab: 'resorts' | 'proposals' | 'poll',
@@ -40,6 +39,7 @@ interface GuideNodeData {
 interface ActionGuideProps {
   resortCount: number
   draftCount: number
+  myDraftCount: number
   submittedCount: number
   approvedCount: number
   closedPollCount: number
@@ -65,7 +65,6 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
   }
 
   const draftActions: ActionChip[] = []
-  const draftSelfActions: ActionChip[] = []
   if (props.draftCount > 0) {
     draftActions.push({
       label: `Browse ${props.draftCount} draft${props.draftCount !== 1 ? 's' : ''}`,
@@ -73,23 +72,29 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       statusFilter: 'DRAFT',
       variant: 'primary',
     })
+  }
+  if (props.myDraftCount > 0) {
+    draftActions.push({
+      label: 'Manage accommodations',
+      tab: 'proposals',
+      statusFilter: 'DRAFT',
+      variant: 'primary',
+    })
+  }
+  if (props.draftCount > 0) {
+    draftActions.push({
+      label: 'Discuss',
+      tab: 'proposals',
+      statusFilter: 'DRAFT',
+      variant: 'primary',
+    })
+  }
+  if (props.myDraftCount > 0) {
     draftActions.push({
       label: 'Submit',
       tab: 'proposals',
       statusFilter: 'DRAFT',
-      variant: 'secondary',
-    })
-    draftSelfActions.push({
-      label: 'Accommodations',
-      tab: 'proposals',
-      statusFilter: 'DRAFT',
-      variant: 'secondary',
-    })
-    draftSelfActions.push({
-      label: 'Discuss',
-      tab: 'proposals',
-      statusFilter: 'DRAFT',
-      variant: 'secondary',
+      variant: 'primary',
     })
   }
 
@@ -99,7 +104,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       label: `Comment on ${props.submittedCount} submitted`,
       tab: 'proposals',
       statusFilter: 'SUBMITTED',
-      variant: props.draftCount === 0 ? 'primary' : 'secondary',
+      variant: 'primary',
     })
   }
 
@@ -118,7 +123,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       pollActions.push({
         label: 'View poll',
         tab: 'poll',
-        variant: 'secondary',
+        variant: 'primary',
       })
       pollStats.push("You've voted")
     }
@@ -136,7 +141,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       label: `View ${props.approvedCount} approved`,
       tab: 'proposals',
       statusFilter: 'SUBMITTED',
-      variant: 'secondary',
+      variant: 'primary',
     })
   }
   if (props.closedPollCount > 0) {
@@ -154,7 +159,6 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       title: 'Resort Catalog',
       stats: [],
       actions: resortsActions,
-      selfActions: [],
       status: props.resortCount > 0 ? 'active' : 'pending',
       onNavigateToTab: nav,
     },
@@ -164,7 +168,6 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       title: 'Draft Proposals',
       stats: [],
       actions: draftActions,
-      selfActions: draftSelfActions,
       status: props.draftCount > 0 ? 'active' : 'pending',
       onNavigateToTab: nav,
     },
@@ -174,7 +177,6 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       title: 'Submitted Proposals',
       stats: [],
       actions: submittedActions,
-      selfActions: [],
       status: props.submittedCount > 0 ? 'active' : 'pending',
       onNavigateToTab: nav,
     },
@@ -185,7 +187,6 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       subtitle: pollSubtitle,
       stats: pollStats,
       actions: pollActions,
-      selfActions: [],
       status: props.activePoll
         ? 'active'
         : props.submittedCount > 0 && props.isCoordinator
@@ -199,7 +200,6 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       title: 'Results',
       stats: [],
       actions: resultsActions,
-      selfActions: [],
       status:
         props.approvedCount > 0 || props.closedPollCount > 0
           ? 'completed'
@@ -265,7 +265,6 @@ function GuideNode({ data }: { data: GuideNodeData }) {
     subtitle,
     stats,
     actions,
-    selfActions,
     status,
     onNavigateToTab,
     nodeId,
@@ -380,10 +379,10 @@ function GuideNode({ data }: { data: GuideNodeData }) {
         <div
           style={{
             display: 'flex',
-            flexWrap: 'wrap' as const,
+            flexDirection: 'column' as const,
             gap: '4px',
             marginLeft: '36px',
-            marginBottom: selfActions.length > 0 ? '3px' : '0',
+            marginBottom: '0',
           }}
         >
           {actions.map((action) => (
@@ -410,52 +409,6 @@ function GuideNode({ data }: { data: GuideNodeData }) {
                   action.variant === 'primary'
                     ? colors.accent
                     : mix('--color-textSecondary', 0.7),
-                cursor: 'pointer',
-                lineHeight: '1.3',
-                transition: 'border-color 0.15s, background 0.15s',
-              }}
-              onClick={(e) => {
-                e.stopPropagation()
-                onNavigateToTab(action.tab, action.statusFilter)
-              }}
-            >
-              {action.label}
-            </button>
-          ))}
-        </div>
-      )}
-      {selfActions.length > 0 && (
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap' as const,
-            gap: '4px',
-            marginLeft: '36px',
-          }}
-        >
-          <span
-            style={{
-              fontFamily: fonts.body,
-              fontSize: '10px',
-              color: mix('--color-textSecondary', 0.45),
-              marginRight: '1px',
-            }}
-          >
-            ↻
-          </span>
-          {selfActions.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              style={{
-                fontFamily: fonts.body,
-                fontSize: '10px',
-                fontWeight: '400',
-                padding: '2px 7px',
-                borderRadius: '9px',
-                border: `1px solid ${mix('--color-textSecondary', 0.15)}`,
-                background: 'transparent',
-                color: mix('--color-textSecondary', 0.55),
                 cursor: 'pointer',
                 lineHeight: '1.3',
                 transition: 'border-color 0.15s, background 0.15s',

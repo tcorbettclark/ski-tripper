@@ -226,7 +226,8 @@ export default function Overview({
       })
   }, [activePoll, user.$id, listVotes])
 
-  const draftCount = proposals.filter(
+  const draftCount = proposals.filter((p) => p.state === 'DRAFT').length
+  const myDraftCount = proposals.filter(
     (p) => p.state === 'DRAFT' && p.proposerUserId === user.$id
   ).length
   const submittedCount = proposals.filter((p) => p.state === 'SUBMITTED').length
@@ -617,6 +618,7 @@ export default function Overview({
       <ActionGuide
         resortCount={resorts.length}
         draftCount={draftCount}
+        myDraftCount={myDraftCount}
         submittedCount={submittedCount}
         approvedCount={approvedCount}
         closedPollCount={closedPollCount}

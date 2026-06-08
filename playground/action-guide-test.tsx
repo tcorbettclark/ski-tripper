@@ -30,6 +30,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -44,6 +45,7 @@ const scenarios = [
     props: {
       resortCount: 1,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -58,6 +60,7 @@ const scenarios = [
     props: {
       resortCount: 3,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -68,10 +71,11 @@ const scenarios = [
     },
   },
   {
-    label: 'Drafts only (1 draft)',
+    label: 'Drafts only (1 draft, 1 mine)',
     props: {
       resortCount: 0,
       draftCount: 1,
+      myDraftCount: 1,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -82,10 +86,26 @@ const scenarios = [
     },
   },
   {
-    label: 'Drafts only (3 drafts)',
+    label: 'Drafts only (3 drafts, 2 mine)',
     props: {
       resortCount: 0,
       draftCount: 3,
+      myDraftCount: 2,
+      submittedCount: 0,
+      approvedCount: 0,
+      closedPollCount: 0,
+      activePoll: undefined,
+      userVotedInActivePoll: false,
+      isCoordinator: false,
+      onNavigateToTab: noop,
+    },
+  },
+  {
+    label: 'Drafts only (other users drafts, none mine)',
+    props: {
+      resortCount: 0,
+      draftCount: 3,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -100,6 +120,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 2,
       approvedCount: 0,
       closedPollCount: 0,
@@ -114,6 +135,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -128,6 +150,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -142,6 +165,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 2,
       approvedCount: 0,
       closedPollCount: 0,
@@ -156,6 +180,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 2,
       approvedCount: 0,
       closedPollCount: 0,
@@ -170,6 +195,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 1,
       closedPollCount: 0,
@@ -184,6 +210,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 2,
@@ -198,6 +225,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 3,
       closedPollCount: 5,
@@ -212,6 +240,7 @@ const scenarios = [
     props: {
       resortCount: 2,
       draftCount: 2,
+      myDraftCount: 1,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -226,6 +255,7 @@ const scenarios = [
     props: {
       resortCount: 2,
       draftCount: 3,
+      myDraftCount: 1,
       submittedCount: 4,
       approvedCount: 0,
       closedPollCount: 0,
@@ -240,6 +270,7 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 2,
+      myDraftCount: 0,
       submittedCount: 3,
       approvedCount: 0,
       closedPollCount: 0,
@@ -254,6 +285,7 @@ const scenarios = [
     props: {
       resortCount: 5,
       draftCount: 3,
+      myDraftCount: 1,
       submittedCount: 4,
       approvedCount: 2,
       closedPollCount: 3,
@@ -268,6 +300,7 @@ const scenarios = [
     props: {
       resortCount: 5,
       draftCount: 3,
+      myDraftCount: 1,
       submittedCount: 4,
       approvedCount: 2,
       closedPollCount: 3,
@@ -282,6 +315,7 @@ const scenarios = [
     props: {
       resortCount: 5,
       draftCount: 3,
+      myDraftCount: 1,
       submittedCount: 4,
       approvedCount: 2,
       closedPollCount: 3,
@@ -296,6 +330,7 @@ const scenarios = [
     props: {
       resortCount: 1,
       draftCount: 0,
+      myDraftCount: 0,
       submittedCount: 0,
       approvedCount: 0,
       closedPollCount: 0,
@@ -373,7 +408,8 @@ function App() {
             <div style={gridStyles.cardLabel}>{scenario.label}</div>
             <div style={gridStyles.cardProps}>
               resorts={scenario.props.resortCount} · drafts=
-              {scenario.props.draftCount} · submitted=
+              {scenario.props.draftCount} · myDrafts=
+              {scenario.props.myDraftCount} · submitted=
               {scenario.props.submittedCount} · approved=
               {scenario.props.approvedCount} · closedPolls=
               {scenario.props.closedPollCount} · hasPoll=
