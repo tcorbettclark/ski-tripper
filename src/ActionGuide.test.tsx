@@ -487,9 +487,63 @@ describe('ActionGuide', () => {
     await waitFor(() => {
       expect(screen.getByText('Resort Catalog')).toBeTruthy()
     })
-    const container = document.querySelector('[data-node="resorts"]')!
+    const connectors = document.querySelectorAll('svg[data-connector]')
+    expect(connectors.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('shows active connector between two active nodes', async () => {
+    await act(async () => {
+      renderActionGuide({ resortCount: 3, draftCount: 1 })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+    })
+    const resortsWrap = document.querySelector('[data-node="resorts"]')!
       .parentElement!
-    const svgs = container.querySelectorAll('svg[aria-hidden="true"]')
-    expect(svgs.length).toBeGreaterThanOrEqual(1)
+    const svg = resortsWrap.querySelector('svg[data-connector]')
+    expect(svg).toBeTruthy()
+    expect(svg!.getAttribute('data-active')).toBe('true')
+  })
+
+  it('shows dimmed connector when source node is pending', async () => {
+    await act(async () => {
+      renderActionGuide({ resortCount: 0, draftCount: 0 })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+    })
+    const resortsWrap = document.querySelector('[data-node="resorts"]')!
+      .parentElement!
+    const svg = resortsWrap.querySelector('svg[data-connector]')
+    expect(svg).toBeTruthy()
+    expect(svg!.getAttribute('data-active')).toBeNull()
+  })
+
+  it('shows dimmed connector when target node is pending', async () => {
+    await act(async () => {
+      renderActionGuide({ resortCount: 3, draftCount: 0 })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+    })
+    const resortsWrap = document.querySelector('[data-node="resorts"]')!
+      .parentElement!
+    const svg = resortsWrap.querySelector('svg[data-connector]')
+    expect(svg).toBeTruthy()
+    expect(svg!.getAttribute('data-active')).toBeNull()
+  })
+
+  it('shows dimmed connector between two pending nodes', async () => {
+    await act(async () => {
+      renderActionGuide({ resortCount: 0, draftCount: 0 })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+    })
+    const resortsWrap = document.querySelector('[data-node="resorts"]')!
+      .parentElement!
+    const svg = resortsWrap.querySelector('svg[data-connector]')
+    expect(svg).toBeTruthy()
+    expect(svg!.getAttribute('data-active')).toBeNull()
   })
 })

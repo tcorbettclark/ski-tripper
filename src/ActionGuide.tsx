@@ -432,15 +432,17 @@ function GuideNode({ data }: { data: GuideNodeData }) {
 }
 
 function FlowConnector({
-  status,
+  sourceStatus,
+  targetStatus,
   colorToken,
   targetColorToken,
 }: {
-  status: NodeStatus
+  sourceStatus: NodeStatus
+  targetStatus: NodeStatus
   colorToken: string
   targetColorToken: string
 }) {
-  const isActive = status === 'active'
+  const isActive = sourceStatus === 'active' && targetStatus === 'active'
   const inactiveColor =
     'color-mix(in srgb, var(--color-textSecondary) 50%, transparent)'
   const fromColor = isActive ? `var(${colorToken})` : inactiveColor
@@ -450,6 +452,8 @@ function FlowConnector({
   const gradientId = `flow-grad-${colorToken.slice(2)}-${targetColorToken.slice(2)}`
   return (
     <svg
+      data-connector
+      data-active={isActive ? 'true' : undefined}
       width="8"
       height="32"
       viewBox="0 0 8 32"
@@ -527,14 +531,16 @@ export default function ActionGuide(props: ActionGuideProps) {
   const edges = useMemo(() => {
     const result: Array<{
       sourceStatus: NodeStatus
+      targetStatus: NodeStatus
       targetColorToken: string
     }> = []
     for (let i = 0; i < guideNodes.length - 1; i++) {
       const source = guideNodes[i]
+      const target = guideNodes[i + 1]
       result.push({
         sourceStatus: source.status,
-        targetColorToken:
-          nodeSlideColor[guideNodes[i + 1].nodeId] ?? '--color-palette0',
+        targetStatus: target.status,
+        targetColorToken: nodeSlideColor[target.nodeId] ?? '--color-palette0',
       })
     }
     return result
@@ -552,7 +558,8 @@ export default function ActionGuide(props: ActionGuideProps) {
             <GuideNode data={node} />
             {i < guideNodes.length - 1 && (
               <FlowConnector
-                status={edges[i].sourceStatus}
+                sourceStatus={edges[i].sourceStatus}
+                targetStatus={edges[i].targetStatus}
                 colorToken={
                   nodeSlideColor[guideNodes[i].nodeId] ?? '--color-palette0'
                 }
