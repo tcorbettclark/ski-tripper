@@ -434,16 +434,20 @@ function GuideNode({ data }: { data: GuideNodeData }) {
 function FlowConnector({
   status,
   colorToken,
+  targetColorToken,
 }: {
   status: NodeStatus
   colorToken: string
+  targetColorToken: string
 }) {
   const isActive = status === 'active'
-  const color = isActive
-    ? `var(${colorToken})`
-    : `color-mix(in srgb, var(--color-textSecondary) 50%, transparent)`
+  const inactiveColor =
+    'color-mix(in srgb, var(--color-textSecondary) 50%, transparent)'
+  const fromColor = isActive ? `var(${colorToken})` : inactiveColor
+  const toColor = isActive ? `var(${targetColorToken})` : inactiveColor
   const strokeWidth = isActive ? 2 : 1.5
   const dashArray = isActive ? undefined : '5 3'
+  const gradientId = `flow-grad-${colorToken.slice(2)}-${targetColorToken.slice(2)}`
   return (
     <svg
       width="8"
@@ -453,24 +457,65 @@ function FlowConnector({
       style={{ display: 'block', margin: '0 auto', flexShrink: 0 }}
       aria-hidden="true"
     >
+      <defs>
+        <linearGradient
+          id={gradientId}
+          x1="4"
+          y1="0"
+          x2="4"
+          y2="32"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" style={{ stopColor: fromColor }} />
+          <stop offset="100%" style={{ stopColor: toColor }} />
+        </linearGradient>
+      </defs>
       <line
         x1="4"
         y1="0"
         x2="4"
         y2="32"
-        stroke={color}
+        stroke={`url(#${gradientId})`}
         strokeWidth={strokeWidth}
         strokeDasharray={dashArray}
       />
       {isActive && (
-        <circle r="3" fill={`var(${colorToken})`}>
-          <animateMotion dur="2s" repeatCount="indefinite" path="M4,0 L4,32" />
-        </circle>
+        <>
+          <circle r="3" fill={`var(${colorToken})`}>
+            <animateMotion
+              dur="2s"
+              repeatCount="indefinite"
+              path="M4,0 L4,32"
+            />
+          </circle>
+          <circle r="3" fill={`var(${colorToken})`}>
+            <animateMotion
+              dur="2s"
+              begin="1s"
+              repeatCount="indefinite"
+              path="M4,0 L4,32"
+            />
+          </circle>
+        </>
       )}
       {!isActive && (
-        <circle r="1.5" fill={color}>
-          <animateMotion dur="4s" repeatCount="indefinite" path="M4,0 L4,32" />
-        </circle>
+        <>
+          <circle r="1.5" fill={inactiveColor}>
+            <animateMotion
+              dur="4s"
+              repeatCount="indefinite"
+              path="M4,0 L4,32"
+            />
+          </circle>
+          <circle r="1.5" fill={inactiveColor}>
+            <animateMotion
+              dur="4s"
+              begin="2s"
+              repeatCount="indefinite"
+              path="M4,0 L4,32"
+            />
+          </circle>
+        </>
       )}
     </svg>
   )
@@ -480,11 +525,17 @@ export default function ActionGuide(props: ActionGuideProps) {
   const guideNodes = buildGuideNodes(props)
 
   const edges = useMemo(() => {
-    const result: Array<{ sourceStatus: NodeStatus }> = []
+    const result: Array<{
+      sourceStatus: NodeStatus
+      targetColorToken: string
+    }> = []
     for (let i = 0; i < guideNodes.length - 1; i++) {
       const source = guideNodes[i]
-      const edgeStatus: NodeStatus = source.status
-      result.push({ sourceStatus: edgeStatus })
+      result.push({
+        sourceStatus: source.status,
+        targetColorToken:
+          nodeSlideColor[guideNodes[i + 1].nodeId] ?? '--color-palette0',
+      })
     }
     return result
   }, [guideNodes])
@@ -505,6 +556,7 @@ export default function ActionGuide(props: ActionGuideProps) {
                 colorToken={
                   nodeSlideColor[guideNodes[i].nodeId] ?? '--color-palette0'
                 }
+                targetColorToken={edges[i].targetColorToken}
               />
             )}
           </div>
