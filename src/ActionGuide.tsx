@@ -237,37 +237,45 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
   ]
 }
 
-const statusThemes: Record<
-  NodeStatus,
-  {
-    bg: string
-    border: string
-    iconBg: string
-    iconColor: string
-    text: string
-  }
-> = {
+const nodeSlideColor: Record<string, string> = {
+  resorts: '--color-palette0',
+  drafts: '--color-palette1',
+  submitted: '--color-palette2',
+  poll: '--color-palette3',
+  results: '--color-palette4',
+}
+
+const statusBorders: Record<NodeStatus, { borderLeft: string }> = {
   pending: {
-    bg: mix('--color-textSecondary', 0.06),
-    border: mix('--color-textSecondary', 0.15),
-    iconBg: mix('--color-textSecondary', 0.1),
-    iconColor: mix('--color-textSecondary', 0.4),
-    text: mix('--color-textSecondary', 0.6),
+    borderLeft: mix('--color-textSecondary', 0.15),
   },
   active: {
-    bg: mix('--color-accent', 0.08),
-    border: mix('--color-accent', 0.35),
-    iconBg: mix('--color-accent', 0.15),
-    iconColor: colors.accent,
-    text: colors.textPrimary,
+    borderLeft: 'var(--color-accent)',
   },
   completed: {
-    bg: 'color-mix(in srgb, var(--color-medalGold) 8%, transparent)',
-    border: 'color-mix(in srgb, var(--color-medalGold) 30%, transparent)',
+    borderLeft: 'color-mix(in srgb, var(--color-medalGold) 30%, transparent)',
+  },
+}
+
+const statusIcon: Record<NodeStatus, { iconBg: string; iconColor: string }> = {
+  pending: {
+    iconBg: mix('--color-textSecondary', 0.1),
+    iconColor: mix('--color-textSecondary', 0.4),
+  },
+  active: {
+    iconBg: mix('--color-accent', 0.15),
+    iconColor: colors.accent,
+  },
+  completed: {
     iconBg: 'color-mix(in srgb, var(--color-medalGold) 15%, transparent)',
     iconColor: colors.medalGold,
-    text: colors.textPrimary,
   },
+}
+
+const statusText: Record<NodeStatus, string> = {
+  pending: mix('--color-textSecondary', 0.6),
+  active: colors.textPrimary,
+  completed: colors.textPrimary,
 }
 
 function FlowEdge({
@@ -330,7 +338,12 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
     onNavigateToTab,
     nodeId,
   } = data
-  const theme = statusThemes[status]
+  const border = statusBorders[status]
+  const icon = statusIcon[status]
+  const text = statusText[status]
+  const colorToken = nodeSlideColor[nodeId] ?? '--color-palette0'
+  const bgColor = mix(colorToken, 0.25)
+  const borderColor = mix(colorToken, 0.35)
 
   const tabMap: Record<string, 'resorts' | 'proposals' | 'poll'> = {
     resorts: 'resorts',
@@ -346,10 +359,10 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
       data-status={status}
       className={`action-guide-node ${status === 'active' ? 'action-guide-node-pulse' : ''}`}
       style={{
-        background: theme.bg,
-        border: `1.5px solid ${theme.border}`,
+        background: bgColor,
+        border: `1.5px solid ${borderColor}`,
         ...(status === 'active'
-          ? { borderLeftWidth: '3px', borderLeftColor: 'var(--color-accent)' }
+          ? { borderLeftWidth: '3px', borderLeftColor: border.borderLeft }
           : {}),
         borderRadius: '10px',
         padding: '10px 14px 8px',
@@ -442,11 +455,11 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
             width: '28px',
             height: '28px',
             borderRadius: '7px',
-            background: theme.iconBg,
+            background: icon.iconBg,
             flexShrink: 0,
           }}
         >
-          <Icon size={15} style={{ color: theme.iconColor }} />
+          <Icon size={15} style={{ color: icon.iconColor }} />
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
           <span
@@ -454,7 +467,7 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
               fontFamily: fonts.body,
               fontSize: '14px',
               fontWeight: '600',
-              color: theme.text,
+              color: text,
               lineHeight: '1.2',
             }}
           >
@@ -465,7 +478,7 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
               style={{
                 fontFamily: fonts.body,
                 fontSize: '11px',
-                color: theme.iconColor,
+                color: icon.iconColor,
                 lineHeight: '1.2',
               }}
             >
@@ -479,7 +492,7 @@ function FlowNode({ data }: NodeProps<Node<GuideNodeData>>) {
           style={{
             fontFamily: fonts.body,
             fontSize: '11px',
-            color: theme.iconColor,
+            color: icon.iconColor,
             lineHeight: '1.3',
             fontWeight: '500',
             marginLeft: '36px',
@@ -593,11 +606,11 @@ const nodeTypes = {
 }
 
 const nodePositions: Record<string, { x: number; y: number }> = {
-  resorts: { x: 200, y: 0 },
-  drafts: { x: 400, y: 200 },
-  submitted: { x: 400, y: 400 },
-  poll: { x: 0, y: 400 },
-  results: { x: 0, y: 200 },
+  resorts: { x: 0, y: 0 },
+  drafts: { x: 0, y: 150 },
+  submitted: { x: 0, y: 300 },
+  poll: { x: 0, y: 450 },
+  results: { x: 0, y: 600 },
 }
 
 const edgeRoutes: Record<
@@ -613,22 +626,17 @@ const edgeRoutes: Record<
     targetHandle: 'target-top',
   },
   'submitted-poll': {
-    sourceHandle: 'source-left',
-    targetHandle: 'target-right',
+    sourceHandle: 'source-bottom',
+    targetHandle: 'target-top',
   },
   'poll-results': {
-    sourceHandle: 'source-top',
-    targetHandle: 'target-bottom',
-  },
-  'results-drafts-return': {
-    sourceHandle: 'source-right',
-    targetHandle: 'target-left',
+    sourceHandle: 'source-bottom',
+    targetHandle: 'target-top',
   },
 }
 
 export default function ActionGuide(props: ActionGuideProps) {
   const guideNodes = buildGuideNodes(props)
-  const showReturnPath = props.closedPollCount > 0 || props.approvedCount > 0
 
   const flowNodes: Node<GuideNodeData>[] = useMemo(
     () =>
@@ -650,13 +658,13 @@ export default function ActionGuide(props: ActionGuideProps) {
     for (let i = 0; i < guideNodes.length - 1; i++) {
       const source = guideNodes[i]
       const target = guideNodes[i + 1]
+      const edgeId = `${source.nodeId}-${target.nodeId}`
       const edgeStatus: NodeStatus =
         source.status === 'completed'
           ? 'completed'
           : source.status === 'active'
             ? 'active'
             : 'pending'
-      const edgeId = `${source.nodeId}-${target.nodeId}`
       const route = edgeRoutes[edgeId]
       edges.push({
         id: edgeId,
@@ -668,22 +676,8 @@ export default function ActionGuide(props: ActionGuideProps) {
         data: { status: edgeStatus },
       })
     }
-    if (showReturnPath) {
-      const resultsNode = guideNodes[guideNodes.length - 1]
-      const draftsNode = guideNodes[1]
-      const route = edgeRoutes['results-drafts-return']
-      edges.push({
-        id: 'results-drafts-return',
-        source: resultsNode.nodeId,
-        target: draftsNode.nodeId,
-        sourceHandle: route?.sourceHandle,
-        targetHandle: route?.targetHandle,
-        type: 'statusFlow',
-        data: { status: 'active' },
-      })
-    }
     return edges
-  }, [guideNodes, showReturnPath])
+  }, [guideNodes])
 
   const defaultEdgeOptions = useMemo(
     () => ({
@@ -716,6 +710,7 @@ export default function ActionGuide(props: ActionGuideProps) {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           defaultEdgeOptions={defaultEdgeOptions}
+          nodeOrigin={[0.5, 0]}
           onInit={handleInit}
           nodesDraggable={false}
           nodesConnectable={false}

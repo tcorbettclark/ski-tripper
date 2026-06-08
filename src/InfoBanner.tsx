@@ -13,14 +13,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { colors, fontSizes, fonts, mix } from './theme'
 
 const slideColorKeys: (keyof typeof colors)[] = [
-  'slide0',
-  'slide1',
-  'slide2',
-  'slide3',
-  'slide4',
-  'slide5',
-  'slide6',
-  'slide7',
+  'palette0',
+  'palette1',
+  'palette2',
+  'palette3',
+  'palette4',
+  'palette5',
+  'palette6',
+  'palette7',
 ]
 
 const defaultSlides = [
