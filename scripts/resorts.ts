@@ -481,6 +481,7 @@ async function enrich(options: {
   fill?: boolean
   all?: boolean
   resort?: string
+  region?: string
 }) {
   const model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL
   const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
@@ -585,6 +586,24 @@ async function enrich(options: {
       'info',
       'enrich',
       `Mode: ${ANSI_BOLD}all${ANSI_RESET} (re-enrich every resort from scratch)`
+    )
+  }
+
+  if (options.region) {
+    const before = toEnrich.length
+    toEnrich = toEnrich.filter((r) => r.region === options.region)
+    if (toEnrich.length === 0) {
+      log(
+        'error',
+        'enrich',
+        `No resorts found in region "${options.region}". Available regions: ${[...new Set(seeded.map((r) => r.region))].sort().join(', ')}`
+      )
+      process.exit(1)
+    }
+    log(
+      'info',
+      'enrich',
+      `Region filter: ${ANSI_BOLD}${options.region}${ANSI_RESET} (${before - toEnrich.length} excluded, ${toEnrich.length} remaining)`
     )
   }
 
@@ -1052,6 +1071,10 @@ program
   .option(
     '--resort <id>',
     'Enrich a specific resort by id (e.g. "chamonix-alps-france")'
+  )
+  .option(
+    '--region <region>',
+    'Enrich only resorts in the specified region (e.g. "Alps", "Rockies (US)")'
   )
   .option(
     '--fill',
