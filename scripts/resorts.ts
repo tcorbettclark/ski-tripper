@@ -14,6 +14,7 @@ import {
 import { InputFile } from 'node-appwrite/file'
 import * as z from 'zod'
 
+import { type AuditIssue, auditEnrichedData } from './lib/audit'
 import { cleanUrls } from './lib/clean-urls'
 import { readJsonl, simpleHash, writeJsonl } from './lib/jsonl'
 import {
@@ -27,7 +28,16 @@ import {
   ollama,
   streamThinking,
 } from './lib/llm'
-import { ANSI_BOLD, ANSI_DIM, ANSI_RESET, log, logSummary } from './lib/log'
+import {
+  ANSI_BOLD,
+  ANSI_DIM,
+  ANSI_GREEN,
+  ANSI_RED,
+  ANSI_RESET,
+  ANSI_YELLOW,
+  log,
+  logSummary,
+} from './lib/log'
 import { loadOpenSkiMapData } from './lib/openski-map'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
@@ -470,6 +480,120 @@ function toEnrichedEntry(
     skiSeasonMonths: data.skiSeasonMonths,
     websites: cleanUrls([...seededResort.websites, ...data.websites]),
     linkedResortsDescription: data.linkedResortsDescription,
+  }
+}
+
+const ANSI_MAGENTA = '\x1b[35m'
+
+const FIELD_COLOURS: Record<string, string> = {
+  description: '\x1b[38;5;46m',
+  nearestAirport: '\x1b[38;5;51m',
+  transferTime: '\x1b[38;5;99m',
+  snowReliability: '\x1b[38;5;196m',
+  skiSeasonMonths: '\x1b[38;5;220m',
+  websites: '\x1b[38;5;87m',
+  linkedResortsDescription: '\x1b[38;5;208m',
+}
+
+function formatIssueTags(issues: AuditIssue[]): string {
+  const tags: Array<{ label: string; colour: string }> = []
+  for (const issue of issues) {
+    if (issue.type === 'low-quality') {
+      for (const field of issue.fields) {
+        tags.push({ label: field, colour: FIELD_COLOURS[field] ?? ANSI_RESET })
+      }
+    } else if (issue.type === 'invalid-snow-reliability') {
+      tags.push({ label: `snowReliability="${issue.value}"`, colour: ANSI_RED })
+    } else {
+      tags.push({ label: `transferTime=${issue.value}`, colour: ANSI_MAGENTA })
+    }
+  }
+  return tags.map((t) => `${t.colour}${t.label}${ANSI_RESET}`).join('  ')
+}
+
+function audit(options: { detail?: boolean }) {
+  const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
+  const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
+
+  const seeded = fs.existsSync(seededPath)
+    ? readJsonl<SeededResort>(seededPath)
+    : []
+  const enriched = fs.existsSync(enrichedPath)
+    ? readJsonl<EnrichedResort>(enrichedPath)
+    : []
+
+  const result = auditEnrichedData(seeded, enriched)
+
+  if (result.seededCount === 0) {
+    console.log(
+      `${ANSI_YELLOW}${ANSI_BOLD}No seeded resorts found.${ANSI_RESET} Run seed first.`
+    )
+    return
+  }
+
+  console.log()
+  console.log(
+    `${ANSI_DIM}Seeded resorts${ANSI_RESET}          ${ANSI_BOLD}${result.seededCount}${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_DIM}Enriched resorts${ANSI_RESET}        ${ANSI_BOLD}${result.enrichedCount}${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_DIM}Coverage${ANSI_RESET}                ${ANSI_BOLD}${result.coveragePct}%${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_DIM}Orphaned entries${ANSI_RESET}        ${ANSI_BOLD}${result.orphans.length}${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_DIM}Duplicate seeded IDs${ANSI_RESET}    ${ANSI_BOLD}${result.duplicateSeededIds.length}${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_DIM}Duplicate enriched IDs${ANSI_RESET}  ${ANSI_BOLD}${result.duplicateEnrichedIds.length}${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_DIM}Resorts with problems${ANSI_RESET}   ${ANSI_BOLD}${result.enrichedProblems.length}${ANSI_RESET}`
+  )
+
+  const totalIssues =
+    result.orphans.length +
+    result.duplicateSeededIds.length +
+    result.duplicateEnrichedIds.length +
+    result.enrichedProblems.length
+
+  if (totalIssues === 0) {
+    console.log()
+    console.log(`${ANSI_GREEN}${ANSI_BOLD}No problems found${ANSI_RESET}`)
+    return
+  }
+
+  console.log()
+  console.log(
+    `${ANSI_YELLOW}${ANSI_BOLD}${totalIssues} total issue(s)${ANSI_RESET}`
+  )
+
+  if (result.enrichedProblems.length > 0) {
+    console.log()
+    if (options.detail) {
+      for (const { id, resortName, issues } of result.enrichedProblems) {
+        console.log(
+          `${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}${id}${ANSI_RESET}`
+        )
+        console.log(`  ${formatIssueTags(issues)}`)
+        console.log()
+      }
+    } else {
+      const show = result.enrichedProblems.slice(0, 10)
+      for (const { resortName, id } of show) {
+        console.log(
+          `  ${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}(${id})${ANSI_RESET}`
+        )
+      }
+      if (result.enrichedProblems.length > 10) {
+        console.log(
+          `  ${ANSI_DIM}... and ${result.enrichedProblems.length - 10} more (use --detail to see all)${ANSI_RESET}`
+        )
+      }
+    }
   }
 }
 
@@ -1090,6 +1214,12 @@ program
     'Re-enrich every resort from scratch, replacing all existing data'
   )
   .action(enrich)
+
+program
+  .command('audit')
+  .description('Summarise enriched data and list problems')
+  .option('--detail', 'Show per-resort quality issue details')
+  .action(audit)
 
 program
   .command('encode')
