@@ -2,13 +2,16 @@
 
 import { extname, join } from 'node:path'
 
-const port = parseInt(
-  Bun.argv.find((arg) => arg.startsWith('--port='))?.split('=')[1] ?? '5173',
-  10
-)
-const dist = join(import.meta.dir, 'dist')
+function getArg(flag) {
+  const match = Bun.argv.find((arg) => arg.startsWith(`--${flag}=`))
+  return match?.split('=')[1]
+}
+
+const port = parseInt(getArg('port') ?? '5173', 10)
+const serveDirName = getArg('serve') ?? 'dist'
+const serveDir = join(import.meta.dir, serveDirName)
 const publicDir = join(import.meta.dir, 'public')
-const indexHtml = Bun.file(join(import.meta.dir, 'index.html'))
+const indexHtml = Bun.file(join(serveDir, 'index.html'))
 
 const keyPath = join(import.meta.dir, 'localhost-key.pem')
 const certPath = join(import.meta.dir, 'localhost.pem')
@@ -60,7 +63,7 @@ Bun.serve({
   },
   fetch: async (req) => {
     const url = new URL(req.url)
-    const distFile = Bun.file(join(dist, url.pathname))
+    const distFile = Bun.file(join(serveDir, url.pathname))
     if (await distFile.exists()) {
       const ext = extname(url.pathname)
       const contentType = mimeTypes[ext] || 'application/octet-stream'
@@ -86,4 +89,4 @@ Bun.serve({
   },
 })
 
-console.log(`Dev server running at https://localhost:${port}`)
+console.log(`Serving ${serveDirName}/ at https://localhost:${port}`)

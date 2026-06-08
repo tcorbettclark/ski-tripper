@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ActionGuide Playground</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text x='16' y='26' font-size='24' font-family='system-ui' text-anchor='middle'>⛷︎</text></svg>" />
+  </head>
+  <body>
+    <script>
+      (() => {
+        var t = localStorage.getItem('theme');
+        var s = (t === 'light' || (t !== 'dark' && window.matchMedia('(prefers-color-scheme: light)').matches)) ? 'light' : 'dark';
+        document.documentElement.dataset.theme = s;
+        var m = document.createElement('meta');
+        m.name = 'color-scheme';
+        m.content = s;
+        document.head.appendChild(m);
+      })();
+    </script>
+    <div id="root"></div>
+    <link rel="stylesheet" href="./action-guide-test.css" />
+    <script type="module" src="./action-guide-test.js"></script>
+  </body>
+</html>

@@ -36,7 +36,8 @@
     "ci": "biome ci",
     "cors-finder": "bash scripts/find-cors-test.sh",
     "db-admin": "bun run scripts/db-admin.ts",
-    "resorts": "bun run scripts/resorts.ts"
+    "resorts": "bun run scripts/resorts.ts",
+    "playground": "bun build playground/action-guide-test.tsx --outdir playground-dist --target browser && cp playground/index.html playground-dist/ && echo 'Playground built to playground-dist/'"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
