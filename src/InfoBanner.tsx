@@ -38,19 +38,19 @@ const defaultSlides = [
   },
   {
     icon: Mountain,
-    text: 'Browse thousands of resorts from an AI-enriched catalogue, packed with detail.',
+    text: 'Browse thousands of resorts from an AI-enriched catalogue.',
   },
   {
     icon: FileText,
     text: 'Create proposals with dates and descriptions, discuss with comments, then submit for voting.',
   },
   {
-    icon: ThumbsUp,
-    text: 'The trip Coordinator runs multiple rounds of voting to arrive at a consensus.',
-  },
-  {
     icon: CircleDot,
     text: 'Have your say by allocating your "chips" amongst the submitted proposals.',
+  },
+  {
+    icon: ThumbsUp,
+    text: 'The trip Coordinator runs multiple rounds of voting to arrive at a consensus.',
   },
   { icon: Compass, text: 'Guided "what next?" prompts stop you getting lost.' },
 ]
