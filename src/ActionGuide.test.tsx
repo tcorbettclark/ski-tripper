@@ -176,7 +176,9 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Accommodations – Chamonix')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Accommodation for: Chamonix/ })
+      ).toBeTruthy()
     })
   })
 
@@ -188,7 +190,9 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Discuss – Val Thorens')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Comment on: Val Thorens/ })
+      ).toBeTruthy()
     })
   })
 
@@ -200,7 +204,9 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Submit')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Submit: Chamonix/ })
+      ).toBeTruthy()
     })
   })
 
@@ -210,8 +216,11 @@ describe('ActionGuide', () => {
     })
     await waitFor(() => {
       expect(screen.getByText('Browse 2 drafts')).toBeTruthy()
-      expect(screen.queryByText('Submit')).toBeNull()
-      expect(screen.queryByText(/Accommodations –/)).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull()
+      expect(
+        screen.queryByRole('button', { name: /Accommodation for:/ })
+      ).toBeNull()
+      expect(screen.queryByRole('button', { name: /Submit:/ })).toBeNull()
     })
   })
 
@@ -225,8 +234,10 @@ describe('ActionGuide', () => {
     })
     await waitFor(() => {
       expect(screen.getByText('Draft Proposals')).toBeTruthy()
-      expect(screen.queryByText(/Accommodations –/)).toBeNull()
-      expect(screen.queryByText(/Discuss –/)).toBeNull()
+      expect(
+        screen.queryByRole('button', { name: /Accommodation for:/ })
+      ).toBeNull()
+      expect(screen.queryByRole('button', { name: /Comment on:/ })).toBeNull()
     })
   })
 
@@ -290,12 +301,13 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Accommodations – Chamonix')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Accommodation for: Chamonix/ })
+      ).toBeTruthy()
     })
-    const buttons = screen
-      .getAllByText('Accommodations – Chamonix')
-      .filter((el) => el.tagName === 'BUTTON')
-    fireEvent.click(buttons[0])
+    fireEvent.click(
+      screen.getByRole('button', { name: /Accommodation for: Chamonix/ })
+    )
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'p1',
       subTab: 'accommodations',
@@ -312,12 +324,13 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Discuss – Val Thorens')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Comment on: Val Thorens/ })
+      ).toBeTruthy()
     })
-    const buttons = screen
-      .getAllByText('Discuss – Val Thorens')
-      .filter((el) => el.tagName === 'BUTTON')
-    fireEvent.click(buttons[0])
+    fireEvent.click(
+      screen.getByRole('button', { name: /Comment on: Val Thorens/ })
+    )
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'p2',
       subTab: 'discussion',
@@ -334,12 +347,11 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Submit')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Submit: Chamonix/ })
+      ).toBeTruthy()
     })
-    const buttons = screen
-      .getAllByText('Submit')
-      .filter((el) => el.tagName === 'BUTTON')
-    fireEvent.click(buttons[0])
+    fireEvent.click(screen.getByRole('button', { name: /Submit: Chamonix/ }))
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'p1',
       subTab: 'proposal',
@@ -382,8 +394,12 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Discuss – Chamonix')).toBeTruthy()
-      expect(screen.getByText('Discuss – Val Thorens')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Discuss: Chamonix/ })
+      ).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Discuss: Val Thorens/ })
+      ).toBeTruthy()
     })
   })
 
@@ -396,12 +412,11 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Discuss – Chamonix')).toBeTruthy()
+      expect(
+        screen.getByRole('button', { name: /Discuss: Chamonix/ })
+      ).toBeTruthy()
     })
-    const buttons = screen
-      .getAllByText('Discuss – Chamonix')
-      .filter((el) => el.tagName === 'BUTTON')
-    fireEvent.click(buttons[0])
+    fireEvent.click(screen.getByRole('button', { name: /Discuss: Chamonix/ }))
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'SUBMITTED', {
       proposalId: 'p3',
       subTab: 'discussion',
@@ -416,7 +431,7 @@ describe('ActionGuide', () => {
     })
     await waitFor(() => {
       expect(screen.getByText('Submitted Proposals')).toBeTruthy()
-      expect(screen.queryByText(/Discuss –/)).toBeNull()
+      expect(screen.queryByRole('button', { name: /Discuss:/ })).toBeNull()
     })
   })
 

@@ -410,10 +410,10 @@ describe('Overview', () => {
     })
     await waitFor(() => {
       expect(
-        screen.getAllByRole('button', { name: /^Submit$/ }).length
+        screen.getAllByRole('button', { name: /^Submit:/ }).length
       ).toBeGreaterThan(0)
     })
-    fireEvent.click(screen.getAllByRole('button', { name: /^Submit$/ })[0])
+    fireEvent.click(screen.getAllByRole('button', { name: /^Submit:/ })[0])
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'prop-1',
       subTab: 'proposal',
@@ -552,7 +552,7 @@ it('shows next step prompt for coordinator with submitted proposals and no poll'
   })
   await waitFor(() => {
     expect(screen.getByText(/Browse \d+ submitted/i))
-    expect(screen.getByText('Discuss – Chamonix'))
+    expect(screen.getByRole('button', { name: /Discuss: Chamonix/ }))
     expect(screen.getByText(/create poll/i))
   })
 })

@@ -22,6 +22,7 @@ export type ProposalDetail = {
 
 interface ActionChip {
   label: string
+  boldSuffix?: string
   tab: 'resorts' | 'proposals' | 'poll'
   statusFilter?: StatusFilter
   detail?: ProposalDetail
@@ -83,31 +84,35 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
   }
   for (const draft of props.myDrafts) {
     draftActions.push({
-      label: `Accommodations – ${draft.resortName}`,
+      label: `Accommodation for: `,
+      boldSuffix: draft.resortName,
       tab: 'proposals',
       statusFilter: 'DRAFT',
       detail: { proposalId: draft.proposalId, subTab: 'accommodations' },
       variant: 'primary',
     })
   }
+  for (const draft of props.draftsForDiscussion) {
+    draftActions.push({
+      label: `Comment on: `,
+      boldSuffix: draft.resortName,
+      tab: 'proposals',
+      statusFilter: 'DRAFT',
+      detail: { proposalId: draft.proposalId, subTab: 'discussion' },
+      variant: 'primary',
+    })
+  }
   if (props.myDrafts.length > 0) {
     draftActions.push({
-      label: 'Submit',
+      label: props.myDrafts.length === 1 ? `Submit: ` : 'Submit',
+      boldSuffix:
+        props.myDrafts.length === 1 ? props.myDrafts[0].resortName : undefined,
       tab: 'proposals',
       statusFilter: 'DRAFT',
       detail:
         props.myDrafts.length === 1
           ? { proposalId: props.myDrafts[0].proposalId, subTab: 'proposal' }
           : undefined,
-      variant: 'primary',
-    })
-  }
-  for (const draft of props.draftsForDiscussion) {
-    draftActions.push({
-      label: `Discuss – ${draft.resortName}`,
-      tab: 'proposals',
-      statusFilter: 'DRAFT',
-      detail: { proposalId: draft.proposalId, subTab: 'discussion' },
       variant: 'primary',
     })
   }
@@ -123,7 +128,8 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
   }
   for (const proposal of props.submittedProposals) {
     submittedActions.push({
-      label: `Discuss – ${proposal.resortName}`,
+      label: `Discuss: `,
+      boldSuffix: proposal.resortName,
       tab: 'proposals',
       statusFilter: 'SUBMITTED',
       detail: { proposalId: proposal.proposalId, subTab: 'discussion' },
@@ -380,7 +386,11 @@ function GuideNode({ data }: { data: GuideNodeData }) {
         >
           {actions.map((action) => (
             <button
-              key={action.label}
+              key={
+                action.detail
+                  ? `${action.detail.proposalId}-${action.detail.subTab}`
+                  : action.label
+              }
               type="button"
               className={
                 action.variant === 'primary'
@@ -412,6 +422,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
               }}
             >
               {action.label}
+              {action.boldSuffix && <strong>{action.boldSuffix}</strong>}
             </button>
           ))}
         </div>
