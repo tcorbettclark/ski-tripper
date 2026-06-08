@@ -53,11 +53,17 @@ const adminClient = new NodeClient()
 
 const adminStorage = new NodeStorage(adminClient)
 
-const EXA_SOURCED_NUM_RESULTS = 4
-const EXA_BROAD_NUM_RESULTS = 4
+const EXA_SOURCED_NUM_RESULTS = 5
+const EXA_BROAD_NUM_RESULTS = 5
+const EXA_TRAVEL_NUM_RESULTS = 3
+const EXA_LINKED_NUM_RESULTS = 3
 const EXA_MAX_CHARS = 12000 as const
-const EXA_SEARCH_QUERY = (resortName: string, country: string) =>
-  `Ski resort review and guide for ${resortName} in ${country}, including terrain difficulty, off-piste, apres-ski, nightlife, family suitability, value, lift quality, resort atmosphere, nearest airport, and transfer time`
+const EXA_GENERAL_QUERY = (resortName: string, country: string) =>
+  `Ski resort review and guide for ${resortName} in ${country}, including terrain difficulty, off-piste, apres-ski, nightlife, family suitability, value, lift quality, resort atmosphere`
+const EXA_TRAVEL_QUERY = (resortName: string, country: string) =>
+  `How to get to ${resortName} ski resort in ${country}, flights, nearest major airport, airport transfers, travel time`
+const EXA_LINKED_QUERY = (resortName: string, country: string) =>
+  `${resortName} ${country} linked ski areas, connected resorts, lift-linked domain, ski area name`
 
 const enrichSchema = z.object({
   description: z
@@ -69,11 +75,15 @@ const enrichSchema = z.object({
   nearestAirport: z
     .string()
     .nullable()
-    .describe('Name of the nearest airport, e.g. "Geneva Airport"'),
+    .describe(
+      'Name of the nearest international airport, e.g. "Geneva Airport"'
+    ),
   transferTime: z
     .number()
     .nullable()
-    .describe('Transfer time from airport in minutes, e.g. 120'),
+    .describe(
+      'Transfer time from nearest international airport in minutes, e.g. 120'
+    ),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
     .nullable()
@@ -205,30 +215,54 @@ async function enrichResort(
   log('info', 'enrich', `Enriching "${resortName}" via Exa+LLM`)
 
   log('info', 'enrich', 'Fetching source text from Exa...', 1)
-  const [sourcedResults, broadResults] = await Promise.all([
-    getExa().search(EXA_SEARCH_QUERY(resortName, country), {
-      type: 'auto',
-      numResults: EXA_SOURCED_NUM_RESULTS,
-      useAutoprompt: true,
-      includeDomains: [...ENRICH_SOURCE_WEBSITES],
-      contents: {
-        text: { maxCharacters: EXA_MAX_CHARS },
-        highlights: true,
-      },
-    }),
-    getExa().search(EXA_SEARCH_QUERY(resortName, country), {
-      type: 'auto',
-      numResults: EXA_BROAD_NUM_RESULTS,
-      useAutoprompt: true,
-      contents: {
-        text: { maxCharacters: EXA_MAX_CHARS },
-        highlights: true,
-      },
-    }),
-  ])
+  const [sourcedResults, broadResults, travelResults, linkedResults] =
+    await Promise.all([
+      getExa().search(EXA_GENERAL_QUERY(resortName, country), {
+        type: 'auto',
+        numResults: EXA_SOURCED_NUM_RESULTS,
+        useAutoprompt: true,
+        includeDomains: [...ENRICH_SOURCE_WEBSITES],
+        contents: {
+          text: { maxCharacters: EXA_MAX_CHARS },
+          highlights: true,
+        },
+      }),
+      getExa().search(EXA_GENERAL_QUERY(resortName, country), {
+        type: 'auto',
+        numResults: EXA_BROAD_NUM_RESULTS,
+        useAutoprompt: true,
+        contents: {
+          text: { maxCharacters: EXA_MAX_CHARS },
+          highlights: true,
+        },
+      }),
+      getExa().search(EXA_TRAVEL_QUERY(resortName, country), {
+        type: 'auto',
+        numResults: EXA_TRAVEL_NUM_RESULTS,
+        useAutoprompt: true,
+        contents: {
+          text: { maxCharacters: EXA_MAX_CHARS },
+          highlights: true,
+        },
+      }),
+      getExa().search(EXA_LINKED_QUERY(resortName, country), {
+        type: 'auto',
+        numResults: EXA_LINKED_NUM_RESULTS,
+        useAutoprompt: true,
+        contents: {
+          text: { maxCharacters: EXA_MAX_CHARS },
+          highlights: true,
+        },
+      }),
+    ])
 
   const seenUrls = new Set<string>()
-  const allResults = [...sourcedResults.results, ...broadResults.results]
+  const allResults = [
+    ...sourcedResults.results,
+    ...broadResults.results,
+    ...travelResults.results,
+    ...linkedResults.results,
+  ]
   const dedupedResults = allResults.filter((r) => {
     if (seenUrls.has(r.url)) return false
     seenUrls.add(r.url)
@@ -238,27 +272,41 @@ async function enrichResort(
   const sourcedHosts = new Set(
     sourcedResults.results.map((r) => new URL(r.url).hostname)
   )
+  const travelHosts = new Set(
+    travelResults.results.map((r) => new URL(r.url).hostname)
+  )
+  const linkedHosts = new Set(
+    linkedResults.results.map((r) => new URL(r.url).hostname)
+  )
 
   log(
     'info',
     'enrich',
-    `Sourced: ${sourcedResults.results.length} results, Broad: ${broadResults.results.length} results, Deduped: ${dedupedResults.length}`,
+    `Sourced: ${sourcedResults.results.length}, Broad: ${broadResults.results.length}, Travel: ${travelResults.results.length}, Linked: ${linkedResults.results.length}, Deduped: ${dedupedResults.length}`,
     1
   )
   for (const r of dedupedResults) {
-    const tag = sourcedHosts.has(new URL(r.url).hostname)
-      ? 'authoritative'
-      : 'general'
-    log('info', 'enrich', `  [${tag}] ${r.url}`, 2)
+    const tags: string[] = []
+    const host = new URL(r.url).hostname
+    if (sourcedHosts.has(host)) tags.push('authoritative')
+    if (travelHosts.has(host)) tags.push('travel')
+    if (linkedHosts.has(host)) tags.push('linked')
+    if (tags.length === 0) tags.push('general')
+    log('info', 'enrich', `  [${tags.join('+')}] ${r.url}`, 2)
   }
 
   const sourceText = dedupedResults
     .filter((r) => r.text)
     .map((r) => {
-      const tag = sourcedHosts.has(new URL(r.url).hostname)
-        ? 'Authoritative source'
-        : 'General source'
-      const parts = [`## ${r.title ?? 'Untitled'} (${tag})\nURL: ${r.url}`]
+      const host = new URL(r.url).hostname
+      const tags: string[] = []
+      if (sourcedHosts.has(host)) tags.push('Authoritative source')
+      if (travelHosts.has(host)) tags.push('Travel source')
+      if (linkedHosts.has(host)) tags.push('Linked-areas source')
+      if (tags.length === 0) tags.push('General source')
+      const parts = [
+        `## ${r.title ?? 'Untitled'} (${tags.join(', ')})\nURL: ${r.url}`,
+      ]
       if (r.highlights?.length) {
         parts.push(`### Key facts\n${r.highlights.join('\n')}`)
       }
