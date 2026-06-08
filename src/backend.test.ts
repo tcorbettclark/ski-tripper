@@ -1523,15 +1523,13 @@ describe('deleteTrip', () => {
 describe('createAccommodation', () => {
   it('creates an accommodation when user is the proposal creator', async () => {
     const db = createMockDb({
-      getRow: mock()
-        .mockImplementationOnce(() =>
-          Promise.resolve({
-            $id: 'prop-1',
-            proposerUserId: 'user-1',
-            state: 'DRAFT',
-          })
-        )
-        .mockImplementationOnce(() => Promise.resolve({ rows: [] })),
+      getRow: mock(() =>
+        Promise.resolve({
+          $id: 'prop-1',
+          proposerUserId: 'user-1',
+          state: 'DRAFT',
+        })
+      ),
       listRows: mock(() => Promise.resolve({ rows: [] })),
       createRow: mock(() =>
         Promise.resolve({ $id: 'acc-1', name: 'Hotel Nevai' })
@@ -1575,34 +1573,6 @@ describe('createAccommodation', () => {
     expect(
       createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, db)
     ).rejects.toThrow('Accommodations can only be added to draft proposals.')
-  })
-
-  it('throws when maximum accommodations (5) is reached', async () => {
-    const db = createMockDb({
-      getRow: mock()
-        .mockImplementationOnce(() =>
-          Promise.resolve({
-            $id: 'prop-1',
-            proposerUserId: 'user-1',
-            state: 'DRAFT',
-          })
-        )
-        .mockImplementationOnce(() => Promise.resolve({ rows: [] })),
-      listRows: mock(() =>
-        Promise.resolve({
-          rows: [
-            { $id: 'acc-1' },
-            { $id: 'acc-2' },
-            { $id: 'acc-3' },
-            { $id: 'acc-4' },
-            { $id: 'acc-5' },
-          ],
-        })
-      ),
-    })
-    expect(
-      createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, db)
-    ).rejects.toThrow('Maximum of 5 accommodations allowed per proposal.')
   })
 })
 

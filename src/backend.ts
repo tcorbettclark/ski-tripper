@@ -746,7 +746,7 @@ export async function deleteProposal(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: ACCOMMODATIONS_TABLE_ID,
-      queries: [Query.equal('proposalId', proposalId), Query.limit(5)],
+      queries: [Query.equal('proposalId', proposalId), Query.limit(100)],
     })
   )
   const discussions = await fetchRows<Discussion>(
@@ -799,7 +799,7 @@ export async function submitProposal(
     db.listRows({
       databaseId: DATABASE_ID,
       tableId: ACCOMMODATIONS_TABLE_ID,
-      queries: [Query.equal('proposalId', proposalId), Query.limit(5)],
+      queries: [Query.equal('proposalId', proposalId), Query.limit(100)],
     })
   )
   if (accommodations.length === 0)
@@ -1140,9 +1140,6 @@ export async function createAccommodation(
     throw new Error('Only the creator can add accommodations.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Accommodations can only be added to draft proposals.')
-  const accommodations = await listAccommodations(proposalId, db)
-  if (accommodations.length >= 5)
-    throw new Error('Maximum of 5 accommodations allowed per proposal.')
   return fetchRow<Accommodation>(
     db.createRow({
       databaseId: DATABASE_ID,
@@ -1172,7 +1169,7 @@ export async function listAccommodations(
       queries: [
         Query.equal('proposalId', proposalId),
         Query.orderDesc('$createdAt'),
-        Query.limit(5),
+        Query.limit(100),
       ],
     })
   )

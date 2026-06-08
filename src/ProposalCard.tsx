@@ -337,8 +337,7 @@ export default function ProposalCard({
                   : styles.tabInactive
               }
             >
-              Accommodations{' '}
-              {accommodations.length > 0 && `(${accommodations.length})`}
+              Accommodations {`(${accommodations.length})`}
             </button>
             <button
               type="button"
