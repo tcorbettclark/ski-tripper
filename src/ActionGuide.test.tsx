@@ -151,47 +151,47 @@ describe('ActionGuide', () => {
       renderActionGuide()
     })
     await waitFor(() => {
-      expect(screen.getByText('Resorts')).toBeTruthy()
-      expect(screen.getByText('Drafts')).toBeTruthy()
-      expect(screen.getByText('Submitted')).toBeTruthy()
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Draft Proposals')).toBeTruthy()
+      expect(screen.getByText('Submitted Proposals')).toBeTruthy()
       expect(screen.getByText('Poll')).toBeTruthy()
       expect(screen.getByText('Results')).toBeTruthy()
     })
   })
 
-  it('shows resort count on the Resorts node', async () => {
+  it('shows resort count in Browse action button', async () => {
     await act(async () => {
       renderActionGuide({ resortCount: 42 })
     })
     await waitFor(() => {
-      expect(screen.getByText('42 resorts')).toBeTruthy()
+      expect(screen.getByText('Browse 42 resorts')).toBeTruthy()
     })
   })
 
-  it('shows draft count on the Drafts node', async () => {
+  it('shows draft count in Browse action button', async () => {
     await act(async () => {
       renderActionGuide({ draftCount: 2 })
     })
     await waitFor(() => {
-      expect(screen.getAllByText('2 drafts').length).toBeGreaterThan(0)
+      expect(screen.getByText('Browse 2 drafts')).toBeTruthy()
     })
   })
 
-  it('shows submitted count on the Submitted node', async () => {
+  it('shows submitted count in Comment action button', async () => {
     await act(async () => {
       renderActionGuide({ submittedCount: 3 })
     })
     await waitFor(() => {
-      expect(screen.getByText('3 submitted')).toBeTruthy()
+      expect(screen.getByText('Comment on 3 submitted')).toBeTruthy()
     })
   })
 
-  it('shows approved count on the Results node', async () => {
+  it('shows approved count in View action button', async () => {
     await act(async () => {
       renderActionGuide({ approvedCount: 1 })
     })
     await waitFor(() => {
-      expect(screen.getByText('1 approved')).toBeTruthy()
+      expect(screen.getByText('View 1 approved')).toBeTruthy()
     })
   })
 
@@ -260,7 +260,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ closedPollCount: 2 })
     })
     await waitFor(() => {
-      expect(screen.getByText('2 past polls')).toBeTruthy()
+      expect(screen.getByText('Review 2 past polls')).toBeTruthy()
     })
   })
 
@@ -279,7 +279,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ draftCount: 0 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Drafts')).toBeTruthy()
+      expect(screen.getByText('Draft Proposals')).toBeTruthy()
       expect(screen.queryByText('Accommodations')).toBeNull()
       expect(screen.queryByText('Discuss')).toBeNull()
     })
@@ -291,9 +291,9 @@ describe('ActionGuide', () => {
       renderActionGuide({ onNavigateToTab })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resorts')).toBeTruthy()
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
     })
-    fireEvent.click(screen.getByText('Resorts'))
+    fireEvent.click(screen.getByText('Resort Catalog'))
     expect(onNavigateToTab).toHaveBeenCalledWith('resorts', undefined)
   })
 
@@ -334,10 +334,10 @@ describe('ActionGuide', () => {
       renderActionGuide({ draftCount: 2, onNavigateToTab })
     })
     await waitFor(() => {
-      expect(screen.getAllByText('2 drafts').length).toBeGreaterThan(0)
+      expect(screen.getByText('Browse 2 drafts')).toBeTruthy()
     })
     const draftButtons = screen
-      .getAllByText('2 drafts')
+      .getAllByText('Browse 2 drafts')
       .filter((el) => el.tagName === 'BUTTON')
     fireEvent.click(draftButtons[0])
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT')
@@ -348,9 +348,11 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 5 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resorts')).toBeTruthy()
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
     })
-    const resortsNode = screen.getByText('Resorts').closest('[data-node]')
+    const resortsNode = screen
+      .getByText('Resort Catalog')
+      .closest('[data-node]')
     expect(resortsNode?.getAttribute('data-status')).toBe('active')
   })
 
@@ -370,9 +372,11 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 0 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resorts')).toBeTruthy()
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
     })
-    const resortsNode = screen.getByText('Resorts').closest('[data-node]')
+    const resortsNode = screen
+      .getByText('Resort Catalog')
+      .closest('[data-node]')
     expect(resortsNode?.getAttribute('data-status')).toBe('pending')
   })
 
@@ -381,7 +385,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 3, draftCount: 1 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resorts')).toBeTruthy()
+      expect(screen.getByText('Resort Catalog')).toBeTruthy()
     })
     const flowContainer = screen.getByTestId('react-flow')
     expect(flowContainer).toBeTruthy()

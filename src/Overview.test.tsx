@@ -556,7 +556,7 @@ describe('Overview', () => {
     await waitFor(() => {
       expect(screen.getByText(/1 past poll/i))
     })
-    fireEvent.click(screen.getByText(/review polls/i))
+    fireEvent.click(screen.getByText(/review \d+ past poll/i))
     expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
   })
 
@@ -567,11 +567,11 @@ describe('Overview', () => {
     })
     await waitFor(() => {
       expect(
-        screen.getAllByRole('button', { name: /browse resorts/i }).length
+        screen.getAllByRole('button', { name: /browse \d+ resorts/i }).length
       ).toBeGreaterThan(0)
     })
     fireEvent.click(
-      screen.getAllByRole('button', { name: /browse resorts/i })[0]
+      screen.getAllByRole('button', { name: /browse \d+ resorts/i })[0]
     )
     expect(onNavigateToTab).toHaveBeenCalledWith('resorts', undefined)
   })
@@ -586,7 +586,7 @@ it('shows next step prompt when no proposals exist', async () => {
   })
   await waitFor(() => {
     expect(
-      screen.getAllByRole('button', { name: /browse resorts/i }).length
+      screen.getAllByRole('button', { name: /browse \d+ resorts/i }).length
     ).toBeGreaterThan(0)
   })
 })
@@ -647,7 +647,7 @@ it('shows next step prompt for coordinator with submitted proposals and no poll'
     })
   })
   await waitFor(() => {
-    expect(screen.getByText('Comment'))
+    expect(screen.getByText(/comment on \d+ submitted/i))
     expect(screen.getByText(/create poll/i))
   })
 })
@@ -659,7 +659,7 @@ it('shows comment on submitted proposals when no active poll', async () => {
     })
   })
   await waitFor(() => {
-    expect(screen.getByText('Comment'))
+    expect(screen.getByText(/comment on \d+ submitted/i))
   })
 })
 
@@ -721,7 +721,7 @@ it('shows only browse resorts when no proposals or polls', async () => {
   })
   await waitFor(() => {
     expect(
-      screen.getAllByRole('button', { name: /browse resorts/i }).length
+      screen.getAllByRole('button', { name: /browse \d+ resorts/i }).length
     ).toBeGreaterThan(0)
   })
 })

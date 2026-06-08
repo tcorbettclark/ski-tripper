@@ -66,30 +66,20 @@ interface ActionGuideProps {
 function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
   const nav = props.onNavigateToTab
 
-  const resortsStats: string[] = []
-  if (props.resortCount > 0) {
-    resortsStats.push(
-      `${props.resortCount} resort${props.resortCount !== 1 ? 's' : ''}`
-    )
-  }
   const resortsActions: ActionChip[] = []
   if (props.resortCount > 0) {
     resortsActions.push({
-      label: 'Browse resorts',
+      label: `Browse ${props.resortCount} resort${props.resortCount !== 1 ? 's' : ''}`,
       tab: 'resorts',
       variant: 'primary',
     })
   }
 
-  const draftStats: string[] = []
   const draftActions: ActionChip[] = []
   const draftSelfActions: ActionChip[] = []
   if (props.draftCount > 0) {
-    draftStats.push(
-      `${props.draftCount} draft${props.draftCount !== 1 ? 's' : ''}`
-    )
     draftActions.push({
-      label: `${props.draftCount} draft${props.draftCount !== 1 ? 's' : ''}`,
+      label: `Browse ${props.draftCount} draft${props.draftCount !== 1 ? 's' : ''}`,
       tab: 'proposals',
       statusFilter: 'DRAFT',
       variant: 'primary',
@@ -114,12 +104,10 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
     })
   }
 
-  const submittedStats: string[] = []
   const submittedActions: ActionChip[] = []
   if (props.submittedCount > 0) {
-    submittedStats.push(`${props.submittedCount} submitted`)
     submittedActions.push({
-      label: 'Comment',
+      label: `Comment on ${props.submittedCount} submitted`,
       tab: 'proposals',
       statusFilter: 'SUBMITTED',
       variant: props.draftCount === 0 ? 'primary' : 'secondary',
@@ -153,23 +141,18 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
     })
   }
 
-  const resultsStats: string[] = []
   const resultsActions: ActionChip[] = []
   if (props.approvedCount > 0) {
-    resultsStats.push(`${props.approvedCount} approved`)
     resultsActions.push({
-      label: 'View',
+      label: `View ${props.approvedCount} approved`,
       tab: 'proposals',
       statusFilter: 'SUBMITTED',
       variant: 'secondary',
     })
   }
   if (props.closedPollCount > 0) {
-    resultsStats.push(
-      `${props.closedPollCount} past poll${props.closedPollCount !== 1 ? 's' : ''}`
-    )
     resultsActions.push({
-      label: 'Review polls',
+      label: `Review ${props.closedPollCount} past poll${props.closedPollCount !== 1 ? 's' : ''}`,
       tab: 'poll',
       variant: 'secondary',
     })
@@ -179,8 +162,8 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
     {
       nodeId: 'resorts',
       icon: Mountain,
-      title: 'Resorts',
-      stats: resortsStats,
+      title: 'Resort Catalog',
+      stats: [],
       actions: resortsActions,
       selfActions: [],
       status: props.resortCount > 0 ? 'active' : 'pending',
@@ -189,8 +172,8 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
     {
       nodeId: 'drafts',
       icon: Plus,
-      title: 'Drafts',
-      stats: draftStats,
+      title: 'Draft Proposals',
+      stats: [],
       actions: draftActions,
       selfActions: draftSelfActions,
       status: props.draftCount > 0 ? 'active' : 'pending',
@@ -199,8 +182,8 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
     {
       nodeId: 'submitted',
       icon: Send,
-      title: 'Submitted',
-      stats: submittedStats,
+      title: 'Submitted Proposals',
+      stats: [],
       actions: submittedActions,
       selfActions: [],
       status: props.submittedCount > 0 ? 'active' : 'pending',
@@ -225,7 +208,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       nodeId: 'results',
       icon: CheckCircle,
       title: 'Results',
-      stats: resultsStats,
+      stats: [],
       actions: resultsActions,
       selfActions: [],
       status:
