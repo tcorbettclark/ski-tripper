@@ -60,7 +60,8 @@ export default function Resorts({
   const [countryFilter, setCountryFilter] = useState<Set<string>>(new Set())
   const [regionFilter, setRegionFilter] = useState<Set<string>>(new Set())
   const [minPisteKm, setMinPisteKm] = useState(0)
-  const [minPeakHeight, setMinPeakHeight] = useState(0)
+  const [minPeakAltitude, setMinPeakHeight] = useState(0)
+  const [minBaseAltitude, setMinBaseAltitude] = useState(0)
   const [maxTransferTime, setMaxTransferTime] = useState(-1)
   const [pisteProfiles, setPisteProfiles] = useState<Set<string>>(new Set())
   const [selectedResort, setSelectedResort] =
@@ -105,7 +106,9 @@ export default function Resorts({
       if (countryFilter.size > 0 && !countryFilter.has(r.country)) return false
       if (regionFilter.size > 0 && !regionFilter.has(r.region)) return false
       if (minPisteKm > 0 && r.pisteKm < minPisteKm) return false
-      if (minPeakHeight > 0 && r.summitAltitude < minPeakHeight) return false
+      if (minPeakAltitude > 0 && r.summitAltitude < minPeakAltitude)
+        return false
+      if (minBaseAltitude > 0 && r.baseAltitude < minBaseAltitude) return false
       if (
         maxTransferTime >= 0 &&
         maxTransferTime < maxTransferTimeFromData &&
@@ -138,7 +141,8 @@ export default function Resorts({
     countryFilter,
     regionFilter,
     minPisteKm,
-    minPeakHeight,
+    minPeakAltitude,
+    minBaseAltitude,
     maxTransferTime,
     maxTransferTimeFromData,
     pisteProfiles,
@@ -209,8 +213,12 @@ export default function Resorts({
       result = result.filter((r) => r.pisteKm >= minPisteKm)
     }
 
-    if (minPeakHeight > 0) {
-      result = result.filter((r) => r.summitAltitude >= minPeakHeight)
+    if (minPeakAltitude > 0) {
+      result = result.filter((r) => r.summitAltitude >= minPeakAltitude)
+    }
+
+    if (minBaseAltitude > 0) {
+      result = result.filter((r) => r.baseAltitude >= minBaseAltitude)
     }
 
     if (maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData) {
@@ -238,7 +246,8 @@ export default function Resorts({
     countryFilter,
     regionFilter,
     minPisteKm,
-    minPeakHeight,
+    minPeakAltitude,
+    minBaseAltitude,
     maxTransferTime,
     maxTransferTimeFromData,
     pisteProfiles,
@@ -328,6 +337,7 @@ export default function Resorts({
   const clearSlopeFilters = useCallback(() => {
     setMinPisteKm(0)
     setMinPeakHeight(0)
+    setMinBaseAltitude(0)
     setPisteProfiles(new Set())
   }, [])
 
@@ -338,7 +348,10 @@ export default function Resorts({
   const hasLocationFilters = countryFilter.size > 0 || regionFilter.size > 0
 
   const hasSlopeFilters =
-    minPisteKm > 0 || minPeakHeight > 0 || pisteProfiles.size > 0
+    minPisteKm > 0 ||
+    minPeakAltitude > 0 ||
+    minBaseAltitude > 0 ||
+    pisteProfiles.size > 0
 
   const hasTransportFilters =
     maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData
@@ -511,7 +524,7 @@ export default function Resorts({
                 htmlFor="min-peak-height-slider"
                 style={resortsStyles.sliderLabel}
               >
-                Min Peak Height
+                Min Peak Alt
               </label>
               <input
                 id="min-peak-height-slider"
@@ -519,16 +532,36 @@ export default function Resorts({
                 min={0}
                 max={5000}
                 step={100}
-                value={minPeakHeight}
+                value={minPeakAltitude}
                 onChange={(e) => setMinPeakHeight(Number(e.target.value))}
                 style={resortsStyles.slider}
               />
               <span style={resortsStyles.sliderValue}>
-                {minPeakHeight > 0 ? `${minPeakHeight}m` : 'Any'}
+                {minPeakAltitude > 0 ? `${minPeakAltitude}m` : 'Any'}
               </span>
             </div>
-            <div style={resortsStyles.terrainGroup}>
-              <span style={resortsStyles.pisteProfileLabel}>Terrain</span>
+            <div style={resortsStyles.sliderGroup}>
+              <label
+                htmlFor="min-base-altitude-slider"
+                style={resortsStyles.sliderLabel}
+              >
+                Min Resort Alt
+              </label>
+              <input
+                id="min-base-altitude-slider"
+                type="range"
+                min={0}
+                max={4000}
+                step={100}
+                value={minBaseAltitude}
+                onChange={(e) => setMinBaseAltitude(Number(e.target.value))}
+                style={resortsStyles.slider}
+              />
+              <span style={resortsStyles.sliderValue}>
+                {minBaseAltitude > 0 ? `${minBaseAltitude}m` : 'Any'}
+              </span>
+            </div>
+            <div style={resortsStyles.sliderGroup}>
               <div style={resortsStyles.terrainButtons}>
                 {[
                   {
@@ -1179,7 +1212,7 @@ const resortsStyles = {
   },
   filterRow: {
     display: 'flex',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: '12px',
     flexWrap: 'wrap' as const,
   },

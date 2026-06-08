@@ -424,6 +424,75 @@ describe('Resorts', () => {
     expect(clearButton).toBeTruthy()
   })
 
+  it('renders min resort alt slider', () => {
+    render(<Resorts {...defaultProps()} />)
+    const slider = screen.getByLabelText(/min resort alt/i)
+    expect(slider).toBeTruthy()
+  })
+
+  it('filters resorts by min resort alt (base altitude)', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/min resort alt/i)
+    fireEvent.change(slider, { target: { value: '1500' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+  })
+
+  it('shows Any when min resort alt slider is at zero', () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/min resort alt/i)
+    const group = slider.closest('div')!
+    expect(group.querySelector('span')!.textContent).toBe('Any')
+  })
+
+  it('displays formatted value in min resort alt slider', () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/min resort alt/i)
+    fireEvent.change(slider, { target: { value: '1000' } })
+
+    const group = slider.closest('div')!
+    expect(group.querySelector('span')!.textContent).toBe('1000m')
+  })
+
+  it('shows clear slope and terrain button when min resort alt filter is active', () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/min resort alt/i)
+    fireEvent.change(slider, { target: { value: '1000' } })
+
+    const clearButton = screen.getByRole('button', {
+      name: /clear slope and terrain/i,
+    }) as HTMLButtonElement
+    expect(clearButton).toBeTruthy()
+  })
+
+  it('resets min resort alt to Any when clear slope filters is clicked', async () => {
+    const eventUser = userEvent.setup()
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/min resort alt/i)
+    fireEvent.change(slider, { target: { value: '1500' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+    })
+
+    await eventUser.click(
+      screen.getByRole('button', { name: /clear slope and terrain/i })
+    )
+
+    await waitFor(() => {
+      const group = screen.getByLabelText(/min resort alt/i).closest('div')!
+      expect(group.querySelector('span')!.textContent).toBe('Any')
+    })
+    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+  })
+
   it('displays all resorts passed as props', () => {
     const extraResort: ResortWithEmbedding = {
       ...sampleResorts[0],
