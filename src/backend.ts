@@ -19,7 +19,7 @@ import type {
   Trip,
   Vote,
 } from './types.d'
-import { dayjs, isValidUrl, parseJsonArray, randomThreeWords } from './utils'
+import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
 export function hasSession(): boolean {
   const projectId = process.env.PUBLIC_APPWRITE_PROJECT_ID as string
@@ -103,7 +103,6 @@ async function fetchRow<T extends { $id: string }>(
 }
 
 function parseProposal(proposal: Proposal): Proposal {
-  proposal.websites = parseJsonArray(proposal.websites as unknown as string)
   return proposal
 }
 
@@ -644,7 +643,7 @@ export async function createProposal(
         state: 'DRAFT',
         ...userData,
         ...resortData,
-        websites: JSON.stringify(resortData.websites),
+        websites: resortData.websites,
       } as Record<string, unknown>,
       permissions: [
         Permission.read(Role.users()),
@@ -714,8 +713,7 @@ export async function updateProposal(
     proposerUserId: _proposerUserId,
     ...safeData
   } = dataRecord
-  if (Array.isArray(safeData.websites))
-    safeData.websites = JSON.stringify(safeData.websites)
+
   return fetchProposalRow(
     db.updateRow({
       databaseId: DATABASE_ID,
