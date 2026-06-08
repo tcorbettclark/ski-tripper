@@ -231,7 +231,6 @@ export default function Overview({
     (p) => p.state === 'DRAFT' && p.proposerUserId === user.$id
   ).length
   const submittedCount = proposals.filter((p) => p.state === 'SUBMITTED').length
-  const approvedCount = proposals.filter((p) => p.state === 'APPROVED').length
 
   function renderPreferenceCell(
     prefs: Preferences | null | undefined,
@@ -620,7 +619,6 @@ export default function Overview({
         draftCount={draftCount}
         myDraftCount={myDraftCount}
         submittedCount={submittedCount}
-        approvedCount={approvedCount}
         closedPollCount={closedPollCount}
         activePoll={activePoll}
         userVotedInActivePoll={userVotedInActivePoll}

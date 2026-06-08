@@ -1,7 +1,6 @@
 import {
   ArrowRight,
   BarChart3,
-  CheckCircle,
   MessageSquare,
   Mountain,
   Send,
@@ -23,7 +22,6 @@ interface NextActionsProps {
   resortCount: number
   draftCount: number
   submittedCount: number
-  approvedCount: number
   closedPollCount: number
   activePoll: Poll | undefined
   userVotedInActivePoll: boolean
@@ -82,14 +80,6 @@ function buildActions(props: NextActionsProps): Action[] {
       label: `View active poll (ends ${formatDate(props.activePoll.endDate)})`,
       tab: 'poll',
       icon: <BarChart3 size={16} />,
-    })
-  }
-
-  if (props.approvedCount > 0) {
-    actions.push({
-      label: `View ${props.approvedCount} approved proposal${props.approvedCount !== 1 ? 's' : ''}`,
-      tab: 'proposals',
-      icon: <CheckCircle size={16} />,
     })
   }
 

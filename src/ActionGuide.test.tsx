@@ -22,7 +22,6 @@ const defaultProps = {
   draftCount: 0,
   myDraftCount: 0,
   submittedCount: 0,
-  approvedCount: 0,
   closedPollCount: 0,
   activePoll: undefined,
   userVotedInActivePoll: false,
@@ -81,15 +80,6 @@ describe('ActionGuide', () => {
     })
     await waitFor(() => {
       expect(screen.getByText('Comment on 3 submitted')).toBeTruthy()
-    })
-  })
-
-  it('shows approved count in View action button', async () => {
-    await act(async () => {
-      renderActionGuide({ approvedCount: 1 })
-    })
-    await waitFor(() => {
-      expect(screen.getByText('View 1 approved')).toBeTruthy()
     })
   })
 
@@ -280,17 +270,6 @@ describe('ActionGuide', () => {
       .getByText('Resort Catalog')
       .closest('[data-node]')
     expect(resortsNode?.getAttribute('data-status')).toBe('active')
-  })
-
-  it('applies active status to Results node when proposals approved', async () => {
-    await act(async () => {
-      renderActionGuide({ approvedCount: 1 })
-    })
-    await waitFor(() => {
-      expect(screen.getByText('Results')).toBeTruthy()
-    })
-    const resultsNode = screen.getByText('Results').closest('[data-node]')
-    expect(resultsNode?.getAttribute('data-status')).toBe('active')
   })
 
   it('applies pending status to a node with no activity', async () => {

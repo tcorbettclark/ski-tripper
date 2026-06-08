@@ -22,7 +22,6 @@ const defaultProps = {
   resortCount: 3,
   draftCount: 0,
   submittedCount: 0,
-  approvedCount: 0,
   closedPollCount: 0,
   activePoll: undefined,
   userVotedInActivePoll: false,
@@ -119,13 +118,6 @@ describe('NextActions', () => {
       })
     )
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'SUBMITTED')
-  })
-
-  it('shows approved proposals button', async () => {
-    await act(async () => {
-      renderNextActions({ approvedCount: 1 })
-    })
-    expect(screen.getByText(/view 1 approved proposal/i))
   })
 
   it('shows closed poll button', async () => {

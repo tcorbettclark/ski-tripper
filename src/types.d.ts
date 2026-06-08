@@ -23,7 +23,7 @@ export interface Proposal {
   proposerUserId: string
   proposerUserName: string
   tripId: string
-  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED' | 'APPROVED'
+  state: 'DRAFT' | 'SUBMITTED' | 'REJECTED'
   description: string
   resortName: string
   startDate: string

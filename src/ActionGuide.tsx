@@ -41,7 +41,6 @@ interface ActionGuideProps {
   draftCount: number
   myDraftCount: number
   submittedCount: number
-  approvedCount: number
   closedPollCount: number
   activePoll: Poll | undefined
   userVotedInActivePoll: boolean
@@ -136,14 +135,6 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
   }
 
   const resultsActions: ActionChip[] = []
-  if (props.approvedCount > 0) {
-    resultsActions.push({
-      label: `View ${props.approvedCount} approved`,
-      tab: 'proposals',
-      statusFilter: 'SUBMITTED',
-      variant: 'primary',
-    })
-  }
   if (props.closedPollCount > 0) {
     resultsActions.push({
       label: `Review ${props.closedPollCount} past poll${props.closedPollCount !== 1 ? 's' : ''}`,
@@ -200,10 +191,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       title: 'Results',
       stats: [],
       actions: resultsActions,
-      status:
-        props.approvedCount > 0 || props.closedPollCount > 0
-          ? 'active'
-          : 'pending',
+      status: props.closedPollCount > 0 ? 'active' : 'pending',
       onNavigateToTab: nav,
     },
   ]

@@ -560,24 +560,6 @@ it('shows comment on submitted proposals when no active poll', async () => {
   })
 })
 
-it('shows approved proposals button', async () => {
-  const approvedProposal: Proposal = {
-    ...sampleProposals[0],
-    state: 'APPROVED',
-  }
-  await act(async () => {
-    renderOverview({
-      listProposals: mock(() =>
-        Promise.resolve({ proposals: [approvedProposal] })
-      ),
-      listPolls: mock(() => Promise.resolve({ polls: [] })),
-    })
-  })
-  await waitFor(() => {
-    expect(screen.getByText(/1 approved/i))
-  })
-})
-
 it('does not render Quick Actions section', async () => {
   await act(async () => {
     renderOverview()
