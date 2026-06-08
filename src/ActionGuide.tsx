@@ -13,7 +13,7 @@ import { colors, fontSizes, fonts, mix } from './theme'
 import type { Poll } from './types.d.ts'
 import { formatDate } from './utils'
 
-type NodeStatus = 'pending' | 'active' | 'completed'
+type NodeStatus = 'pending' | 'active'
 
 interface ActionChip {
   label: string
@@ -202,7 +202,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       actions: resultsActions,
       status:
         props.approvedCount > 0 || props.closedPollCount > 0
-          ? 'completed'
+          ? 'active'
           : 'pending',
       onNavigateToTab: nav,
     },
@@ -224,9 +224,6 @@ const statusBorders: Record<NodeStatus, { borderLeft: string }> = {
   active: {
     borderLeft: 'var(--color-accent)',
   },
-  completed: {
-    borderLeft: 'var(--color-accent)',
-  },
 }
 
 const statusIcon: Record<NodeStatus, { iconBg: string; iconColor: string }> = {
@@ -238,16 +235,11 @@ const statusIcon: Record<NodeStatus, { iconBg: string; iconColor: string }> = {
     iconBg: mix('--color-accent', 0.15),
     iconColor: colors.accent,
   },
-  completed: {
-    iconBg: mix('--color-accent', 0.15),
-    iconColor: colors.accent,
-  },
 }
 
 const statusText: Record<NodeStatus, string> = {
   pending: mix('--color-textSecondary', 0.6),
   active: colors.textPrimary,
-  completed: colors.textPrimary,
 }
 
 const tabMap: Record<string, 'resorts' | 'proposals' | 'poll'> = {
@@ -428,7 +420,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
 }
 
 function FlowConnector({ status }: { status: NodeStatus }) {
-  const isActive = status === 'active' || status === 'completed'
+  const isActive = status === 'active'
   const strokeColor = isActive
     ? 'var(--color-accent)'
     : 'color-mix(in srgb, var(--color-textSecondary) 50%, transparent)'
@@ -473,12 +465,7 @@ export default function ActionGuide(props: ActionGuideProps) {
     const result: Array<{ sourceStatus: NodeStatus }> = []
     for (let i = 0; i < guideNodes.length - 1; i++) {
       const source = guideNodes[i]
-      const edgeStatus: NodeStatus =
-        source.status === 'completed'
-          ? 'completed'
-          : source.status === 'active'
-            ? 'active'
-            : 'pending'
+      const edgeStatus: NodeStatus = source.status
       result.push({ sourceStatus: edgeStatus })
     }
     return result

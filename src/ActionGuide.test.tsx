@@ -282,7 +282,7 @@ describe('ActionGuide', () => {
     expect(resortsNode?.getAttribute('data-status')).toBe('active')
   })
 
-  it('applies completed status to Results node when proposals approved', async () => {
+  it('applies active status to Results node when proposals approved', async () => {
     await act(async () => {
       renderActionGuide({ approvedCount: 1 })
     })
@@ -290,7 +290,7 @@ describe('ActionGuide', () => {
       expect(screen.getByText('Results')).toBeTruthy()
     })
     const resultsNode = screen.getByText('Results').closest('[data-node]')
-    expect(resultsNode?.getAttribute('data-status')).toBe('completed')
+    expect(resultsNode?.getAttribute('data-status')).toBe('active')
   })
 
   it('applies pending status to a node with no activity', async () => {
