@@ -15,10 +15,16 @@ import { formatDate } from './utils'
 
 type NodeStatus = 'pending' | 'active'
 
+export type ProposalDetail = {
+  proposalId: string
+  subTab: 'proposal' | 'accommodations' | 'discussion'
+}
+
 interface ActionChip {
   label: string
   tab: 'resorts' | 'proposals' | 'poll'
   statusFilter?: StatusFilter
+  detail?: ProposalDetail
   variant: 'primary' | 'secondary'
 }
 
@@ -32,22 +38,25 @@ interface GuideNodeData {
   status: NodeStatus
   onNavigateToTab: (
     tab: 'resorts' | 'proposals' | 'poll',
-    statusFilter?: StatusFilter
+    statusFilter?: StatusFilter,
+    detail?: ProposalDetail
   ) => void
 }
 
 interface ActionGuideProps {
   resortCount: number
   draftCount: number
-  myDraftCount: number
-  submittedCount: number
+  myDrafts: Array<{ proposalId: string; resortName: string }>
+  submittedProposals: Array<{ proposalId: string; resortName: string }>
+  draftsForDiscussion: Array<{ proposalId: string; resortName: string }>
   closedPollCount: number
   activePoll: Poll | undefined
   userVotedInActivePoll: boolean
   isCoordinator: boolean
   onNavigateToTab: (
     tab: 'resorts' | 'proposals' | 'poll',
-    statusFilter?: StatusFilter
+    statusFilter?: StatusFilter,
+    detail?: ProposalDetail
   ) => void
 }
 
@@ -72,37 +81,52 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       variant: 'primary',
     })
   }
-  if (props.myDraftCount > 0) {
+  for (const draft of props.myDrafts) {
     draftActions.push({
-      label: 'Manage accommodations',
+      label: `Accommodations – ${draft.resortName}`,
       tab: 'proposals',
       statusFilter: 'DRAFT',
+      detail: { proposalId: draft.proposalId, subTab: 'accommodations' },
       variant: 'primary',
     })
   }
-  if (props.draftCount > 0) {
-    draftActions.push({
-      label: 'Discuss',
-      tab: 'proposals',
-      statusFilter: 'DRAFT',
-      variant: 'primary',
-    })
-  }
-  if (props.myDraftCount > 0) {
+  if (props.myDrafts.length > 0) {
     draftActions.push({
       label: 'Submit',
       tab: 'proposals',
       statusFilter: 'DRAFT',
+      detail:
+        props.myDrafts.length === 1
+          ? { proposalId: props.myDrafts[0].proposalId, subTab: 'proposal' }
+          : undefined,
+      variant: 'primary',
+    })
+  }
+  for (const draft of props.draftsForDiscussion) {
+    draftActions.push({
+      label: `Discuss – ${draft.resortName}`,
+      tab: 'proposals',
+      statusFilter: 'DRAFT',
+      detail: { proposalId: draft.proposalId, subTab: 'discussion' },
       variant: 'primary',
     })
   }
 
   const submittedActions: ActionChip[] = []
-  if (props.submittedCount > 0) {
+  if (props.submittedProposals.length > 0) {
     submittedActions.push({
-      label: `Comment on ${props.submittedCount} submitted`,
+      label: `Browse ${props.submittedProposals.length} submitted`,
       tab: 'proposals',
       statusFilter: 'SUBMITTED',
+      variant: 'primary',
+    })
+  }
+  for (const proposal of props.submittedProposals) {
+    submittedActions.push({
+      label: `Discuss – ${proposal.resortName}`,
+      tab: 'proposals',
+      statusFilter: 'SUBMITTED',
+      detail: { proposalId: proposal.proposalId, subTab: 'discussion' },
       variant: 'primary',
     })
   }
@@ -126,7 +150,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       })
       pollStats.push("You've voted")
     }
-  } else if (props.submittedCount > 0 && props.isCoordinator) {
+  } else if (props.submittedProposals.length > 0 && props.isCoordinator) {
     pollActions.push({
       label: 'Create poll',
       tab: 'poll',
@@ -168,7 +192,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       title: 'Submitted Proposals',
       stats: [],
       actions: submittedActions,
-      status: props.submittedCount > 0 ? 'active' : 'pending',
+      status: props.submittedProposals.length > 0 ? 'active' : 'pending',
       onNavigateToTab: nav,
     },
     {
@@ -180,7 +204,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       actions: pollActions,
       status: props.activePoll
         ? 'active'
-        : props.submittedCount > 0 && props.isCoordinator
+        : props.submittedProposals.length > 0 && props.isCoordinator
           ? 'active'
           : 'pending',
       onNavigateToTab: nav,
@@ -267,7 +291,11 @@ function GuideNode({ data }: { data: GuideNodeData }) {
         onClick={() => {
           const primaryAction = actions[0]
           if (primaryAction) {
-            onNavigateToTab(primaryAction.tab, primaryAction.statusFilter)
+            onNavigateToTab(
+              primaryAction.tab,
+              primaryAction.statusFilter,
+              primaryAction.detail
+            )
           } else {
             onNavigateToTab(tabMap[nodeId])
           }
@@ -380,7 +408,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
               }}
               onClick={(e) => {
                 e.stopPropagation()
-                onNavigateToTab(action.tab, action.statusFilter)
+                onNavigateToTab(action.tab, action.statusFilter, action.detail)
               }}
             >
               {action.label}

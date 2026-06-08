@@ -1,7 +1,7 @@
 import type { Models } from 'appwrite'
 import { Check, Copy, Heart, Pencil, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import ActionGuide from './ActionGuide'
+import ActionGuide, { type ProposalDetail } from './ActionGuide'
 import {
   getCoordinatorParticipant as _getCoordinatorParticipant,
   getPreferences as _getPreferences,
@@ -43,7 +43,8 @@ interface OverviewProps {
   resorts: ResortWithEmbedding[]
   onNavigateToTab: (
     tab: 'resorts' | 'proposals' | 'poll',
-    statusFilter?: 'DRAFT' | 'SUBMITTED' | 'REJECTED'
+    statusFilter?: 'DRAFT' | 'SUBMITTED' | 'REJECTED',
+    detail?: ProposalDetail
   ) => void
   onTripUpdated?: (trip: Trip) => void
   onAuthError?: (err: unknown) => void
@@ -227,10 +228,15 @@ export default function Overview({
   }, [activePoll, user.$id, listVotes])
 
   const draftCount = proposals.filter((p) => p.state === 'DRAFT').length
-  const myDraftCount = proposals.filter(
-    (p) => p.state === 'DRAFT' && p.proposerUserId === user.$id
-  ).length
-  const submittedCount = proposals.filter((p) => p.state === 'SUBMITTED').length
+  const myDrafts = proposals
+    .filter((p) => p.state === 'DRAFT' && p.proposerUserId === user.$id)
+    .map((p) => ({ proposalId: p.$id, resortName: p.resortName || 'Untitled' }))
+  const draftsForDiscussion = proposals
+    .filter((p) => p.state === 'DRAFT')
+    .map((p) => ({ proposalId: p.$id, resortName: p.resortName || 'Untitled' }))
+  const submittedProposals = proposals
+    .filter((p) => p.state === 'SUBMITTED')
+    .map((p) => ({ proposalId: p.$id, resortName: p.resortName || 'Untitled' }))
 
   function renderPreferenceCell(
     prefs: Preferences | null | undefined,
@@ -617,8 +623,9 @@ export default function Overview({
       <ActionGuide
         resortCount={resorts.length}
         draftCount={draftCount}
-        myDraftCount={myDraftCount}
-        submittedCount={submittedCount}
+        myDrafts={myDrafts}
+        draftsForDiscussion={draftsForDiscussion}
+        submittedProposals={submittedProposals}
         closedPollCount={closedPollCount}
         activePoll={activePoll}
         userVotedInActivePoll={userVotedInActivePoll}

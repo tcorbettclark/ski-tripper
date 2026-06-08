@@ -1,5 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import type { ProposalDetail } from './ActionGuide'
 import ActionGuide from './ActionGuide'
 import type { Poll } from './types.d.ts'
 
@@ -20,13 +21,16 @@ const sampleActivePoll: Poll = {
 const defaultProps = {
   resortCount: 3,
   draftCount: 0,
-  myDraftCount: 0,
-  submittedCount: 0,
+  myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+  submittedProposals: [] as Array<{ proposalId: string; resortName: string }>,
+  draftsForDiscussion: [] as Array<{ proposalId: string; resortName: string }>,
   closedPollCount: 0,
   activePoll: undefined,
   userVotedInActivePoll: false,
   isCoordinator: false,
-  onNavigateToTab: mock((_tab: string, _statusFilter?: string) => {}),
+  onNavigateToTab: mock(
+    (_tab: string, _statusFilter?: string, _detail?: ProposalDetail) => {}
+  ),
 }
 
 function renderActionGuide(props = {}) {
@@ -74,12 +78,18 @@ describe('ActionGuide', () => {
     })
   })
 
-  it('shows submitted count in Comment action button', async () => {
+  it('shows submitted count in Browse action button', async () => {
     await act(async () => {
-      renderActionGuide({ submittedCount: 3 })
+      renderActionGuide({
+        submittedProposals: [
+          { proposalId: 'p3', resortName: 'Chamonix' },
+          { proposalId: 'p4', resortName: 'Val Thorens' },
+          { proposalId: 'p5', resortName: 'Zermatt' },
+        ],
+      })
     })
     await waitFor(() => {
-      expect(screen.getByText('Comment on 3 submitted')).toBeTruthy()
+      expect(screen.getByText('Browse 3 submitted')).toBeTruthy()
     })
   })
 
@@ -122,7 +132,10 @@ describe('ActionGuide', () => {
   it('shows Create poll action for coordinator with submitted proposals', async () => {
     await act(async () => {
       renderActionGuide({
-        submittedCount: 2,
+        submittedProposals: [
+          { proposalId: 'p3', resortName: 'Chamonix' },
+          { proposalId: 'p4', resortName: 'Val Thorens' },
+        ],
         isCoordinator: true,
       })
     })
@@ -134,7 +147,10 @@ describe('ActionGuide', () => {
   it('does not show Create poll for non-coordinator', async () => {
     await act(async () => {
       renderActionGuide({
-        submittedCount: 2,
+        submittedProposals: [
+          { proposalId: 'p3', resortName: 'Chamonix' },
+          { proposalId: 'p4', resortName: 'Val Thorens' },
+        ],
         isCoordinator: false,
       })
     })
@@ -152,52 +168,65 @@ describe('ActionGuide', () => {
     })
   })
 
-  it('shows Manage accommodations action when user has drafts', async () => {
+  it('shows per-proposal Accommodations action when user has drafts', async () => {
     await act(async () => {
-      renderActionGuide({ draftCount: 1, myDraftCount: 1 })
+      renderActionGuide({
+        draftCount: 1,
+        myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      })
     })
     await waitFor(() => {
-      expect(screen.getByText('Manage accommodations')).toBeTruthy()
+      expect(screen.getByText('Accommodations – Chamonix')).toBeTruthy()
     })
   })
 
-  it('shows Discuss self-action when any drafts exist', async () => {
+  it('shows per-proposal Discuss action for drafts', async () => {
     await act(async () => {
-      renderActionGuide({ draftCount: 1, myDraftCount: 0 })
+      renderActionGuide({
+        draftCount: 1,
+        draftsForDiscussion: [{ proposalId: 'p1', resortName: 'Val Thorens' }],
+      })
     })
     await waitFor(() => {
-      expect(screen.getByText('Discuss')).toBeTruthy()
+      expect(screen.getByText('Discuss – Val Thorens')).toBeTruthy()
     })
   })
 
   it('shows Submit action when user has drafts', async () => {
     await act(async () => {
-      renderActionGuide({ draftCount: 1, myDraftCount: 1 })
+      renderActionGuide({
+        draftCount: 1,
+        myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      })
     })
     await waitFor(() => {
       expect(screen.getByText('Submit')).toBeTruthy()
     })
   })
 
-  it('does not show Submit when user has no drafts even if other drafts exist', async () => {
+  it('does not show Submit or Accommodations when user has no drafts even if other drafts exist', async () => {
     await act(async () => {
-      renderActionGuide({ draftCount: 2, myDraftCount: 0 })
+      renderActionGuide({ draftCount: 2, myDrafts: [] })
     })
     await waitFor(() => {
       expect(screen.getByText('Browse 2 drafts')).toBeTruthy()
       expect(screen.queryByText('Submit')).toBeNull()
-      expect(screen.queryByText('Manage accommodations')).toBeNull()
+      expect(screen.queryByText(/Accommodations –/)).toBeNull()
     })
   })
 
-  it('does not show self-loop actions when no drafts at all', async () => {
+  it('does not show per-proposal actions when no drafts at all', async () => {
     await act(async () => {
-      renderActionGuide({ draftCount: 0, myDraftCount: 0 })
+      renderActionGuide({
+        draftCount: 0,
+        myDrafts: [],
+        draftsForDiscussion: [],
+      })
     })
     await waitFor(() => {
       expect(screen.getByText('Draft Proposals')).toBeTruthy()
-      expect(screen.queryByText('Manage accommodations')).toBeNull()
-      expect(screen.queryByText('Discuss')).toBeNull()
+      expect(screen.queryByText(/Accommodations –/)).toBeNull()
+      expect(screen.queryByText(/Discuss –/)).toBeNull()
     })
   })
 
@@ -210,7 +239,11 @@ describe('ActionGuide', () => {
       expect(screen.getByText('Resort Catalog')).toBeTruthy()
     })
     fireEvent.click(screen.getByText('Resort Catalog'))
-    expect(onNavigateToTab).toHaveBeenCalledWith('resorts', undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith(
+      'resorts',
+      undefined,
+      undefined
+    )
   })
 
   it('navigates to poll tab when Vote now action clicked', async () => {
@@ -225,14 +258,17 @@ describe('ActionGuide', () => {
       expect(screen.getByText('Vote now')).toBeTruthy()
     })
     fireEvent.click(screen.getByText('Vote now'))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
   })
 
   it('navigates to poll tab when Create poll action clicked', async () => {
     const onNavigateToTab = mock(() => {})
     await act(async () => {
       renderActionGuide({
-        submittedCount: 2,
+        submittedProposals: [
+          { proposalId: 'p3', resortName: 'Chamonix' },
+          { proposalId: 'p4', resortName: 'Val Thorens' },
+        ],
         isCoordinator: true,
         onNavigateToTab,
       })
@@ -241,7 +277,147 @@ describe('ActionGuide', () => {
       expect(screen.getByText('Create poll')).toBeTruthy()
     })
     fireEvent.click(screen.getByText('Create poll'))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
+  })
+
+  it('navigates with detail when Accommodations action clicked', async () => {
+    const onNavigateToTab = mock(() => {})
+    await act(async () => {
+      renderActionGuide({
+        draftCount: 1,
+        myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+        onNavigateToTab,
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Accommodations – Chamonix')).toBeTruthy()
+    })
+    const buttons = screen
+      .getAllByText('Accommodations – Chamonix')
+      .filter((el) => el.tagName === 'BUTTON')
+    fireEvent.click(buttons[0])
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
+      proposalId: 'p1',
+      subTab: 'accommodations',
+    })
+  })
+
+  it('navigates with detail when Discuss action clicked', async () => {
+    const onNavigateToTab = mock(() => {})
+    await act(async () => {
+      renderActionGuide({
+        draftCount: 1,
+        draftsForDiscussion: [{ proposalId: 'p2', resortName: 'Val Thorens' }],
+        onNavigateToTab,
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Discuss – Val Thorens')).toBeTruthy()
+    })
+    const buttons = screen
+      .getAllByText('Discuss – Val Thorens')
+      .filter((el) => el.tagName === 'BUTTON')
+    fireEvent.click(buttons[0])
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
+      proposalId: 'p2',
+      subTab: 'discussion',
+    })
+  })
+
+  it('navigates with detail for single draft Submit action', async () => {
+    const onNavigateToTab = mock(() => {})
+    await act(async () => {
+      renderActionGuide({
+        draftCount: 1,
+        myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+        onNavigateToTab,
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Submit')).toBeTruthy()
+    })
+    const buttons = screen
+      .getAllByText('Submit')
+      .filter((el) => el.tagName === 'BUTTON')
+    fireEvent.click(buttons[0])
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
+      proposalId: 'p1',
+      subTab: 'proposal',
+    })
+  })
+
+  it('does not include detail for Submit when user has multiple drafts', async () => {
+    const onNavigateToTab = mock(() => {})
+    await act(async () => {
+      renderActionGuide({
+        draftCount: 2,
+        myDrafts: [
+          { proposalId: 'p1', resortName: 'Chamonix' },
+          { proposalId: 'p2', resortName: 'Val Thorens' },
+        ],
+        onNavigateToTab,
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Submit')).toBeTruthy()
+    })
+    const buttons = screen
+      .getAllByText('Submit')
+      .filter((el) => el.tagName === 'BUTTON')
+    fireEvent.click(buttons[0])
+    expect(onNavigateToTab).toHaveBeenCalledWith(
+      'proposals',
+      'DRAFT',
+      undefined
+    )
+  })
+
+  it('shows per-proposal Discuss action for submitted proposals', async () => {
+    await act(async () => {
+      renderActionGuide({
+        submittedProposals: [
+          { proposalId: 'p3', resortName: 'Chamonix' },
+          { proposalId: 'p4', resortName: 'Val Thorens' },
+        ],
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Discuss – Chamonix')).toBeTruthy()
+      expect(screen.getByText('Discuss – Val Thorens')).toBeTruthy()
+    })
+  })
+
+  it('navigates with detail when submitted Discuss action clicked', async () => {
+    const onNavigateToTab = mock(() => {})
+    await act(async () => {
+      renderActionGuide({
+        submittedProposals: [{ proposalId: 'p3', resortName: 'Chamonix' }],
+        onNavigateToTab,
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Discuss – Chamonix')).toBeTruthy()
+    })
+    const buttons = screen
+      .getAllByText('Discuss – Chamonix')
+      .filter((el) => el.tagName === 'BUTTON')
+    fireEvent.click(buttons[0])
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'SUBMITTED', {
+      proposalId: 'p3',
+      subTab: 'discussion',
+    })
+  })
+
+  it('does not show per-proposal Discuss actions when no submitted proposals', async () => {
+    await act(async () => {
+      renderActionGuide({
+        submittedProposals: [],
+      })
+    })
+    await waitFor(() => {
+      expect(screen.getByText('Submitted Proposals')).toBeTruthy()
+      expect(screen.queryByText(/Discuss –/)).toBeNull()
+    })
   })
 
   it('navigates to proposals with DRAFT filter when draft action clicked', async () => {
@@ -256,7 +432,11 @@ describe('ActionGuide', () => {
       .getAllByText('Browse 2 drafts')
       .filter((el) => el.tagName === 'BUTTON')
     fireEvent.click(draftButtons[0])
-    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT')
+    expect(onNavigateToTab).toHaveBeenCalledWith(
+      'proposals',
+      'DRAFT',
+      undefined
+    )
   })
 
   it('applies active status to Resorts node when resorts exist', async () => {

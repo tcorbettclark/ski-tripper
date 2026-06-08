@@ -928,4 +928,50 @@ describe('ProposalCard', () => {
 
     expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()
   })
+
+  it('opens accommodations tab when initialTab is accommodations', async () => {
+    const listDiscussion = mock(async () => [])
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        initialTab="accommodations"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+        listAccommodations={mock(async () => [])}
+        listDiscussion={listDiscussion}
+      />
+    )
+
+    expect(screen.getByText('No accommodations yet.')).toBeDefined()
+  })
+
+  it('opens discussion tab when initialTab is discussion', async () => {
+    const listDiscussion = mock(async () => [])
+
+    render(
+      <ProposalCard
+        proposal={baseProposal}
+        userId="user-1"
+        userName="Alice"
+        initialTab="discussion"
+        onUpdated={() => {}}
+        onDeleted={() => {}}
+        onSubmitted={() => {}}
+        updateProposal={mockUpdateProposal}
+        deleteProposal={mockDeleteProposal}
+        submitProposal={mockSubmitProposal}
+        rejectProposal={mockRejectProposal}
+        listDiscussion={listDiscussion}
+      />
+    )
+
+    expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()
+  })
 })

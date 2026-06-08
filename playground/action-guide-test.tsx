@@ -30,8 +30,15 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -44,8 +51,15 @@ const scenarios = [
     props: {
       resortCount: 1,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -58,8 +72,15 @@ const scenarios = [
     props: {
       resortCount: 3,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -72,8 +93,12 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 1,
-      myDraftCount: 1,
-      submittedCount: 0,
+      myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [{ proposalId: 'p1', resortName: 'Chamonix' }],
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -86,8 +111,19 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 3,
-      myDraftCount: 2,
-      submittedCount: 0,
+      myDrafts: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+      ],
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+        { proposalId: 'p3', resortName: 'Zermatt' },
+      ],
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -100,8 +136,16 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 3,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+        { proposalId: 'p3', resortName: 'Zermatt' },
+      ],
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -114,9 +158,15 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 2,
-
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+      ],
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -129,8 +179,15 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: makePoll(),
       userVotedInActivePoll: false,
@@ -143,8 +200,15 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: makePoll(),
       userVotedInActivePoll: true,
@@ -157,9 +221,15 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 2,
-
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+      ],
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -172,9 +242,15 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 2,
-
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+      ],
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -187,8 +263,15 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 2,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -201,8 +284,15 @@ const scenarios = [
     props: {
       resortCount: 2,
       draftCount: 2,
-      myDraftCount: 1,
-      submittedCount: 0,
+      myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+      ],
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -215,9 +305,18 @@ const scenarios = [
     props: {
       resortCount: 2,
       draftCount: 3,
-      myDraftCount: 1,
-      submittedCount: 4,
-
+      myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+        { proposalId: 's3', resortName: 'Courchevel' },
+        { proposalId: 's4', resortName: 'Meribel' },
+      ],
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+        { proposalId: 'p3', resortName: 'Zermatt' },
+      ],
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -230,9 +329,16 @@ const scenarios = [
     props: {
       resortCount: 0,
       draftCount: 2,
-      myDraftCount: 0,
-      submittedCount: 3,
-
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+        { proposalId: 's3', resortName: 'Courchevel' },
+      ],
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+      ],
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -245,8 +351,18 @@ const scenarios = [
     props: {
       resortCount: 5,
       draftCount: 3,
-      myDraftCount: 1,
-      submittedCount: 4,
+      myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+        { proposalId: 's3', resortName: 'Courchevel' },
+        { proposalId: 's4', resortName: 'Meribel' },
+      ],
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+        { proposalId: 'p3', resortName: 'Zermatt' },
+      ],
       closedPollCount: 3,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -259,8 +375,18 @@ const scenarios = [
     props: {
       resortCount: 5,
       draftCount: 3,
-      myDraftCount: 1,
-      submittedCount: 4,
+      myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+        { proposalId: 's3', resortName: 'Courchevel' },
+        { proposalId: 's4', resortName: 'Meribel' },
+      ],
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+        { proposalId: 'p3', resortName: 'Zermatt' },
+      ],
       closedPollCount: 3,
       activePoll: makePoll(),
       userVotedInActivePoll: false,
@@ -273,8 +399,18 @@ const scenarios = [
     props: {
       resortCount: 5,
       draftCount: 3,
-      myDraftCount: 1,
-      submittedCount: 4,
+      myDrafts: [{ proposalId: 'p1', resortName: 'Chamonix' }],
+      submittedProposals: [
+        { proposalId: 's1', resortName: 'Zermatt' },
+        { proposalId: 's2', resortName: 'St Anton' },
+        { proposalId: 's3', resortName: 'Courchevel' },
+        { proposalId: 's4', resortName: 'Meribel' },
+      ],
+      draftsForDiscussion: [
+        { proposalId: 'p1', resortName: 'Chamonix' },
+        { proposalId: 'p2', resortName: 'Val Thorens' },
+        { proposalId: 'p3', resortName: 'Zermatt' },
+      ],
       closedPollCount: 3,
       activePoll: makePoll(),
       userVotedInActivePoll: true,
@@ -287,8 +423,15 @@ const scenarios = [
     props: {
       resortCount: 1,
       draftCount: 0,
-      myDraftCount: 0,
-      submittedCount: 0,
+      myDrafts: [] as Array<{ proposalId: string; resortName: string }>,
+      submittedProposals: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
+      draftsForDiscussion: [] as Array<{
+        proposalId: string
+        resortName: string
+      }>,
       closedPollCount: 0,
       activePoll: undefined,
       userVotedInActivePoll: false,
@@ -365,8 +508,8 @@ function App() {
             <div style={gridStyles.cardProps}>
               resorts={scenario.props.resortCount} · drafts=
               {scenario.props.draftCount} · myDrafts=
-              {scenario.props.myDraftCount} · submitted=
-              {scenario.props.submittedCount} · closedPolls=
+              {scenario.props.myDrafts.length} · submitted=
+              {scenario.props.submittedProposals.length} · closedPolls=
               {scenario.props.closedPollCount} · hasPoll=
               {scenario.props.activePoll ? 'yes' : 'no'} · voted=
               {String(scenario.props.userVotedInActivePoll)} · coordinator=

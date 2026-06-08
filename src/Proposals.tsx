@@ -28,6 +28,11 @@ interface ProposalsProps {
   statusFilter?: StatusFilter
   /** Called when the user clicks a status tab — lets the parent stay in sync when statusFilter is controlled. */
   onStatusFilterChange?: (status: StatusFilter) => void
+  /** When provided, the ProposalCard with this ID will open to the specified sub-tab. */
+  proposalDetail?: {
+    proposalId: string
+    subTab: 'proposal' | 'accommodations' | 'discussion'
+  }
   onRefresh?: () => void
   onAuthError?: (err: unknown) => void
   listProposals?: (
@@ -104,6 +109,7 @@ export default function Proposals({
   resorts,
   statusFilter,
   onStatusFilterChange,
+  proposalDetail,
   onRefresh: _onRefresh,
   onAuthError = noopAuthError,
   listProposals = _listProposals,
@@ -295,6 +301,7 @@ export default function Proposals({
           accommodations={accommodations}
           statusFilter={statusFilter}
           onStatusFilterChange={onStatusFilterChange}
+          proposalDetail={proposalDetail}
           onUpdated={handleUpdated}
           onDeleted={handleDeleted}
           onSubmitted={handleSubmitted}

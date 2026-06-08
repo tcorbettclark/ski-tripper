@@ -1,5 +1,5 @@
 import { MapPin } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   createAccommodation as _createAccommodation,
   deleteAccommodation as _deleteAccommodation,
@@ -47,6 +47,7 @@ interface ProposalCardProps {
   userName?: string
   isCoordinator?: boolean
   previewMode?: boolean
+  initialTab?: 'proposal' | 'accommodations' | 'discussion'
   accommodations?: Accommodation[]
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
@@ -93,6 +94,7 @@ export default function ProposalCard({
   userName = '',
   isCoordinator = false,
   previewMode = false,
+  initialTab,
   accommodations = [],
   onUpdated,
   onDeleted,
@@ -116,7 +118,15 @@ export default function ProposalCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [activeTab, setActiveTab] = useState<
     'proposal' | 'accommodations' | 'discussion'
-  >('proposal')
+  >(initialTab ?? 'proposal')
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab)
+      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [initialTab])
   const [discussionCount, setDiscussionCount] = useState(0)
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
 
@@ -277,7 +287,7 @@ export default function ProposalCard({
 
   return (
     <>
-      <div style={previewMode ? styles.previewCard : styles.card}>
+      <div ref={cardRef} style={previewMode ? styles.previewCard : styles.card}>
         <div style={styles.header}>
           <span style={detailStyles.title}>
             {(() => {

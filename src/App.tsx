@@ -98,6 +98,11 @@ const defaultUpdateName = _updateName
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
+type ProposalDetail = {
+  proposalId: string
+  subTab: 'proposal' | 'accommodations' | 'discussion'
+}
+
 export default function App({
   hasSession = _hasSession,
   accountGet = defaultAccountGet,
@@ -137,6 +142,9 @@ export default function App({
   // Without this, navigating to the proposals tab always lands on DRAFT regardless of context.
   const [proposalsStatusFilter, setProposalsStatusFilter] =
     useState<StatusFilter>('DRAFT')
+  const [proposalDetail, setProposalDetail] = useState<ProposalDetail | null>(
+    null
+  )
   const [trips, setTrips] = useState<Trip[]>([])
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
@@ -273,6 +281,7 @@ export default function App({
     setView('tripDetail')
     setTripDetailTab('overview')
     setProposalsStatusFilter('DRAFT')
+    setProposalDetail(null)
     listPolls(tripId, user.$id).then(({ polls }) => {
       const open = polls.find((p) => p.state === 'OPEN')
       setActivePollEndDate(open?.endDate || null)
@@ -284,6 +293,7 @@ export default function App({
     setSelectedTripId(null)
     setTripDetailTab('overview')
     setProposalsStatusFilter('DRAFT')
+    setProposalDetail(null)
     setActivePollEndDate(null)
   }
 
@@ -433,7 +443,10 @@ export default function App({
         onViewAllTrips={handleViewAllTrips}
         onTripDetailTabChange={(tab) => {
           setTripDetailTab(tab as TripDetailTab)
-          if (tab !== 'proposals') setProposalsStatusFilter('DRAFT')
+          if (tab !== 'proposals') {
+            setProposalsStatusFilter('DRAFT')
+            setProposalDetail(null)
+          }
         }}
         userName={user.name || user.email}
         onLogout={handleLogout}
@@ -464,10 +477,13 @@ export default function App({
                 trip={selectedTrip}
                 tripId={selectedTripId}
                 resorts={resorts}
-                onNavigateToTab={(tab, statusFilter) => {
+                onNavigateToTab={(tab, statusFilter, detail) => {
                   setTripDetailTab(tab as TripDetailTab)
                   if (tab === 'proposals' && statusFilter) {
                     setProposalsStatusFilter(statusFilter)
+                  }
+                  if (detail) {
+                    setProposalDetail(detail)
                   }
                 }}
                 onTripUpdated={handleTripUpdated}
@@ -498,6 +514,7 @@ export default function App({
                 resorts={resorts}
                 statusFilter={proposalsStatusFilter}
                 onStatusFilterChange={setProposalsStatusFilter}
+                proposalDetail={proposalDetail ?? undefined}
                 onRefresh={() => setRefreshProposalsKey((k) => k + 1)}
                 onAuthError={onAuthError}
               />

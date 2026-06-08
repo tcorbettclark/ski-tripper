@@ -26,6 +26,11 @@ interface ProposalsGridProps {
   statusFilter?: StatusFilter
   /** Called when the user clicks a status tab — lets the parent stay in sync when statusFilter is controlled. */
   onStatusFilterChange?: (status: StatusFilter) => void
+  /** When provided, the ProposalCard with this ID will open to the specified sub-tab. */
+  proposalDetail?: {
+    proposalId: string
+    subTab: 'proposal' | 'accommodations' | 'discussion'
+  }
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
@@ -72,6 +77,7 @@ export default function ProposalsGrid({
   accommodations = {},
   statusFilter: controlledStatusFilter,
   onStatusFilterChange,
+  proposalDetail,
   onUpdated,
   onDeleted,
   onSubmitted,
@@ -247,6 +253,11 @@ export default function ProposalsGrid({
               userName={userName}
               isCoordinator={isCoordinator}
               accommodations={accommodations[proposal.$id] || []}
+              initialTab={
+                proposalDetail?.proposalId === proposal.$id
+                  ? proposalDetail.subTab
+                  : undefined
+              }
               onUpdated={onUpdated}
               onDeleted={onDeleted}
               onSubmitted={onSubmitted}

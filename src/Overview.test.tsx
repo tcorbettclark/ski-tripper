@@ -414,7 +414,10 @@ describe('Overview', () => {
       ).toBeGreaterThan(0)
     })
     fireEvent.click(screen.getAllByRole('button', { name: /^Submit$/ })[0])
-    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT')
+    expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
+      proposalId: 'prop-1',
+      subTab: 'proposal',
+    })
   })
 
   it('navigates to poll tab when clicking vote in active poll', async () => {
@@ -426,7 +429,7 @@ describe('Overview', () => {
       expect(screen.getByText(/vote now/i))
     })
     fireEvent.click(screen.getByText(/vote now/i))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
   })
 
   it('navigates to poll tab when clicking closed polls button', async () => {
@@ -454,7 +457,7 @@ describe('Overview', () => {
       expect(screen.getByText(/1 past poll/i))
     })
     fireEvent.click(screen.getByText(/review \d+ past poll/i))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
   })
 
   it('navigates to resorts tab when clicking browse resorts', async () => {
@@ -470,7 +473,11 @@ describe('Overview', () => {
     fireEvent.click(
       screen.getAllByRole('button', { name: /browse \d+ resorts/i })[0]
     )
-    expect(onNavigateToTab).toHaveBeenCalledWith('resorts', undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith(
+      'resorts',
+      undefined,
+      undefined
+    )
   })
 })
 
@@ -544,19 +551,20 @@ it('shows next step prompt for coordinator with submitted proposals and no poll'
     })
   })
   await waitFor(() => {
-    expect(screen.getByText(/comment on \d+ submitted/i))
+    expect(screen.getByText(/Browse \d+ submitted/i))
+    expect(screen.getByText('Discuss – Chamonix'))
     expect(screen.getByText(/create poll/i))
   })
 })
 
-it('shows comment on submitted proposals when no active poll', async () => {
+it('shows Browse submitted proposals when no active poll', async () => {
   await act(async () => {
     renderOverview({
       listPolls: mock(() => Promise.resolve({ polls: [] })),
     })
   })
   await waitFor(() => {
-    expect(screen.getByText(/comment on \d+ submitted/i))
+    expect(screen.getByText(/Browse \d+ submitted/i))
   })
 })
 
