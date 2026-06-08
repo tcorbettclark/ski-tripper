@@ -225,7 +225,7 @@ const statusBorders: Record<NodeStatus, { borderLeft: string }> = {
     borderLeft: 'var(--color-accent)',
   },
   completed: {
-    borderLeft: 'color-mix(in srgb, var(--color-medalGold) 30%, transparent)',
+    borderLeft: 'var(--color-accent)',
   },
 }
 
@@ -239,8 +239,8 @@ const statusIcon: Record<NodeStatus, { iconBg: string; iconColor: string }> = {
     iconColor: colors.accent,
   },
   completed: {
-    iconBg: 'color-mix(in srgb, var(--color-medalGold) 15%, transparent)',
-    iconColor: colors.medalGold,
+    iconBg: mix('--color-accent', 0.15),
+    iconColor: colors.accent,
   },
 }
 
