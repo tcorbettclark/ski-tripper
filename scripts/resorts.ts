@@ -507,6 +507,11 @@ async function enrich(options: {
     process.exit(1)
   }
 
+  if (!fs.existsSync(enrichedPath)) {
+    log('info', 'enrich', `Enriched file not found, creating: ${enrichedPath}`)
+    writeJsonl(enrichedPath, [])
+  }
+
   const existingEnriched = readJsonl<EnrichedResort>(enrichedPath)
   const enrichedById = new Map(existingEnriched.map((r) => [r.id, r]))
 
