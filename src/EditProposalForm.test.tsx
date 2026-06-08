@@ -15,7 +15,7 @@ const sampleProposal: Proposal = {
   resortName: "Val d'Isère",
   startDate: '2024-01-01',
   endDate: '2024-01-07',
-  nearestAirport: 'GVA',
+  nearestAirport: 'Geneva Airport',
   transferTime: 150,
   country: 'France',
   region: 'Alps',

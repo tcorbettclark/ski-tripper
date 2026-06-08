@@ -59,7 +59,7 @@ const enrichSchema = z.object({
   nearestAirport: z
     .string()
     .nullable()
-    .describe('IATA code of the nearest airport, e.g. "GVA"'),
+    .describe('Name of the nearest airport, e.g. "Geneva Airport"'),
   transferTime: z
     .number()
     .nullable()

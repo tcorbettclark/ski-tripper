@@ -22,7 +22,7 @@ const baseProposal: Proposal = {
   resortName: 'Test Resort',
   startDate: '2024-01-01',
   endDate: '2024-01-07',
-  nearestAirport: 'TEST',
+  nearestAirport: 'Test Airport',
   transferTime: 60,
   country: 'Test Country',
   region: 'Alps',

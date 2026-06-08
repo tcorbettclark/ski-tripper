@@ -20,7 +20,7 @@ const sampleProposals = [
     region: 'Alps',
     summitAltitude: 3456,
     baseAltitude: 1850,
-    nearestAirport: 'GVA',
+    nearestAirport: 'Geneva Airport',
     transferTime: 120,
     pisteKm: 300,
     beginnerPct: 0,

@@ -22,7 +22,7 @@ const sampleResorts: ResortWithEmbedding[] = [
     longitude: '6.9219',
     summitAltitude: 3330,
     baseAltitude: 1850,
-    nearestAirport: 'GVA',
+    nearestAirport: 'Geneva Airport',
     transferTime: 90,
     pisteKm: 300,
     beginnerPct: 0,
@@ -45,7 +45,7 @@ const sampleResorts: ResortWithEmbedding[] = [
     longitude: '-122.9640',
     summitAltitude: 2280,
     baseAltitude: 675,
-    nearestAirport: 'YVR',
+    nearestAirport: 'Vancouver Airport',
     transferTime: 120,
     pisteKm: 200,
     beginnerPct: 0,
@@ -132,7 +132,7 @@ describe('CreateProposalForm', () => {
     fill('region', 'Alps')
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
-    fill('nearestAirport', 'GVA')
+    fill('nearestAirport', 'Geneva Airport')
     fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('beginnerPct', '0')
@@ -189,7 +189,7 @@ describe('CreateProposalForm', () => {
     fill('region', 'Alps')
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
-    fill('nearestAirport', 'GVA')
+    fill('nearestAirport', 'Geneva Airport')
     fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
@@ -226,7 +226,7 @@ describe('CreateProposalForm', () => {
     fill('region', 'Alps')
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
-    fill('nearestAirport', 'GVA')
+    fill('nearestAirport', 'Geneva Airport')
     fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
@@ -274,7 +274,7 @@ describe('CreateProposalForm', () => {
     fill('region', 'Alps')
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
-    fill('nearestAirport', 'GVA')
+    fill('nearestAirport', 'Geneva Airport')
     fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
@@ -313,7 +313,7 @@ describe('CreateProposalForm', () => {
     fill('region', 'Alps')
     fill('summitAltitude', '3330')
     fill('baseAltitude', '1850')
-    fill('nearestAirport', 'GVA')
+    fill('nearestAirport', 'Geneva Airport')
     fill('transferTime', '90')
     fill('pisteKm', '300')
     fill('liftCount', '80')
@@ -382,7 +382,7 @@ describe('CreateProposalForm', () => {
       const airportInput = container.querySelector(
         '[name="nearestAirport"]'
       ) as HTMLInputElement
-      expect(airportInput.value).toBe('GVA')
+      expect(airportInput.value).toBe('Geneva Airport')
     })
 
     it('pre-fills description when resort is selected', () => {
