@@ -18,7 +18,6 @@ import {
 } from './Icons'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Preferences } from './types.d'
-import { parseJsonArray } from './utils'
 
 const skiSnowboardOptions = ['Ski', 'Snowboard']
 const difficultyOptions = ['Black', 'Red', 'Blue']
@@ -62,14 +61,10 @@ export default function PreferencesForm({
   updatePreferences = _updatePreferences,
   updateName: _updateName,
 }: PreferencesFormProps) {
-  const initialSkiSnowboard = initial
-    ? parseJsonArray(initial.skiSnowboard)
-    : []
-  const initialDifficulty = initial ? parseJsonArray(initial.difficulty) : []
-  const initialPiste = initial ? parseJsonArray(initial.piste) : []
-  const initialAccommodation = initial
-    ? parseJsonArray(initial.accommodation)
-    : []
+  const initialSkiSnowboard = initial?.skiSnowboard ?? []
+  const initialDifficulty = initial?.difficulty ?? []
+  const initialPiste = initial?.piste ?? []
+  const initialAccommodation = initial?.accommodation ?? []
   const initialTime = initial
     ? [
         initial.timeSlopes ?? 20,
@@ -87,9 +82,7 @@ export default function PreferencesForm({
   const [timeAllocation, setTimeAllocation] = useState<number[]>(initialTime)
   const [accommodation, setAccommodation] =
     useState<string[]>(initialAccommodation)
-  const [mostImportantAspect, setMostImportantAspect] = useState(
-    initial?.mostImportantAspect ?? ''
-  )
+  const [notes, setNotes] = useState(initial?.notes ?? '')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -128,15 +121,15 @@ export default function PreferencesForm({
     setSaving(true)
     try {
       const data = {
-        skiSnowboard: JSON.stringify(skiSnowboard),
-        difficulty: JSON.stringify(difficulty),
-        piste: JSON.stringify(piste),
+        skiSnowboard,
+        difficulty,
+        piste,
         timeSlopes: timeAllocation[0],
         timeEating: timeAllocation[1],
         timeApres: timeAllocation[2],
         timeHotel: timeAllocation[3],
-        accommodation: JSON.stringify(accommodation),
-        mostImportantAspect,
+        accommodation,
+        notes,
       }
       const result = initial
         ? await updatePreferences(userId, data)
@@ -290,13 +283,13 @@ export default function PreferencesForm({
       )}
 
       <div style={styles.group}>
-        <label htmlFor="mostImportantAspect" style={styles.groupLabel}>
-          What kind of holiday do you like?
+        <label htmlFor="notes" style={styles.groupLabel}>
+          Notes
         </label>
         <textarea
-          id="mostImportantAspect"
-          value={mostImportantAspect}
-          onChange={(e) => setMostImportantAspect(e.target.value)}
+          id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
           placeholder="Tell us what matters most to you on a ski trip — the more detail the better! For example: &quot;I love long lunches in mountain restaurants, good snow, and lively après-ski&quot;"
           rows={4}
           style={styles.textareaInput}

@@ -303,15 +303,15 @@ const samplePreferencesAlice: Preferences = {
   $createdAt: '2024-01-01T00:00:00Z',
   $updatedAt: '2024-01-01T00:00:00Z',
   userId: 'user-1',
-  skiSnowboard: '["Ski"]',
-  difficulty: '["Red","Black"]',
-  piste: '["On-Piste","Off-Piste"]',
+  skiSnowboard: ['Ski'],
+  difficulty: ['Red', 'Black'],
+  piste: ['On-Piste', 'Off-Piste'],
   timeSlopes: 60,
   timeEating: 20,
   timeApres: 15,
   timeHotel: 5,
-  accommodation: '["Chalet"]',
-  mostImportantAspect: 'Snow quality',
+  accommodation: ['Chalet'],
+  notes: 'Snow quality',
 }
 
 const samplePreferencesBob: Preferences = {
@@ -319,15 +319,15 @@ const samplePreferencesBob: Preferences = {
   $createdAt: '2024-01-01T00:00:00Z',
   $updatedAt: '2024-01-01T00:00:00Z',
   userId: 'user-2',
-  skiSnowboard: '["Snowboard"]',
-  difficulty: '["Blue"]',
-  piste: '["On-Piste"]',
+  skiSnowboard: ['Snowboard'],
+  difficulty: ['Blue'],
+  piste: ['On-Piste'],
   timeSlopes: 40,
   timeEating: 30,
   timeApres: 20,
   timeHotel: 10,
-  accommodation: '["Hotel"]',
-  mostImportantAspect: '',
+  accommodation: ['Hotel'],
+  notes: '',
 }
 
 function renderOverview(props = {}) {
@@ -816,8 +816,8 @@ it('updates displayed preferences when onPreferencesUpdated is called', async ()
 
   const updatedPrefs: Preferences = {
     ...samplePreferencesAlice,
-    skiSnowboard: '["Snowboard"]',
-    mostImportantAspect: 'Powder',
+    skiSnowboard: ['Snowboard'],
+    notes: 'Powder',
   }
 
   await act(async () => {

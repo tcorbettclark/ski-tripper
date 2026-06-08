@@ -35,7 +35,6 @@ import type {
   Trip,
   Vote,
 } from './types.d.ts'
-import { parseJsonArray } from './utils'
 
 interface OverviewProps {
   user: Models.User
@@ -241,7 +240,7 @@ export default function Overview({
     if (!prefs) return <span style={overviewStyles.cellEmpty}>—</span>
 
     if (column === 'ski') {
-      const ski = parseJsonArray(prefs.skiSnowboard)
+      const ski = prefs.skiSnowboard
       const tip = ski.length > 0 ? ski.join(', ') : 'Not set'
       return (
         <span title={tip} style={overviewStyles.iconRow}>
@@ -252,7 +251,7 @@ export default function Overview({
     }
 
     if (column === 'diff') {
-      const diff = parseJsonArray(prefs.difficulty)
+      const diff = prefs.difficulty
       const slopeOrder: Record<string, number> = { Black: 0, Red: 1, Blue: 2 }
       const slopeIcons: Record<string, typeof BlackSlopeIcon> = {
         Black: BlackSlopeIcon,
@@ -277,7 +276,7 @@ export default function Overview({
     }
 
     if (column === 'piste') {
-      const piste = parseJsonArray(prefs.piste)
+      const piste = prefs.piste
       const tip = piste.length > 0 ? piste.join(', ') : 'Not set'
       return (
         <span title={tip} style={overviewStyles.iconRow}>
@@ -288,7 +287,7 @@ export default function Overview({
     }
 
     if (column === 'accom') {
-      const accom = parseJsonArray(prefs.accommodation)
+      const accom = prefs.accommodation
       const tip = accom.length > 0 ? accom.join(', ') : 'Not set'
       return (
         <span title={tip} style={overviewStyles.iconRow}>
@@ -362,8 +361,7 @@ export default function Overview({
     }
 
     if (column === 'aspect') {
-      if (!prefs.mostImportantAspect)
-        return <span style={overviewStyles.cellEmpty}>—</span>
+      if (!prefs.notes) return <span style={overviewStyles.cellEmpty}>—</span>
       const isOpen = aspectPopup?.userId === participantUserId
       return (
         <button
@@ -378,7 +376,7 @@ export default function Overview({
               const rect = e.currentTarget.getBoundingClientRect()
               setAspectPopup({
                 userId: participantUserId,
-                text: prefs.mostImportantAspect,
+                text: prefs.notes,
                 x: rect.right + 8,
                 y: rect.top,
               })

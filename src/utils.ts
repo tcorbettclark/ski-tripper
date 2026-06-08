@@ -56,28 +56,6 @@ export function formatCountdown(endDate: string) {
   return `${minutes}m ${seconds}s`
 }
 
-export function parseJsonArray(value: string | string[]): string[] {
-  if (Array.isArray(value)) return value
-  try {
-    const parsed = JSON.parse(value)
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    // fallthrough
-  }
-  return []
-}
-
-export function parseJsonNumberArray(value: string | number[]): number[] {
-  if (Array.isArray(value)) return value
-  try {
-    const parsed = JSON.parse(value)
-    if (Array.isArray(parsed)) return parsed
-  } catch {
-    // fallthrough
-  }
-  return []
-}
-
 export function formatTransferTime(minutes: number): string {
   if (minutes <= 0) return '0 mins'
   const hrs = Math.floor(minutes / 60)

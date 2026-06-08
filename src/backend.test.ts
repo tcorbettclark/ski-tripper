@@ -1792,7 +1792,7 @@ describe('deleteProposal with cascade delete', () => {
             {
               $id: 'pref-1',
               userId: 'user-1',
-              skiSnowboard: JSON.stringify(['Ski']),
+              skiSnowboard: ['Ski'],
             },
           ],
         })
@@ -1823,22 +1823,22 @@ describe('createPreferences', () => {
     const result = await createPreferences(
       'user-1',
       {
-        skiSnowboard: JSON.stringify(['Ski']),
-        difficulty: JSON.stringify(['Red']),
-        piste: JSON.stringify(['On-Piste']),
+        skiSnowboard: ['Ski'],
+        difficulty: ['Red'],
+        piste: ['On-Piste'],
         timeSlopes: 20,
         timeEating: 20,
         timeApres: 20,
         timeHotel: 40,
-        accommodation: JSON.stringify(['Chalet']),
-        mostImportantAspect: 'Good snow',
+        accommodation: ['Chalet'],
+        notes: 'Good snow',
       },
       db
     )
     expect(db.createRow).toHaveBeenCalledTimes(1)
     const [{ data }] = db.createRow.mock.calls[0]
     expect(data.userId).toBe('user-1')
-    expect(data.skiSnowboard).toBe(JSON.stringify(['Ski']))
+    expect(data.skiSnowboard).toEqual(['Ski'])
     expect(result.$id).toBe('new-id')
   })
 
@@ -1850,15 +1850,15 @@ describe('createPreferences', () => {
       createPreferences(
         'user-1',
         {
-          skiSnowboard: JSON.stringify(['Ski']),
-          difficulty: JSON.stringify(['Red']),
-          piste: JSON.stringify(['On-Piste']),
+          skiSnowboard: ['Ski'],
+          difficulty: ['Red'],
+          piste: ['On-Piste'],
           timeSlopes: 20,
           timeEating: 20,
           timeApres: 20,
           timeHotel: 40,
-          accommodation: JSON.stringify(['Chalet']),
-          mostImportantAspect: 'Good snow',
+          accommodation: ['Chalet'],
+          notes: 'Good snow',
         },
         db
       )
@@ -1875,11 +1875,7 @@ describe('updatePreferences', () => {
         })
       ),
     })
-    const result = await updatePreferences(
-      'user-1',
-      { mostImportantAspect: 'Updated' },
-      db
-    )
+    const result = await updatePreferences('user-1', { notes: 'Updated' }, db)
     expect(db.updateRow).toHaveBeenCalledTimes(1)
     const [{ rowId }] = db.updateRow.mock.calls[0]
     expect(rowId).toBe('pref-1')
@@ -1889,7 +1885,7 @@ describe('updatePreferences', () => {
   it('throws when preferences do not exist', async () => {
     const db = createMockDb()
     expect(
-      updatePreferences('user-1', { mostImportantAspect: 'Updated' }, db)
+      updatePreferences('user-1', { notes: 'Updated' }, db)
     ).rejects.toThrow('Preferences not found.')
   })
 
@@ -1901,7 +1897,7 @@ describe('updatePreferences', () => {
       updateRow: mock(() => Promise.reject(new Error('Update failed'))),
     })
     expect(
-      updatePreferences('user-1', { mostImportantAspect: 'Updated' }, db)
+      updatePreferences('user-1', { notes: 'Updated' }, db)
     ).rejects.toThrow('Update failed')
   })
 })

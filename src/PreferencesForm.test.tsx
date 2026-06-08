@@ -9,15 +9,15 @@ const defaultPreferences: Preferences = {
   $createdAt: '2024-01-01T00:00:00.000Z',
   $updatedAt: '2024-01-01T00:00:00.000Z',
   userId: 'user-1',
-  skiSnowboard: JSON.stringify(['Ski']),
-  difficulty: JSON.stringify(['Red']),
-  piste: JSON.stringify(['On-Piste']),
+  skiSnowboard: ['Ski'],
+  difficulty: ['Red'],
+  piste: ['On-Piste'],
   timeSlopes: 20,
   timeEating: 20,
   timeApres: 20,
   timeHotel: 40,
-  accommodation: JSON.stringify(['Chalet']),
-  mostImportantAspect: 'Good snow',
+  accommodation: ['Chalet'],
+  notes: 'Good snow',
 }
 
 describe('PreferencesForm', () => {
@@ -30,7 +30,7 @@ describe('PreferencesForm', () => {
     expect(screen.getByText('Piste')).toBeDefined()
     expect(screen.getByText('Time Allocation')).toBeDefined()
     expect(screen.getByText('Accommodation')).toBeDefined()
-    expect(screen.getByText('What kind of holiday do you like?')).toBeDefined()
+    expect(screen.getByText('Notes')).toBeDefined()
   })
 
   it('toggles checkboxes', async () => {
