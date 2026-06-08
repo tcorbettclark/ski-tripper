@@ -217,31 +217,6 @@ const nodeSlideColor: Record<string, string> = {
   results: '--color-palette4',
 }
 
-const statusBorders: Record<NodeStatus, { borderLeft: string }> = {
-  pending: {
-    borderLeft: mix('--color-textSecondary', 0.15),
-  },
-  active: {
-    borderLeft: 'var(--color-accent)',
-  },
-}
-
-const statusIcon: Record<NodeStatus, { iconBg: string; iconColor: string }> = {
-  pending: {
-    iconBg: mix('--color-textSecondary', 0.1),
-    iconColor: mix('--color-textSecondary', 0.4),
-  },
-  active: {
-    iconBg: mix('--color-accent', 0.15),
-    iconColor: colors.accent,
-  },
-}
-
-const statusText: Record<NodeStatus, string> = {
-  pending: mix('--color-textSecondary', 0.6),
-  active: colors.textPrimary,
-}
-
 const tabMap: Record<string, 'resorts' | 'proposals' | 'poll'> = {
   resorts: 'resorts',
   drafts: 'proposals',
@@ -261,12 +236,22 @@ function GuideNode({ data }: { data: GuideNodeData }) {
     onNavigateToTab,
     nodeId,
   } = data
-  const border = statusBorders[status]
-  const icon = statusIcon[status]
-  const text = statusText[status]
   const colorToken = nodeSlideColor[nodeId] ?? '--color-palette0'
-  const bgColor = mix(colorToken, 0.25)
-  const borderColor = mix(colorToken, 0.35)
+  const isActive = status === 'active'
+  const borderLeftColor = isActive
+    ? mix(colorToken, 0.8)
+    : mix('--color-textSecondary', 0.15)
+  const iconBg = isActive ? mix(colorToken, 0.25) : mix(colorToken, 0.08)
+  const iconColor = isActive ? `var(${colorToken})` : mix(colorToken, 0.4)
+  const textColor = isActive
+    ? colors.textPrimary
+    : mix('--color-textSecondary', 0.6)
+  const bgColor = isActive
+    ? mix(colorToken, 0.12)
+    : mix('--color-textSecondary', 0.04)
+  const borderColor = isActive
+    ? mix(colorToken, 0.35)
+    : mix('--color-textSecondary', 0.12)
 
   return (
     <div
@@ -277,7 +262,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
         background: bgColor,
         border: `1.5px solid ${borderColor}`,
         ...(status === 'active'
-          ? { borderLeftWidth: '3px', borderLeftColor: border.borderLeft }
+          ? { borderLeftWidth: '3px', borderLeftColor: borderLeftColor }
           : {}),
         borderRadius: '10px',
         padding: '10px 14px 8px',
@@ -321,11 +306,11 @@ function GuideNode({ data }: { data: GuideNodeData }) {
             width: '28px',
             height: '28px',
             borderRadius: '7px',
-            background: icon.iconBg,
+            background: iconBg,
             flexShrink: 0,
           }}
         >
-          <Icon size={15} style={{ color: icon.iconColor }} />
+          <Icon size={15} style={{ color: iconColor }} />
         </span>
         <span style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
           <span
@@ -333,7 +318,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
               fontFamily: fonts.body,
               fontSize: '14px',
               fontWeight: '600',
-              color: text,
+              color: textColor,
               lineHeight: '1.2',
             }}
           >
@@ -344,7 +329,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
               style={{
                 fontFamily: fonts.body,
                 fontSize: '11px',
-                color: icon.iconColor,
+                color: iconColor,
                 lineHeight: '1.2',
               }}
             >
@@ -358,7 +343,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
           style={{
             fontFamily: fonts.body,
             fontSize: '11px',
-            color: icon.iconColor,
+            color: iconColor,
             lineHeight: '1.3',
             fontWeight: '500',
             marginLeft: '36px',
@@ -392,14 +377,14 @@ function GuideNode({ data }: { data: GuideNodeData }) {
                 fontWeight: '500',
                 padding: '3px 9px',
                 borderRadius: '12px',
-                border: `1px solid ${action.variant === 'primary' ? mix('--color-accent', 0.35) : mix('--color-textSecondary', 0.2)}`,
+                border: `1px solid ${action.variant === 'primary' ? mix(colorToken, 0.5) : mix('--color-textSecondary', 0.2)}`,
                 background:
                   action.variant === 'primary'
-                    ? mix('--color-accent', 0.1)
+                    ? mix(colorToken, 0.15)
                     : 'transparent',
                 color:
                   action.variant === 'primary'
-                    ? colors.accent
+                    ? `var(${colorToken})`
                     : mix('--color-textSecondary', 0.7),
                 cursor: 'pointer',
                 lineHeight: '1.3',
@@ -419,11 +404,17 @@ function GuideNode({ data }: { data: GuideNodeData }) {
   )
 }
 
-function FlowConnector({ status }: { status: NodeStatus }) {
+function FlowConnector({
+  status,
+  colorToken,
+}: {
+  status: NodeStatus
+  colorToken: string
+}) {
   const isActive = status === 'active'
-  const strokeColor = isActive
-    ? 'var(--color-accent)'
-    : 'color-mix(in srgb, var(--color-textSecondary) 50%, transparent)'
+  const color = isActive
+    ? `var(${colorToken})`
+    : `color-mix(in srgb, var(--color-textSecondary) 50%, transparent)`
   const strokeWidth = isActive ? 2 : 1.5
   const dashArray = isActive ? undefined : '5 3'
   return (
@@ -440,17 +431,17 @@ function FlowConnector({ status }: { status: NodeStatus }) {
         y1="0"
         x2="4"
         y2="32"
-        stroke={strokeColor}
+        stroke={color}
         strokeWidth={strokeWidth}
         strokeDasharray={dashArray}
       />
       {isActive && (
-        <circle r="3" fill="var(--color-accent)">
+        <circle r="3" fill={`var(${colorToken})`}>
           <animateMotion dur="2s" repeatCount="indefinite" path="M4,0 L4,32" />
         </circle>
       )}
       {!isActive && (
-        <circle r="1.5" fill={strokeColor}>
+        <circle r="1.5" fill={color}>
           <animateMotion dur="4s" repeatCount="indefinite" path="M4,0 L4,32" />
         </circle>
       )}
@@ -482,7 +473,12 @@ export default function ActionGuide(props: ActionGuideProps) {
           <div key={node.nodeId} style={actionGuideStyles.nodeWrap}>
             <GuideNode data={node} />
             {i < guideNodes.length - 1 && (
-              <FlowConnector status={edges[i].sourceStatus} />
+              <FlowConnector
+                status={edges[i].sourceStatus}
+                colorToken={
+                  nodeSlideColor[guideNodes[i].nodeId] ?? '--color-palette0'
+                }
+              />
             )}
           </div>
         ))}
