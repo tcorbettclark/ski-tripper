@@ -8,6 +8,7 @@ import {
 } from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Participant, Preferences } from './types.d'
+import type { UseLLMCacheStreamResult } from './useLLMCacheStream'
 import useLLMCacheStream from './useLLMCacheStream'
 
 interface AnalysisTabProps {
@@ -19,6 +20,7 @@ interface AnalysisTabProps {
     tripId: string
   ) => Promise<{ participants: Participant[] }>
   getPreferences?: (userId: string) => Promise<Preferences | null>
+  streamResult?: UseLLMCacheStreamResult
 }
 
 const noopAuthError = () => {}
@@ -30,12 +32,14 @@ export default function AnalysisTab({
   triggerAnalysis = _triggerAnalysis,
   listTripParticipants = _listTripParticipants,
   getPreferences = _getPreferences,
+  streamResult,
 }: AnalysisTabProps) {
-  const { status, thinking, content, model, error } = useLLMCacheStream({
+  const hookResult = useLLMCacheStream({
     type: 'analysis',
     proposalId,
     tripId,
   })
+  const { status, thinking, content, model, error } = streamResult ?? hookResult
   const [participants, setParticipants] = useState<Participant[]>([])
   const [preferencesMap, setPreferencesMap] = useState<
     Record<string, Preferences | null>

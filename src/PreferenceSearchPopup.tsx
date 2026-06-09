@@ -8,6 +8,7 @@ import {
 } from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Participant, Preferences } from './types.d'
+import type { UseLLMCacheStreamResult } from './useLLMCacheStream'
 import useLLMCacheStream from './useLLMCacheStream'
 
 interface PreferenceSearchPopupProps {
@@ -20,6 +21,7 @@ interface PreferenceSearchPopupProps {
     tripId: string
   ) => Promise<{ participants: Participant[] }>
   getPreferences?: (userId: string) => Promise<Preferences | null>
+  streamResult?: UseLLMCacheStreamResult
 }
 
 const NOOP_AUTH_ERROR = () => {}
@@ -32,11 +34,13 @@ export default function PreferenceSearchPopup({
   triggerPreferenceSearch = _triggerPreferenceSearch,
   listTripParticipants = _listTripParticipants,
   getPreferences = _getPreferences,
+  streamResult,
 }: PreferenceSearchPopupProps) {
-  const { status, thinking, content, model, error } = useLLMCacheStream({
+  const hookResult = useLLMCacheStream({
     type: 'preference-search',
     tripId,
   })
+  const { status, thinking, content, model, error } = streamResult ?? hookResult
 
   const [participants, setParticipants] = useState<Participant[]>([])
   const [preferencesMap, setPreferencesMap] = useState<

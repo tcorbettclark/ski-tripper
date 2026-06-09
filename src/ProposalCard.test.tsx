@@ -906,24 +906,26 @@ describe('ProposalCard', () => {
 
   it('switches to discussion tab and shows discussion section', async () => {
     const listDiscussion = mock(async () => [])
+
+    await act(async () => {
+      render(
+        <ProposalCard
+          proposal={baseProposal}
+          userId="user-1"
+          userName="Alice"
+          onUpdated={() => {}}
+          onDeleted={() => {}}
+          onSubmitted={() => {}}
+          updateProposal={mockUpdateProposal}
+          deleteProposal={mockDeleteProposal}
+          submitProposal={mockSubmitProposal}
+          rejectProposal={mockRejectProposal}
+          listDiscussion={listDiscussion}
+        />
+      )
+    })
+
     const user = userEvent.setup()
-
-    render(
-      <ProposalCard
-        proposal={baseProposal}
-        userId="user-1"
-        userName="Alice"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-        listDiscussion={listDiscussion}
-      />
-    )
-
     await user.click(screen.getByRole('button', { name: /Discussion/ }))
 
     expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()
@@ -955,22 +957,24 @@ describe('ProposalCard', () => {
   it('opens discussion tab when initialTab is discussion', async () => {
     const listDiscussion = mock(async () => [])
 
-    render(
-      <ProposalCard
-        proposal={baseProposal}
-        userId="user-1"
-        userName="Alice"
-        initialTab="discussion"
-        onUpdated={() => {}}
-        onDeleted={() => {}}
-        onSubmitted={() => {}}
-        updateProposal={mockUpdateProposal}
-        deleteProposal={mockDeleteProposal}
-        submitProposal={mockSubmitProposal}
-        rejectProposal={mockRejectProposal}
-        listDiscussion={listDiscussion}
-      />
-    )
+    await act(async () => {
+      render(
+        <ProposalCard
+          proposal={baseProposal}
+          userId="user-1"
+          userName="Alice"
+          initialTab="discussion"
+          onUpdated={() => {}}
+          onDeleted={() => {}}
+          onSubmitted={() => {}}
+          updateProposal={mockUpdateProposal}
+          deleteProposal={mockDeleteProposal}
+          submitProposal={mockSubmitProposal}
+          rejectProposal={mockRejectProposal}
+          listDiscussion={listDiscussion}
+        />
+      )
+    })
 
     expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()
   })

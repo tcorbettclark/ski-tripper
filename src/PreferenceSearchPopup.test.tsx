@@ -94,18 +94,18 @@ let mockStreamResult: UseLLMCacheStreamResult = {
   error: null,
 }
 
-mock.module('./useLLMCacheStream', () => ({
-  default: (_params: unknown) => mockStreamResult,
-}))
+const defaultStreamResult: UseLLMCacheStreamResult = {
+  status: null,
+  thinking: '',
+  content: '',
+  model: '',
+  error: null,
+}
 
 describe('PreferenceSearchPopup', () => {
   beforeEach(() => {
     mockStreamResult = {
-      status: null,
-      thinking: '',
-      content: '',
-      model: '',
-      error: null,
+      ...defaultStreamResult,
     }
     listTripParticipantsMock.mockClear()
     getPreferencesMock.mockClear()
@@ -124,6 +124,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -144,6 +145,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -162,6 +164,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -187,6 +190,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -212,6 +216,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -237,6 +242,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -266,6 +272,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -291,6 +298,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -317,6 +325,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -344,6 +353,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -364,6 +374,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -393,6 +404,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -413,6 +425,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -446,6 +459,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -473,6 +487,7 @@ describe('PreferenceSearchPopup', () => {
           triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })

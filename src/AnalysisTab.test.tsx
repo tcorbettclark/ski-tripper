@@ -91,18 +91,18 @@ let mockStreamResult: UseLLMCacheStreamResult = {
   error: null,
 }
 
-mock.module('./useLLMCacheStream', () => ({
-  default: (_params: unknown) => mockStreamResult,
-}))
+const defaultStreamResult: UseLLMCacheStreamResult = {
+  status: null,
+  thinking: '',
+  content: '',
+  model: '',
+  error: null,
+}
 
 describe('AnalysisTab', () => {
   beforeEach(() => {
     mockStreamResult = {
-      status: null,
-      thinking: '',
-      content: '',
-      model: '',
-      error: null,
+      ...defaultStreamResult,
     }
     listTripParticipantsMock.mockClear()
     getPreferencesMock.mockClear()
@@ -118,6 +118,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -135,6 +136,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -152,6 +154,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -176,6 +179,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -200,6 +204,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -224,6 +229,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -249,6 +255,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -273,6 +280,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -292,6 +300,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -318,6 +327,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -344,6 +354,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
@@ -370,6 +381,7 @@ describe('AnalysisTab', () => {
           triggerAnalysis={triggerAnalysisMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
+          streamResult={mockStreamResult}
         />
       )
     })
