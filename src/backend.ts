@@ -12,6 +12,7 @@ import {
 import type {
   Accommodation,
   Discussion,
+  LlmCache,
   Participant,
   Poll,
   Preferences,
@@ -160,6 +161,8 @@ const PREFERENCES_TABLE_ID = process.env
   .PUBLIC_APPWRITE_PREFERENCES_TABLE_ID as string
 const DISCUSSION_TABLE_ID = process.env
   .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
+const LLM_CACHE_TABLE_ID = process.env
+  .PUBLIC_APPWRITE_LLM_CACHE_TABLE_ID as string
 
 export async function getCoordinatorParticipant(
   tripId: string,
@@ -1418,4 +1421,88 @@ export async function createSystemMessage(
       permissions: [Permission.read(Role.users())],
     })
   )
+}
+
+export async function getLlmCacheByInputHash(
+  inputHash: string,
+  db: TablesDB = tablesDb
+): Promise<LlmCache | null> {
+  const rows = await fetchRows<LlmCache>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: LLM_CACHE_TABLE_ID,
+      queries: [Query.equal('inputHash', inputHash), Query.limit(1)],
+    })
+  )
+  return rows.length > 0 ? rows[0] : null
+}
+
+export async function listLlmCacheByTripAndType(
+  tripId: string,
+  type: LlmCache['type'],
+  db: TablesDB = tablesDb
+): Promise<LlmCache[]> {
+  return fetchRows<LlmCache>(
+    db.listRows({
+      databaseId: DATABASE_ID,
+      tableId: LLM_CACHE_TABLE_ID,
+      queries: [
+        Query.equal('tripId', tripId),
+        Query.equal('type', type),
+        Query.limit(100),
+      ],
+    })
+  )
+}
+
+export async function createLlmCacheRow(
+  data: Omit<LlmCache, '$id' | '$createdAt' | '$updatedAt'>,
+  db: TablesDB = tablesDb
+): Promise<LlmCache> {
+  return fetchRow<LlmCache>(
+    db.createRow({
+      databaseId: DATABASE_ID,
+      tableId: LLM_CACHE_TABLE_ID,
+      rowId: ID.unique(),
+      data: data as Record<string, unknown>,
+      permissions: [Permission.read(Role.users())],
+    })
+  )
+}
+
+export async function updateLlmCacheRow(
+  rowId: string,
+  data: Partial<
+    Omit<
+      LlmCache,
+      | '$id'
+      | '$createdAt'
+      | '$updatedAt'
+      | 'inputHash'
+      | 'type'
+      | 'tripId'
+      | 'model'
+    >
+  >,
+  db: TablesDB = tablesDb
+): Promise<LlmCache> {
+  return fetchRow<LlmCache>(
+    db.updateRow({
+      databaseId: DATABASE_ID,
+      tableId: LLM_CACHE_TABLE_ID,
+      rowId,
+      data: data as Record<string, unknown>,
+    })
+  )
+}
+
+export async function deleteLlmCacheRow(
+  rowId: string,
+  db: TablesDB = tablesDb
+): Promise<void> {
+  await db.deleteRow({
+    databaseId: DATABASE_ID,
+    tableId: LLM_CACHE_TABLE_ID,
+    rowId,
+  })
 }

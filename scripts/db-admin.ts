@@ -24,10 +24,13 @@ const ACCOMMODATIONS_TABLE_ID = process.env
   .PUBLIC_APPWRITE_ACCOMMODATIONS_TABLE_ID as string
 const DISCUSSION_TABLE_ID = process.env
   .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
+const LLM_CACHE_TABLE_ID = process.env
+  .PUBLIC_APPWRITE_LLM_CACHE_TABLE_ID as string
 
 export const TABLE_IDS = {
   accommodations: ACCOMMODATIONS_TABLE_ID,
   discussions: DISCUSSION_TABLE_ID,
+  llmCache: LLM_CACHE_TABLE_ID,
   participants: PARTICIPANTS_TABLE_ID,
   polls: POLLS_TABLE_ID,
   preferences: PREFERENCES_TABLE_ID,

@@ -136,3 +136,17 @@ export interface Preferences {
   accommodation: string[]
   notes: string
 }
+
+export interface LlmCache {
+  $id: string
+  $createdAt: string
+  $updatedAt: string
+  inputHash: string
+  type: 'analysis' | 'preference-search'
+  proposalId: string | null
+  tripId: string
+  status: 'generating' | 'complete' | 'error'
+  thinking: string | null
+  content: string | null
+  model: string
+}
