@@ -1,5 +1,6 @@
 import { MapPin } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import AnalysisTab from './AnalysisTab'
 import {
   createAccommodation as _createAccommodation,
   deleteAccommodation as _deleteAccommodation,
@@ -47,7 +48,7 @@ interface ProposalCardProps {
   userName?: string
   isCoordinator?: boolean
   previewMode?: boolean
-  initialTab?: 'proposal' | 'accommodations' | 'discussion'
+  initialTab?: 'proposal' | 'accommodations' | 'discussion' | 'analysis'
   accommodations?: Accommodation[]
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
@@ -117,7 +118,7 @@ export default function ProposalCard({
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    'proposal' | 'accommodations' | 'discussion'
+    'proposal' | 'accommodations' | 'discussion' | 'analysis'
   >(initialTab ?? 'proposal')
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -360,6 +361,15 @@ export default function ProposalCard({
             >
               Discussion {discussionCount > 0 && `(${discussionCount})`}
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('analysis')}
+              style={
+                activeTab === 'analysis' ? styles.tabActive : styles.tabInactive
+              }
+            >
+              Analysis
+            </button>
           </div>
         )}
 
@@ -595,6 +605,14 @@ export default function ProposalCard({
                   .then((rows) => setDiscussionCount(rows.length))
                   .catch(onAuthError)
               }}
+            />
+          )}
+
+          {!previewMode && activeTab === 'analysis' && (
+            <AnalysisTab
+              proposalId={proposal.$id}
+              tripId={proposal.tripId}
+              onAuthError={onAuthError}
             />
           )}
         </div>

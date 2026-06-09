@@ -29,7 +29,7 @@ interface ProposalsGridProps {
   /** When provided, the ProposalCard with this ID will open to the specified sub-tab. */
   proposalDetail?: {
     proposalId: string
-    subTab: 'proposal' | 'accommodations' | 'discussion'
+    subTab: 'proposal' | 'accommodations' | 'discussion' | 'analysis'
   }
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void

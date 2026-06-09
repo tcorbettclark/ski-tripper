@@ -2,6 +2,7 @@ import type { Models } from 'appwrite'
 import {
   Account,
   Client,
+  Functions,
   ID,
   Permission,
   Query,
@@ -37,6 +38,7 @@ const client = new Client()
 export const account = new Account(client)
 export const tablesDb = new TablesDB(client)
 export const storage = new Storage(client)
+export const functions = new Functions(client)
 export default client
 
 const RESORTS_BUCKET_ID = process.env
@@ -1504,5 +1506,20 @@ export async function deleteLlmCacheRow(
     databaseId: DATABASE_ID,
     tableId: LLM_CACHE_TABLE_ID,
     rowId,
+  })
+}
+
+const ANALYSE_PROPOSAL_FUNCTION_ID = process.env
+  .PUBLIC_APPWRITE_ANALYSE_PROPOSAL_FUNCTION_ID as string
+
+export async function triggerAnalysis(
+  proposalId: string,
+  tripId: string,
+  fn: Functions = functions
+): Promise<void> {
+  await fn.createExecution({
+    functionId: ANALYSE_PROPOSAL_FUNCTION_ID,
+    body: JSON.stringify({ proposalId, tripId }),
+    async: true,
   })
 }

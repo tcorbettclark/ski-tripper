@@ -31,7 +31,7 @@ interface ProposalsProps {
   /** When provided, the ProposalCard with this ID will open to the specified sub-tab. */
   proposalDetail?: {
     proposalId: string
-    subTab: 'proposal' | 'accommodations' | 'discussion'
+    subTab: 'proposal' | 'accommodations' | 'discussion' | 'analysis'
   }
   onRefresh?: () => void
   onAuthError?: (err: unknown) => void
