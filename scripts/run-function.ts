@@ -2,12 +2,14 @@
 
 import { Command } from 'commander'
 import * as analyseProposal from './functions/analyse-proposal'
+import * as preferenceSearch from './functions/preference-search'
 
 const functions: Record<
   string,
   { run: (args: string[]) => Promise<void>; description: string }
 > = {
   'analyse-proposal': analyseProposal,
+  'preference-search': preferenceSearch,
 }
 
 const program = new Command()

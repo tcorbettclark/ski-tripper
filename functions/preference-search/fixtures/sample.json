@@ -1,0 +1,66 @@
+{
+  "participants": [
+    {
+      "$id": "part-1",
+      "participantUserId": "user-1",
+      "participantUserName": "Bob",
+      "tripId": "trip-1",
+      "role": "participant"
+    },
+    {
+      "$id": "part-2",
+      "participantUserId": "user-2",
+      "participantUserName": "Carol",
+      "tripId": "trip-1",
+      "role": "participant"
+    },
+    {
+      "$id": "part-3",
+      "participantUserId": "user-3",
+      "participantUserName": "Dave",
+      "tripId": "trip-1",
+      "role": "participant"
+    }
+  ],
+  "preferences": [
+    {
+      "$id": "pref-1",
+      "userId": "user-1",
+      "skiSnowboard": ["Ski"],
+      "difficulty": ["Red", "Black"],
+      "piste": ["On-Piste", "Off-Piste"],
+      "timeSlopes": 60,
+      "timeEating": 15,
+      "timeApres": 15,
+      "timeHotel": 10,
+      "accommodation": ["4-star hotel"],
+      "notes": "Loves moguls and steep terrain"
+    },
+    {
+      "$id": "pref-2",
+      "userId": "user-2",
+      "skiSnowboard": ["Snowboard"],
+      "difficulty": ["Blue", "Red"],
+      "piste": ["On-Piste"],
+      "timeSlopes": 40,
+      "timeEating": 20,
+      "timeApres": 25,
+      "timeHotel": 15,
+      "accommodation": ["Self-catered apartment"],
+      "notes": "Love a good fondue night, easy access from Geneva"
+    },
+    {
+      "$id": "pref-3",
+      "userId": "user-3",
+      "skiSnowboard": ["Ski", "Snowboard"],
+      "difficulty": ["Red"],
+      "piste": ["Off-Piste"],
+      "timeSlopes": 70,
+      "timeEating": 10,
+      "timeApres": 10,
+      "timeHotel": 10,
+      "accommodation": ["Chalet"],
+      "notes": "Powder hound, don't care about nightlife"
+    }
+  ]
+}
