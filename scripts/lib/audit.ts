@@ -19,6 +19,58 @@ export interface AuditResult {
   }>
 }
 
+export const QUALITY_FIELDS: Record<string, string | string[] | number> = {
+  description: '',
+  nearestAirport: '',
+  transferTime: 0,
+  snowReliability: '',
+  skiSeasonMonths: '',
+  websites: [],
+}
+
+export function isLowQualityValue(
+  key: string,
+  value: string | string[] | number | null
+): boolean {
+  const fallback = QUALITY_FIELDS[key]
+  if (value === null) return true
+  if (value === fallback) return true
+  if (typeof value === 'string' && value.trim() === '') return true
+  if (Array.isArray(value) && value.length === 0) return true
+  return false
+}
+
+export function hasLowQualityFields(entry: EnrichedResort): boolean {
+  for (const key of Object.keys(QUALITY_FIELDS)) {
+    if (
+      key in entry &&
+      isLowQualityValue(
+        key,
+        entry[key as keyof EnrichedResort] as string | string[] | null
+      )
+    ) {
+      return true
+    }
+  }
+  return false
+}
+
+export function listLowQualityFields(entry: EnrichedResort): string[] {
+  const result: string[] = []
+  for (const key of Object.keys(QUALITY_FIELDS)) {
+    if (
+      key in entry &&
+      isLowQualityValue(
+        key,
+        entry[key as keyof EnrichedResort] as string | string[] | null
+      )
+    ) {
+      result.push(key)
+    }
+  }
+  return result
+}
+
 export function auditEnrichedData(
   seeded: SeededResort[],
   enriched: EnrichedResort[]
@@ -75,34 +127,6 @@ export function auditEnrichedData(
     duplicateEnrichedIds,
     enrichedProblems,
   }
-}
-
-function listLowQualityFields(entry: EnrichedResort): string[] {
-  const defaults: Record<string, string | string[] | number> = {
-    description: '',
-    nearestAirport: '',
-    transferTime: 0,
-    snowReliability: '',
-    skiSeasonMonths: '',
-    websites: [],
-    linkedResortsDescription: '',
-  }
-  const fields = Object.keys(defaults) as (keyof typeof defaults)[]
-  const result: string[] = []
-  for (const key of fields) {
-    if (!(key in entry)) continue
-    const value = entry[key as keyof EnrichedResort] as string | string[] | null
-    if (value === null) {
-      result.push(key)
-    } else if (value === defaults[key]) {
-      result.push(key)
-    } else if (typeof value === 'string' && value.trim() === '') {
-      result.push(key)
-    } else if (Array.isArray(value) && value.length === 0) {
-      result.push(key)
-    }
-  }
-  return result
 }
 
 function findDuplicateIds(items: { id: string }[]): string[] {

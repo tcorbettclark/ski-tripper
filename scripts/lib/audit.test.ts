@@ -64,7 +64,6 @@ describe('auditEnrichedData', () => {
     const lowQuality: EnrichedResort = {
       ...goodEnriched,
       nearestAirport: '',
-      linkedResortsDescription: '',
     }
     const result = auditEnrichedData([seededResort], [lowQuality])
     expect(result.enrichedProblems).toEqual([
@@ -74,7 +73,7 @@ describe('auditEnrichedData', () => {
         issues: [
           {
             type: 'low-quality',
-            fields: ['nearestAirport', 'linkedResortsDescription'],
+            fields: ['nearestAirport'],
           },
         ],
       },

@@ -13,8 +13,14 @@ import {
 } from 'node-appwrite'
 import { InputFile } from 'node-appwrite/file'
 import * as z from 'zod'
-
-import { type AuditIssue, auditEnrichedData } from './lib/audit'
+import {
+  type AuditIssue,
+  auditEnrichedData,
+  hasLowQualityFields,
+  isLowQualityValue,
+  listLowQualityFields,
+  QUALITY_FIELDS,
+} from './lib/audit'
 import { cleanUrls } from './lib/clean-urls'
 import { readJsonl, simpleHash, writeJsonl } from './lib/jsonl'
 import {
@@ -141,53 +147,17 @@ function withDefaults(data: EnrichData): ResolvedEnrichData {
   return result as ResolvedEnrichData
 }
 
-function isLowQualityValue(
-  key: keyof EnrichData,
-  value: string | string[] | null
-): boolean {
-  if (value === null) return true
-  if (value === enrichDefaults[key]) return true
-  if (typeof value === 'string' && value.trim() === '') return true
-  if (Array.isArray(value) && value.length === 0) return true
-  return false
-}
-
-function hasLowQualityFields(entry: EnrichedResort): boolean {
-  const fields = Object.keys(enrichDefaults) as (keyof EnrichData)[]
-  for (const key of fields) {
-    if (
-      key in entry &&
-      isLowQualityValue(key, entry[key] as string | string[] | null)
-    ) {
-      return true
-    }
-  }
-  return false
-}
-
-function listLowQualityFields(entry: EnrichedResort): string[] {
-  const fields = Object.keys(enrichDefaults) as (keyof EnrichData)[]
-  const result: string[] = []
-  for (const key of fields) {
-    if (
-      key in entry &&
-      isLowQualityValue(key, entry[key] as string | string[] | null)
-    ) {
-      result.push(key)
-    }
-  }
-  return result
-}
-
 function mergeEnriched(
   existing: EnrichedResort,
   newData: ResolvedEnrichData,
   seeded: SeededResort
 ): EnrichedResort {
-  const merged = { ...existing }
-  const fields = Object.keys(enrichDefaults) as (keyof EnrichData)[]
-  for (const key of fields) {
-    const oldValue = existing[key] as string | string[] | null
+  const merged = { ...existing } as Record<string, unknown>
+  for (const key of Object.keys(QUALITY_FIELDS)) {
+    const oldValue = existing[key as keyof EnrichedResort] as
+      | string
+      | string[]
+      | null
     const isOldLow = isLowQualityValue(key, oldValue)
     if (isOldLow) {
       if (key === 'websites') {
@@ -195,13 +165,13 @@ function mergeEnriched(
           ...seeded.websites,
           ...newData.websites,
         ])
-        merged.websites = mergedWebsites
+        merged[key] = mergedWebsites
       } else {
-        ;(merged[key] as (typeof newData)[typeof key]) = newData[key]
+        merged[key] = newData[key as keyof ResolvedEnrichData]
       }
     }
   }
-  return merged
+  return merged as unknown as EnrichedResort
 }
 
 async function enrichResort(
