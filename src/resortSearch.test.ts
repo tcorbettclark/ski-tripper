@@ -33,7 +33,7 @@ function makeResort(
     summitAltitude: overrides.summitAltitude ?? 3000,
     baseAltitude: overrides.baseAltitude ?? 1500,
     nearestAirport: overrides.nearestAirport ?? '',
-    transferTime: overrides.transferTime ?? 0,
+    transferTime: overrides.transferTime ?? null,
     pisteKm: overrides.pisteKm ?? 100,
     beginnerPct: overrides.beginnerPct ?? 30,
     intermediatePct: overrides.intermediatePct ?? 40,

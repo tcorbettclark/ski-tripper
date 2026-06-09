@@ -103,6 +103,10 @@ describe('formatTransferTime', () => {
   it('formats 0 minutes', () => {
     expect(formatTransferTime(0)).toBe('0 mins')
   })
+
+  it('returns empty string for null', () => {
+    expect(formatTransferTime(null)).toBe('')
+  })
 })
 
 describe('ensureUrlScheme', () => {

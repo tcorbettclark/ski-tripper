@@ -89,6 +89,29 @@ const sampleResorts: ResortWithEmbedding[] = [
     linkedResortsDescription: '',
     embedding: [0.7, 0.8, 0.9],
   },
+  {
+    id: 'unknown-alps-andorra',
+    resortName: 'Unknown Resort',
+    country: 'Andorra',
+    region: 'Alps',
+    description: 'A resort with missing transfer time',
+    latitude: '42.5424',
+    longitude: '1.5932',
+    summitAltitude: 2640,
+    baseAltitude: 1750,
+    nearestAirport: '',
+    transferTime: null,
+    pisteKm: 100,
+    beginnerPct: 30,
+    intermediatePct: 40,
+    advancedPct: 30,
+    liftCount: 25,
+    snowReliability: 'medium',
+    skiSeasonMonths: 'Dec-Mar',
+    websites: [],
+    linkedResortsDescription: '',
+    embedding: [0.2, 0.3, 0.4],
+  },
 ]
 
 function defaultProps(overrides: Record<string, unknown> = {}) {
@@ -151,7 +174,7 @@ describe('Resorts', () => {
 
   it('shows result count', () => {
     render(<Resorts {...defaultProps()} />)
-    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
   })
 
   it('renders table headers', () => {
@@ -166,7 +189,7 @@ describe('Resorts', () => {
 
   it('does not show clear location button when no location filters are active', () => {
     render(<Resorts {...defaultProps()} />)
-    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
 
     expect(screen.queryByRole('button', { name: /clear location/i })).toBeNull()
   })
@@ -194,7 +217,7 @@ describe('Resorts', () => {
       screen.getByRole('button', { name: /clear location/i })
     )
 
-    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
   })
 
   it('filters resorts by single country using tag cloud', async () => {
@@ -204,7 +227,7 @@ describe('Resorts', () => {
     fireEvent.click(canadaButton)
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -217,7 +240,7 @@ describe('Resorts', () => {
     fireEvent.click(canadaButton)
 
     await waitFor(() => {
-      expect(screen.getByText('2 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('2 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -228,13 +251,13 @@ describe('Resorts', () => {
     fireEvent.click(franceButton)
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
 
     fireEvent.click(franceButton)
 
     await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -245,7 +268,7 @@ describe('Resorts', () => {
     fireEvent.click(alpsButton)
 
     await waitFor(() => {
-      expect(screen.getByText('2 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('3 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -260,7 +283,7 @@ describe('Resorts', () => {
     fireEvent.click(rockiesButton)
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -299,7 +322,7 @@ describe('Resorts', () => {
     fireEvent.click(alpsButton)
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -310,7 +333,7 @@ describe('Resorts', () => {
     fireEvent.change(slider, { target: { value: '60' } })
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -322,7 +345,18 @@ describe('Resorts', () => {
       const group = slider.closest('div')!
       expect(group.querySelector('span')!.textContent).toBe('Any')
     })
-    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
+  })
+
+  it('excludes resorts with null transfer time when transfer time filter is active', async () => {
+    render(<Resorts {...defaultProps()} />)
+
+    const slider = screen.getByLabelText(/max transfer time/i)
+    fireEvent.change(slider, { target: { value: '120' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('2 of 4 resorts')).toBeTruthy()
+    })
   })
 
   it('displays formatted transfer time in slider value', () => {
@@ -343,7 +377,7 @@ describe('Resorts', () => {
     fireEvent.change(slider, { target: { value: '60' } })
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
 
     await eventUser.click(
@@ -354,7 +388,7 @@ describe('Resorts', () => {
       const group = screen.getByLabelText(/max transfer time/i).closest('div')!
       expect(group.querySelector('span')!.textContent).toBe('Any')
     })
-    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
   })
 
   it('shows clear transport button when transfer time filter is active', () => {
@@ -376,7 +410,7 @@ describe('Resorts', () => {
     fireEvent.click(advancedButton)
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -391,7 +425,7 @@ describe('Resorts', () => {
     fireEvent.click(advancedButton)
 
     await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -402,13 +436,13 @@ describe('Resorts', () => {
     fireEvent.click(advancedButton)
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('1 of 4 resorts')).toBeTruthy()
     })
 
     fireEvent.click(advancedButton)
 
     await waitFor(() => {
-      expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -437,7 +471,7 @@ describe('Resorts', () => {
     fireEvent.change(slider, { target: { value: '1500' } })
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('2 of 4 resorts')).toBeTruthy()
     })
   })
 
@@ -479,7 +513,7 @@ describe('Resorts', () => {
     fireEvent.change(slider, { target: { value: '1500' } })
 
     await waitFor(() => {
-      expect(screen.getByText('1 of 3 resorts')).toBeTruthy()
+      expect(screen.getByText('2 of 4 resorts')).toBeTruthy()
     })
 
     await eventUser.click(
@@ -490,7 +524,7 @@ describe('Resorts', () => {
       const group = screen.getByLabelText(/min resort alt/i).closest('div')!
       expect(group.querySelector('span')!.textContent).toBe('Any')
     })
-    expect(screen.getByText('3 of 3 resorts')).toBeTruthy()
+    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
   })
 
   it('displays all resorts passed as props', () => {
@@ -507,7 +541,7 @@ describe('Resorts', () => {
     }
     const fourResorts = [...sampleResorts, extraResort]
     render(<Resorts {...defaultProps({ resorts: fourResorts })} />)
-    expect(screen.getByText('4 of 4 resorts')).toBeTruthy()
+    expect(screen.getByText('5 of 5 resorts')).toBeTruthy()
   })
 
   it('disables search input when model is not ready', () => {

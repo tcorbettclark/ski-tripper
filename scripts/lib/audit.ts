@@ -3,7 +3,7 @@ import type { EnrichedResort, SeededResort } from './types'
 export type AuditIssue =
   | { type: 'low-quality'; fields: string[] }
   | { type: 'invalid-snow-reliability'; value: string }
-  | { type: 'negative-transfer-time'; value: number }
+  | { type: 'negative-transfer-time'; value: number | null }
 
 export interface AuditResult {
   seededCount: number
@@ -19,14 +19,15 @@ export interface AuditResult {
   }>
 }
 
-export const QUALITY_FIELDS: Record<string, string | string[] | number> = {
-  description: '',
-  nearestAirport: '',
-  transferTime: 0,
-  snowReliability: '',
-  skiSeasonMonths: '',
-  websites: [],
-}
+export const QUALITY_FIELDS: Record<string, string | string[] | number | null> =
+  {
+    description: '',
+    nearestAirport: '',
+    transferTime: null,
+    snowReliability: '',
+    skiSeasonMonths: '',
+    websites: [],
+  }
 
 export function isLowQualityValue(
   key: string,
@@ -104,7 +105,7 @@ export function auditEnrichedData(
         value: r.snowReliability,
       })
     }
-    if (r.transferTime < 0) {
+    if (r.transferTime != null && r.transferTime < 0) {
       issues.push({ type: 'negative-transfer-time', value: r.transferTime })
     }
     if (issues.length > 0) {

@@ -76,7 +76,13 @@ export default function Resorts({
   }, [])
 
   const maxTransferTimeFromData = useMemo(
-    () => Math.max(...resorts.map((r) => r.transferTime ?? 0)),
+    () =>
+      Math.max(
+        ...resorts
+          .map((r) => r.transferTime)
+          .filter((t): t is number => t != null),
+        0
+      ),
     [resorts]
   )
 
@@ -112,7 +118,7 @@ export default function Resorts({
       if (
         maxTransferTime >= 0 &&
         maxTransferTime < maxTransferTimeFromData &&
-        r.transferTime > maxTransferTime
+        (r.transferTime == null || r.transferTime > maxTransferTime)
       )
         return false
       if (pisteProfiles.size > 0) {
@@ -221,8 +227,14 @@ export default function Resorts({
       result = result.filter((r) => r.baseAltitude >= minBaseAltitude)
     }
 
-    if (maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData) {
-      result = result.filter((r) => r.transferTime <= maxTransferTime)
+    if (
+      maxTransferTime >= 0 &&
+      maxTransferTimeFromData > 0 &&
+      maxTransferTime < maxTransferTimeFromData
+    ) {
+      result = result.filter(
+        (r) => r.transferTime != null && r.transferTime <= maxTransferTime
+      )
     }
 
     if (pisteProfiles.size > 0) {
@@ -342,7 +354,11 @@ export default function Resorts({
   }, [])
 
   const clearTransportFilters = useCallback(() => {
-    setMaxTransferTime(maxTransferTimeFromData)
+    if (maxTransferTimeFromData > 0) {
+      setMaxTransferTime(maxTransferTimeFromData)
+    } else {
+      setMaxTransferTime(-1)
+    }
   }, [maxTransferTimeFromData])
 
   const hasLocationFilters = countryFilter.size > 0 || regionFilter.size > 0
@@ -354,7 +370,9 @@ export default function Resorts({
     pisteProfiles.size > 0
 
   const hasTransportFilters =
-    maxTransferTime >= 0 && maxTransferTime < maxTransferTimeFromData
+    maxTransferTimeFromData > 0 &&
+    maxTransferTime >= 0 &&
+    maxTransferTime < maxTransferTimeFromData
 
   if (resorts.length === 0) {
     return (
@@ -607,49 +625,51 @@ export default function Resorts({
             </div>
           </div>
         </fieldset>
-        <fieldset style={resortsStyles.filterGroup}>
-          <legend style={resortsStyles.filterGroupLabel}>Transport</legend>
-          {hasTransportFilters && (
-            <button
-              type="button"
-              onClick={clearTransportFilters}
-              style={resortsStyles.groupClearButton}
-              aria-label="Clear transport filters"
-            >
-              ×
-            </button>
-          )}
-          <div style={resortsStyles.filterRow}>
-            <div style={resortsStyles.sliderGroup}>
-              <label
-                htmlFor="max-transfer-time-slider"
-                style={resortsStyles.sliderLabel}
+        {maxTransferTimeFromData > 0 && (
+          <fieldset style={resortsStyles.filterGroup}>
+            <legend style={resortsStyles.filterGroupLabel}>Transport</legend>
+            {hasTransportFilters && (
+              <button
+                type="button"
+                onClick={clearTransportFilters}
+                style={resortsStyles.groupClearButton}
+                aria-label="Clear transport filters"
               >
-                Max Transfer Time
-              </label>
-              <input
-                id="max-transfer-time-slider"
-                type="range"
-                min={0}
-                max={maxTransferTimeFromData}
-                step={5}
-                value={
-                  maxTransferTime < 0
-                    ? maxTransferTimeFromData
-                    : maxTransferTime
-                }
-                onChange={(e) => setMaxTransferTime(Number(e.target.value))}
-                style={resortsStyles.slider}
-              />
-              <span style={resortsStyles.sliderValue}>
-                {maxTransferTime >= 0 &&
-                maxTransferTime < maxTransferTimeFromData
-                  ? formatTransferTime(maxTransferTime)
-                  : 'Any'}
-              </span>
+                ×
+              </button>
+            )}
+            <div style={resortsStyles.filterRow}>
+              <div style={resortsStyles.sliderGroup}>
+                <label
+                  htmlFor="max-transfer-time-slider"
+                  style={resortsStyles.sliderLabel}
+                >
+                  Max Transfer Time
+                </label>
+                <input
+                  id="max-transfer-time-slider"
+                  type="range"
+                  min={0}
+                  max={maxTransferTimeFromData}
+                  step={5}
+                  value={
+                    maxTransferTime < 0
+                      ? maxTransferTimeFromData
+                      : maxTransferTime
+                  }
+                  onChange={(e) => setMaxTransferTime(Number(e.target.value))}
+                  style={resortsStyles.slider}
+                />
+                <span style={resortsStyles.sliderValue}>
+                  {maxTransferTime >= 0 &&
+                  maxTransferTime < maxTransferTimeFromData
+                    ? formatTransferTime(maxTransferTime)
+                    : 'Any'}
+                </span>
+              </div>
             </div>
-          </div>
-        </fieldset>
+          </fieldset>
+        )}
       </div>
 
       <div style={resortsStyles.resultCount}>

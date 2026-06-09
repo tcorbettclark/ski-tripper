@@ -56,7 +56,8 @@ export function formatCountdown(endDate: string) {
   return `${minutes}m ${seconds}s`
 }
 
-export function formatTransferTime(minutes: number): string {
+export function formatTransferTime(minutes: number | null): string {
+  if (minutes == null) return ''
   if (minutes <= 0) return '0 mins'
   const hrs = Math.floor(minutes / 60)
   const mins = minutes % 60

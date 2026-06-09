@@ -86,7 +86,7 @@ export default function EditProposalForm({
               .map((u) => u.trim())
               .filter((u) => u && isValidUrl(ensureUrlScheme(u)))
           : [],
-        transferTime: Number(form.transferTime),
+        transferTime: form.transferTime ? Number(form.transferTime) : null,
         summitAltitude: Number(form.summitAltitude),
         baseAltitude: Number(form.baseAltitude),
         pisteKm: Number(form.pisteKm),

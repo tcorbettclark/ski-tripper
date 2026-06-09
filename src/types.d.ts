@@ -29,7 +29,7 @@ export interface Proposal {
   startDate: string
   endDate: string
   nearestAirport: string
-  transferTime: number
+  transferTime: number | null
   country: string
   region: string
   summitAltitude: number
@@ -105,7 +105,7 @@ export interface LocalResort {
   summitAltitude: number
   baseAltitude: number
   nearestAirport: string
-  transferTime: number
+  transferTime: number | null
   pisteKm: number
   beginnerPct: number
   intermediatePct: number

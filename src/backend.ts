@@ -613,7 +613,7 @@ export async function createProposal(
       summitAltitude: number
       baseAltitude: number
       nearestAirport: string
-      transferTime: number
+      transferTime: number | null
       pisteKm: number
       beginnerPct: number
       intermediatePct: number

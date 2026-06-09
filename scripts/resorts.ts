@@ -114,14 +114,15 @@ const enrichSchema = z.object({
 
 type EnrichData = z.infer<typeof enrichSchema>
 
-type ResolvedEnrichData = {
-  [K in keyof EnrichData]: NonNullable<EnrichData[K]>
-}
+type ResolvedEnrichData = Omit<
+  { [K in keyof EnrichData]: NonNullable<EnrichData[K]> },
+  'transferTime'
+> & { transferTime: number | null }
 
-const enrichDefaults: Record<string, string | string[] | number> = {
+const enrichDefaults: Record<string, string | string[] | number | null> = {
   description: '',
   nearestAirport: '',
-  transferTime: 0,
+  transferTime: null,
   snowReliability: '',
   skiSeasonMonths: '',
   websites: [],
@@ -388,7 +389,7 @@ function displayEnrichedData(
   logSummary(
     'Airport',
     data.nearestAirport
-      ? `${data.nearestAirport} (${data.transferTime ? formatTransferTime(data.transferTime) : 'unknown'})`
+      ? `${data.nearestAirport} (${data.transferTime != null ? formatTransferTime(data.transferTime) : 'unknown'})`
       : 'unknown',
     2
   )
