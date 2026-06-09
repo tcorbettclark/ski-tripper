@@ -185,8 +185,10 @@ function slugify(name: string, region: string, country: string): string {
 }
 
 export async function loadOpenSkiMapData(
-  dataDir: string
+  dataDir: string,
+  options?: { minPisteKm?: number }
 ): Promise<ParsedSkiArea[]> {
+  const minPisteKm = options?.minPisteKm ?? 1
   const skiAreasPath = path.resolve(dataDir, 'ski_areas.csv')
   const liftsPath = path.resolve(dataDir, 'lifts.csv')
   const runsPath = path.resolve(dataDir, 'runs.csv')
@@ -247,7 +249,7 @@ export async function loadOpenSkiMapData(
     if (!areaId) continue
 
     const downhillKm = parseFloat(area.downhill_distance_km)
-    if (Number.isNaN(downhillKm) || downhillKm < 1) continue
+    if (Number.isNaN(downhillKm) || downhillKm < minPisteKm) continue
     if (!hasNonSurfaceLift(areaId, liftIndex)) continue
 
     const country = area.countries.split(';')[0].trim()

@@ -687,6 +687,23 @@ async function enrich(options: {
   const existingEnriched = readJsonl<EnrichedResort>(enrichedPath)
   const enrichedById = new Map(existingEnriched.map((r) => [r.id, r]))
 
+  const seededIds = new Set(seeded.map((r) => r.id))
+  const staleEnriched = existingEnriched.filter((r) => !seededIds.has(r.id))
+  if (staleEnriched.length > 0) {
+    log(
+      'info',
+      'enrich',
+      `Removing ${staleEnriched.length} enriched resort(s) no longer in seeded data: ${staleEnriched.map((r) => r.id).join(', ')}`
+    )
+    for (const r of staleEnriched) {
+      enrichedById.delete(r.id)
+    }
+    writeJsonl(
+      enrichedPath,
+      [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
+    )
+  }
+
   let toEnrich: SeededResort[]
   const reEnrichMode = mode === 'fill' || mode === 'all'
 
@@ -787,7 +804,7 @@ async function enrich(options: {
   log(
     'info',
     'enrich',
-    `Found ${toEnrich.length} resort(s) to enrich (out of ${seeded.length} total, ${existingEnriched.length} already enriched)`
+    `Found ${toEnrich.length} resort(s) to enrich (out of ${seeded.length} total, ${enrichedById.size} already enriched)`
   )
   log('info', 'enrich', `Model: ${model}`)
 
@@ -1141,19 +1158,20 @@ async function uploadResorts() {
   console.log('Upload complete!')
 }
 
-async function seed(options: { dryRun?: boolean }) {
+async function seed(options: { dryRun?: boolean; minPisteLength?: number }) {
   const dataDir = path.resolve(RESORTS_DIR)
   const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
   const dryRun = options.dryRun ?? false
+  const minPisteKm = options.minPisteLength ?? 5
 
   log('info', 'seed', `Loading OpenSkiMap data from: ${dataDir}`)
 
-  const resorts = await loadOpenSkiMapData(dataDir)
+  const resorts = await loadOpenSkiMapData(dataDir, { minPisteKm })
 
   log(
     'success',
     'seed',
-    `Found ${resorts.length} resorts matching criteria (operating, downhill, named, >=1km piste, has non-surface lift)`
+    `Found ${resorts.length} resorts matching criteria (operating, downhill, named, >=${minPisteKm}km piste, has non-surface lift)`
   )
 
   const byRegion: Record<string, number> = {}
@@ -1233,6 +1251,11 @@ program
     'Seed ski resorts from OpenSkiMap CSV data into a seeded JSONL file'
   )
   .option('--dry-run', 'Show what would be seeded without writing files')
+  .option(
+    '--min-piste-length <km>',
+    'Minimum piste length in km (default: 5)',
+    parseFloat
+  )
   .action(seed)
 
 program
