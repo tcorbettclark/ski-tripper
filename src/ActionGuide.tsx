@@ -1,5 +1,4 @@
 import {
-  BarChart3,
   CheckCircle,
   type LucideIcon,
   Mountain,
@@ -549,7 +548,6 @@ export default function ActionGuide(props: ActionGuideProps) {
   return (
     <section style={actionGuideStyles.container}>
       <div style={actionGuideStyles.header}>
-        <BarChart3 size={16} style={{ color: colors.accent }} />
         <h3 style={actionGuideStyles.heading}>What's Next</h3>
       </div>
       <div style={actionGuideStyles.flowWrap}>
