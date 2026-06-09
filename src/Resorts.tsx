@@ -1,10 +1,11 @@
-import { MapPin, Trophy } from 'lucide-react'
+import { MapPin, Sparkles, Trophy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import { COMMON_COUNTRIES, COUNTRIES, getCountryFlagUrl } from './countries'
 import DateRangeField from './DateRangeField'
 import DetailField from './DetailField'
 import PisteBreakdown from './PisteBreakdown'
+import PreferenceSearchPopup from './PreferenceSearchPopup'
 import { COMMON_REGIONS, REGIONS } from './regions'
 import type { ScoredResort } from './resortSearch'
 import {
@@ -98,6 +99,7 @@ export default function Resorts({
   const [proposalSuccess, setProposalSuccess] = useState(false)
   const [proposalSuccessName, setProposalSuccessName] = useState('')
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
+  const [showPreferenceSearch, setShowPreferenceSearch] = useState(false)
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -473,6 +475,15 @@ export default function Resorts({
               </button>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => setShowPreferenceSearch(true)}
+            style={resortsStyles.preferenceSearchButton}
+            title="Search from preferences"
+          >
+            <Sparkles size={14} />
+            Preferences
+          </button>
         </div>
         <fieldset style={resortsStyles.filterGroup}>
           <legend style={resortsStyles.filterGroupLabel}>Location</legend>
@@ -1004,6 +1015,15 @@ export default function Resorts({
           </div>
         </div>
       )}
+
+      {showPreferenceSearch && (
+        <PreferenceSearchPopup
+          tripId={tripId}
+          onClose={() => setShowPreferenceSearch(false)}
+          onSearch={(query) => setSearchQuery(query)}
+          onAuthError={onAuthError}
+        />
+      )}
     </div>
   )
 }
@@ -1164,6 +1184,22 @@ const resortsStyles = {
   },
   searchRow: {
     display: 'flex',
+    gap: '8px',
+  },
+  preferenceSearchButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 14px',
+    borderRadius: '8px',
+    border: `1px solid ${mix('--color-accent', 0.3)}`,
+    background: 'transparent',
+    color: colors.accent,
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    fontWeight: '600' as const,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap' as const,
   },
   searchInputWrapper: {
     position: 'relative' as const,

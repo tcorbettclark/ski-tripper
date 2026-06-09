@@ -1523,3 +1523,17 @@ export async function triggerAnalysis(
     async: true,
   })
 }
+
+const PREFERENCE_SEARCH_FUNCTION_ID = process.env
+  .PUBLIC_APPWRITE_PREFERENCE_SEARCH_FUNCTION_ID as string
+
+export async function triggerPreferenceSearch(
+  tripId: string,
+  fn: Functions = functions
+): Promise<void> {
+  await fn.createExecution({
+    functionId: PREFERENCE_SEARCH_FUNCTION_ID,
+    body: JSON.stringify({ tripId }),
+    async: true,
+  })
+}
