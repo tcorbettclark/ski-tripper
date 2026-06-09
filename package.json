@@ -36,6 +36,7 @@
     "ci": "biome ci",
     "cors-finder": "bash scripts/find-cors-test.sh",
     "db-admin": "bun run scripts/db-admin.ts",
+    "run-function": "bun run scripts/run-function.ts",
     "resorts": "bun run scripts/resorts.ts",
     "playground": "bun build playground/action-guide-test.tsx --outdir playground-dist --target browser && cp playground/index.html playground-dist/ && echo 'Playground built to playground-dist/'"
   },
@@ -61,6 +62,7 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "ai-json-safe-parse": "^0.3.0",
+    "canonical-json": "^0.4.0",
     "commander": "^14.0.3",
     "csv-parse": "^6.2.1",
     "exa-js": "^2.13.0",
