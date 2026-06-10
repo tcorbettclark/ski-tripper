@@ -1,4 +1,4 @@
-appwrite.config.json
+pb_data
 node_modules/
 dist
 dist-test
@@ -8,7 +8,6 @@ dist-test
 .backups/
 .DS_Store
 .playwright-cli
-.env.app-explorer.md
 localhost-key.pem
 localhost.pem
 resorts/

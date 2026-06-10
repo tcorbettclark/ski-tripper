@@ -38,6 +38,7 @@
     "db-admin": "bun run scripts/db-admin.ts",
     "run-function": "bun run scripts/run-function.ts",
     "resorts": "bun run scripts/resorts.ts",
+    "create-collections": "bun run scripts/create-collections.ts",
     "playground": "bun build playground/action-guide-test.tsx --outdir playground-dist --target browser && cp playground/index.html playground-dist/ && echo 'Playground built to playground-dist/'"
   },
   "dependencies": {
@@ -47,6 +48,7 @@
     "dayjs": "^1.11.21",
     "leven": "^4.1.0",
     "lucide-react": "^1.17.0",
+    "pocketbase": "^0.27.0",
     "react": "^19.2.6",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.6",
