@@ -52,7 +52,7 @@ interface PollComponentProps {
   ) => Promise<Vote>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ participantUserId: string }> }>
+  ) => Promise<{ participants: Array<{ user: string }> }>
   listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
 }
 
@@ -122,13 +122,13 @@ export default function Poll({
         if (!mountedRef.current) return
         setIsCoordinator(
           coordResult.participants.length > 0 &&
-            coordResult.participants[0].participantUserId === user.id
+            coordResult.participants[0].user === user.id
         )
         setProposals(proposalsResult.proposals)
         const accMap: Record<string, Accommodation[]> = {}
         const accResults = await Promise.all(
           proposalsResult.proposals.map((p) =>
-            listAccommodations(p.$id).catch((err) => {
+            listAccommodations(p.id).catch((err) => {
               onAuthError(err)
               return []
             })
@@ -136,7 +136,7 @@ export default function Poll({
         )
         if (!mountedRef.current) return
         proposalsResult.proposals.forEach((p, i) => {
-          accMap[p.$id] = accResults[i]
+          accMap[p.id] = accResults[i]
         })
         setAccommodations(accMap)
         const open = pollsResult.polls.find((p) => p.state === 'OPEN') || null
@@ -145,7 +145,7 @@ export default function Poll({
         setPastPolls(past)
         onActivePollChange?.(open?.endDate || null)
         if (open) {
-          const votesResult = await listVotes(open.$id, user.id)
+          const votesResult = await listVotes(open.id, user.id)
           if (mountedRef.current) setVotes(votesResult.votes)
         }
       })
@@ -171,8 +171,8 @@ export default function Poll({
   const handleVoteSaved = useCallback((vote: unknown) => {
     const v = vote as Vote
     setVotes((prev) => {
-      const exists = prev.find((x) => x.$id === v.$id)
-      return exists ? prev.map((x) => (x.$id === v.$id ? v : x)) : [...prev, v]
+      const exists = prev.find((x) => x.id === v.id)
+      return exists ? prev.map((x) => (x.id === v.id ? v : x)) : [...prev, v]
     })
   }, [])
 
@@ -201,7 +201,7 @@ export default function Poll({
     setClosingPoll(true)
     setClosePollError(null)
     try {
-      const closed = await closePoll(activePoll.$id, user.id, outcomeText)
+      const closed = await closePoll(activePoll.id, user.id, outcomeText)
       setActivePoll(null)
       setPastPolls((p) => [closed, ...p])
       onActivePollChange?.(null)
@@ -215,7 +215,7 @@ export default function Poll({
   }
 
   const hasSubmittedProposals = proposals.some((p) => p.state === 'SUBMITTED')
-  const myVote = votes.find((v) => v.voterUserId === user.id) || null
+  const myVote = votes.find((v) => v.voter === user.id) || null
 
   if (loading) return <p style={styles.message}>Loading…</p>
 
@@ -350,7 +350,7 @@ export default function Poll({
               <h3 style={styles.pastHeading}>Past Polls</h3>
               {pastPolls.map((poll) => (
                 <PastPoll
-                  key={poll.$id}
+                  key={poll.id}
                   poll={poll}
                   proposals={proposals}
                   userId={user.id}

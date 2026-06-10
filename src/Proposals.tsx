@@ -102,7 +102,7 @@ interface ProposalsProps {
   ) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ participantUserId: string }> }>
+  ) => Promise<{ participants: Array<{ user: string }> }>
 }
 
 const noopAuthError = () => {}
@@ -166,14 +166,14 @@ export default function Proposals({
         setProposals(proposalsResult.proposals)
         setIsCoordinator(
           coordResult.participants.length > 0 &&
-            coordResult.participants[0].participantUserId === user.id
+            coordResult.participants[0].user === user.id
         )
         return proposalsResult.proposals
       })
       .then((loadedProposals) => {
         if (!mountedRef.current || !loadedProposals) return
         const accommodationPromises = loadedProposals.map((p) =>
-          listAccommodations(p.$id).catch((err) => {
+          listAccommodations(p.id).catch((err) => {
             onAuthError(err)
             return []
           })
@@ -190,7 +190,7 @@ export default function Proposals({
         const { loadedProposals, accommodationResults } = result
         const accMap: Record<string, Accommodation[]> = {}
         accommodationResults.forEach((accs, i) => {
-          accMap[loadedProposals[i].$id] = accs
+          accMap[loadedProposals[i].id] = accs
         })
         setAccommodations(accMap)
       })
@@ -217,11 +217,11 @@ export default function Proposals({
   const handleUpdated = useCallback(
     (updated: unknown) => {
       const u = updated as Proposal
-      setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
-      listAccommodations(u.$id)
+      setProposals((p) => p.map((prop) => (prop.id === u.id ? u : prop)))
+      listAccommodations(u.id)
         .then((accs) => {
           if (!mountedRef.current) return
-          setAccommodations((prev) => ({ ...prev, [u.$id]: accs }))
+          setAccommodations((prev) => ({ ...prev, [u.id]: accs }))
         })
         .catch(onAuthError)
     },
@@ -229,22 +229,22 @@ export default function Proposals({
   )
 
   const handleDeleted = useCallback((id: string) => {
-    setProposals((p) => p.filter((prop) => prop.$id !== id))
+    setProposals((p) => p.filter((prop) => prop.id !== id))
   }, [])
 
   const handleRejected = useCallback((updated: unknown) => {
     const u = updated as Proposal
-    setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
+    setProposals((p) => p.map((prop) => (prop.id === u.id ? u : prop)))
   }, [])
 
   const handleRevertedToDraft = useCallback((updated: unknown) => {
     const u = updated as Proposal
-    setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
+    setProposals((p) => p.map((prop) => (prop.id === u.id ? u : prop)))
   }, [])
 
   const handleSubmitted = useCallback((updated: unknown) => {
     const u = updated as Proposal
-    setProposals((p) => p.map((prop) => (prop.$id === u.$id ? u : prop)))
+    setProposals((p) => p.map((prop) => (prop.id === u.id ? u : prop)))
   }, [])
 
   const handleAccommodationsChanged = useCallback(

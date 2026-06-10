@@ -12,7 +12,7 @@ export default function PollResults({
   proposals,
   votes,
 }: PollResultsProps) {
-  const proposalMap = Object.fromEntries(proposals.map((p) => [p.$id, p]))
+  const proposalMap = Object.fromEntries(proposals.map((p) => [p.id, p]))
 
   const totals: Record<string, number> = {}
   poll.proposalIds.forEach((id) => {

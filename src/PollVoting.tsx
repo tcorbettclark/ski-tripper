@@ -28,7 +28,7 @@ export default function PollVoting({
   onVoteSaved,
   upsertVote = _upsertVote,
 }: PollVotingProps) {
-  const proposalMap = Object.fromEntries(proposals.map((p) => [p.$id, p]))
+  const proposalMap = Object.fromEntries(proposals.map((p) => [p.id, p]))
   const sortedProposalIds = [...poll.proposalIds].sort((a, b) =>
     (proposalMap[a]?.resortName || '').localeCompare(
       proposalMap[b]?.resortName || ''
@@ -80,7 +80,7 @@ export default function PollVoting({
     const nonZeroIds = sortedProposalIds.filter((id) => allocations[id] > 0)
     try {
       const result = await upsertVote(
-        poll.$id,
+        poll.id,
         userId,
         nonZeroIds,
         nonZeroIds.map((id) => allocations[id])
@@ -204,7 +204,7 @@ function ProposalRow({
         <button
           type="button"
           aria-label={`Remove vote from ${name}`}
-          onClick={() => onRemove(proposal.$id)}
+          onClick={() => onRemove(proposal.id)}
           disabled={count === 0}
           style={{
             ...styles.stepperButton,
@@ -214,7 +214,7 @@ function ProposalRow({
           −
         </button>
         <span
-          data-testid={`count-${proposal.$id}`}
+          data-testid={`count-${proposal.id}`}
           style={count > 0 ? styles.count : styles.countZero}
         >
           {count}
@@ -222,7 +222,7 @@ function ProposalRow({
         <button
           type="button"
           aria-label={`Add vote to ${name}`}
-          onClick={() => onAdd(proposal.$id)}
+          onClick={() => onAdd(proposal.id)}
           disabled={remaining === 0}
           style={{
             ...styles.stepperButton,

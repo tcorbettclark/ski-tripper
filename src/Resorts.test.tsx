@@ -17,7 +17,12 @@ mock.module('./resortSearch', () => ({
   ),
 }))
 
-const user = { $id: 'user-1', name: 'Alice' }
+const user = {
+  id: 'user-1',
+  name: 'Alice',
+  email: 'alice@example.com',
+  emailVerification: true,
+}
 
 const sampleResorts: ResortWithEmbedding[] = [
   {

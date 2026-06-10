@@ -4,13 +4,13 @@ import userEvent from '@testing-library/user-event'
 import PollVoting from './PollVoting'
 
 const poll = {
-  $id: 'poll-1',
-  $createdAt: '2024-01-01T00:00:00Z',
-  $updatedAt: '2024-01-01T00:00:00Z',
-  pollCreatorUserId: 'user-1',
+  id: 'poll-1',
+  created: '2024-01-01T00:00:00Z',
+  updated: '2024-01-01T00:00:00Z',
+  pollCreator: 'user-1',
   pollCreatorUserName: 'Test User',
   state: 'OPEN' as const,
-  tripId: 'trip-1',
+  trip: 'trip-1',
   proposalIds: ['p-1', 'p-2', 'p-3'],
   startDate: '2024-01-01T00:00:00Z',
   endDate: '2024-12-31T23:59:59Z',
@@ -18,12 +18,12 @@ const poll = {
 }
 const proposals = [
   {
-    $id: 'p-1',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
-    proposerUserId: 'user-2',
+    id: 'p-1',
+    created: '2024-01-01T00:00:00Z',
+    updated: '2024-01-01T00:00:00Z',
+    proposer: 'user-2',
     proposerUserName: 'Proposer',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     state: 'SUBMITTED' as const,
     description: 'Great skiing',
     resortName: 'Chamonix',
@@ -51,12 +51,12 @@ const proposals = [
     approximateCost: '£1000',
   },
   {
-    $id: 'p-2',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
-    proposerUserId: 'user-2',
+    id: 'p-2',
+    created: '2024-01-01T00:00:00Z',
+    updated: '2024-01-01T00:00:00Z',
+    proposer: 'user-2',
     proposerUserName: 'Proposer',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     state: 'SUBMITTED' as const,
     description: 'Great skiing',
     resortName: 'Verbier',
@@ -84,12 +84,12 @@ const proposals = [
     approximateCost: '£1500',
   },
   {
-    $id: 'p-3',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
-    proposerUserId: 'user-2',
+    id: 'p-3',
+    created: '2024-01-01T00:00:00Z',
+    updated: '2024-01-01T00:00:00Z',
+    proposer: 'user-2',
     proposerUserName: 'Proposer',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     state: 'SUBMITTED' as const,
     description: 'Great skiing',
     resortName: 'Zermatt',
@@ -125,7 +125,7 @@ function renderPollVoting(props = {}) {
     myVote: null,
     userId: 'user-1',
     onVoteSaved: mock(() => {}),
-    upsertVote: mock(() => Promise.resolve({ $id: 'v-new' })),
+    upsertVote: mock(() => Promise.resolve({ id: 'v-new' })),
   }
   return render(<PollVoting {...defaults} {...props} />)
 }
@@ -234,7 +234,7 @@ describe('PollVoting', () => {
 
   it('save calls upsertVote with correct args and calls onVoteSaved', async () => {
     const user = userEvent.setup()
-    const savedVote = { $id: 'v-new' }
+    const savedVote = { id: 'v-new' }
     const upsertVote = mock(() => Promise.resolve(savedVote))
     const onVoteSaved = mock(() => {})
     renderPollVoting({ upsertVote, onVoteSaved })
@@ -271,25 +271,25 @@ describe('PollVoting', () => {
 
   it('displays proposals in alphabetical order regardless of proposalIds order', () => {
     const pollOutOfOrder = {
-      $id: 'poll-1',
-      $createdAt: '2024-01-01T00:00:00Z',
-      $updatedAt: '2024-01-01T00:00:00Z',
-      pollCreatorUserId: 'user-1',
+      id: 'poll-1',
+      created: '2024-01-01T00:00:00Z',
+      updated: '2024-01-01T00:00:00Z',
+      pollCreator: 'user-1',
       pollCreatorUserName: 'Test User',
       state: 'OPEN' as const,
-      tripId: 'trip-1',
+      trip: 'trip-1',
       proposalIds: ['p-3', 'p-1', 'p-2'],
       startDate: '2024-01-01T00:00:00Z',
       endDate: '2024-12-31T23:59:59Z',
     }
     const proposalsOutOfOrder = [
       {
-        $id: 'p-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposerUserId: 'user-2',
+        id: 'p-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposer: 'user-2',
         proposerUserName: 'Proposer',
-        tripId: 'trip-1',
+        trip: 'trip-1',
         state: 'SUBMITTED' as const,
         description: 'Great skiing',
         resortName: 'Chamonix',
@@ -317,12 +317,12 @@ describe('PollVoting', () => {
         approximateCost: '£1000',
       },
       {
-        $id: 'p-2',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposerUserId: 'user-2',
+        id: 'p-2',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposer: 'user-2',
         proposerUserName: 'Proposer',
-        tripId: 'trip-1',
+        trip: 'trip-1',
         state: 'SUBMITTED' as const,
         description: 'Great skiing',
         resortName: 'Verbier',
@@ -350,12 +350,12 @@ describe('PollVoting', () => {
         approximateCost: '£1500',
       },
       {
-        $id: 'p-3',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposerUserId: 'user-2',
+        id: 'p-3',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposer: 'user-2',
         proposerUserName: 'Proposer',
-        tripId: 'trip-1',
+        trip: 'trip-1',
         state: 'SUBMITTED' as const,
         description: 'Great skiing',
         resortName: 'Zermatt',

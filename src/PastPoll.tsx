@@ -33,7 +33,7 @@ export default function PastPoll({
   useEffect(() => {
     setLoading(true)
     setError('')
-    listVotes(poll.$id, userId)
+    listVotes(poll.id, userId)
       .then(async (result) => {
         if (!mountedRef.current) return
         setVotes(result.votes)
@@ -45,7 +45,7 @@ export default function PastPoll({
       .finally(() => {
         if (mountedRef.current) setLoading(false)
       })
-  }, [poll.$id, userId, listVotes])
+  }, [poll.id, userId, listVotes])
 
   return (
     <div style={styles.container}>
@@ -64,7 +64,7 @@ export default function PastPoll({
           </div>
           <span style={styles.outcomeMeta}>
             Closed by {poll.pollCreatorUserName} ·{' '}
-            {formatDateTime(poll.$updatedAt)}
+            {formatDateTime(poll.updated)}
           </span>
         </div>
       )}

@@ -305,9 +305,7 @@ export default function Resorts({
       setProposalError('')
       try {
         const { createProposal } = await import('./backend')
-        const account = (await import('./backend')).account
-        const userAccount = await account.get()
-        await createProposal(tripId, user.id, userAccount.name, {
+        await createProposal(tripId, user.id, user.name, {
           description,
           startDate,
           endDate,
@@ -340,7 +338,7 @@ export default function Resorts({
         setProposalSaving(false)
       }
     },
-    [tripId, user.id]
+    [tripId, user.id, user.name]
   )
 
   const clearLocationFilters = useCallback(() => {

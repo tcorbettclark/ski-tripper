@@ -5,16 +5,16 @@ import type { Trip } from './types'
 
 const sampleTrips: Trip[] = [
   {
-    $id: '1',
-    $createdAt: '',
-    $updatedAt: '',
+    id: '1',
+    created: '',
+    updated: '',
     code: '',
     description: 'Alpine trip',
   },
   {
-    $id: '2',
-    $createdAt: '',
-    $updatedAt: '',
+    id: '2',
+    created: '',
+    updated: '',
     code: '',
     description: 'Canada trip',
   },
@@ -30,9 +30,7 @@ async function renderTable(trips: Trip[], props = {}) {
         onSelectTrip={noop}
         getCoordinatorParticipant={() =>
           Promise.resolve({
-            participants: [
-              { participantUserId: 'user-1', participantUserName: 'Test User' },
-            ],
+            participants: [{ user: 'user-1', userName: 'Test User' }],
           })
         }
         {...props}

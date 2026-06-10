@@ -1,19 +1,24 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Models } from 'appwrite'
 import Proposals from './Proposals'
+import type { User } from './types.d'
 
-const user = { $id: 'user-1', name: 'Alice' } as Models.User
+const user = {
+  id: 'user-1',
+  name: 'Alice',
+  email: 'alice@example.com',
+  emailVerification: true,
+} as User
 
 const sampleProposals = [
   {
-    $id: 'p-1',
-    $createdAt: '2024-01-01T00:00:00.000Z',
-    $updatedAt: '2024-01-01T00:00:00.000Z',
-    proposerUserId: 'user-1',
+    id: 'p-1',
+    created: '2024-01-01T00:00:00.000Z',
+    updated: '2024-01-01T00:00:00.000Z',
+    proposer: 'user-1',
     proposerUserName: 'Alice',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     state: 'DRAFT' as const,
     resortName: "Val d'Isère",
     country: 'France',
@@ -49,19 +54,19 @@ function renderProposals(props = {}) {
     listProposals: mock((_tripId: string, _userId: string) =>
       Promise.resolve({ proposals: sampleProposals })
     ),
-    createProposal: mock(() => Promise.resolve({ $id: 'p-new' })),
-    updateProposal: mock(() => Promise.resolve({ $id: 'p-1' })),
+    createProposal: mock(() => Promise.resolve({ id: 'p-new' })),
+    updateProposal: mock(() => Promise.resolve({ id: 'p-1' })),
     deleteProposal: mock(() => Promise.resolve()),
     submitProposal: mock(() =>
-      Promise.resolve({ $id: 'p-1', state: 'SUBMITTED' })
+      Promise.resolve({ id: 'p-1', state: 'SUBMITTED' })
     ),
     rejectProposal: mock(() =>
-      Promise.resolve({ $id: 'p-1', state: 'REJECTED' })
+      Promise.resolve({ id: 'p-1', state: 'REJECTED' })
     ),
     getCoordinatorParticipant: mock(() =>
       Promise.resolve({ participants: [] })
     ),
-    listAccommodations: mock((_proposalId: string) => Promise.resolve([])),
+    listAccommodations: mock((_proposal: string) => Promise.resolve([])),
     resorts: [] as any[],
   }
   return render(<Proposals {...defaults} {...props} />)
@@ -84,7 +89,7 @@ describe('Proposals', () => {
   it('shows "No proposals yet" when trip has no proposals', async () => {
     await act(async () => {
       renderProposals({
-        tripId: 'trip-1',
+        trip: 'trip-1',
         listProposals: mock(() => Promise.resolve({ proposals: [] })),
       })
     })
@@ -131,7 +136,7 @@ describe('Proposals', () => {
 
     listProposals.mockClear()
     const newProposals = [
-      { ...sampleProposals[0], $id: 'p-2', resortName: 'Whistler' },
+      { ...sampleProposals[0], id: 'p-2', resortName: 'Whistler' },
     ]
     listProposals.mockImplementation(() =>
       Promise.resolve({ proposals: newProposals })
@@ -143,17 +148,17 @@ describe('Proposals', () => {
     await act(async () => {
       rerender(
         <Proposals
-          user={user as Models.User}
+          user={user as User}
           tripId="trip-2"
           listProposals={listProposals}
-          createProposal={mock(() => Promise.resolve({ $id: 'p-new' }))}
-          updateProposal={mock(() => Promise.resolve({ $id: 'p-1' }))}
+          createProposal={mock(() => Promise.resolve({ id: 'p-new' }))}
+          updateProposal={mock(() => Promise.resolve({ id: 'p-1' }))}
           deleteProposal={mock(() => Promise.resolve())}
           submitProposal={mock(() =>
-            Promise.resolve({ $id: 'p-1', state: 'SUBMITTED' })
+            Promise.resolve({ id: 'p-1', state: 'SUBMITTED' })
           )}
           rejectProposal={mock(() =>
-            Promise.resolve({ $id: 'p-1', state: 'REJECTED' })
+            Promise.resolve({ id: 'p-1', state: 'REJECTED' })
           )}
           getCoordinatorParticipant={mock(() =>
             Promise.resolve({ participants: [] })
@@ -172,13 +177,13 @@ describe('Proposals', () => {
     const user = userEvent.setup()
     await act(async () => {
       renderProposals({
-        tripId: 'trip-1',
+        trip: 'trip-1',
         listProposals: mock(() =>
           Promise.resolve({ proposals: [submittedProposal] })
         ),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            participants: [{ $id: 'part-1', participantUserId: 'user-1' }],
+            participants: [{ id: 'part-1', user: 'user-1' }],
           })
         ),
       })
@@ -193,13 +198,13 @@ describe('Proposals', () => {
     const submittedProposal = { ...sampleProposals[0], state: 'SUBMITTED' }
     await act(async () => {
       renderProposals({
-        tripId: 'trip-1',
+        trip: 'trip-1',
         listProposals: mock(() =>
           Promise.resolve({ proposals: [submittedProposal] })
         ),
         getCoordinatorParticipant: mock(() =>
           Promise.resolve({
-            participants: [{ $id: 'part-1', participantUserId: 'other-user' }],
+            participants: [{ id: 'part-1', user: 'other-user' }],
           })
         ),
       })
@@ -212,10 +217,10 @@ describe('Proposals', () => {
   it('re-fetches accommodations when handleUpdated is called', async () => {
     const initialAccommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposalId: 'p-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposal: 'p-1',
         name: 'Old Hotel',
         url: '',
         cost: '€100',
@@ -224,10 +229,10 @@ describe('Proposals', () => {
     ]
     const updatedAccommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-02T00:00:00Z',
-        proposalId: 'p-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-02T00:00:00Z',
+        proposal: 'p-1',
         name: 'New Hotel',
         url: '',
         cost: '€200',
@@ -235,7 +240,7 @@ describe('Proposals', () => {
       },
     ]
     let listAccCallCount = 0
-    const listAccommodationsFn = mock((_proposalId: string) => {
+    const listAccommodationsFn = mock((_proposal: string) => {
       listAccCallCount++
       if (listAccCallCount === 1) return Promise.resolve(initialAccommodations)
       return Promise.resolve(updatedAccommodations)
@@ -247,13 +252,13 @@ describe('Proposals', () => {
       })
     )
 
-    const updateAccommodationFn = mock(() => Promise.resolve({ $id: 'acc-1' }))
+    const updateAccommodationFn = mock(() => Promise.resolve({ id: 'acc-1' }))
 
     const user = userEvent.setup()
 
     await act(async () => {
       renderProposals({
-        tripId: 'trip-1',
+        trip: 'trip-1',
         listAccommodations: listAccommodationsFn,
         updateProposal: updateProposalFn,
         updateAccommodation: updateAccommodationFn,

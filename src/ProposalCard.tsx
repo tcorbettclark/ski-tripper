@@ -157,12 +157,12 @@ export default function ProposalCard({
   >(null)
 
   useEffect(() => {
-    listDiscussion(proposal.$id)
+    listDiscussion(proposal.id)
       .then((rows) => setDiscussionCount(rows.length))
       .catch(onAuthError)
-  }, [proposal.$id, listDiscussion, onAuthError])
+  }, [proposal.id, listDiscussion, onAuthError])
 
-  const isOwner = userId === proposal.proposerUserId
+  const isOwner = userId === proposal.proposer
   const isDraft = proposal.state === 'DRAFT'
   const isRejected = proposal.state === 'REJECTED'
   const canAct = isOwner && isDraft
@@ -187,7 +187,7 @@ export default function ProposalCard({
     setSubmitting(true)
     setSubmitError(null)
     try {
-      const result = await submitProposal(proposal.$id, userId)
+      const result = await submitProposal(proposal.id, userId)
       onSubmitted(result)
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : String(err))
@@ -200,7 +200,7 @@ export default function ProposalCard({
     setRejecting(true)
     setRejectError(null)
     try {
-      const result = await rejectProposal(proposal.$id, userId)
+      const result = await rejectProposal(proposal.id, userId)
       onRejected(result)
     } catch (err) {
       setRejectError(err instanceof Error ? err.message : String(err))
@@ -213,7 +213,7 @@ export default function ProposalCard({
     setReverting(true)
     setRevertError(null)
     try {
-      const result = await revertProposalToDraft(proposal.$id, userId)
+      const result = await revertProposalToDraft(proposal.id, userId)
       onRevertedToDraft(result)
     } catch (err) {
       setRevertError(err instanceof Error ? err.message : String(err))
@@ -226,8 +226,8 @@ export default function ProposalCard({
     setDeleting(true)
     setDeleteError(null)
     try {
-      await deleteProposal(proposal.$id, userId)
-      onDeleted(proposal.$id)
+      await deleteProposal(proposal.id, userId)
+      onDeleted(proposal.id)
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : String(err))
     } finally {
@@ -236,8 +236,8 @@ export default function ProposalCard({
   }
 
   function handleAccommodationsChanged() {
-    onAccommodationsChanged?.(proposal.$id)
-    listAccommodations(proposal.$id).catch(onAuthError)
+    onAccommodationsChanged?.(proposal.id)
+    listAccommodations(proposal.id).catch(onAuthError)
   }
 
   async function handleAddAccommodation(data: {
@@ -248,7 +248,7 @@ export default function ProposalCard({
   }) {
     setAccommodationError(null)
     try {
-      await createAccommodation(proposal.$id, userId, data)
+      await createAccommodation(proposal.id, userId, data)
       setAddingAccommodation(false)
       handleAccommodationsChanged()
     } catch (err) {
@@ -491,16 +491,16 @@ export default function ProposalCard({
                 <p style={styles.noAccommodations}>No accommodations yet.</p>
               )}
               {accommodations.map((acc) =>
-                editingAccommodationId === acc.$id ? (
+                editingAccommodationId === acc.id ? (
                   <AccommodationEditForm
-                    key={acc.$id}
+                    key={acc.id}
                     initialData={{
                       name: acc.name,
                       url: acc.url,
                       cost: acc.cost,
                       description: acc.description,
                     }}
-                    onSave={(data) => handleEditAccommodation(acc.$id, data)}
+                    onSave={(data) => handleEditAccommodation(acc.id, data)}
                     onCancel={() => {
                       setEditingAccommodationId(null)
                       setAccommodationError(null)
@@ -508,7 +508,7 @@ export default function ProposalCard({
                     error={accommodationError}
                   />
                 ) : (
-                  <div key={acc.$id}>
+                  <div key={acc.id}>
                     <div style={styles.accommodationItem}>
                       <div style={styles.accommodationItemContent}>
                         <div style={styles.grid}>
@@ -545,7 +545,7 @@ export default function ProposalCard({
                           <button
                             type="button"
                             onClick={() =>
-                              setConfirmDeleteAccommodationId(acc.$id)
+                              setConfirmDeleteAccommodationId(acc.id)
                             }
                             style={styles.accommodationDeleteButton}
                             aria-label={`Delete accommodation ${acc.name}`}
@@ -555,7 +555,7 @@ export default function ProposalCard({
                           <button
                             type="button"
                             onClick={() => {
-                              setEditingAccommodationId(acc.$id)
+                              setEditingAccommodationId(acc.id)
                               setAccommodationError(null)
                             }}
                             style={styles.accommodationEditButton}
@@ -597,11 +597,11 @@ export default function ProposalCard({
 
           {!previewMode && activeTab === 'discussion' && (
             <DiscussionSection
-              proposalId={proposal.$id}
+              proposalId={proposal.id}
               userId={userId}
               userName={userName}
               onCommentsChanged={() => {
-                listDiscussion(proposal.$id)
+                listDiscussion(proposal.id)
                   .then((rows) => setDiscussionCount(rows.length))
                   .catch(onAuthError)
               }}
@@ -610,8 +610,8 @@ export default function ProposalCard({
 
           {!previewMode && activeTab === 'analysis' && (
             <AnalysisTab
-              proposalId={proposal.$id}
-              tripId={proposal.tripId}
+              proposalId={proposal.id}
+              tripId={proposal.trip}
               onAuthError={onAuthError}
             />
           )}

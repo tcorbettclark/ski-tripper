@@ -11,12 +11,12 @@ const mockRejectProposal = mock(async () => ({}))
 const mockRevertProposalToDraft = mock(async () => ({}))
 
 const baseProposal: Proposal = {
-  $id: 'proposal-1',
-  $createdAt: '2024-01-01T00:00:00Z',
-  $updatedAt: '2024-01-01T00:00:00Z',
-  proposerUserId: 'user-1',
+  id: 'proposal-1',
+  created: '2024-01-01T00:00:00Z',
+  updated: '2024-01-01T00:00:00Z',
+  proposer: 'user-1',
   proposerUserName: 'John Doe',
-  tripId: 'trip-1',
+  trip: 'trip-1',
   state: 'DRAFT',
   description: 'A test proposal description',
   resortName: 'Test Resort',
@@ -362,10 +362,10 @@ describe('ProposalCard', () => {
     const user = userEvent.setup()
     const accommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposalId: 'proposal-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposal: 'proposal-1',
         name: 'Hotel Test',
         url: '',
         cost: '',
@@ -474,11 +474,11 @@ describe('ProposalCard', () => {
   it('shows discussion count in tab', async () => {
     const comments: Discussion[] = [
       {
-        $id: 'd-1',
-        $createdAt: '2024-06-15T10:00:00Z',
-        $updatedAt: '2024-06-15T10:00:00Z',
-        proposalId: 'proposal-1',
-        authorUserId: 'user-2',
+        id: 'd-1',
+        created: '2024-06-15T10:00:00Z',
+        updated: '2024-06-15T10:00:00Z',
+        proposal: 'proposal-1',
+        author: 'user-2',
         authorUserName: 'Bob',
         body: 'Hello',
         type: 'comment',
@@ -512,10 +512,10 @@ describe('ProposalCard', () => {
     const user = userEvent.setup()
     const accommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposalId: 'proposal-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposal: 'proposal-1',
         name: 'Chalet Mont Blanc',
         url: 'https://example.com/chalet',
         cost: '€150/night',
@@ -602,10 +602,10 @@ describe('ProposalCard', () => {
     const user = userEvent.setup()
     const accommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposalId: 'proposal-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposal: 'proposal-1',
         name: 'Chalet Mont Blanc',
         url: '',
         cost: '€100/night',
@@ -634,10 +634,10 @@ describe('ProposalCard', () => {
   it('shows edit button on accommodations for owner of DRAFT', async () => {
     const accommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposalId: 'proposal-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposal: 'proposal-1',
         name: 'Hotel Test',
         url: '',
         cost: '€100',
@@ -668,10 +668,10 @@ describe('ProposalCard', () => {
   it('hides accommodation edit/delete buttons for non-owner', async () => {
     const accommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposalId: 'proposal-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposal: 'proposal-1',
         name: 'Hotel Test',
         url: '',
         cost: '€100',
@@ -700,7 +700,7 @@ describe('ProposalCard', () => {
   })
 
   it('creates accommodation inline', async () => {
-    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
     const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
@@ -737,7 +737,7 @@ describe('ProposalCard', () => {
   })
 
   it('prepends https:// to accommodation URL when scheme is missing', async () => {
-    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
     const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
@@ -772,7 +772,7 @@ describe('ProposalCard', () => {
   })
 
   it('does not modify accommodation URL that already has https://', async () => {
-    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
     const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
@@ -807,7 +807,7 @@ describe('ProposalCard', () => {
   })
 
   it('does not modify accommodation URL that already has http://', async () => {
-    const createAccommodation = mock(() => Promise.resolve({ $id: 'acc-new' }))
+    const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
     const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
@@ -847,10 +847,10 @@ describe('ProposalCard', () => {
     )
     const accommodations = [
       {
-        $id: 'acc-1',
-        $createdAt: '2024-01-01T00:00:00Z',
-        $updatedAt: '2024-01-01T00:00:00Z',
-        proposalId: 'proposal-1',
+        id: 'acc-1',
+        created: '2024-01-01T00:00:00Z',
+        updated: '2024-01-01T00:00:00Z',
+        proposal: 'proposal-1',
         name: 'Hotel',
         url: '',
         cost: '',

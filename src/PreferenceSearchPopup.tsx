@@ -58,9 +58,9 @@ export default function PreferenceSearchPopup({
         setParticipants(p)
         return Promise.all(
           p.map((participant) =>
-            getPreferences(participant.participantUserId)
-              .then((prefs) => [participant.participantUserId, prefs] as const)
-              .catch(() => [participant.participantUserId, null] as const)
+            getPreferences(participant.user)
+              .then((prefs) => [participant.user, prefs] as const)
+              .catch(() => [participant.user, null] as const)
           )
         ).then((entries) => {
           const map: Record<string, Preferences | null> = {}
@@ -73,13 +73,9 @@ export default function PreferenceSearchPopup({
       .catch(onAuthError)
   }
 
-  const included = participants.filter(
-    (p) => preferencesMap[p.participantUserId] != null
-  )
+  const included = participants.filter((p) => preferencesMap[p.user] != null)
   const excluded = participants.filter(
-    (p) =>
-      p.participantUserId in preferencesMap &&
-      preferencesMap[p.participantUserId] == null
+    (p) => p.user in preferencesMap && preferencesMap[p.user] == null
   )
 
   async function handleTrigger() {
@@ -147,8 +143,8 @@ export default function PreferenceSearchPopup({
             <div style={popupStyles.participantGroup}>
               <span style={popupStyles.participantLabel}>Included: </span>
               {included.map((p) => (
-                <span key={p.$id} style={popupStyles.participantName}>
-                  {p.participantUserName}
+                <span key={p.id} style={popupStyles.participantName}>
+                  {p.userName}
                 </span>
               ))}
             </div>
@@ -159,8 +155,8 @@ export default function PreferenceSearchPopup({
                 No preferences:{' '}
               </span>
               {excluded.map((p) => (
-                <span key={p.$id} style={popupStyles.participantNameExcluded}>
-                  {p.participantUserName}
+                <span key={p.id} style={popupStyles.participantNameExcluded}>
+                  {p.userName}
                 </span>
               ))}
             </div>

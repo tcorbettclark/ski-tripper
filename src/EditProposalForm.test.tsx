@@ -4,12 +4,12 @@ import EditProposalForm from './EditProposalForm'
 import type { Proposal } from './types.d.ts'
 
 const sampleProposal: Proposal = {
-  $id: 'p-1',
-  $createdAt: '2024-01-01T00:00:00Z',
-  $updatedAt: '2024-01-01T00:00:00Z',
-  proposerUserId: 'user-1',
+  id: 'p-1',
+  created: '2024-01-01T00:00:00Z',
+  updated: '2024-01-01T00:00:00Z',
+  proposer: 'user-1',
   proposerUserName: 'John Doe',
-  tripId: 'trip-1',
+  trip: 'trip-1',
   state: 'DRAFT',
   description: 'Great powder skiing',
   resortName: "Val d'Isère",
@@ -41,7 +41,7 @@ function renderForm(props = {}) {
     onUpdated: mock((_p: unknown) => {}),
     onCancel: mock(() => {}),
     updateProposal: mock(() =>
-      Promise.resolve({ $id: 'p-1', resortName: 'Updated' })
+      Promise.resolve({ id: 'p-1', resortName: 'Updated' })
     ),
   }
   return render(<EditProposalForm {...defaults} {...props} />)
@@ -58,7 +58,7 @@ describe('EditProposalForm', () => {
   it('calls updateProposal with correct args and then onUpdated on submit', async () => {
     const onUpdated = mock(() => {})
     const updateProposal = mock(() =>
-      Promise.resolve({ $id: 'p-1', resortName: 'Updated' })
+      Promise.resolve({ id: 'p-1', resortName: 'Updated' })
     )
     renderForm({ onUpdated, updateProposal })
 
@@ -97,7 +97,7 @@ describe('EditProposalForm', () => {
     const updatedFromServer = {
       ...sampleProposal,
       resortName: 'Updated Resort',
-      $updatedAt: '2024-02-01T00:00:00Z',
+      updated: '2024-02-01T00:00:00Z',
     }
     const updateProposal = mock(() => Promise.resolve(updatedFromServer))
     renderForm({ onUpdated, updateProposal })
@@ -119,13 +119,13 @@ describe('EditProposalForm', () => {
         onUpdated.mock.calls as unknown[][]
       )[0][0] as Proposal
       expect(passedProposal.resortName).toBe('Updated Resort')
-      expect(passedProposal.$updatedAt).toBe('2024-02-01T00:00:00Z')
+      expect(passedProposal.updated).toBe('2024-02-01T00:00:00Z')
     })
   })
 
   it('shows date validation error when submitting without dates', async () => {
     const updateProposal = mock(() =>
-      Promise.resolve({ $id: 'p-1', resortName: 'Updated' })
+      Promise.resolve({ id: 'p-1', resortName: 'Updated' })
     )
     const proposalWithoutDates: Proposal = {
       ...sampleProposal,

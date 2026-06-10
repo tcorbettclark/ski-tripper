@@ -10,9 +10,9 @@ interface RenderRowProps {
 }
 
 const sampleTrip: Trip = {
-  $id: 'trip-1',
-  $createdAt: '2024-01-01T00:00:00.000Z',
-  $updatedAt: '2024-01-01T00:00:00.000Z',
+  id: 'trip-1',
+  created: '2024-01-01T00:00:00.000Z',
+  updated: '2024-01-01T00:00:00.000Z',
   code: 'ABC12',
   description: 'A great trip',
 }
@@ -31,8 +31,8 @@ async function renderRow(trip: Trip, props: RenderRowProps = {}) {
               Promise.resolve({
                 participants: [
                   {
-                    participantUserId: props.coordinatorUserId || 'user-1',
-                    participantUserName: 'Test User',
+                    user: props.coordinatorUserId || 'user-1',
+                    userName: 'Test User',
                   },
                 ],
               })

@@ -1,7 +1,6 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Models } from 'appwrite'
 import Overview from './Overview'
 import type {
   Participant,
@@ -10,48 +9,54 @@ import type {
   Proposal,
   ResortWithEmbedding,
   Trip,
+  User,
   Vote,
 } from './types.d.ts'
 
-const user = { $id: 'user-1', name: 'Alice' } as Models.User
+const user = {
+  id: 'user-1',
+  name: 'Alice',
+  email: 'alice@example.com',
+  emailVerification: true,
+} as User
 
 const sampleTrip: Trip = {
-  $id: 'trip-1',
-  $createdAt: '2024-01-01T00:00:00.000Z',
-  $updatedAt: '2024-01-01T00:00:00.000Z',
+  id: 'trip-1',
+  created: '2024-01-01T00:00:00.000Z',
+  updated: '2024-01-01T00:00:00.000Z',
   code: 'blue-mountain-lodge',
   description: 'Alpine Adventure',
 }
 
 const sampleParticipants: Participant[] = [
   {
-    $id: 'part-1',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
-    participantUserId: 'user-1',
-    participantUserName: 'Alice',
-    tripId: 'trip-1',
+    id: 'part-1',
+    created: '2024-01-01T00:00:00Z',
+    updated: '2024-01-01T00:00:00Z',
+    user: 'user-1',
+    userName: 'Alice',
+    trip: 'trip-1',
     role: 'coordinator',
   },
   {
-    $id: 'part-2',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
-    participantUserId: 'user-2',
-    participantUserName: 'Bob',
-    tripId: 'trip-1',
+    id: 'part-2',
+    created: '2024-01-01T00:00:00Z',
+    updated: '2024-01-01T00:00:00Z',
+    user: 'user-2',
+    userName: 'Bob',
+    trip: 'trip-1',
     role: 'participant',
   },
 ]
 
 const sampleProposals: Proposal[] = [
   {
-    $id: 'prop-1',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-01T00:00:00Z',
-    proposerUserId: 'user-1',
+    id: 'prop-1',
+    created: '2024-01-01T00:00:00Z',
+    updated: '2024-01-01T00:00:00Z',
+    proposer: 'user-1',
     proposerUserName: 'Alice',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     state: 'DRAFT',
     description: 'Nice resort',
     resortName: 'Whistler',
@@ -76,12 +81,12 @@ const sampleProposals: Proposal[] = [
     linkedResortsDescription: '',
   },
   {
-    $id: 'prop-2',
-    $createdAt: '2024-01-02T00:00:00Z',
-    $updatedAt: '2024-01-02T00:00:00Z',
-    proposerUserId: 'user-2',
+    id: 'prop-2',
+    created: '2024-01-02T00:00:00Z',
+    updated: '2024-01-02T00:00:00Z',
+    proposer: 'user-2',
     proposerUserName: 'Bob',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     state: 'SUBMITTED',
     description: 'Great slopes',
     resortName: 'Chamonix',
@@ -109,13 +114,13 @@ const sampleProposals: Proposal[] = [
 
 const samplePolls: Poll[] = [
   {
-    $id: 'poll-1',
-    $createdAt: '2024-01-05T00:00:00Z',
-    $updatedAt: '2024-01-05T00:00:00Z',
-    pollCreatorUserId: 'user-1',
+    id: 'poll-1',
+    created: '2024-01-05T00:00:00Z',
+    updated: '2024-01-05T00:00:00Z',
+    pollCreator: 'user-1',
     pollCreatorUserName: 'Alice',
     state: 'OPEN',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     proposalIds: ['prop-2'],
     startDate: '2024-01-05T00:00:00Z',
     endDate: '2024-01-12T00:00:00Z',
@@ -196,10 +201,10 @@ const sampleResorts: ResortWithEmbedding[] = [
 ]
 
 const samplePreferencesAlice: Preferences = {
-  $id: 'prefs-1',
-  $createdAt: '2024-01-01T00:00:00Z',
-  $updatedAt: '2024-01-01T00:00:00Z',
-  userId: 'user-1',
+  id: 'prefs-1',
+  created: '2024-01-01T00:00:00Z',
+  updated: '2024-01-01T00:00:00Z',
+  user: 'user-1',
   skiSnowboard: ['Ski'],
   difficulty: ['Red', 'Black'],
   piste: ['On-Piste', 'Off-Piste'],
@@ -212,10 +217,10 @@ const samplePreferencesAlice: Preferences = {
 }
 
 const samplePreferencesBob: Preferences = {
-  $id: 'prefs-2',
-  $createdAt: '2024-01-01T00:00:00Z',
-  $updatedAt: '2024-01-01T00:00:00Z',
-  userId: 'user-2',
+  id: 'prefs-2',
+  created: '2024-01-01T00:00:00Z',
+  updated: '2024-01-01T00:00:00Z',
+  user: 'user-2',
   skiSnowboard: ['Snowboard'],
   difficulty: ['Blue'],
   piste: ['On-Piste'],
@@ -338,12 +343,12 @@ describe('Overview', () => {
 
   it('handles participants with no preferences', async () => {
     const participantNoPrefs: Participant = {
-      $id: 'part-3',
-      $createdAt: '2024-01-01T00:00:00Z',
-      $updatedAt: '2024-01-01T00:00:00Z',
-      participantUserId: 'user-3',
-      participantUserName: 'Charlie',
-      tripId: 'trip-1',
+      id: 'part-3',
+      created: '2024-01-01T00:00:00Z',
+      updated: '2024-01-01T00:00:00Z',
+      user: 'user-3',
+      userName: 'Charlie',
+      trip: 'trip-1',
       role: 'participant',
     }
     await act(async () => {
@@ -434,13 +439,13 @@ describe('Overview', () => {
 
   it('navigates to poll tab when clicking closed polls button', async () => {
     const closedPoll: Poll = {
-      $id: 'poll-closed',
-      $createdAt: '2024-01-01T00:00:00Z',
-      $updatedAt: '2024-01-08T00:00:00Z',
-      pollCreatorUserId: 'user-1',
+      id: 'poll-closed',
+      created: '2024-01-01T00:00:00Z',
+      updated: '2024-01-08T00:00:00Z',
+      pollCreator: 'user-1',
       pollCreatorUserName: 'Alice',
       state: 'CLOSED',
-      tripId: 'trip-1',
+      trip: 'trip-1',
       proposalIds: ['prop-1'],
       startDate: '2024-01-01T00:00:00Z',
       endDate: '2024-01-08T00:00:00Z',
@@ -519,11 +524,11 @@ it('shows next step prompt when active poll needs user vote', async () => {
 
 it('shows view active poll when user already voted', async () => {
   const votedVote: Vote = {
-    $id: 'vote-1',
-    $createdAt: '2024-01-06T00:00:00Z',
-    $updatedAt: '2024-01-06T00:00:00Z',
-    pollId: 'poll-1',
-    voterUserId: 'user-1',
+    id: 'vote-1',
+    created: '2024-01-06T00:00:00Z',
+    updated: '2024-01-06T00:00:00Z',
+    poll: 'poll-1',
+    voter: 'user-1',
     proposalIds: ['prop-2'],
     tokenCounts: [3],
   } as Vote
@@ -615,13 +620,13 @@ it('shows only browse resorts when no proposals or polls', async () => {
 
 it('shows closed poll button', async () => {
   const closedPoll: Poll = {
-    $id: 'poll-closed',
-    $createdAt: '2024-01-01T00:00:00Z',
-    $updatedAt: '2024-01-08T00:00:00Z',
-    pollCreatorUserId: 'user-1',
+    id: 'poll-closed',
+    created: '2024-01-01T00:00:00Z',
+    updated: '2024-01-08T00:00:00Z',
+    pollCreator: 'user-1',
     pollCreatorUserName: 'Alice',
     state: 'CLOSED',
-    tripId: 'trip-1',
+    trip: 'trip-1',
     proposalIds: ['prop-1'],
     startDate: '2024-01-01T00:00:00Z',
     endDate: '2024-01-08T00:00:00Z',
@@ -744,10 +749,11 @@ it('updates displayed preferences when onPreferencesUpdated is called', async ()
 
 it('uses current user name from user prop instead of stale participant name', async () => {
   const updatedUser = {
-    $id: 'user-1',
+    id: 'user-1',
     name: 'Alice Updated',
     email: 'alice@example.com',
-  } as Models.User
+    emailVerification: true,
+  } as User
   await act(async () => {
     renderOverview({ user: updatedUser })
   })

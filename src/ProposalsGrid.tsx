@@ -117,7 +117,7 @@ export default function ProposalsGrid({
     let result = proposals
 
     if (myProposalsOnly) {
-      result = result.filter((p) => p.proposerUserId === userId)
+      result = result.filter((p) => p.proposer === userId)
     }
 
     if (debouncedQuery) {
@@ -247,14 +247,14 @@ export default function ProposalsGrid({
         <div style={styles.fullWidthList}>
           {filteredProposals.map((proposal) => (
             <ProposalCard
-              key={proposal.$id}
+              key={proposal.id}
               proposal={proposal}
               userId={userId}
               userName={userName}
               isCoordinator={isCoordinator}
-              accommodations={accommodations[proposal.$id] || []}
+              accommodations={accommodations[proposal.id] || []}
               initialTab={
-                proposalDetail?.proposalId === proposal.$id
+                proposalDetail?.proposalId === proposal.id
                   ? proposalDetail.subTab
                   : undefined
               }

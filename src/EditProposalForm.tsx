@@ -78,7 +78,7 @@ export default function EditProposalForm({
     setDateError('')
     setSaving(true)
     try {
-      const updatedProposal = await updateProposal(proposal.$id, userId, {
+      const updatedProposal = await updateProposal(proposal.id, userId, {
         ...form,
         websites: form.websites
           ? form.websites

@@ -9,7 +9,7 @@ interface TripTableProps {
   emptyMessage?: string
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ participantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ userName: string }> }>
 }
 
 export default function TripTable({
@@ -34,7 +34,7 @@ export default function TripTable({
       <tbody>
         {trips.map((trip) => (
           <TripRow
-            key={trip.$id}
+            key={trip.id}
             trip={trip}
             onSelectTrip={onSelectTrip}
             getCoordinatorParticipant={getCoordinatorParticipant}

@@ -5,10 +5,10 @@ import PreferencesModal from './PreferencesModal'
 import type { Preferences } from './types.d'
 
 const defaultPreferences: Preferences = {
-  $id: 'pref-1',
-  $createdAt: '2024-01-01T00:00:00.000Z',
-  $updatedAt: '2024-01-01T00:00:00.000Z',
-  userId: 'user-1',
+  id: 'pref-1',
+  created: '2024-01-01T00:00:00.000Z',
+  updated: '2024-01-01T00:00:00.000Z',
+  user: 'user-1',
   skiSnowboard: ['Ski'],
   difficulty: ['Red'],
   piste: ['On-Piste'],

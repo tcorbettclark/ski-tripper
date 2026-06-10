@@ -17,13 +17,13 @@ function createMockPoll(overrides: Partial<Poll> = {}): Poll {
   const startDate = baseDate.subtract(7, 'day').toISOString()
   const endDate = baseDate.subtract(1, 'day').toISOString()
   return {
-    $id: TEST_IDS.POLL,
-    $createdAt: new Date().toISOString(),
-    $updatedAt: new Date().toISOString(),
-    pollCreatorUserId: TEST_IDS.USER,
+    id: TEST_IDS.POLL,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    pollCreator: TEST_IDS.USER,
     pollCreatorUserName: 'Alice',
     state: 'CLOSED',
-    tripId: TEST_IDS.TRIP,
+    trip: TEST_IDS.TRIP,
     proposalIds: [TEST_IDS.PROPOSAL_1],
     startDate,
     endDate,
@@ -34,12 +34,12 @@ function createMockPoll(overrides: Partial<Poll> = {}): Poll {
 
 function createMockProposal(overrides: Partial<Proposal> = {}): Proposal {
   return {
-    $id: TEST_IDS.PROPOSAL_1,
-    $createdAt: new Date().toISOString(),
-    $updatedAt: new Date().toISOString(),
-    proposerUserId: TEST_IDS.USER,
+    id: TEST_IDS.PROPOSAL_1,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    proposer: TEST_IDS.USER,
     proposerUserName: 'Alice',
-    tripId: TEST_IDS.TRIP,
+    trip: TEST_IDS.TRIP,
     state: 'SUBMITTED',
     description: 'French Alps',
     resortName: 'Chamonix',
@@ -68,11 +68,11 @@ function createMockProposal(overrides: Partial<Proposal> = {}): Proposal {
 
 function createMockVote(overrides: Partial<Vote> = {}): Vote {
   return {
-    $id: TEST_IDS.VOTE_1,
-    $createdAt: new Date().toISOString(),
-    $updatedAt: new Date().toISOString(),
-    pollId: TEST_IDS.POLL,
-    voterUserId: TEST_IDS.USER,
+    id: TEST_IDS.VOTE_1,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    poll: TEST_IDS.POLL,
+    voter: TEST_IDS.USER,
     voterUserName: 'Alice',
     proposalIds: [TEST_IDS.PROPOSAL_1],
     tokenCounts: [5],
@@ -149,7 +149,7 @@ describe('PastPoll', () => {
       )
     })
 
-    expect(listVotes).toHaveBeenCalledWith(poll.$id, TEST_IDS.USER)
+    expect(listVotes).toHaveBeenCalledWith(poll.id, TEST_IDS.USER)
   })
 
   it('renders PollResults after votes load', async () => {

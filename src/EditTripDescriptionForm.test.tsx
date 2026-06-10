@@ -6,9 +6,9 @@ import type { Trip } from './types.d.ts'
 
 const noop = () => {}
 const testTrip = {
-  $id: 'trip-1',
-  $createdAt: '2024-01-01T00:00:00Z',
-  $updatedAt: '2024-01-01T00:00:00Z',
+  id: 'trip-1',
+  created: '2024-01-01T00:00:00Z',
+  updated: '2024-01-01T00:00:00Z',
   code: 'aaa-bbb-ccc',
   description: 'Original description',
 } as Trip

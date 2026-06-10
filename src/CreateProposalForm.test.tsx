@@ -7,9 +7,8 @@ import {
   waitFor,
   within,
 } from '@testing-library/react'
-import type { Models } from 'appwrite'
 import CreateProposalForm from './CreateProposalForm'
-import type { ResortWithEmbedding } from './types.d'
+import type { ResortWithEmbedding, User } from './types.d'
 
 const sampleResorts: ResortWithEmbedding[] = [
   {
@@ -67,10 +66,15 @@ function renderForm(props = {}) {
     onCreated: mock(() => {}),
     onDismiss: mock(() => {}),
     createProposal: mock(() =>
-      Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })
+      Promise.resolve({ id: 'p-1', resortName: "Val d'Isère" })
     ),
     accountGet: () =>
-      Promise.resolve({ $id: 'user-1', name: 'Alice' }) as Promise<Models.User>,
+      Promise.resolve({
+        id: 'user-1',
+        name: 'Alice',
+        email: 'alice@example.com',
+        emailVerification: true,
+      } as User),
   }
   const utils = render(<CreateProposalForm {...defaults} {...props} />)
   return { ...utils, ...defaults, ...props }
@@ -118,7 +122,7 @@ describe('CreateProposalForm', () => {
 
   it('calls createProposal on submit', async () => {
     const createProposal = mock(() =>
-      Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })
+      Promise.resolve({ id: 'p-1', resortName: "Val d'Isère" })
     )
     const { container } = renderForm({ createProposal })
 
@@ -169,7 +173,7 @@ describe('CreateProposalForm', () => {
   })
 
   it('calls onCreated with result and onDismiss on success', async () => {
-    const result = { $id: 'p-1', resortName: "Val d'Isère" }
+    const result = { id: 'p-1', resortName: "Val d'Isère" }
     const createProposal = mock(() => Promise.resolve(result))
     const onCreated = mock(() => {})
     const onDismiss = mock(() => {})
@@ -293,13 +297,13 @@ describe('CreateProposalForm', () => {
     })
 
     await act(async () => {
-      resolvePromise?.({ $id: 'p-1' })
+      resolvePromise?.({ id: 'p-1' })
     })
   })
 
   it('shows date validation error when submitting without dates', async () => {
     const createProposal = mock(() =>
-      Promise.resolve({ $id: 'p-1', resortName: "Val d'Isère" })
+      Promise.resolve({ id: 'p-1', resortName: "Val d'Isère" })
     )
     const { container } = renderForm({ createProposal })
 

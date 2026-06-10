@@ -5,13 +5,13 @@ import NextActions from './NextActions'
 import type { Poll } from './types.d.ts'
 
 const sampleActivePoll: Poll = {
-  $id: 'poll-1',
-  $createdAt: '2024-01-05T00:00:00Z',
-  $updatedAt: '2024-01-05T00:00:00Z',
-  pollCreatorUserId: 'user-1',
+  id: 'poll-1',
+  created: '2024-01-05T00:00:00Z',
+  updated: '2024-01-05T00:00:00Z',
+  pollCreator: 'user-1',
   pollCreatorUserName: 'Alice',
   state: 'OPEN',
-  tripId: 'trip-1',
+  trip: 'trip-1',
   proposalIds: ['prop-2'],
   startDate: '2024-01-05T00:00:00Z',
   endDate: '2024-01-12T00:00:00Z',

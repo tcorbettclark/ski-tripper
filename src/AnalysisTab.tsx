@@ -56,9 +56,9 @@ export default function AnalysisTab({
         setParticipants(p)
         return Promise.all(
           p.map((participant) =>
-            getPreferences(participant.participantUserId)
-              .then((prefs) => [participant.participantUserId, prefs] as const)
-              .catch(() => [participant.participantUserId, null] as const)
+            getPreferences(participant.user)
+              .then((prefs) => [participant.user, prefs] as const)
+              .catch(() => [participant.user, null] as const)
           )
         ).then((entries) => {
           const map: Record<string, Preferences | null> = {}
@@ -71,13 +71,9 @@ export default function AnalysisTab({
       .catch(onAuthError)
   }
 
-  const included = participants.filter(
-    (p) => preferencesMap[p.participantUserId] != null
-  )
+  const included = participants.filter((p) => preferencesMap[p.user] != null)
   const excluded = participants.filter(
-    (p) =>
-      p.participantUserId in preferencesMap &&
-      preferencesMap[p.participantUserId] == null
+    (p) => p.user in preferencesMap && preferencesMap[p.user] == null
   )
 
   async function handleTrigger() {
@@ -103,8 +99,8 @@ export default function AnalysisTab({
           <div style={analysisStyles.participantGroup}>
             <span style={analysisStyles.participantLabel}>Included: </span>
             {included.map((p) => (
-              <span key={p.$id} style={analysisStyles.participantName}>
-                {p.participantUserName}
+              <span key={p.id} style={analysisStyles.participantName}>
+                {p.userName}
               </span>
             ))}
           </div>
@@ -115,8 +111,8 @@ export default function AnalysisTab({
               No preferences:{' '}
             </span>
             {excluded.map((p) => (
-              <span key={p.$id} style={analysisStyles.participantNameExcluded}>
-                {p.participantUserName}
+              <span key={p.id} style={analysisStyles.participantNameExcluded}>
+                {p.userName}
               </span>
             ))}
           </div>

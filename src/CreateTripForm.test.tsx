@@ -1,17 +1,18 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Models } from 'appwrite'
 import CreateTripForm from './CreateTripForm'
+import type { User } from './types.d'
 
 const noop = () => {}
 const testUser = {
-  $id: 'user-1',
+  id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-} as Models.User
+  emailVerification: true,
+} as User
 const defaultTrip = {
-  $id: 'new-trip',
+  id: 'new-trip',
   description: 'New Trip',
   code: 'aaa-bbb-ccc',
 }
@@ -23,7 +24,7 @@ function renderForm(props = {}) {
       onCreated={noop}
       onDismiss={noop}
       createTrip={() => Promise.resolve(defaultTrip)}
-      accountGet={() => Promise.resolve(testUser) as Promise<Models.User>}
+      accountGet={() => Promise.resolve(testUser) as Promise<User>}
       {...props}
     />
   )

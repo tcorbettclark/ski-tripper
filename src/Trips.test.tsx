@@ -1,34 +1,34 @@
 import { describe, expect, it } from 'bun:test'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Models } from 'appwrite'
 import Trips from './Trips'
-import type { Trip } from './types'
+import type { Trip, User } from './types'
 
 interface RenderTripsProps {
-  user?: Models.User
+  user?: User
   trips?: Trip[]
-  onSelectTrip?: (tripId: string) => void
+  onSelectTrip?: (trip: string) => void
   onJoinedTrip?: () => void
-  createTrip?: () => Promise<{ $id: string; description: string; code: string }>
+  createTrip?: () => Promise<{ id: string; description: string; code: string }>
   getTripByCode?: () => Promise<{ trips: Trip[] }>
   joinTrip?: () => Promise<void>
   getCoordinatorParticipant?: () => Promise<{
     participants: Array<{
-      participantUserId: string
-      participantUserName: string
+      user: string
+      userName: string
     }>
   }>
 }
 
 const testUser = {
-  $id: 'user-1',
+  id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-} as Models.User
+  emailVerification: true,
+} as User
 
 const defaultTrip = {
-  $id: 'new-trip',
+  id: 'new-trip',
   description: 'New Trip',
   code: 'aaa-bbb-ccc',
 }
@@ -45,9 +45,7 @@ function renderTrips(props: RenderTripsProps = {}) {
       joinTrip={() => Promise.resolve()}
       getCoordinatorParticipant={() =>
         Promise.resolve({
-          participants: [
-            { participantUserId: 'user-1', participantUserName: 'Test User' },
-          ],
+          participants: [{ user: 'user-1', userName: 'Test User' }],
         })
       }
     />
@@ -80,18 +78,18 @@ describe('Trips', () => {
       renderTrips({
         trips: [
           {
-            $id: 't-1',
+            id: 't-1',
             description: "Val d'Isere week",
             code: 'aaa-bbb-ccc',
-            $createdAt: '2024-01-01T00:00:00.000Z',
-            $updatedAt: '2024-01-01T00:00:00.000Z',
+            created: '2024-01-01T00:00:00.000Z',
+            updated: '2024-01-01T00:00:00.000Z',
           },
           {
-            $id: 't-2',
+            id: 't-2',
             description: 'Chamonix weekend',
             code: 'ddd-eee-fff',
-            $createdAt: '2024-01-01T00:00:00.000Z',
-            $updatedAt: '2024-01-01T00:00:00.000Z',
+            created: '2024-01-01T00:00:00.000Z',
+            updated: '2024-01-01T00:00:00.000Z',
           },
         ],
       })
@@ -109,11 +107,11 @@ describe('Trips', () => {
       renderTrips({
         trips: [
           {
-            $id: 't-1',
+            id: 't-1',
             description: 'Test Trip',
             code: 'xxx-yyy-zzz',
-            $createdAt: '2024-01-01T00:00:00.000Z',
-            $updatedAt: '2024-01-01T00:00:00.000Z',
+            created: '2024-01-01T00:00:00.000Z',
+            updated: '2024-01-01T00:00:00.000Z',
           },
         ],
         onSelectTrip: handleSelectTrip,

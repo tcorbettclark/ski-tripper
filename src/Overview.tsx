@@ -63,7 +63,7 @@ interface OverviewProps {
   updateTrip?: (
     tripId: string,
     data: Partial<Trip>,
-    participantUserId: string
+    user: string
   ) => Promise<Trip>
   getPreferences?: (userId: string) => Promise<Preferences | null>
   preferencesUpdated?: { userId: string; preferences: Preferences } | null
@@ -124,8 +124,7 @@ export default function Overview({
       .then(({ participants }) => {
         if (!mountedRef.current) return
         setIsCoordinator(
-          participants.length > 0 &&
-            participants[0].participantUserId === user.id
+          participants.length > 0 && participants[0].user === user.id
         )
       })
       .catch(() => {})
@@ -156,9 +155,7 @@ export default function Overview({
     if (participants.length === 0) return
     Promise.all(
       participants.map((p) =>
-        getPreferences(p.participantUserId).then(
-          (prefs) => [p.participantUserId, prefs] as const
-        )
+        getPreferences(p.user).then((prefs) => [p.user, prefs] as const)
       )
     )
       .then((results) => {
@@ -216,7 +213,7 @@ export default function Overview({
       setUserVotedInActivePoll(false)
       return
     }
-    listVotes(activePoll.$id, user.id)
+    listVotes(activePoll.id, user.id)
       .then((result) => {
         if (!mountedRef.current) return
         setUserVotedInActivePoll(result.votes.length > 0)
@@ -229,19 +226,19 @@ export default function Overview({
 
   const draftCount = proposals.filter((p) => p.state === 'DRAFT').length
   const myDrafts = proposals
-    .filter((p) => p.state === 'DRAFT' && p.proposerUserId === user.id)
-    .map((p) => ({ proposalId: p.$id, resortName: p.resortName || 'Untitled' }))
+    .filter((p) => p.state === 'DRAFT' && p.proposer === user.id)
+    .map((p) => ({ proposalId: p.id, resortName: p.resortName || 'Untitled' }))
   const draftsForDiscussion = proposals
     .filter((p) => p.state === 'DRAFT')
-    .map((p) => ({ proposalId: p.$id, resortName: p.resortName || 'Untitled' }))
+    .map((p) => ({ proposalId: p.id, resortName: p.resortName || 'Untitled' }))
   const submittedProposals = proposals
     .filter((p) => p.state === 'SUBMITTED')
-    .map((p) => ({ proposalId: p.$id, resortName: p.resortName || 'Untitled' }))
+    .map((p) => ({ proposalId: p.id, resortName: p.resortName || 'Untitled' }))
 
   function renderPreferenceCell(
     prefs: Preferences | null | undefined,
     column: string,
-    participantUserId?: string
+    user?: string
   ) {
     if (!prefs) return <span style={overviewStyles.cellEmpty}>—</span>
 
@@ -368,20 +365,20 @@ export default function Overview({
 
     if (column === 'aspect') {
       if (!prefs.notes) return <span style={overviewStyles.cellEmpty}>—</span>
-      const isOpen = aspectPopup?.userId === participantUserId
+      const isOpen = aspectPopup?.userId === user
       return (
         <button
           type="button"
-          data-aspect-toggle={participantUserId}
+          data-aspect-toggle={user}
           onClick={(e) => {
             e.stopPropagation()
-            if (!participantUserId) return
+            if (!user) return
             if (isOpen) {
               setAspectPopup(null)
             } else {
               const rect = e.currentTarget.getBoundingClientRect()
               setAspectPopup({
-                userId: participantUserId,
+                userId: user,
                 text: prefs.notes,
                 x: rect.right + 8,
                 y: rect.top,
@@ -425,8 +422,8 @@ export default function Overview({
 
   const sortedParticipants = [...participants]
     .map((p) => {
-      if (p.participantUserId === user.id) {
-        return { ...p, participantUserName: user.name || user.email }
+      if (p.user === user.id) {
+        return { ...p, userName: user.name || user.email }
       }
       return p
     })
@@ -532,7 +529,7 @@ export default function Overview({
           <span style={overviewStyles.coordinatorNames}>
             {participants
               .filter((p) => p.role === 'coordinator')
-              .map((c) => c.participantUserName)
+              .map((c) => c.userName)
               .join(', ')}
           </span>
         </div>
@@ -554,11 +551,11 @@ export default function Overview({
               <div style={overviewStyles.participantGrid}>
                 <style>{`.participant-name-cell { background: var(--color-bgCard); transition: background 0.15s; } .participant-grid-row-clickable { transition: background 0.15s; } .participant-grid-row-clickable:hover { background: color-mix(in srgb, var(--color-accent) 25%, transparent); cursor: pointer; } .participant-grid-row-clickable:hover .participant-name-cell { background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bgCard)); }`}</style>
                 {sortedParticipants.map((p) => {
-                  const prefs = preferencesMap[p.participantUserId]
+                  const prefs = preferencesMap[p.user]
                   const isCurrentUser =
-                    p.participantUserId === user.id && !!onOpenPreferences
+                    p.user === user.id && !!onOpenPreferences
                   return (
-                    <div key={p.$id}>
+                    <div key={p.id}>
                       {/* biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally */}
                       <div
                         className={
@@ -589,7 +586,7 @@ export default function Overview({
                           }}
                         >
                           <span style={overviewStyles.participantName}>
-                            {p.participantUserName}
+                            {p.userName}
                           </span>
                         </span>
                         {prefColumns.map((col) => (
@@ -603,11 +600,7 @@ export default function Overview({
                               minWidth: colWidths[col],
                             }}
                           >
-                            {renderPreferenceCell(
-                              prefs,
-                              col,
-                              p.participantUserId
-                            )}
+                            {renderPreferenceCell(prefs, col, p.user)}
                           </span>
                         ))}
                       </div>

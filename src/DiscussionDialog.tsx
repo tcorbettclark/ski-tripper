@@ -95,9 +95,7 @@ export default function DiscussionDialog({
         userId,
         editBody.trim()
       )
-      setComments((prev) =>
-        prev.map((c) => (c.$id === editingId ? updated : c))
-      )
+      setComments((prev) => prev.map((c) => (c.id === editingId ? updated : c)))
       setEditingId(null)
       setEditBody('')
     } catch (err) {
@@ -113,7 +111,7 @@ export default function DiscussionDialog({
     setDeleteError(null)
     try {
       await deleteDiscussionComment(deleteConfirmId, userId)
-      setComments((prev) => prev.filter((c) => c.$id !== deleteConfirmId))
+      setComments((prev) => prev.filter((c) => c.id !== deleteConfirmId))
       setDeleteConfirmId(null)
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : String(err))
@@ -161,18 +159,18 @@ export default function DiscussionDialog({
           {comments.map((comment) => {
             if (comment.type === 'system') {
               return (
-                <div key={comment.$id} style={styles.systemMessage}>
+                <div key={comment.id} style={styles.systemMessage}>
                   <span style={styles.systemMessageBody}>{comment.body}</span>
                   <span style={styles.systemMessageTimestamp}>
-                    {formatRelativeTime(comment.$createdAt)}
+                    {formatRelativeTime(comment.created)}
                   </span>
                 </div>
               )
             }
-            const isOwner = comment.authorUserId === userId
-            const isEditing = editingId === comment.$id
+            const isOwner = comment.author === userId
+            const isEditing = editingId === comment.id
             return (
-              <div key={comment.$id} style={styles.commentBubble}>
+              <div key={comment.id} style={styles.commentBubble}>
                 <div style={styles.commentHeader}>
                   <span style={styles.commentAuthor}>
                     {comment.authorUserName || 'Unknown'}
@@ -181,14 +179,14 @@ export default function DiscussionDialog({
                     )}
                   </span>
                   <span style={styles.commentTimestamp}>
-                    {formatRelativeTime(comment.$createdAt)}
+                    {formatRelativeTime(comment.created)}
                   </span>
                   {isOwner && !isEditing && (
                     <span style={styles.commentActions}>
                       <button
                         type="button"
                         onClick={() => {
-                          setDeleteConfirmId(comment.$id)
+                          setDeleteConfirmId(comment.id)
                           setDeleteError(null)
                         }}
                         style={styles.deleteButton}
@@ -199,7 +197,7 @@ export default function DiscussionDialog({
                       <button
                         type="button"
                         onClick={() => {
-                          setEditingId(comment.$id)
+                          setEditingId(comment.id)
                           setEditBody(comment.body)
                           setEditError(null)
                         }}

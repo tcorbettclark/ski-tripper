@@ -11,7 +11,7 @@ interface EditTripDescriptionFormProps {
   updateTrip?: (
     tripId: string,
     data: Partial<Trip>,
-    participantUserId: string
+    user: string
   ) => Promise<Trip>
 }
 
@@ -31,7 +31,7 @@ export default function EditTripDescriptionForm({
     setError('')
     setSaving(true)
     try {
-      const updated = await updateTrip(trip.$id, { description }, userId)
+      const updated = await updateTrip(trip.id, { description }, userId)
       onUpdated(updated)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))

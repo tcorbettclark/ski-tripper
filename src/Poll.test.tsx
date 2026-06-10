@@ -7,11 +7,10 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
-import type { Models } from 'appwrite'
 import Poll from './Poll'
+import type { User } from './types.d.ts'
 import { dayjs } from './utils'
 
-// Constants for test data
 const TEST_IDS = {
   USER: 'user-1',
   USER_NAME: 'Alice',
@@ -25,14 +24,16 @@ const TEST_IDS = {
 } as const
 
 const MOCK_USER = {
-  $id: TEST_IDS.USER,
+  id: TEST_IDS.USER,
   name: TEST_IDS.USER_NAME,
-} as Models.User
+  email: 'alice@example.com',
+  emailVerification: true,
+} as User
 
 // Factory functions for creating mock data
 function createMockProposal(overrides: Record<string, unknown> = {}) {
   return {
-    $id: TEST_IDS.PROPOSAL_1,
+    id: TEST_IDS.PROPOSAL_1,
     state: 'SUBMITTED',
     resortName: 'Chamonix',
     ...overrides,
@@ -44,8 +45,8 @@ function createMockPoll(overrides: Record<string, unknown> = {}) {
   const startDate = baseDate.subtract(7, 'day').toISOString()
   const endDate = baseDate.subtract(1, 'day').toISOString()
   return {
-    $id: TEST_IDS.POLL_OPEN,
-    tripId: TEST_IDS.TRIP,
+    id: TEST_IDS.POLL_OPEN,
+    trip: TEST_IDS.TRIP,
     state: 'OPEN',
     proposalIds: [TEST_IDS.PROPOSAL_1],
     startDate,
@@ -57,9 +58,9 @@ function createMockPoll(overrides: Record<string, unknown> = {}) {
 
 function createMockVote(overrides: Record<string, unknown> = {}) {
   return {
-    $id: TEST_IDS.VOTE_1,
-    pollId: TEST_IDS.POLL_OPEN,
-    voterUserId: TEST_IDS.USER,
+    id: TEST_IDS.VOTE_1,
+    poll: TEST_IDS.POLL_OPEN,
+    voter: TEST_IDS.USER,
     proposalIds: [TEST_IDS.PROPOSAL_1],
     tokenCounts: [5],
     ...overrides,
@@ -80,7 +81,7 @@ function createMockCallbacks(
     closePoll: mock((_pollId: string, _userId: string, _outcome: string) =>
       Promise.resolve(
         createMockPoll({
-          $id: TEST_IDS.POLL_CLOSED,
+          id: TEST_IDS.POLL_CLOSED,
           state: 'CLOSED',
           outcome: 'Test outcome',
         })
@@ -97,9 +98,7 @@ function createMockCallbacks(
 function createCoordinatorMock() {
   return mock(() =>
     Promise.resolve({
-      participants: [
-        { $id: TEST_IDS.PARTICIPANT_1, participantUserId: TEST_IDS.USER },
-      ],
+      participants: [{ id: TEST_IDS.PARTICIPANT_1, user: TEST_IDS.USER }],
     })
   )
 }
@@ -381,7 +380,7 @@ describe('Poll', () => {
       const closePoll = mock(() =>
         Promise.resolve(
           createMockPoll({
-            $id: TEST_IDS.POLL_CLOSED,
+            id: TEST_IDS.POLL_CLOSED,
             state: 'CLOSED',
             outcome: 'Chamonix through, Annecy rejected',
           })
@@ -476,7 +475,7 @@ describe('Poll', () => {
 
     it('moves closed poll to past polls section', async () => {
       const closedPoll = createMockPoll({
-        $id: TEST_IDS.POLL_CLOSED,
+        id: TEST_IDS.POLL_CLOSED,
         state: 'CLOSED',
         outcome: 'Chamonix through',
       })
@@ -553,7 +552,7 @@ describe('Poll', () => {
       await act(async () => {
         resolveClose?.(
           createMockPoll({
-            $id: TEST_IDS.POLL_CLOSED,
+            id: TEST_IDS.POLL_CLOSED,
             state: 'CLOSED',
             outcome: 'Outcome',
           })
@@ -569,7 +568,7 @@ describe('Poll', () => {
           listPolls: mock(() =>
             Promise.resolve({
               polls: [
-                createMockPoll({ $id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' }),
+                createMockPoll({ id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' }),
               ],
             })
           ),
@@ -586,7 +585,7 @@ describe('Poll', () => {
           listPolls: mock(() =>
             Promise.resolve({
               polls: [
-                createMockPoll({ $id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' }),
+                createMockPoll({ id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' }),
               ],
             })
           ),
@@ -605,7 +604,7 @@ describe('Poll', () => {
     it('fetches votes on mount for past poll', async () => {
       const listVotes = mock(() =>
         Promise.resolve({
-          votes: [createMockVote({ pollId: TEST_IDS.POLL_CLOSED })],
+          votes: [createMockVote({ poll: TEST_IDS.POLL_CLOSED })],
         })
       )
       await act(async () => {
@@ -613,7 +612,7 @@ describe('Poll', () => {
           listPolls: mock(() =>
             Promise.resolve({
               polls: [
-                createMockPoll({ $id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' }),
+                createMockPoll({ id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' }),
               ],
             })
           ),
@@ -635,8 +634,8 @@ describe('Poll', () => {
           listPolls: mock(() =>
             Promise.resolve({
               polls: [
-                createMockPoll({ $id: 'poll-closed-1', state: 'CLOSED' }),
-                createMockPoll({ $id: 'poll-closed-2', state: 'CLOSED' }),
+                createMockPoll({ id: 'poll-closed-1', state: 'CLOSED' }),
+                createMockPoll({ id: 'poll-closed-2', state: 'CLOSED' }),
               ],
             })
           ),
@@ -762,8 +761,8 @@ describe('Poll', () => {
           listPolls: mock(() =>
             Promise.resolve({
               polls: [
-                createMockPoll({ $id: 'poll-closed-1', state: 'CLOSED' }),
-                createMockPoll({ $id: 'poll-closed-2', state: 'CLOSED' }),
+                createMockPoll({ id: 'poll-closed-1', state: 'CLOSED' }),
+                createMockPoll({ id: 'poll-closed-2', state: 'CLOSED' }),
               ],
             })
           ),
@@ -783,9 +782,9 @@ describe('Poll', () => {
           listProposals: mock(() =>
             Promise.resolve({
               proposals: [
-                createMockProposal({ $id: 'p-draft', state: 'DRAFT' }),
-                createMockProposal({ $id: 'p-submitted', state: 'SUBMITTED' }),
-                createMockProposal({ $id: 'p-rejected', state: 'REJECTED' }),
+                createMockProposal({ id: 'p-draft', state: 'DRAFT' }),
+                createMockProposal({ id: 'p-submitted', state: 'SUBMITTED' }),
+                createMockProposal({ id: 'p-rejected', state: 'REJECTED' }),
               ],
             })
           ),

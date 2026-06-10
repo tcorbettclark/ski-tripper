@@ -1,17 +1,18 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import type { Models } from 'appwrite'
 import JoinTripForm from './JoinTripForm'
+import type { User } from './types.d'
 
 const noop = () => {}
 const testUser = {
-  $id: 'user-1',
+  id: 'user-1',
   name: 'Test User',
   email: 'test@example.com',
-} as Models.User
-const ownTrip = { $id: 'trip-1', code: 'abc-def-ghi', name: 'My Trip' }
-const otherTrip = { $id: 'trip-2', code: 'xyz-uvw-rst', name: 'Other Trip' }
+  emailVerification: true,
+} as User
+const ownTrip = { id: 'trip-1', code: 'abc-def-ghi', name: 'My Trip' }
+const otherTrip = { id: 'trip-2', code: 'xyz-uvw-rst', name: 'Other Trip' }
 
 function renderForm(props = {}) {
   return render(
