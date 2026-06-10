@@ -1,28 +1,28 @@
 export interface Trip {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
+  id: string
+  created: string
+  updated: string
   code: string
   description: string
 }
 
 export interface Participant {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  participantUserId: string
-  participantUserName: string
-  tripId: string
+  id: string
+  created: string
+  updated: string
+  user: string
+  userName: string
+  trip: string
   role: 'coordinator' | 'participant'
 }
 
 export interface Proposal {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  proposerUserId: string
+  id: string
+  created: string
+  updated: string
+  proposer: string
   proposerUserName: string
-  tripId: string
+  trip: string
   state: 'DRAFT' | 'SUBMITTED' | 'REJECTED'
   description: string
   resortName: string
@@ -48,10 +48,10 @@ export interface Proposal {
 }
 
 export interface Accommodation {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  proposalId: string
+  id: string
+  created: string
+  updated: string
+  proposal: string
   name: string
   url: string
   cost: string
@@ -59,13 +59,13 @@ export interface Accommodation {
 }
 
 export interface Poll {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  pollCreatorUserId: string
+  id: string
+  created: string
+  updated: string
+  pollCreator: string
   pollCreatorUserName: string
   state: 'OPEN' | 'CLOSED'
-  tripId: string
+  trip: string
   proposalIds: string[]
   startDate: string
   endDate: string
@@ -73,22 +73,22 @@ export interface Poll {
 }
 
 export interface Vote {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  pollId: string
-  voterUserId: string
+  id: string
+  created: string
+  updated: string
+  poll: string
+  voter: string
   voterUserName: string
   proposalIds: string[]
   tokenCounts: number[]
 }
 
 export interface Discussion {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  proposalId: string
-  authorUserId: string
+  id: string
+  created: string
+  updated: string
+  proposal: string
+  author: string
   authorUserName: string
   body: string
   type: 'comment' | 'system'
@@ -122,10 +122,10 @@ export interface ResortWithEmbedding extends LocalResort {
 }
 
 export interface Preferences {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  userId: string
+  id: string
+  created: string
+  updated: string
+  user: string
   skiSnowboard: string[]
   difficulty: string[]
   piste: string[]
@@ -135,18 +135,4 @@ export interface Preferences {
   timeHotel: number
   accommodation: string[]
   notes: string
-}
-
-export interface LlmCache {
-  $id: string
-  $createdAt: string
-  $updatedAt: string
-  inputHash: string
-  type: 'analysis' | 'preference-search'
-  proposalId: string | null
-  tripId: string
-  status: 'generating' | 'complete' | 'error'
-  thinking: string | null
-  content: string | null
-  model: string
 }

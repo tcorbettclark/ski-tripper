@@ -1,19 +1,8 @@
-import type { Models } from 'appwrite'
-import {
-  Account,
-  Client,
-  Functions,
-  ID,
-  Permission,
-  Query,
-  Role,
-  Storage,
-  TablesDB,
-} from 'appwrite'
+import PocketBase from 'pocketbase'
 import type {
   Accommodation,
   Discussion,
-  LlmCache,
+  LocalResort,
   Participant,
   Poll,
   Preferences,
@@ -23,302 +12,260 @@ import type {
 } from './types.d'
 import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
-export function hasSession(): boolean {
-  const projectId = process.env.PUBLIC_APPWRITE_PROJECT_ID as string
-  if (projectId && document.cookie.includes(`a_session_${projectId}`))
-    return true
-  if (localStorage.getItem('cookieFallback')) return true
-  return false
-}
+const pb = new PocketBase(process.env.PUBLIC_POCKETBASE_URL as string)
+export default pb
 
-const client = new Client()
-  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
-  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
-
-export const account = new Account(client)
-export const tablesDb = new TablesDB(client)
-export const storage = new Storage(client)
-export const functions = new Functions(client)
-export default client
-
-const RESORTS_BUCKET_ID = process.env
-  .PUBLIC_APPWRITE_RESORTS_BUCKET_ID as string
-const RESORTS_FILE_ID = process.env.PUBLIC_APPWRITE_RESORTS_FILE_ID as string
-
-export function getResortDataUrl(updatedAt: number): string {
-  const url = storage.getFileView({
-    bucketId: RESORTS_BUCKET_ID,
-    fileId: RESORTS_FILE_ID,
-  })
-  const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}_t=${updatedAt}`
-}
-
-export async function getResortFileMetadata(): Promise<Models.File> {
-  return storage.getFile({
-    bucketId: RESORTS_BUCKET_ID,
-    fileId: RESORTS_FILE_ID,
-  })
-}
-
-export async function fetchResortDataWithAuth(): Promise<string> {
-  const file = await getResortFileMetadata()
-  const url = getResortDataUrl(new Date(file.$updatedAt).getTime())
-  const headers: Record<string, string> = {
-    'X-Appwrite-Project': process.env.PUBLIC_APPWRITE_PROJECT_ID as string,
+function mapParticipant(row: Record<string, unknown>): Participant {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    user: row.user as string,
+    userName: row.user_name as string,
+    trip: row.trip as string,
+    role: row.role as 'coordinator' | 'participant',
   }
-  const cookieFallback = window.localStorage.getItem('cookieFallback')
-  if (cookieFallback) {
-    headers['X-Fallback-Cookies'] = cookieFallback
+}
+
+function mapTrip(row: Record<string, unknown>): Trip {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    code: row.code as string,
+    description: row.description as string,
   }
-  const response = await fetch(url, {
-    credentials: 'include',
-    headers,
-  })
-  if (!response.ok) {
-    throw new Error(`Failed to fetch resort data: ${response.status}`)
+}
+
+function mapProposal(row: Record<string, unknown>): Proposal {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    proposer: row.proposer as string,
+    proposerUserName: row.proposer_user_name as string,
+    trip: row.trip as string,
+    state: row.state as 'DRAFT' | 'SUBMITTED' | 'REJECTED',
+    description: row.description as string,
+    resortName: row.resort_name as string,
+    startDate: row.start_date as string,
+    endDate: row.end_date as string,
+    nearestAirport: row.nearest_airport as string,
+    transferTime: row.transfer_time as number | null,
+    country: row.country as string,
+    region: row.region as string,
+    summitAltitude: row.summit_altitude as number,
+    baseAltitude: row.base_altitude as number,
+    pisteKm: row.piste_km as number,
+    beginnerPct: row.beginner_pct as number,
+    intermediatePct: row.intermediate_pct as number,
+    advancedPct: row.advanced_pct as number,
+    liftCount: row.lift_count as number,
+    snowReliability: row.snow_reliability as 'high' | 'medium' | 'low',
+    skiSeasonMonths: row.ski_season_months as string,
+    websites: row.websites as string[],
+    latitude: row.latitude as string,
+    longitude: row.longitude as string,
+    linkedResortsDescription: row.linked_resorts_description as string,
   }
-  return response.text()
 }
 
-function toRow<T extends { $id: string }>(row: Models.Row): T {
-  if (!row || typeof (row as { $id?: unknown }).$id !== 'string') {
-    throw new Error('Failed to fetch row: expected $id')
+function mapAccommodation(row: Record<string, unknown>): Accommodation {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    proposal: row.proposal as string,
+    name: row.name as string,
+    url: row.url as string,
+    cost: row.cost as string,
+    description: row.description as string,
   }
-  return row as unknown as T
 }
 
-function toRows<T extends { $id: string }>(rows: Models.Row[]): T[] {
-  return rows.map((row) => toRow<T>(row))
+function mapPoll(row: Record<string, unknown>): Poll {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    pollCreator: row.poll_creator as string,
+    pollCreatorUserName: row.poll_creator_user_name as string,
+    state: row.state as 'OPEN' | 'CLOSED',
+    trip: row.trip as string,
+    proposalIds: row.proposal_ids as string[],
+    startDate: row.start_date as string,
+    endDate: row.end_date as string,
+    outcome: row.outcome as string,
+  }
 }
 
-async function fetchRows<T extends { $id: string }>(
-  result: Promise<{ rows: Models.Row[] }>
-): Promise<T[]> {
-  const { rows } = await result
-  return toRows<T>(rows)
+function mapVote(row: Record<string, unknown>): Vote {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    poll: row.poll as string,
+    voter: row.voter as string,
+    voterUserName: row.voter_user_name as string,
+    proposalIds: row.proposal_ids as string[],
+    tokenCounts: row.token_counts as number[],
+  }
 }
 
-async function fetchRow<T extends { $id: string }>(
-  result: Promise<Models.Row>
-): Promise<T> {
-  return toRow<T>(await result)
+function mapDiscussion(row: Record<string, unknown>): Discussion {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    proposal: row.proposal as string,
+    author: row.author as string,
+    authorUserName: row.author_user_name as string,
+    body: row.body as string,
+    type: row.type as 'comment' | 'system',
+  }
 }
 
-function parseProposal(proposal: Proposal): Proposal {
-  return proposal
+function mapPreferences(row: Record<string, unknown>): Preferences {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    user: row.user as string,
+    skiSnowboard: row.ski_snowboard as string[],
+    difficulty: row.difficulty as string[],
+    piste: row.piste as string[],
+    timeSlopes: row.time_slopes as number,
+    timeEating: row.time_eating as number,
+    timeApres: row.time_apres as number,
+    timeHotel: row.time_hotel as number,
+    accommodation: row.accommodation as string[],
+    notes: row.notes as string,
+  }
 }
-
-function parsePoll(poll: Poll): Poll {
-  return poll
-}
-
-function parseVote(vote: Vote): Vote {
-  return vote
-}
-
-async function fetchProposalRows(
-  result: Promise<{ rows: Models.Row[] }>
-): Promise<Proposal[]> {
-  return (await fetchRows<Proposal>(result)).map(parseProposal)
-}
-
-async function fetchProposalRow(
-  result: Promise<Models.Row>
-): Promise<Proposal> {
-  return parseProposal(await fetchRow<Proposal>(result))
-}
-
-async function fetchPollRows(
-  result: Promise<{ rows: Models.Row[] }>
-): Promise<Poll[]> {
-  return (await fetchRows<Poll>(result)).map(parsePoll)
-}
-
-async function fetchPollRow(result: Promise<Models.Row>): Promise<Poll> {
-  return parsePoll(await fetchRow<Poll>(result))
-}
-
-async function fetchVoteRows(
-  result: Promise<{ rows: Models.Row[] }>
-): Promise<Vote[]> {
-  return (await fetchRows<Vote>(result)).map(parseVote)
-}
-
-async function fetchVoteRow(result: Promise<Models.Row>): Promise<Vote> {
-  return parseVote(await fetchRow<Vote>(result))
-}
-
-const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
-const TRIPS_TABLE_ID = process.env.PUBLIC_APPWRITE_TRIPS_TABLE_ID as string
-const PARTICIPANTS_TABLE_ID = process.env
-  .PUBLIC_APPWRITE_PARTICIPANTS_TABLE_ID as string
-const PROPOSALS_TABLE_ID = process.env
-  .PUBLIC_APPWRITE_PROPOSALS_TABLE_ID as string
-const ACCOMMODATIONS_TABLE_ID = process.env
-  .PUBLIC_APPWRITE_ACCOMMODATIONS_TABLE_ID as string
-const POLLS_TABLE_ID = process.env.PUBLIC_APPWRITE_POLLS_TABLE_ID as string
-const VOTES_TABLE_ID = process.env.PUBLIC_APPWRITE_VOTES_TABLE_ID as string
-const PREFERENCES_TABLE_ID = process.env
-  .PUBLIC_APPWRITE_PREFERENCES_TABLE_ID as string
-const DISCUSSION_TABLE_ID = process.env
-  .PUBLIC_APPWRITE_DISCUSSION_TABLE_ID as string
-const LLM_CACHE_TABLE_ID = process.env
-  .PUBLIC_APPWRITE_LLM_CACHE_TABLE_ID as string
 
 export async function getCoordinatorParticipant(
   tripId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<{ participants: Participant[] }> {
-  const participants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.equal('role', 'coordinator'),
-        Query.limit(1),
-      ],
-    })
-  )
-  return { participants }
+  const rows = await client.collection('participants').getFullList({
+    filter: client.filter('trip = {:tripId} && role = {:role}', {
+      tripId,
+      role: 'coordinator',
+    }),
+  })
+  return {
+    participants: rows.map((r) =>
+      mapParticipant(r as unknown as Record<string, unknown>)
+    ),
+  }
 }
 
 export async function listTripParticipants(
   tripId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<{ participants: Participant[] }> {
-  const participants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(100),
-      ],
-    })
-  )
-  return { participants }
+  const rows = await client.collection('participants').getFullList({
+    filter: client.filter('trip = {:tripId}', { tripId }),
+    sort: '-created',
+  })
+  return {
+    participants: rows.map((r) =>
+      mapParticipant(r as unknown as Record<string, unknown>)
+    ),
+  }
 }
 
 export async function listTrips(
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<{
   trips: Trip[]
   coordinatorUserIds: Record<string, string>
 }> {
-  const coordinatorParticipants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [
-        Query.equal('participantUserId', participantUserId),
-        Query.equal('role', 'coordinator'),
-        Query.orderDesc('$createdAt'),
-        Query.limit(50),
-      ],
+  const coordinatorParticipants = await client
+    .collection('participants')
+    .getFullList({
+      filter: client.filter('user = {:userId} && role = {:role}', {
+        userId,
+        role: 'coordinator',
+      }),
+      sort: '-created',
     })
+
+  const mappedParticipants = coordinatorParticipants.map((r) =>
+    mapParticipant(r as unknown as Record<string, unknown>)
   )
 
-  if (coordinatorParticipants.length === 0) {
+  if (mappedParticipants.length === 0) {
     return { trips: [], coordinatorUserIds: {} }
   }
-  const tripIds = coordinatorParticipants.map((p) => p.tripId)
+
+  const tripIds = mappedParticipants.map((p) => p.trip)
   const coordinatorUserIds = Object.fromEntries(
-    coordinatorParticipants.map((p) => [p.tripId, p.participantUserId])
+    mappedParticipants.map((p) => [p.trip, p.user])
   )
-  const trips = await fetchRows<Trip>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: TRIPS_TABLE_ID,
-      queries: [Query.equal('$id', tripIds)],
-    })
-  )
-  const tripMap = Object.fromEntries(trips.map((t) => [t.$id, t]))
-  const orderedTrips = tripIds.map((id) => tripMap[id]).filter(Boolean)
+
+  const filterExpr = tripIds.map((id) => `id = '${id}'`).join(' || ')
+  const trips = await client.collection('trips').getFullList({
+    filter: `(${filterExpr})`,
+  })
+
+  const orderedTrips = tripIds
+    .map((id) => trips.find((t) => t.id === id))
+    .filter(Boolean)
+    .map((t) => mapTrip(t as unknown as Record<string, unknown>))
+
   return { trips: orderedTrips, coordinatorUserIds }
 }
 
 export async function getTrip(
   tripId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Trip> {
-  return fetchRow<Trip>(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: TRIPS_TABLE_ID,
-      rowId: tripId,
-    })
-  )
+  const row = await client.collection('trips').getOne(tripId)
+  return mapTrip(row as unknown as Record<string, unknown>)
 }
 
 export async function getTripByCode(
   code: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<{ trips: Trip[] }> {
-  const trips = await fetchRows<Trip>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: TRIPS_TABLE_ID,
-      queries: [Query.equal('code', code), Query.limit(1)],
-    })
-  )
-  return { trips }
+  const rows = await client.collection('trips').getFullList({
+    filter: client.filter('code = {:code}', { code }),
+  })
+  return {
+    trips: rows.map((r) => mapTrip(r as unknown as Record<string, unknown>)),
+  }
 }
 
-async function findUniqueCode(db: TablesDB = tablesDb): Promise<string> {
+async function findUniqueCode(client: PocketBase = pb): Promise<string> {
   for (let attempt = 0; attempt < 100; attempt++) {
     const code = randomThreeWords()
-    const trips = await fetchRows<Trip>(
-      db.listRows({
-        databaseId: DATABASE_ID,
-        tableId: TRIPS_TABLE_ID,
-        queries: [Query.equal('code', code), Query.limit(1)],
-      })
-    )
-    if (trips.length === 0) return code
+    const rows = await client.collection('trips').getFullList({
+      filter: client.filter('code = {:code}', { code }),
+    })
+    if (rows.length === 0) return code
   }
   throw new Error('Could not generate a unique trip code after 100 attempts.')
 }
 
 export async function createTrip(
-  participantUserId: string,
-  participantUserName: string,
+  userId: string,
+  userName: string,
   data: Partial<Trip>,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Trip> {
-  const code = await findUniqueCode(db)
-  const trip = await fetchRow<Trip>(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: TRIPS_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        code,
-        ...data,
-      } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.write(Role.user(participantUserId)),
-      ],
-    })
-  )
-  await db.createRow({
-    databaseId: DATABASE_ID,
-    tableId: PARTICIPANTS_TABLE_ID,
-    rowId: ID.unique(),
-    data: {
-      participantUserId,
-      participantUserName,
-      tripId: trip.$id,
-      role: 'coordinator',
-    } as Record<string, unknown>,
-    permissions: [
-      Permission.read(Role.user(participantUserId)),
-      Permission.write(Role.user(participantUserId)),
-    ],
+  const code = await findUniqueCode(client)
+  const tripRow = await client.collection('trips').create({
+    code,
+    description: data.description,
+  })
+  const trip = mapTrip(tripRow as unknown as Record<string, unknown>)
+  await client.collection('participants').create({
+    user: userId,
+    user_name: userName,
+    trip: trip.id,
+    role: 'coordinator',
   })
   return trip
 }
@@ -326,281 +273,127 @@ export async function createTrip(
 export async function updateTrip(
   tripId: string,
   data: Partial<Trip>,
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<Trip> {
-  const { participants } = await getCoordinatorParticipant(tripId, db)
-  if (
-    participants.length === 0 ||
-    participants[0].participantUserId !== participantUserId
-  ) {
+  const { participants } = await getCoordinatorParticipant(tripId, client)
+  if (participants.length === 0 || participants[0].user !== userId) {
     throw new Error('Only the coordinator can edit this trip.')
   }
-  return fetchRow<Trip>(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: TRIPS_TABLE_ID,
-      rowId: tripId,
-      data: data as Record<string, unknown>,
-    })
-  )
+  const updateData: Record<string, unknown> = {}
+  if (data.description !== undefined) updateData.description = data.description
+  if (data.code !== undefined) updateData.code = data.code
+  const row = await client.collection('trips').update(tripId, updateData)
+  return mapTrip(row as unknown as Record<string, unknown>)
 }
 
 export async function deleteTrip(
   tripId: string,
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<void> {
   const { participants: coordinatorDocs } = await getCoordinatorParticipant(
     tripId,
-    db
+    client
   )
-  if (
-    coordinatorDocs.length === 0 ||
-    coordinatorDocs[0].participantUserId !== participantUserId
-  ) {
+  if (coordinatorDocs.length === 0 || coordinatorDocs[0].user !== userId) {
     throw new Error('Only the coordinator can delete this trip.')
   }
-  await db.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: TRIPS_TABLE_ID,
-    rowId: tripId,
-  })
-  const [participants, proposals, polls] = await Promise.all([
-    fetchRows<Participant>(
-      db.listRows({
-        databaseId: DATABASE_ID,
-        tableId: PARTICIPANTS_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(5000)],
-      })
-    ),
-    fetchProposalRows(
-      db.listRows({
-        databaseId: DATABASE_ID,
-        tableId: PROPOSALS_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(1000)],
-      })
-    ),
-    fetchPollRows(
-      db.listRows({
-        databaseId: DATABASE_ID,
-        tableId: POLLS_TABLE_ID,
-        queries: [Query.equal('tripId', tripId), Query.limit(100)],
-      })
-    ),
-  ])
-  const votes =
-    polls.length > 0
-      ? await fetchVoteRows(
-          db.listRows({
-            databaseId: DATABASE_ID,
-            tableId: VOTES_TABLE_ID,
-            queries: [
-              Query.equal(
-                'pollId',
-                polls.map((p) => p.$id)
-              ),
-              Query.limit(5000),
-            ],
-          })
-        )
-      : []
-  const accommodations =
-    proposals.length > 0
-      ? await fetchRows<Accommodation>(
-          db.listRows({
-            databaseId: DATABASE_ID,
-            tableId: ACCOMMODATIONS_TABLE_ID,
-            queries: [
-              Query.equal(
-                'proposalId',
-                proposals.map((p) => p.$id)
-              ),
-              Query.limit(5000),
-            ],
-          })
-        )
-      : []
-  if (participants.length >= 5000)
-    throw new Error('Too many participants to delete.')
-  if (proposals.length >= 1000) throw new Error('Too many proposals to delete.')
-  if (votes.length >= 5000) throw new Error('Too many votes to delete.')
-  if (polls.length >= 100) throw new Error('Too many polls to delete.')
-  if (accommodations.length >= 5000)
-    throw new Error('Too many accommodations to delete.')
-  await Promise.all([
-    ...accommodations.map((a) =>
-      db.deleteRow({
-        databaseId: DATABASE_ID,
-        tableId: ACCOMMODATIONS_TABLE_ID,
-        rowId: a.$id,
-      })
-    ),
-    ...participants.map((p) =>
-      db.deleteRow({
-        databaseId: DATABASE_ID,
-        tableId: PARTICIPANTS_TABLE_ID,
-        rowId: p.$id,
-      })
-    ),
-    ...proposals.map((p) =>
-      db.deleteRow({
-        databaseId: DATABASE_ID,
-        tableId: PROPOSALS_TABLE_ID,
-        rowId: p.$id,
-      })
-    ),
-    ...votes.map((v) =>
-      db.deleteRow({
-        databaseId: DATABASE_ID,
-        tableId: VOTES_TABLE_ID,
-        rowId: v.$id,
-      })
-    ),
-    ...polls.map((p) =>
-      db.deleteRow({
-        databaseId: DATABASE_ID,
-        tableId: POLLS_TABLE_ID,
-        rowId: p.$id,
-      })
-    ),
-  ])
+  await client.collection('trips').delete(tripId)
 }
 
 export async function listParticipatedTrips(
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<{ trips: Trip[] }> {
-  const participants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [
-        Query.equal('participantUserId', participantUserId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(50),
-      ],
-    })
+  const participants = await client.collection('participants').getFullList({
+    filter: client.filter('user = {:userId}', { userId }),
+    sort: '-created',
+  })
+  const mappedParticipants = participants.map((r) =>
+    mapParticipant(r as unknown as Record<string, unknown>)
   )
-  if (participants.length === 0) return { trips: [] }
-  const tripIds = participants.map((p) => p.tripId)
-  const trips = await fetchRows<Trip>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: TRIPS_TABLE_ID,
-      queries: [Query.equal('$id', tripIds)],
-    })
-  )
-  return { trips }
+  if (mappedParticipants.length === 0) return { trips: [] }
+  const tripIds = mappedParticipants.map((p) => p.trip)
+  const filterExpr = tripIds.map((id) => `id = '${id}'`).join(' || ')
+  const trips = await client.collection('trips').getFullList({
+    filter: `(${filterExpr})`,
+  })
+  return {
+    trips: trips.map((r) => mapTrip(r as unknown as Record<string, unknown>)),
+  }
 }
 
 export async function joinTrip(
-  participantUserId: string,
-  participantUserName: string,
+  userId: string,
+  userName: string,
   tripId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Participant> {
   try {
-    await db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: TRIPS_TABLE_ID,
-      rowId: tripId,
-    })
+    await client.collection('trips').getOne(tripId)
   } catch {
     throw new Error('Trip not found.')
   }
-  const participants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [
-        Query.equal('participantUserId', participantUserId),
-        Query.equal('tripId', tripId),
-        Query.limit(1),
-      ],
-    })
-  )
-  if (participants.length > 0)
-    throw new Error('You have already joined this trip.')
-  return fetchRow<Participant>(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        participantUserId,
-        participantUserName,
-        tripId,
-        role: 'participant',
-      } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.user(participantUserId)),
-        Permission.write(Role.user(participantUserId)),
-      ],
-    })
-  )
+  const existing = await client.collection('participants').getFullList({
+    filter: client.filter('user = {:userId} && trip = {:tripId}', {
+      userId,
+      tripId,
+    }),
+  })
+  if (existing.length > 0) throw new Error('You have already joined this trip.')
+  const row = await client.collection('participants').create({
+    user: userId,
+    user_name: userName,
+    trip: tripId,
+    role: 'participant',
+  })
+  return mapParticipant(row as unknown as Record<string, unknown>)
 }
 
 export async function leaveTrip(
-  participantUserId: string,
+  userId: string,
   tripId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<void> {
-  const participants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [
-        Query.equal('participantUserId', participantUserId),
-        Query.equal('tripId', tripId),
-        Query.limit(1),
-      ],
-    })
-  )
-  if (participants.length === 0)
-    throw new Error('Participation record not found.')
-  if (participants[0].role === 'coordinator')
-    throw new Error('The coordinator cannot leave the trip.')
-  await db.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: PARTICIPANTS_TABLE_ID,
-    rowId: participants[0].$id,
+  const rows = await client.collection('participants').getFullList({
+    filter: client.filter('user = {:userId} && trip = {:tripId}', {
+      userId,
+      tripId,
+    }),
   })
+  if (rows.length === 0) throw new Error('Participation record not found.')
+  const participant = mapParticipant(
+    rows[0] as unknown as Record<string, unknown>
+  )
+  if (participant.role === 'coordinator')
+    throw new Error('The coordinator cannot leave the trip.')
+  await client.collection('participants').delete(participant.id)
 }
 
 async function _verifyParticipant(
   tripId: string,
-  participantUserId: string,
-  db: TablesDB
+  userId: string,
+  client: PocketBase
 ): Promise<void> {
-  const participants = await fetchRows<Participant>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PARTICIPANTS_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.equal('participantUserId', participantUserId),
-        Query.limit(1),
-      ],
-    })
-  )
-  if (participants.length === 0)
+  const rows = await client.collection('participants').getFullList({
+    filter: client.filter('trip = {:tripId} && user = {:userId}', {
+      tripId,
+      userId,
+    }),
+  })
+  if (rows.length === 0)
     throw new Error('You must be a participant to access this trip.')
 }
 
 async function _verifyParticipantByPoll(
   pollId: string,
-  participantUserId: string,
-  db: TablesDB
+  userId: string,
+  client: PocketBase
 ): Promise<void> {
-  const poll = await fetchPollRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: POLLS_TABLE_ID,
-      rowId: pollId,
-    })
-  )
-  await _verifyParticipant(poll.tripId, participantUserId, db)
+  const pollRow = await client.collection('polls').getOne(pollId)
+  const poll = mapPoll(pollRow as unknown as Record<string, unknown>)
+  await _verifyParticipant(poll.trip, userId, client)
 }
 
 export async function createProposal(
@@ -632,65 +425,65 @@ export async function createProposal(
       linkedResortsDescription: string
     }
   },
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Proposal> {
-  await _verifyParticipant(tripId, proposerUserId, db)
+  await _verifyParticipant(tripId, proposerUserId, client)
   const { resortData, ...userData } = data
-  return fetchProposalRow(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        tripId,
-        proposerUserId,
-        proposerUserName,
-        state: 'DRAFT',
-        ...userData,
-        ...resortData,
-        websites: resortData.websites,
-      } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.write(Role.user(proposerUserId)),
-      ],
-    })
-  )
+  const row = await client.collection('proposals').create({
+    trip: tripId,
+    proposer: proposerUserId,
+    proposer_user_name: proposerUserName,
+    state: 'DRAFT',
+    description: userData.description,
+    start_date: userData.startDate,
+    end_date: userData.endDate,
+    resort_name: resortData.resortName,
+    country: resortData.country,
+    region: resortData.region,
+    summit_altitude: resortData.summitAltitude,
+    base_altitude: resortData.baseAltitude,
+    nearest_airport: resortData.nearestAirport,
+    transfer_time: resortData.transferTime,
+    piste_km: resortData.pisteKm,
+    beginner_pct: resortData.beginnerPct,
+    intermediate_pct: resortData.intermediatePct,
+    advanced_pct: resortData.advancedPct,
+    lift_count: resortData.liftCount,
+    snow_reliability: resortData.snowReliability,
+    ski_season_months: resortData.skiSeasonMonths,
+    websites: resortData.websites,
+    latitude: resortData.latitude,
+    longitude: resortData.longitude,
+    linked_resorts_description: resortData.linkedResortsDescription,
+  })
+  return mapProposal(row as unknown as Record<string, unknown>)
 }
 
 export async function listProposals(
   tripId: string,
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<{ proposals: Proposal[] }> {
-  await _verifyParticipant(tripId, participantUserId, db)
-  const proposals = await fetchProposalRows(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(50),
-      ],
-    })
-  )
-  return { proposals }
+  await _verifyParticipant(tripId, userId, client)
+  const rows = await client.collection('proposals').getFullList({
+    filter: client.filter('trip = {:tripId}', { tripId }),
+    sort: '-created',
+  })
+  return {
+    proposals: rows.map((r) =>
+      mapProposal(r as unknown as Record<string, unknown>)
+    ),
+  }
 }
 
 export async function getProposal(
   proposalId: string,
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<Proposal> {
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-    })
-  )
-  await _verifyParticipant(proposal.tripId, participantUserId, db)
+  const row = await client.collection('proposals').getOne(proposalId)
+  const proposal = mapProposal(row as unknown as Record<string, unknown>)
+  await _verifyParticipant(proposal.trip, userId, client)
   return proposal
 }
 
@@ -698,209 +491,151 @@ export async function updateProposal(
   proposalId: string,
   proposerUserId: string,
   data: Partial<Proposal>,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Proposal> {
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-    })
-  )
-  if (proposal.proposerUserId !== proposerUserId)
+  const row = await client.collection('proposals').getOne(proposalId)
+  const proposal = mapProposal(row as unknown as Record<string, unknown>)
+  if (proposal.proposer !== proposerUserId)
     throw new Error('Only the creator can edit this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be edited.')
-  const dataRecord = data as Record<string, unknown>
-  const {
-    state: _state,
-    tripId: _tripId,
-    proposerUserId: _proposerUserId,
-    ...safeData
-  } = dataRecord
 
-  return fetchProposalRow(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-      data: safeData as Record<string, unknown>,
-    })
-  )
+  const updateData: Record<string, unknown> = {}
+  if (data.description !== undefined) updateData.description = data.description
+  if (data.startDate !== undefined) updateData.start_date = data.startDate
+  if (data.endDate !== undefined) updateData.end_date = data.endDate
+  if (data.resortName !== undefined) updateData.resort_name = data.resortName
+  if (data.country !== undefined) updateData.country = data.country
+  if (data.region !== undefined) updateData.region = data.region
+  if (data.summitAltitude !== undefined)
+    updateData.summit_altitude = data.summitAltitude
+  if (data.baseAltitude !== undefined)
+    updateData.base_altitude = data.baseAltitude
+  if (data.nearestAirport !== undefined)
+    updateData.nearest_airport = data.nearestAirport
+  if (data.transferTime !== undefined)
+    updateData.transfer_time = data.transferTime
+  if (data.pisteKm !== undefined) updateData.piste_km = data.pisteKm
+  if (data.beginnerPct !== undefined) updateData.beginner_pct = data.beginnerPct
+  if (data.intermediatePct !== undefined)
+    updateData.intermediate_pct = data.intermediatePct
+  if (data.advancedPct !== undefined) updateData.advanced_pct = data.advancedPct
+  if (data.liftCount !== undefined) updateData.lift_count = data.liftCount
+  if (data.snowReliability !== undefined)
+    updateData.snow_reliability = data.snowReliability
+  if (data.skiSeasonMonths !== undefined)
+    updateData.ski_season_months = data.skiSeasonMonths
+  if (data.websites !== undefined) updateData.websites = data.websites
+  if (data.latitude !== undefined) updateData.latitude = data.latitude
+  if (data.longitude !== undefined) updateData.longitude = data.longitude
+  if (data.linkedResortsDescription !== undefined)
+    updateData.linked_resorts_description = data.linkedResortsDescription
+
+  const updated = await client
+    .collection('proposals')
+    .update(proposalId, updateData)
+  return mapProposal(updated as unknown as Record<string, unknown>)
 }
 
 export async function deleteProposal(
   proposalId: string,
   proposerUserId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<void> {
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-    })
-  )
-  if (proposal.proposerUserId !== proposerUserId)
+  const row = await client.collection('proposals').getOne(proposalId)
+  const proposal = mapProposal(row as unknown as Record<string, unknown>)
+  if (proposal.proposer !== proposerUserId)
     throw new Error('Only the creator can delete this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be deleted.')
-  const accommodations = await fetchRows<Accommodation>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: ACCOMMODATIONS_TABLE_ID,
-      queries: [Query.equal('proposalId', proposalId), Query.limit(100)],
-    })
-  )
-  const discussions = await fetchRows<Discussion>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: DISCUSSION_TABLE_ID,
-      queries: [Query.equal('proposalId', proposalId), Query.limit(5000)],
-    })
-  )
-  await Promise.all([
-    ...accommodations.map((a) =>
-      db.deleteRow({
-        databaseId: DATABASE_ID,
-        tableId: ACCOMMODATIONS_TABLE_ID,
-        rowId: a.$id,
-      })
-    ),
-    ...discussions.map((d) =>
-      db.deleteRow({
-        databaseId: DATABASE_ID,
-        tableId: DISCUSSION_TABLE_ID,
-        rowId: d.$id,
-      })
-    ),
-  ])
-  await db.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: PROPOSALS_TABLE_ID,
-    rowId: proposalId,
-  })
+  await client.collection('proposals').delete(proposalId)
 }
 
 export async function submitProposal(
   proposalId: string,
   proposerUserId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Proposal> {
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-    })
-  )
-  if (proposal.proposerUserId !== proposerUserId)
+  const row = await client.collection('proposals').getOne(proposalId)
+  const proposal = mapProposal(row as unknown as Record<string, unknown>)
+  if (proposal.proposer !== proposerUserId)
     throw new Error('Only the creator can submit this proposal.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Only draft proposals can be submitted.')
-  const accommodations = await fetchRows<Accommodation>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: ACCOMMODATIONS_TABLE_ID,
-      queries: [Query.equal('proposalId', proposalId), Query.limit(100)],
-    })
-  )
+  const accommodations = await client.collection('accommodations').getFullList({
+    filter: client.filter('proposal = {:proposalId}', { proposalId }),
+  })
   if (accommodations.length === 0)
     throw new Error(
       'At least one accommodation is required to submit a proposal.'
     )
-  const updated = await fetchProposalRow(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-      data: { state: 'SUBMITTED' } as Record<string, unknown>,
-    })
-  )
+  const updated = await client
+    .collection('proposals')
+    .update(proposalId, { state: 'SUBMITTED' })
   await createSystemMessage(
     proposalId,
     `${proposal.proposerUserName} submitted this proposal`,
-    db
+    client
   )
-  return updated
+  return mapProposal(updated as unknown as Record<string, unknown>)
 }
 
 export async function rejectProposal(
   proposalId: string,
   pollCreatorUserId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Proposal> {
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-    })
-  )
+  const row = await client.collection('proposals').getOne(proposalId)
+  const proposal = mapProposal(row as unknown as Record<string, unknown>)
   if (proposal.state !== 'SUBMITTED') {
     throw new Error('Only submitted proposals can be rejected.')
   }
-  const { participants } = await getCoordinatorParticipant(proposal.tripId, db)
-  if (
-    participants.length === 0 ||
-    participants[0].participantUserId !== pollCreatorUserId
-  ) {
+  const { participants } = await getCoordinatorParticipant(
+    proposal.trip,
+    client
+  )
+  if (participants.length === 0 || participants[0].user !== pollCreatorUserId) {
     throw new Error('Only the coordinator can reject this proposal.')
   }
-  const updated = await fetchProposalRow(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-      data: { state: 'REJECTED' } as Record<string, unknown>,
-    })
-  )
+  const updated = await client
+    .collection('proposals')
+    .update(proposalId, { state: 'REJECTED' })
   await createSystemMessage(
     proposalId,
-    `${participants[0].participantUserName} rejected this proposal`,
-    db
+    `${participants[0].userName} rejected this proposal`,
+    client
   )
-  return updated
+  return mapProposal(updated as unknown as Record<string, unknown>)
 }
 
 export async function revertProposalToDraft(
   proposalId: string,
   pollCreatorUserId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Proposal> {
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-    })
-  )
+  const row = await client.collection('proposals').getOne(proposalId)
+  const proposal = mapProposal(row as unknown as Record<string, unknown>)
   if (proposal.state !== 'REJECTED') {
     throw new Error('Only rejected proposals can be moved back to draft.')
   }
-  const { participants } = await getCoordinatorParticipant(proposal.tripId, db)
-  if (
-    participants.length === 0 ||
-    participants[0].participantUserId !== pollCreatorUserId
-  ) {
+  const { participants } = await getCoordinatorParticipant(
+    proposal.trip,
+    client
+  )
+  if (participants.length === 0 || participants[0].user !== pollCreatorUserId) {
     throw new Error(
       'Only the coordinator can move this proposal back to draft.'
     )
   }
-  const updated = await fetchProposalRow(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-      data: { state: 'DRAFT' } as Record<string, unknown>,
-    })
-  )
+  const updated = await client
+    .collection('proposals')
+    .update(proposalId, { state: 'DRAFT' })
   await createSystemMessage(
     proposalId,
-    `${participants[0].participantUserName} moved this proposal back to draft`,
-    db
+    `${participants[0].userName} moved this proposal back to draft`,
+    client
   )
-  return updated
+  return mapProposal(updated as unknown as Record<string, unknown>)
 }
 
 export async function createPoll(
@@ -908,122 +643,82 @@ export async function createPoll(
   pollCreatorUserId: string,
   pollCreatorUserName: string,
   durationDays: number,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Poll> {
   const { participants: coordDocs } = await getCoordinatorParticipant(
     tripId,
-    db
+    client
   )
-  if (
-    coordDocs.length === 0 ||
-    coordDocs[0].participantUserId !== pollCreatorUserId
-  ) {
+  if (coordDocs.length === 0 || coordDocs[0].user !== pollCreatorUserId) {
     throw new Error('Only the coordinator can create a poll.')
   }
-  const openPolls = await fetchPollRows(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: POLLS_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.equal('state', 'OPEN'),
-        Query.limit(1),
-      ],
-    })
-  )
+  const openPolls = await client.collection('polls').getFullList({
+    filter: client.filter('trip = {:tripId} && state = {:state}', {
+      tripId,
+      state: 'OPEN',
+    }),
+  })
   if (openPolls.length > 0) {
     throw new Error('A poll is already open for this trip.')
   }
-  const proposals = await fetchProposalRows(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.equal('state', 'SUBMITTED'),
-        Query.limit(100),
-      ],
-    })
-  )
+  const proposals = await client.collection('proposals').getFullList({
+    filter: client.filter('trip = {:tripId} && state = {:state}', {
+      tripId,
+      state: 'SUBMITTED',
+    }),
+  })
   if (proposals.length === 0) {
     throw new Error('No submitted proposals to poll on.')
   }
-  const proposalIds = proposals.map((p) => p.$id)
+  const proposalIds = proposals.map((p) => p.id)
   const startDate = dayjs().toISOString()
   const endDate = dayjs().add(durationDays, 'day').toISOString()
-  return fetchPollRow(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: POLLS_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        tripId,
-        pollCreatorUserId,
-        pollCreatorUserName,
-        state: 'OPEN',
-        proposalIds,
-        startDate,
-        endDate,
-        outcome: '',
-      } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.write(Role.user(pollCreatorUserId)),
-      ],
-    })
-  )
+  const pollRow = await client.collection('polls').create({
+    trip: tripId,
+    poll_creator: pollCreatorUserId,
+    poll_creator_user_name: pollCreatorUserName,
+    state: 'OPEN',
+    proposal_ids: proposalIds,
+    start_date: startDate,
+    end_date: endDate,
+    outcome: '',
+  })
+  return mapPoll(pollRow as unknown as Record<string, unknown>)
 }
 
 export async function closePoll(
   pollId: string,
   pollCreatorUserId: string,
   outcome: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Poll> {
   if (!outcome.trim()) throw new Error('Outcome is required to close a poll.')
-  const poll = await fetchPollRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: POLLS_TABLE_ID,
-      rowId: pollId,
-    })
-  )
+  const pollRow = await client.collection('polls').getOne(pollId)
+  const poll = mapPoll(pollRow as unknown as Record<string, unknown>)
   if (poll.state !== 'OPEN') throw new Error('Only open polls can be closed.')
-  const { participants } = await getCoordinatorParticipant(poll.tripId, db)
-  if (
-    participants.length === 0 ||
-    participants[0].participantUserId !== pollCreatorUserId
-  ) {
+  const { participants } = await getCoordinatorParticipant(poll.trip, client)
+  if (participants.length === 0 || participants[0].user !== pollCreatorUserId) {
     throw new Error('Only the coordinator can close a poll.')
   }
-  return fetchPollRow(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: POLLS_TABLE_ID,
-      rowId: pollId,
-      data: { state: 'CLOSED', outcome } as Record<string, unknown>,
-    })
-  )
+  const updated = await client
+    .collection('polls')
+    .update(pollId, { state: 'CLOSED', outcome })
+  return mapPoll(updated as unknown as Record<string, unknown>)
 }
 
 export async function listPolls(
   tripId: string,
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<{ polls: Poll[] }> {
-  await _verifyParticipant(tripId, participantUserId, db)
-  const polls = await fetchPollRows(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: POLLS_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(50),
-      ],
-    })
-  )
-  return { polls }
+  await _verifyParticipant(tripId, userId, client)
+  const rows = await client.collection('polls').getFullList({
+    filter: client.filter('trip = {:tripId}', { tripId }),
+    sort: '-created',
+  })
+  return {
+    polls: rows.map((r) => mapPoll(r as unknown as Record<string, unknown>)),
+  }
 }
 
 export async function upsertVote(
@@ -1031,16 +726,11 @@ export async function upsertVote(
   voterUserId: string,
   proposalIds: string[],
   tokenCounts: number[],
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Vote> {
-  const poll = await fetchPollRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: POLLS_TABLE_ID,
-      rowId: pollId,
-    })
-  )
-  await _verifyParticipant(poll.tripId, voterUserId, db)
+  const pollRow = await client.collection('polls').getOne(pollId)
+  const poll = mapPoll(pollRow as unknown as Record<string, unknown>)
+  await _verifyParticipant(poll.trip, voterUserId, client)
   if (poll.state !== 'OPEN') {
     throw new Error('Voting is only allowed on open polls.')
   }
@@ -1055,63 +745,42 @@ export async function upsertVote(
   if (total > poll.proposalIds.length) {
     throw new Error(`Total tokens cannot exceed ${poll.proposalIds.length}.`)
   }
-  const votes = await fetchVoteRows(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: VOTES_TABLE_ID,
-      queries: [
-        Query.equal('pollId', pollId),
-        Query.equal('voterUserId', voterUserId),
-        Query.limit(1),
-      ],
-    })
-  )
-  if (votes.length > 0) {
-    return fetchVoteRow(
-      db.updateRow({
-        databaseId: DATABASE_ID,
-        tableId: VOTES_TABLE_ID,
-        rowId: votes[0].$id,
-        data: {
-          proposalIds,
-          tokenCounts,
-        } as Record<string, unknown>,
+  const existingVotes = await client.collection('votes').getFullList({
+    filter: client.filter('poll = {:pollId} && voter = {:voterUserId}', {
+      pollId,
+      voterUserId,
+    }),
+  })
+  if (existingVotes.length > 0) {
+    const updated = await client
+      .collection('votes')
+      .update(existingVotes[0].id, {
+        proposal_ids: proposalIds,
+        token_counts: tokenCounts,
       })
-    )
+    return mapVote(updated as unknown as Record<string, unknown>)
   }
-  return fetchVoteRow(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: VOTES_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        pollId,
-        voterUserId,
-        proposalIds,
-        tokenCounts,
-      } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.write(Role.user(voterUserId)),
-      ],
-    })
-  )
+  const row = await client.collection('votes').create({
+    poll: pollId,
+    voter: voterUserId,
+    proposal_ids: proposalIds,
+    token_counts: tokenCounts,
+  })
+  return mapVote(row as unknown as Record<string, unknown>)
 }
 
 export async function listVotes(
   pollId: string,
-  participantUserId: string,
-  db: TablesDB = tablesDb
+  userId: string,
+  client: PocketBase = pb
 ): Promise<{ votes: Vote[] }> {
-  await _verifyParticipantByPoll(pollId, participantUserId, db)
-  const votes = await fetchVoteRows(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: VOTES_TABLE_ID,
-      queries: [Query.equal('pollId', pollId), Query.limit(200)],
-    })
-  )
-  return { votes }
+  await _verifyParticipantByPoll(pollId, userId, client)
+  const rows = await client.collection('votes').getFullList({
+    filter: client.filter('poll = {:pollId}', { pollId }),
+  })
+  return {
+    votes: rows.map((r) => mapVote(r as unknown as Record<string, unknown>)),
+  }
 }
 
 function validateUrl(url: string | undefined): string | undefined {
@@ -1130,51 +799,36 @@ export async function createAccommodation(
     cost?: string
     description?: string
   },
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Accommodation> {
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: proposalId,
-    })
+  const proposalRow = await client.collection('proposals').getOne(proposalId)
+  const proposal = mapProposal(
+    proposalRow as unknown as Record<string, unknown>
   )
-  if (proposal.proposerUserId !== proposerUserId)
+  if (proposal.proposer !== proposerUserId)
     throw new Error('Only the creator can add accommodations.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Accommodations can only be added to draft proposals.')
-  return fetchRow<Accommodation>(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: ACCOMMODATIONS_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        proposalId,
-        ...data,
-        url: validateUrl(data.url),
-      } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.write(Role.user(proposerUserId)),
-      ],
-    })
-  )
+  const row = await client.collection('accommodations').create({
+    proposal: proposalId,
+    name: data.name,
+    url: validateUrl(data.url),
+    cost: data.cost,
+    description: data.description,
+  })
+  return mapAccommodation(row as unknown as Record<string, unknown>)
 }
 
 export async function listAccommodations(
   proposalId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Accommodation[]> {
-  return fetchRows<Accommodation>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: ACCOMMODATIONS_TABLE_ID,
-      queries: [
-        Query.equal('proposalId', proposalId),
-        Query.orderDesc('$createdAt'),
-        Query.limit(100),
-      ],
-    })
+  const rows = await client.collection('accommodations').getFullList({
+    filter: client.filter('proposal = {:proposalId}', { proposalId }),
+    sort: '-created',
+  })
+  return rows.map((r) =>
+    mapAccommodation(r as unknown as Record<string, unknown>)
   )
 }
 
@@ -1187,143 +841,135 @@ export async function updateAccommodation(
     cost?: string
     description?: string
   },
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Accommodation> {
-  const accommodation = await fetchRow<Accommodation>(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: ACCOMMODATIONS_TABLE_ID,
-      rowId: accommodationId,
-    })
+  const accommodationRow = await client
+    .collection('accommodations')
+    .getOne(accommodationId)
+  const accommodation = mapAccommodation(
+    accommodationRow as unknown as Record<string, unknown>
   )
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: accommodation.proposalId,
-    })
+  const proposalRow = await client
+    .collection('proposals')
+    .getOne(accommodation.proposal)
+  const proposal = mapProposal(
+    proposalRow as unknown as Record<string, unknown>
   )
-  if (proposal.proposerUserId !== proposerUserId)
+  if (proposal.proposer !== proposerUserId)
     throw new Error('Only the creator can edit accommodations.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Accommodations can only be edited on draft proposals.')
-  return fetchRow<Accommodation>(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: ACCOMMODATIONS_TABLE_ID,
-      rowId: accommodationId,
-      data: {
-        ...data,
-        ...(data.url !== undefined && { url: validateUrl(data.url) }),
-      } as Record<string, unknown>,
-    })
-  )
+  const updateData: Record<string, unknown> = {}
+  if (data.name !== undefined) updateData.name = data.name
+  if (data.url !== undefined) updateData.url = validateUrl(data.url)
+  if (data.cost !== undefined) updateData.cost = data.cost
+  if (data.description !== undefined) updateData.description = data.description
+  const updated = await client
+    .collection('accommodations')
+    .update(accommodationId, updateData)
+  return mapAccommodation(updated as unknown as Record<string, unknown>)
 }
 
 export async function deleteAccommodation(
   accommodationId: string,
   proposerUserId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<void> {
-  const accommodation = await fetchRow<Accommodation>(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: ACCOMMODATIONS_TABLE_ID,
-      rowId: accommodationId,
-    })
+  const accommodationRow = await client
+    .collection('accommodations')
+    .getOne(accommodationId)
+  const accommodation = mapAccommodation(
+    accommodationRow as unknown as Record<string, unknown>
   )
-  const proposal = await fetchProposalRow(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: PROPOSALS_TABLE_ID,
-      rowId: accommodation.proposalId,
-    })
+  const proposalRow = await client
+    .collection('proposals')
+    .getOne(accommodation.proposal)
+  const proposal = mapProposal(
+    proposalRow as unknown as Record<string, unknown>
   )
-  if (proposal.proposerUserId !== proposerUserId)
+  if (proposal.proposer !== proposerUserId)
     throw new Error('Only the creator can delete accommodations.')
   if (proposal.state !== 'DRAFT')
     throw new Error('Accommodations can only be deleted from draft proposals.')
-  await db.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: ACCOMMODATIONS_TABLE_ID,
-    rowId: accommodationId,
-  })
+  await client.collection('accommodations').delete(accommodationId)
 }
 
 export async function getPreferences(
   userId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Preferences | null> {
-  const rows = await fetchRows<Preferences>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: PREFERENCES_TABLE_ID,
-      queries: [Query.equal('userId', userId), Query.limit(1)],
-    })
-  )
-  return rows.length > 0 ? rows[0] : null
+  const rows = await client.collection('preferences').getFullList({
+    filter: client.filter('user = {:userId}', { userId }),
+  })
+  if (rows.length === 0) return null
+  return mapPreferences(rows[0] as unknown as Record<string, unknown>)
 }
 
 export async function updateName(
   name: string,
-  acct: Account = account
-): Promise<Models.User> {
-  return acct.updateName({ name })
+  client: PocketBase = pb
+): Promise<Record<string, unknown>> {
+  const userId = (client.authStore.record as Record<string, unknown>)
+    ?.id as string
+  return client
+    .collection('users')
+    .update(userId, { name }) as unknown as Record<string, unknown>
 }
 
 export async function createPreferences(
   userId: string,
-  data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>,
-  db: TablesDB = tablesDb
+  data: Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>,
+  client: PocketBase = pb
 ): Promise<Preferences> {
-  return fetchRow<Preferences>(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: PREFERENCES_TABLE_ID,
-      rowId: ID.unique(),
-      data: { userId, ...data } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.write(Role.user(userId)),
-      ],
-    })
-  )
+  const row = await client.collection('preferences').create({
+    user: userId,
+    ski_snowboard: data.skiSnowboard,
+    difficulty: data.difficulty,
+    piste: data.piste,
+    time_slopes: data.timeSlopes,
+    time_eating: data.timeEating,
+    time_apres: data.timeApres,
+    time_hotel: data.timeHotel,
+    accommodation: data.accommodation,
+    notes: data.notes,
+  })
+  return mapPreferences(row as unknown as Record<string, unknown>)
 }
 
 export async function updatePreferences(
   userId: string,
-  data: Partial<
-    Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
-  >,
-  db: TablesDB = tablesDb
+  data: Partial<Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>>,
+  client: PocketBase = pb
 ): Promise<Preferences> {
-  const existing = await getPreferences(userId, db)
+  const existing = await getPreferences(userId, client)
   if (!existing) throw new Error('Preferences not found.')
-  return fetchRow<Preferences>(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: PREFERENCES_TABLE_ID,
-      rowId: existing.$id,
-      data: data as Record<string, unknown>,
-    })
-  )
+  const updateData: Record<string, unknown> = {}
+  if (data.skiSnowboard !== undefined)
+    updateData.ski_snowboard = data.skiSnowboard
+  if (data.difficulty !== undefined) updateData.difficulty = data.difficulty
+  if (data.piste !== undefined) updateData.piste = data.piste
+  if (data.timeSlopes !== undefined) updateData.time_slopes = data.timeSlopes
+  if (data.timeEating !== undefined) updateData.time_eating = data.timeEating
+  if (data.timeApres !== undefined) updateData.time_apres = data.timeApres
+  if (data.timeHotel !== undefined) updateData.time_hotel = data.timeHotel
+  if (data.accommodation !== undefined)
+    updateData.accommodation = data.accommodation
+  if (data.notes !== undefined) updateData.notes = data.notes
+  const updated = await client
+    .collection('preferences')
+    .update(existing.id, updateData)
+  return mapPreferences(updated as unknown as Record<string, unknown>)
 }
 
 export async function listDiscussion(
   proposalId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Discussion[]> {
-  return fetchRows<Discussion>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: DISCUSSION_TABLE_ID,
-      queries: [
-        Query.equal('proposalId', proposalId),
-        Query.orderAsc('$createdAt'),
-        Query.limit(500),
-      ],
-    })
-  )
+  const rows = await client.collection('discussion').getFullList({
+    filter: client.filter('proposal = {:proposalId}', { proposalId }),
+    sort: 'created',
+  })
+  return rows.map((r) => mapDiscussion(r as unknown as Record<string, unknown>))
 }
 
 export async function createDiscussionComment(
@@ -1331,209 +977,87 @@ export async function createDiscussionComment(
   authorUserId: string,
   authorUserName: string,
   body: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Discussion> {
-  return fetchRow<Discussion>(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: DISCUSSION_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        proposalId,
-        authorUserId,
-        authorUserName,
-        body,
-        type: 'comment',
-      } as Record<string, unknown>,
-      permissions: [
-        Permission.read(Role.users()),
-        Permission.write(Role.user(authorUserId)),
-      ],
-    })
-  )
+  const row = await client.collection('discussion').create({
+    proposal: proposalId,
+    author: authorUserId,
+    author_user_name: authorUserName,
+    body,
+    type: 'comment',
+  })
+  return mapDiscussion(row as unknown as Record<string, unknown>)
 }
 
 export async function updateDiscussionComment(
   commentId: string,
   authorUserId: string,
   body: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Discussion> {
-  const comment = await fetchRow<Discussion>(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: DISCUSSION_TABLE_ID,
-      rowId: commentId,
-    })
-  )
-  if (comment.authorUserId !== authorUserId)
+  const row = await client.collection('discussion').getOne(commentId)
+  const comment = mapDiscussion(row as unknown as Record<string, unknown>)
+  if (comment.author !== authorUserId)
     throw new Error('Only the author can edit this comment.')
   if (comment.type !== 'comment')
     throw new Error('System messages cannot be edited.')
-  return fetchRow<Discussion>(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: DISCUSSION_TABLE_ID,
-      rowId: commentId,
-      data: { body } as Record<string, unknown>,
-    })
-  )
+  const updated = await client
+    .collection('discussion')
+    .update(commentId, { body })
+  return mapDiscussion(updated as unknown as Record<string, unknown>)
 }
 
 export async function deleteDiscussionComment(
   commentId: string,
   authorUserId: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<void> {
-  const comment = await fetchRow<Discussion>(
-    db.getRow({
-      databaseId: DATABASE_ID,
-      tableId: DISCUSSION_TABLE_ID,
-      rowId: commentId,
-    })
-  )
-  if (comment.authorUserId !== authorUserId)
+  const row = await client.collection('discussion').getOne(commentId)
+  const comment = mapDiscussion(row as unknown as Record<string, unknown>)
+  if (comment.author !== authorUserId)
     throw new Error('Only the author can delete this comment.')
   if (comment.type !== 'comment')
     throw new Error('System messages cannot be deleted.')
-  await db.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: DISCUSSION_TABLE_ID,
-    rowId: commentId,
-  })
+  await client.collection('discussion').delete(commentId)
 }
 
 export async function createSystemMessage(
   proposalId: string,
   body: string,
-  db: TablesDB = tablesDb
+  client: PocketBase = pb
 ): Promise<Discussion> {
-  return fetchRow<Discussion>(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: DISCUSSION_TABLE_ID,
-      rowId: ID.unique(),
-      data: {
-        proposalId,
-        authorUserId: '',
-        authorUserName: 'System',
-        body,
-        type: 'system',
-      } as Record<string, unknown>,
-      permissions: [Permission.read(Role.users())],
-    })
-  )
-}
-
-export async function getLlmCacheByInputHash(
-  inputHash: string,
-  db: TablesDB = tablesDb
-): Promise<LlmCache | null> {
-  const rows = await fetchRows<LlmCache>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: LLM_CACHE_TABLE_ID,
-      queries: [Query.equal('inputHash', inputHash), Query.limit(1)],
-    })
-  )
-  return rows.length > 0 ? rows[0] : null
-}
-
-export async function listLlmCacheByTripAndType(
-  tripId: string,
-  type: LlmCache['type'],
-  db: TablesDB = tablesDb
-): Promise<LlmCache[]> {
-  return fetchRows<LlmCache>(
-    db.listRows({
-      databaseId: DATABASE_ID,
-      tableId: LLM_CACHE_TABLE_ID,
-      queries: [
-        Query.equal('tripId', tripId),
-        Query.equal('type', type),
-        Query.limit(100),
-      ],
-    })
-  )
-}
-
-export async function createLlmCacheRow(
-  data: Omit<LlmCache, '$id' | '$createdAt' | '$updatedAt'>,
-  db: TablesDB = tablesDb
-): Promise<LlmCache> {
-  return fetchRow<LlmCache>(
-    db.createRow({
-      databaseId: DATABASE_ID,
-      tableId: LLM_CACHE_TABLE_ID,
-      rowId: ID.unique(),
-      data: data as Record<string, unknown>,
-      permissions: [Permission.read(Role.users())],
-    })
-  )
-}
-
-export async function updateLlmCacheRow(
-  rowId: string,
-  data: Partial<
-    Omit<
-      LlmCache,
-      | '$id'
-      | '$createdAt'
-      | '$updatedAt'
-      | 'inputHash'
-      | 'type'
-      | 'tripId'
-      | 'model'
-    >
-  >,
-  db: TablesDB = tablesDb
-): Promise<LlmCache> {
-  return fetchRow<LlmCache>(
-    db.updateRow({
-      databaseId: DATABASE_ID,
-      tableId: LLM_CACHE_TABLE_ID,
-      rowId,
-      data: data as Record<string, unknown>,
-    })
-  )
-}
-
-export async function deleteLlmCacheRow(
-  rowId: string,
-  db: TablesDB = tablesDb
-): Promise<void> {
-  await db.deleteRow({
-    databaseId: DATABASE_ID,
-    tableId: LLM_CACHE_TABLE_ID,
-    rowId,
+  const row = await client.collection('discussion').create({
+    proposal: proposalId,
+    author: '',
+    author_user_name: 'System',
+    body,
+    type: 'system',
   })
+  return mapDiscussion(row as unknown as Record<string, unknown>)
 }
 
-const ANALYSE_PROPOSAL_FUNCTION_ID = process.env
-  .PUBLIC_APPWRITE_ANALYSE_PROPOSAL_FUNCTION_ID as string
-
-export async function triggerAnalysis(
-  proposalId: string,
-  tripId: string,
-  fn: Functions = functions
-): Promise<void> {
-  await fn.createExecution({
-    functionId: ANALYSE_PROPOSAL_FUNCTION_ID,
-    body: JSON.stringify({ proposalId, tripId }),
-    async: true,
-  })
-}
-
-const PREFERENCE_SEARCH_FUNCTION_ID = process.env
-  .PUBLIC_APPWRITE_PREFERENCE_SEARCH_FUNCTION_ID as string
-
-export async function triggerPreferenceSearch(
-  tripId: string,
-  fn: Functions = functions
-): Promise<void> {
-  await fn.createExecution({
-    functionId: PREFERENCE_SEARCH_FUNCTION_ID,
-    body: JSON.stringify({ tripId }),
-    async: true,
-  })
+export async function getResortData(): Promise<LocalResort[]> {
+  const rows = await pb.collection('resorts').getFullList()
+  return rows.map((r) => ({
+    id: r.id as string,
+    resortName: r.resort_name as string,
+    country: r.country as string,
+    region: r.region as string,
+    description: r.description as string,
+    latitude: r.latitude as string,
+    longitude: r.longitude as string,
+    summitAltitude: r.summit_altitude as number,
+    baseAltitude: r.base_altitude as number,
+    nearestAirport: r.nearest_airport as string,
+    transferTime: r.transfer_time as number | null,
+    pisteKm: r.piste_km as number,
+    beginnerPct: r.beginner_pct as number,
+    intermediatePct: r.intermediate_pct as number,
+    advancedPct: r.advanced_pct as number,
+    liftCount: r.lift_count as number,
+    snowReliability: r.snow_reliability as 'high' | 'medium' | 'low',
+    skiSeasonMonths: r.ski_season_months as string,
+    websites: r.websites as string[],
+    linkedResortsDescription: r.linked_resorts_description as string,
+  }))
 }
