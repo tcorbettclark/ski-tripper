@@ -1,25 +1,24 @@
 import { useState } from 'react'
-import { account as _account } from './backend'
+import pb from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
 
 interface ResetPasswordFormProps {
-  userId: string
-  secret: string
+  token: string
   onSuccess: () => void
-  updateRecovery?: (
-    userId: string,
-    secret: string,
-    password: string
+  confirmPasswordReset?: (
+    token: string,
+    password: string,
+    passwordConfirm: string
   ) => Promise<unknown>
 }
 
 export default function ResetPasswordForm({
-  userId,
-  secret,
+  token,
   onSuccess,
-  updateRecovery = (uid, s, pw) => _account.updateRecovery(uid, s, pw),
+  confirmPasswordReset = (t, pw, pwc) =>
+    pb.collection('users').confirmPasswordReset(t, pw, pwc),
 }: ResetPasswordFormProps) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -35,7 +34,7 @@ export default function ResetPasswordForm({
     setError('')
     setLoading(true)
     try {
-      await updateRecovery(userId, secret, password)
+      await confirmPasswordReset(token, password, password)
       onSuccess()
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

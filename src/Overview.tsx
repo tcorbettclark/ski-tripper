@@ -1,4 +1,3 @@
-import type { Models } from 'appwrite'
 import { Check, Copy, Heart, Pencil, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import ActionGuide, { type ProposalDetail } from './ActionGuide'
@@ -33,11 +32,12 @@ import type {
   Proposal,
   ResortWithEmbedding,
   Trip,
+  User,
   Vote,
 } from './types.d.ts'
 
 interface OverviewProps {
-  user: Models.User
+  user: User
   trip: Trip
   tripId: string
   resorts: ResortWithEmbedding[]
@@ -125,11 +125,11 @@ export default function Overview({
         if (!mountedRef.current) return
         setIsCoordinator(
           participants.length > 0 &&
-            participants[0].participantUserId === user.$id
+            participants[0].participantUserId === user.id
         )
       })
       .catch(() => {})
-  }, [tripId, user.$id, getCoordinatorParticipant])
+  }, [tripId, user.id, getCoordinatorParticipant])
 
   useEffect(() => {
     if (!tripId) return
@@ -183,7 +183,7 @@ export default function Overview({
   useEffect(() => {
     if (!tripId) return
 
-    listProposals(tripId, user.$id)
+    listProposals(tripId, user.id)
       .then((result) => {
         if (!mountedRef.current) return
         setProposals(result.proposals)
@@ -192,12 +192,12 @@ export default function Overview({
         if (!mountedRef.current) return
         onAuthError(err)
       })
-  }, [tripId, user.$id, listProposals, onAuthError])
+  }, [tripId, user.id, listProposals, onAuthError])
 
   useEffect(() => {
     if (!tripId) return
 
-    listPolls(tripId, user.$id)
+    listPolls(tripId, user.id)
       .then((result) => {
         if (!mountedRef.current) return
         setPolls(result.polls)
@@ -206,7 +206,7 @@ export default function Overview({
         if (!mountedRef.current) return
         onAuthError(err)
       })
-  }, [tripId, user.$id, listPolls, onAuthError])
+  }, [tripId, user.id, listPolls, onAuthError])
 
   const activePoll = polls.find((p) => p.state === 'OPEN')
   const closedPollCount = polls.filter((p) => p.state === 'CLOSED').length
@@ -216,7 +216,7 @@ export default function Overview({
       setUserVotedInActivePoll(false)
       return
     }
-    listVotes(activePoll.$id, user.$id)
+    listVotes(activePoll.$id, user.id)
       .then((result) => {
         if (!mountedRef.current) return
         setUserVotedInActivePoll(result.votes.length > 0)
@@ -225,11 +225,11 @@ export default function Overview({
         if (!mountedRef.current) return
         setUserVotedInActivePoll(false)
       })
-  }, [activePoll, user.$id, listVotes])
+  }, [activePoll, user.id, listVotes])
 
   const draftCount = proposals.filter((p) => p.state === 'DRAFT').length
   const myDrafts = proposals
-    .filter((p) => p.state === 'DRAFT' && p.proposerUserId === user.$id)
+    .filter((p) => p.state === 'DRAFT' && p.proposerUserId === user.id)
     .map((p) => ({ proposalId: p.$id, resortName: p.resortName || 'Untitled' }))
   const draftsForDiscussion = proposals
     .filter((p) => p.state === 'DRAFT')
@@ -425,7 +425,7 @@ export default function Overview({
 
   const sortedParticipants = [...participants]
     .map((p) => {
-      if (p.participantUserId === user.$id) {
+      if (p.participantUserId === user.id) {
         return { ...p, participantUserName: user.name || user.email }
       }
       return p
@@ -490,7 +490,7 @@ export default function Overview({
         <div style={overviewStyles.card}>
           <EditTripDescriptionForm
             trip={trip}
-            userId={user.$id}
+            userId={user.id}
             onUpdated={(updatedTrip) => {
               setEditingDescription(false)
               onTripUpdated?.(updatedTrip)
@@ -556,7 +556,7 @@ export default function Overview({
                 {sortedParticipants.map((p) => {
                   const prefs = preferencesMap[p.participantUserId]
                   const isCurrentUser =
-                    p.participantUserId === user.$id && !!onOpenPreferences
+                    p.participantUserId === user.id && !!onOpenPreferences
                   return (
                     <div key={p.$id}>
                       {/* biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally */}

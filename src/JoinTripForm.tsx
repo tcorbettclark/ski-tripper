@@ -1,15 +1,14 @@
-import type { Models } from 'appwrite'
 import { useState } from 'react'
-import {
-  account as _account,
+import pb, {
   getTripByCode as _getTripByCode,
   joinTrip as _joinTrip,
 } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
+import type { User } from './types.d.ts'
 
 interface JoinTripFormProps {
-  user: Models.User
+  user: User
   onJoined: (trip: unknown) => void
   onDismiss: () => void
   getTripByCode?: (code: string) => Promise<{ trips: unknown[] }>
@@ -18,7 +17,7 @@ interface JoinTripFormProps {
     userName: string,
     tripId: string
   ) => Promise<unknown>
-  accountGet?: () => Promise<Models.User>
+  accountGet?: () => Promise<User>
 }
 
 export default function JoinTripForm({
@@ -27,7 +26,16 @@ export default function JoinTripForm({
   onDismiss,
   getTripByCode = _getTripByCode,
   joinTrip = _joinTrip,
-  accountGet = _account.get.bind(_account),
+  accountGet = () => {
+    const record = pb.authStore.record as Record<string, unknown> | null
+    if (!record) return Promise.reject(new Error('Not authenticated'))
+    return Promise.resolve({
+      id: record.id as string,
+      name: (record.name as string) || '',
+      email: record.email as string,
+      emailVerification: record.verified as boolean,
+    } as User)
+  },
 }: JoinTripFormProps) {
   const [code, setCode] = useState('')
   const [saving, setSaving] = useState(false)
@@ -43,7 +51,7 @@ export default function JoinTripForm({
         throw new Error('No trip found with that code.')
       const trip = res.trips[0]
       const userAccount = await accountGet()
-      await joinTrip(user.$id, userAccount.name, (trip as { $id: string }).$id)
+      await joinTrip(user.id, userAccount.name, (trip as { id: string }).id)
       onJoined(trip)
       setCode('')
       onDismiss()

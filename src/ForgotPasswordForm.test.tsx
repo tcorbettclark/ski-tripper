@@ -24,28 +24,25 @@ describe('ForgotPasswordForm', () => {
     expect(screen.getByLabelText(/email/i))
   })
 
-  it('calls createRecovery with email and URL on submit', async () => {
+  it('calls requestPasswordReset with email on submit', async () => {
     const user = userEvent.setup()
-    const mockCreateRecovery = mock(() => Promise.resolve())
+    const mockRequestPasswordReset = mock(() => Promise.resolve())
     renderForgotPasswordForm({
-      createRecovery: mockCreateRecovery,
+      requestPasswordReset: mockRequestPasswordReset,
     })
 
     await user.type(screen.getByLabelText(/email/i), 'alice@example.com')
     await user.click(screen.getByRole('button', { name: /send reset link/i }))
 
     await waitFor(() => {
-      expect(mockCreateRecovery).toHaveBeenCalledWith(
-        'alice@example.com',
-        expect.stringContaining('/reset-password')
-      )
+      expect(mockRequestPasswordReset).toHaveBeenCalledWith('alice@example.com')
     })
   })
 
   it('shows success message after sending reset link', async () => {
     const user = userEvent.setup()
     renderForgotPasswordForm({
-      createRecovery: () => Promise.resolve(),
+      requestPasswordReset: () => Promise.resolve(),
     })
 
     await user.type(screen.getByLabelText(/email/i), 'alice@example.com')
@@ -61,7 +58,7 @@ describe('ForgotPasswordForm', () => {
     const user = userEvent.setup()
     const handleBack = mock(() => {})
     renderForgotPasswordForm({
-      createRecovery: () => Promise.resolve(),
+      requestPasswordReset: () => Promise.resolve(),
       onBackToLogin: handleBack,
     })
 
@@ -76,10 +73,10 @@ describe('ForgotPasswordForm', () => {
     expect(handleBack).toHaveBeenCalledTimes(1)
   })
 
-  it('shows error when createRecovery fails', async () => {
+  it('shows error when requestPasswordReset fails', async () => {
     const user = userEvent.setup()
     renderForgotPasswordForm({
-      createRecovery: () => Promise.reject(new Error('User not found')),
+      requestPasswordReset: () => Promise.reject(new Error('User not found')),
     })
 
     await user.type(screen.getByLabelText(/email/i), 'unknown@example.com')
@@ -103,7 +100,7 @@ describe('ForgotPasswordForm', () => {
     let resolveRecovery: ((value: unknown) => void) | undefined
     const user = userEvent.setup()
     renderForgotPasswordForm({
-      createRecovery: () =>
+      requestPasswordReset: () =>
         new Promise((resolve) => {
           resolveRecovery = resolve
         }),

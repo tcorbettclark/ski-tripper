@@ -1,31 +1,34 @@
-import { ID, type Models } from 'appwrite'
 import { useState } from 'react'
-import { account as _account } from './backend'
+import pb from './backend'
 import Field from './Field'
 import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, fontSizes, formStyles } from './theme'
+import type { User } from './types.d'
 
 interface AuthFormProps {
   mode?: 'login' | 'signup'
-  onSuccess: (session: Models.Session, user: Models.User) => void
+  onSuccess: (user: User) => void
   onSwitchMode: () => void
   onForgotPassword?: () => void
-  accountCreate?: (
-    id: string,
+  createUser?: (
     email: string,
     password: string,
     name: string
-  ) => Promise<Models.User>
-  createEmailPasswordSession?: (
-    email: string,
-    password: string
-  ) => Promise<Models.Session>
-  createEmailVerification?: (url: string) => Promise<unknown>
-  accountGet?: () => Promise<Models.User>
-  generateId?: () => string
+  ) => Promise<unknown>
+  authWithPassword?: (email: string, password: string) => Promise<User>
+  requestVerification?: (email: string) => Promise<unknown>
   sessionExpiredMessage?: string | null
+}
+
+function mapUser(record: Record<string, unknown>): User {
+  return {
+    id: record.id as string,
+    name: (record.name as string) || '',
+    email: record.email as string,
+    emailVerification: record.verified as boolean,
+  }
 }
 
 export default function AuthForm({
@@ -33,13 +36,14 @@ export default function AuthForm({
   onSuccess,
   onSwitchMode,
   onForgotPassword,
-  accountCreate = (id, email, password, name) =>
-    _account.create(id, email, password, name),
-  createEmailPasswordSession = (email, password) =>
-    _account.createEmailPasswordSession(email, password),
-  createEmailVerification = (url) => _account.createVerification(url),
-  accountGet = () => _account.get(),
-  generateId = () => ID.unique(),
+  createUser = (email, password, name) =>
+    pb.collection('users').create({ email, password, name }),
+  authWithPassword = async (email, password) => {
+    await pb.collection('users').authWithPassword(email, password)
+    return mapUser(pb.authStore.record as unknown as Record<string, unknown>)
+  },
+  requestVerification = (email) =>
+    pb.collection('users').requestVerification(email),
   sessionExpiredMessage = null,
 }: AuthFormProps) {
   const [name, setName] = useState('')
@@ -56,9 +60,8 @@ export default function AuthForm({
     setLoading(true)
     try {
       if (isSignup) {
-        await accountCreate(generateId(), email, password, name)
-        const session = await createEmailPasswordSession(email, password)
-        const user = await accountGet()
+        await createUser(email, password, name)
+        const user = await authWithPassword(email, password)
         try {
           if (navigator.credentials?.store) {
             const credential = new PasswordCredential({
@@ -72,15 +75,13 @@ export default function AuthForm({
           // Credential Management API not supported or blocked
         }
         if (!user.emailVerification) {
-          const baseUrl = window.location.origin
-          await createEmailVerification(`${baseUrl}/verify`)
+          await requestVerification(email)
         }
-        onSuccess(session, user)
+        onSuccess(user)
         window.location.reload()
       } else {
-        const session = await createEmailPasswordSession(email, password)
-        const user = await accountGet()
-        onSuccess(session, user)
+        const user = await authWithPassword(email, password)
+        onSuccess(user)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

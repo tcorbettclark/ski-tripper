@@ -1,4 +1,3 @@
-import type { Models } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   closePoll as _closePoll,
@@ -18,12 +17,13 @@ import type {
   Accommodation,
   Poll as PollType,
   Proposal,
+  User,
   Vote,
 } from './types.d.ts'
 import { formatDate } from './utils'
 
 interface PollComponentProps {
-  user: Models.User
+  user: User
   tripId: string
   onActivePollChange?: (endDate: string | null) => void
   onAuthError?: (err: unknown) => void
@@ -115,14 +115,14 @@ export default function Poll({
     setPollsError('')
     Promise.all([
       getCoordinatorParticipant(tripId),
-      listProposals(tripId, user.$id),
-      listPolls(tripId, user.$id),
+      listProposals(tripId, user.id),
+      listPolls(tripId, user.id),
     ])
       .then(async ([coordResult, proposalsResult, pollsResult]) => {
         if (!mountedRef.current) return
         setIsCoordinator(
           coordResult.participants.length > 0 &&
-            coordResult.participants[0].participantUserId === user.$id
+            coordResult.participants[0].participantUserId === user.id
         )
         setProposals(proposalsResult.proposals)
         const accMap: Record<string, Accommodation[]> = {}
@@ -145,7 +145,7 @@ export default function Poll({
         setPastPolls(past)
         onActivePollChange?.(open?.endDate || null)
         if (open) {
-          const votesResult = await listVotes(open.$id, user.$id)
+          const votesResult = await listVotes(open.$id, user.id)
           if (mountedRef.current) setVotes(votesResult.votes)
         }
       })
@@ -158,7 +158,7 @@ export default function Poll({
       })
   }, [
     tripId,
-    user.$id,
+    user.id,
     getCoordinatorParticipant,
     listProposals,
     listPolls,
@@ -182,7 +182,7 @@ export default function Poll({
     try {
       const poll = await createPoll(
         tripId,
-        user.$id,
+        user.id,
         user.name || '',
         pollDuration
       )
@@ -201,7 +201,7 @@ export default function Poll({
     setClosingPoll(true)
     setClosePollError(null)
     try {
-      const closed = await closePoll(activePoll.$id, user.$id, outcomeText)
+      const closed = await closePoll(activePoll.$id, user.id, outcomeText)
       setActivePoll(null)
       setPastPolls((p) => [closed, ...p])
       onActivePollChange?.(null)
@@ -215,7 +215,7 @@ export default function Poll({
   }
 
   const hasSubmittedProposals = proposals.some((p) => p.state === 'SUBMITTED')
-  const myVote = votes.find((v) => v.voterUserId === user.$id) || null
+  const myVote = votes.find((v) => v.voterUserId === user.id) || null
 
   if (loading) return <p style={styles.message}>Loading…</p>
 
@@ -295,7 +295,7 @@ export default function Poll({
                 proposals={proposals}
                 accommodations={accommodations}
                 myVote={myVote}
-                userId={user.$id}
+                userId={user.id}
                 onVoteSaved={handleVoteSaved}
                 upsertVote={upsertVote}
               />
@@ -353,7 +353,7 @@ export default function Poll({
                   key={poll.$id}
                   poll={poll}
                   proposals={proposals}
-                  userId={user.$id}
+                  userId={user.id}
                   listVotes={listVotes}
                 />
               ))}

@@ -5,13 +5,13 @@ import { authStyles, colors, fontSizes, formStyles } from './theme'
 interface EmailVerifyScreenProps {
   email: string
   onBackToLogin: () => void
-  createEmailVerification: (url: string) => Promise<unknown>
+  requestVerification: (email: string) => Promise<unknown>
 }
 
 export default function EmailVerifyScreen({
   email,
   onBackToLogin,
-  createEmailVerification,
+  requestVerification,
 }: EmailVerifyScreenProps) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -21,8 +21,7 @@ export default function EmailVerifyScreen({
     setError('')
     setLoading(true)
     try {
-      const baseUrl = window.location.origin
-      await createEmailVerification(`${baseUrl}/verify`)
+      await requestVerification(email)
       setResent(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

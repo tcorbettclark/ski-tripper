@@ -121,6 +121,13 @@ export interface ResortWithEmbedding extends LocalResort {
   embedding: number[]
 }
 
+export interface User {
+  id: string
+  name: string
+  email: string
+  emailVerification: boolean
+}
+
 export interface Preferences {
   id: string
   created: string
@@ -135,4 +142,18 @@ export interface Preferences {
   timeHotel: number
   accommodation: string[]
   notes: string
+}
+
+export interface LlmCache {
+  id: string
+  created: string
+  updated: string
+  inputHash: string
+  type: 'analysis' | 'preference-search'
+  proposalId: string | null
+  tripId: string
+  status: 'generating' | 'complete' | 'error'
+  thinking: string | null
+  content: string | null
+  model: string
 }

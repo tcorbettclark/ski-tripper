@@ -1,8 +1,6 @@
-import type { Models } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AuthForm from './AuthForm'
-import {
-  account as _account,
+import pb, {
   createPreferences as _createPreferences,
   fetchResortDataWithAuth as _fetchResortDataWithAuth,
   getCoordinatorParticipant as _getCoordinatorParticipant,
@@ -29,7 +27,7 @@ import ResetPasswordForm from './ResetPasswordForm'
 import Resorts from './Resorts'
 import Trips from './Trips'
 import { colors, fontSizes, fonts, mix } from './theme'
-import type { Preferences, ResortWithEmbedding, Trip } from './types.d.ts'
+import type { Preferences, ResortWithEmbedding, Trip } from './types.d'
 import useAuth from './useAuth'
 
 interface ListTripsResult {
@@ -39,9 +37,7 @@ interface ListTripsResult {
 
 interface AppProps {
   hasSession?: () => boolean
-  accountGet?: () => Promise<Models.User>
-  deleteSession?: () => Promise<unknown>
-  updateEmailVerification?: (userId: string, secret: string) => Promise<unknown>
+  confirmVerification?: (token: string) => Promise<unknown>
   listTrips?: (userId: string) => Promise<ListTripsResult>
   listParticipatedTrips?: (userId: string) => Promise<{
     trips: Trip[]
@@ -54,33 +50,31 @@ interface AppProps {
   }>
   getCoordinatorParticipant?: (tripId: string) => Promise<{
     participants: Array<{
-      participantUserId: string
-      participantUserName: string
+      user: string
+      userName: string
     }>
   }>
   getPreferences?: (userId: string) => Promise<Preferences | null>
   createPreferences?: (
     userId: string,
-    data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
+    data: Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>
   ) => Promise<Preferences>
   updateTrip?: (
     tripId: string,
     data: Partial<Trip>,
-    participantUserId: string
+    userId: string
   ) => Promise<Trip>
-  updateRecovery?: (
-    userId: string,
-    secret: string,
-    password: string
+  confirmPasswordReset?: (
+    token: string,
+    password: string,
+    passwordConfirm: string
   ) => Promise<unknown>
   fetchResortDataWithAuth?: () => Promise<string>
-  updateName?: (name: string) => Promise<Models.User>
+  updateName?: (name: string) => Promise<unknown>
 }
 
-const defaultAccountGet = () => _account.get()
-const defaultDeleteSession = () => _account.deleteSession('current')
-const defaultUpdateEmailVerification = (userId: string, secret: string) =>
-  _account.updateVerification(userId, secret)
+const defaultConfirmVerification = (token: string) =>
+  pb.collection('users').confirmVerification(token)
 const defaultListTrips = _listTrips
 const defaultListParticipatedTrips = _listParticipatedTrips
 const defaultListPolls = _listPolls
@@ -88,11 +82,12 @@ const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
 const defaultUpdateTrip = _updateTrip
-const defaultUpdateRecovery = (
-  userId: string,
-  secret: string,
-  password: string
-) => _account.updateRecovery(userId, secret, password)
+const defaultConfirmPasswordReset = (
+  token: string,
+  password: string,
+  passwordConfirm: string
+) =>
+  pb.collection('users').confirmPasswordReset(token, password, passwordConfirm)
 const defaultFetchResortDataWithAuth = _fetchResortDataWithAuth
 const defaultUpdateName = _updateName
 
@@ -105,9 +100,7 @@ type ProposalDetail = {
 
 export default function App({
   hasSession = _hasSession,
-  accountGet = defaultAccountGet,
-  deleteSession = defaultDeleteSession,
-  updateEmailVerification = defaultUpdateEmailVerification,
+  confirmVerification = defaultConfirmVerification,
   listTrips = defaultListTrips,
   listParticipatedTrips = defaultListParticipatedTrips,
   listPolls = defaultListPolls,
@@ -115,7 +108,7 @@ export default function App({
   getPreferences = defaultGetPreferences,
   createPreferences = defaultCreatePreferences,
   updateTrip = defaultUpdateTrip,
-  updateRecovery = defaultUpdateRecovery,
+  confirmPasswordReset = defaultConfirmPasswordReset,
   fetchResortDataWithAuth = defaultFetchResortDataWithAuth,
   updateName = defaultUpdateName,
 }: AppProps) {
@@ -127,19 +120,16 @@ export default function App({
     logout,
     onAuthError,
     refreshUser,
-  } = useAuth({ hasSession, accountGet, deleteSession })
+  } = useAuth({ hasSession })
   const [page, setPage] = useState<'login' | 'signup' | 'forgotPassword'>(
     'login'
   )
-  const [resetPassword, setResetPassword] = useState<{
-    userId: string
-    secret: string
-  } | null>(null)
+  const [resetPasswordToken, setResetPasswordToken] = useState<string | null>(
+    null
+  )
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false)
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
-  // Lifted from ProposalsGrid so that NextActions can navigate directly to a specific proposals sub-tab.
-  // Without this, navigating to the proposals tab always lands on DRAFT regardless of context.
   const [proposalsStatusFilter, setProposalsStatusFilter] =
     useState<StatusFilter>('DRAFT')
   const [proposalDetail, setProposalDetail] = useState<ProposalDetail | null>(
@@ -182,34 +172,35 @@ export default function App({
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const verifyUserId = params.get('userId')
-    const verifySecret = params.get('secret')
-    if (!verifyUserId || !verifySecret) return
+    const token = params.get('token')
+    if (!token) return
     if (window.location.pathname === '/reset-password') {
-      setResetPassword({ userId: verifyUserId, secret: verifySecret })
+      setResetPasswordToken(token)
       setPasswordResetSuccess(false)
       window.history.replaceState({}, '', window.location.pathname)
       return
     }
-    updateEmailVerification(verifyUserId, verifySecret)
-      .then(() => {
-        window.history.replaceState({}, '', window.location.pathname)
-        refreshUser()
-      })
-      .catch(() => {})
-  }, [updateEmailVerification, refreshUser])
+    if (window.location.pathname === '/verify') {
+      confirmVerification(token)
+        .then(() => {
+          window.history.replaceState({}, '', window.location.pathname)
+          refreshUser()
+        })
+        .catch(() => {})
+    }
+  }, [confirmVerification, refreshUser])
 
   const loadTrips = useCallback(
     (userId: string) => {
       Promise.all([listTrips(userId), listParticipatedTrips(userId)]).then(
         ([ownRes, participatedRes]) => {
           const coordinatedIds = new Set(
-            ownRes.trips.map((t: { $id: string }) => t.$id)
+            ownRes.trips.map((t: { id: string }) => t.id)
           )
           const allTrips = [
             ...ownRes.trips,
             ...participatedRes.trips.filter(
-              (t: { $id: string }) => !coordinatedIds.has(t.$id)
+              (t: { id: string }) => !coordinatedIds.has(t.id)
             ),
           ]
           setTrips(allTrips)
@@ -221,7 +212,7 @@ export default function App({
 
   const handleJoinedTrip = useCallback(() => {
     if (!user) return
-    loadTrips(user.$id)
+    loadTrips(user.id)
     setRefreshProposalsKey((k) => k + 1)
   }, [user, loadTrips])
 
@@ -236,7 +227,7 @@ export default function App({
     if (preferencesFetchedRef.current) return
     preferencesFetchedRef.current = true
     setCheckingPreferences(true)
-    getPreferences(user.$id)
+    getPreferences(user.id)
       .then((prefs) => {
         setPreferences(prefs)
       })
@@ -246,7 +237,7 @@ export default function App({
 
   useEffect(() => {
     if (!user) return
-    loadTrips(user.$id)
+    loadTrips(user.id)
   }, [user, loadTrips])
 
   useEffect(() => {
@@ -254,9 +245,9 @@ export default function App({
     if (view === 'tripList') {
       autoSelectedRef.current = true
       const trip = trips[0]
-      setSelectedTripId(trip.$id)
+      setSelectedTripId(trip.id)
       setTripDetailTab('overview')
-      listPolls(trip.$id, user.$id).then(({ polls }) => {
+      listPolls(trip.id, user.id).then(({ polls }) => {
         const open = polls.find((p) => p.state === 'OPEN')
         setActivePollEndDate(open?.endDate || null)
       })
@@ -267,7 +258,7 @@ export default function App({
   async function handleLogout() {
     setLogoutError(null)
     try {
-      await deleteSession()
+      pb.authStore.clear()
       logout()
       setPage('login')
     } catch (err) {
@@ -282,7 +273,7 @@ export default function App({
     setTripDetailTab('overview')
     setProposalsStatusFilter('DRAFT')
     setProposalDetail(null)
-    listPolls(tripId, user.$id).then(({ polls }) => {
+    listPolls(tripId, user.id).then(({ polls }) => {
       const open = polls.find((p) => p.state === 'OPEN')
       setActivePollEndDate(open?.endDate || null)
     })
@@ -303,27 +294,26 @@ export default function App({
 
   function handleTripUpdated(updatedTrip: Trip) {
     setTrips((prev) =>
-      prev.map((t) => (t.$id === updatedTrip.$id ? updatedTrip : t))
+      prev.map((t) => (t.id === updatedTrip.id ? updatedTrip : t))
     )
   }
 
-  const selectedTrip = trips.find((t) => t.$id === selectedTripId) || null
+  const selectedTrip = trips.find((t) => t.id === selectedTripId) || null
 
   if (checking) return null
 
   if (!user) {
-    if (resetPassword) {
+    if (resetPasswordToken) {
       return (
         <>
           <ResetPasswordForm
-            userId={resetPassword.userId}
-            secret={resetPassword.secret}
+            token={resetPasswordToken}
             onSuccess={() => {
-              setResetPassword(null)
+              setResetPasswordToken(null)
               setPasswordResetSuccess(true)
               setPage('login')
             }}
-            updateRecovery={updateRecovery}
+            confirmPasswordReset={confirmPasswordReset}
           />
           <Footer />
         </>
@@ -360,8 +350,8 @@ export default function App({
       <EmailVerifyScreen
         email={user.email}
         onBackToLogin={handleLogout}
-        createEmailVerification={(url: string) =>
-          _account.createVerification(url)
+        requestVerification={(email: string) =>
+          pb.collection('users').requestVerification(email)
         }
       />
     )
@@ -416,7 +406,7 @@ export default function App({
             experience.
           </p>
           <PreferencesForm
-            userId={user.$id}
+            userId={user.id}
             onSaved={(prefs) => {
               setPreferences(prefs)
               setView('tripList')
@@ -534,14 +524,14 @@ export default function App({
       )}
 
       <PreferencesModal
-        userId={user.$id}
+        userId={user.id}
         userName={user.name || user.email}
         initial={preferences}
         open={showPreferencesModal}
         onClose={() => setShowPreferencesModal(false)}
         onSaved={(prefs) => {
           setPreferences(prefs)
-          setPreferencesUpdated({ userId: user.$id, preferences: prefs })
+          setPreferencesUpdated({ userId: user.id, preferences: prefs })
         }}
         onNameUpdated={() => {
           refreshUser()

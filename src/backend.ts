@@ -2,11 +2,13 @@ import PocketBase from 'pocketbase'
 import type {
   Accommodation,
   Discussion,
+  LlmCache,
   LocalResort,
   Participant,
   Poll,
   Preferences,
   Proposal,
+  ResortWithEmbedding,
   Trip,
   Vote,
 } from './types.d'
@@ -14,6 +16,10 @@ import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
 const pb = new PocketBase(process.env.PUBLIC_POCKETBASE_URL as string)
 export default pb
+
+export function hasSession(): boolean {
+  return pb.authStore.isValid
+}
 
 function mapParticipant(row: Record<string, unknown>): Participant {
   return {
@@ -1060,4 +1066,73 @@ export async function getResortData(): Promise<LocalResort[]> {
     websites: r.websites as string[],
     linkedResortsDescription: r.linked_resorts_description as string,
   }))
+}
+
+export async function fetchResortDataWithAuth(): Promise<string> {
+  const rows = await pb.collection('resorts').getFullList()
+  const resorts: ResortWithEmbedding[] = rows.map((r) => ({
+    id: r.id as string,
+    resortName: r.resort_name as string,
+    country: r.country as string,
+    region: r.region as string,
+    description: r.description as string,
+    latitude: r.latitude as string,
+    longitude: r.longitude as string,
+    summitAltitude: r.summit_altitude as number,
+    baseAltitude: r.base_altitude as number,
+    nearestAirport: r.nearest_airport as string,
+    transferTime: r.transfer_time as number | null,
+    pisteKm: r.piste_km as number,
+    beginnerPct: r.beginner_pct as number,
+    intermediatePct: r.intermediate_pct as number,
+    advancedPct: r.advanced_pct as number,
+    liftCount: r.lift_count as number,
+    snowReliability: r.snow_reliability as 'high' | 'medium' | 'low',
+    skiSeasonMonths: r.ski_season_months as string,
+    websites: r.websites as string[],
+    linkedResortsDescription: r.linked_resorts_description as string,
+    embedding: (r.embedding as number[] | undefined) || [],
+  }))
+  return resorts.map((r) => JSON.stringify(r)).join('\n')
+}
+
+function mapLlmCache(row: Record<string, unknown>): LlmCache {
+  return {
+    id: row.id as string,
+    created: row.created as string,
+    updated: row.updated as string,
+    inputHash: row.input_hash as string,
+    type: row.type as 'analysis' | 'preference-search',
+    proposalId: (row.proposal as string) || null,
+    tripId: row.trip as string,
+    status: row.status as 'generating' | 'complete' | 'error',
+    thinking: (row.thinking as string) || null,
+    content: (row.content as string) || null,
+    model: row.model as string,
+  }
+}
+
+export async function listLlmCacheByTripAndType(
+  tripId: string,
+  type: LlmCache['type'],
+  client: PocketBase = pb
+): Promise<LlmCache[]> {
+  const rows = await client.collection('llm_cache').getFullList({
+    filter: client.filter('trip = {:tripId} && type = {:type}', {
+      tripId,
+      type,
+    }),
+  })
+  return rows.map((r) => mapLlmCache(r as unknown as Record<string, unknown>))
+}
+
+export async function triggerAnalysis(
+  _proposalId: string,
+  _tripId: string
+): Promise<void> {
+  throw new Error('triggerAnalysis not yet implemented for PocketBase')
+}
+
+export async function triggerPreferenceSearch(_tripId: string): Promise<void> {
+  throw new Error('triggerPreferenceSearch not yet implemented for PocketBase')
 }

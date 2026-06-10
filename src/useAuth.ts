@@ -1,34 +1,35 @@
-import { AppwriteException, type Models } from 'appwrite'
+import { ClientResponseError } from 'pocketbase'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { account as _account, hasSession as _hasSession } from './backend'
+import pb, { hasSession as _hasSession } from './backend'
+import type { User } from './types.d'
 
 const IDLE_TIMEOUT_MS = 5 * 60_000
 const ACTIVITY_THROTTLE_MS = 1_000
 
+function mapUser(record: Record<string, unknown>): User {
+  return {
+    id: record.id as string,
+    name: (record.name as string) || '',
+    email: record.email as string,
+    emailVerification: record.verified as boolean,
+  }
+}
+
 export default function useAuth(options?: {
   hasSession?: () => boolean
-  accountGet?: () => Promise<Models.User>
-  deleteSession?: () => Promise<unknown>
+  getUser?: () => User | null
 }) {
-  const sessionRef = useRef(options?.hasSession ?? _hasSession)
-  const accountGetRef = useRef(options?.accountGet ?? (() => _account.get()))
-  const deleteSessionRef = useRef(
-    options?.deleteSession ?? (() => _account.deleteSession('current'))
-  )
+  const hasSessionRef = useRef(options?.hasSession ?? _hasSession)
+  const pbRef = useRef(pb)
 
-  const [user, setUser] = useState<Models.User | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [checking, setChecking] = useState(true)
   const [sessionExpiredMessage, setSessionExpiredMessage] = useState<
     string | null
   >(null)
-  const sessionExpiryRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearTimers = useCallback(() => {
-    if (sessionExpiryRef.current) {
-      clearTimeout(sessionExpiryRef.current)
-      sessionExpiryRef.current = null
-    }
     if (idleTimeoutRef.current) {
       clearTimeout(idleTimeoutRef.current)
       idleTimeoutRef.current = null
@@ -46,7 +47,7 @@ export default function useAuth(options?: {
 
   const autoLogout = useCallback(
     (message?: string) => {
-      deleteSessionRef.current().catch(() => {})
+      pbRef.current.authStore.clear()
       logout(message)
     },
     [logout]
@@ -54,7 +55,7 @@ export default function useAuth(options?: {
 
   const onAuthError = useCallback(
     (err: unknown) => {
-      if (err instanceof AppwriteException && err.code === 401) {
+      if (err instanceof ClientResponseError && err.status === 401) {
         autoLogout('Your session has expired. Please sign in again.')
       }
     },
@@ -62,16 +63,31 @@ export default function useAuth(options?: {
   )
 
   useEffect(() => {
-    if (!sessionRef.current()) {
+    if (!hasSessionRef.current()) {
       setUser(null)
       setChecking(false)
       return
     }
-    accountGetRef
-      .current()
-      .then(setUser)
-      .catch(() => setUser(null))
-      .finally(() => setChecking(false))
+    const record = pbRef.current.authStore.record
+    if (record) {
+      setUser(mapUser(record as unknown as Record<string, unknown>))
+    } else {
+      setUser(null)
+    }
+    setChecking(false)
+  }, [])
+
+  useEffect(() => {
+    const unsubscribe = pbRef.current.authStore.onChange((_token, record) => {
+      if (record) {
+        setUser(mapUser(record as unknown as Record<string, unknown>))
+      } else {
+        setUser(null)
+      }
+    })
+    return () => {
+      unsubscribe()
+    }
   }, [])
 
   const lastActivityRef = useRef(0)
@@ -117,27 +133,18 @@ export default function useAuth(options?: {
   }, [clearTimers])
 
   const refreshUser = useCallback(() => {
-    return accountGetRef
-      .current()
-      .then(setUser)
-      .catch(() => setUser(null))
+    const record = pbRef.current.authStore.record
+    if (record) {
+      setUser(mapUser(record as unknown as Record<string, unknown>))
+    } else {
+      setUser(null)
+    }
   }, [])
 
-  const login = useCallback(
-    (session: Models.Session, loggedInUser: Models.User) => {
-      setUser(loggedInUser)
-      setSessionExpiredMessage(null)
-
-      const expireDate = new Date(session.expire)
-      const msUntilExpire = expireDate.getTime() - Date.now()
-      if (msUntilExpire > 0) {
-        sessionExpiryRef.current = setTimeout(() => {
-          autoLogout('Your session has expired. Please sign in again.')
-        }, msUntilExpire)
-      }
-    },
-    [autoLogout]
-  )
+  const login = useCallback((loggedInUser: User) => {
+    setUser(loggedInUser)
+    setSessionExpiredMessage(null)
+  }, [])
 
   return {
     user,

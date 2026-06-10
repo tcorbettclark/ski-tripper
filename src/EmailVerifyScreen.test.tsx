@@ -10,7 +10,7 @@ function renderEmailVerifyScreen(props = {}) {
     <EmailVerifyScreen
       email="test@example.com"
       onBackToLogin={noop}
-      createEmailVerification={() => Promise.resolve()}
+      requestVerification={() => Promise.resolve()}
       {...props}
     />
   )
@@ -37,11 +37,11 @@ describe('EmailVerifyScreen', () => {
     expect(screen.getByRole('button', { name: /resend verification email/i }))
   })
 
-  it('calls createEmailVerification when resend is clicked', async () => {
+  it('calls requestVerification when resend is clicked', async () => {
     const user = userEvent.setup()
-    const mockCreateVerification = mock(() => Promise.resolve())
+    const mockRequestVerification = mock(() => Promise.resolve())
     renderEmailVerifyScreen({
-      createEmailVerification: mockCreateVerification,
+      requestVerification: mockRequestVerification,
     })
 
     await user.click(
@@ -49,14 +49,14 @@ describe('EmailVerifyScreen', () => {
     )
 
     await waitFor(() => {
-      expect(mockCreateVerification).toHaveBeenCalled()
+      expect(mockRequestVerification).toHaveBeenCalledWith('test@example.com')
     })
   })
 
   it('shows success message after resending', async () => {
     const user = userEvent.setup()
     renderEmailVerifyScreen({
-      createEmailVerification: () => Promise.resolve(),
+      requestVerification: () => Promise.resolve(),
     })
 
     await user.click(
@@ -71,7 +71,7 @@ describe('EmailVerifyScreen', () => {
   it('shows error when resend fails', async () => {
     const user = userEvent.setup()
     renderEmailVerifyScreen({
-      createEmailVerification: () => Promise.reject(new Error('Rate limited')),
+      requestVerification: () => Promise.reject(new Error('Rate limited')),
     })
 
     await user.click(

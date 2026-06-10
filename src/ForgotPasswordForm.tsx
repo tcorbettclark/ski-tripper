@@ -1,17 +1,18 @@
 import { useState } from 'react'
-import { account as _account } from './backend'
+import pb from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, formStyles } from './theme'
 
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void
-  createRecovery?: (email: string, url: string) => Promise<unknown>
+  requestPasswordReset?: (email: string) => Promise<unknown>
 }
 
 export default function ForgotPasswordForm({
   onBackToLogin,
-  createRecovery = (email, url) => _account.createRecovery(email, url),
+  requestPasswordReset = (email) =>
+    pb.collection('users').requestPasswordReset(email),
 }: ForgotPasswordFormProps) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
@@ -23,8 +24,7 @@ export default function ForgotPasswordForm({
     setError('')
     setLoading(true)
     try {
-      const baseUrl = window.location.origin
-      await createRecovery(email, `${baseUrl}/reset-password`)
+      await requestPasswordReset(email)
       setSent(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))

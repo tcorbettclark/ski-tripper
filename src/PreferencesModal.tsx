@@ -14,13 +14,11 @@ interface PreferencesModalProps {
   onNameUpdated?: () => void
   createPreferences?: (
     userId: string,
-    data: Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
+    data: Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>
   ) => Promise<Preferences>
   updatePreferences?: (
     userId: string,
-    data: Partial<
-      Omit<Preferences, '$id' | '$createdAt' | '$updatedAt' | 'userId'>
-    >
+    data: Partial<Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>>
   ) => Promise<Preferences>
   updateName?: (name: string) => Promise<unknown>
 }

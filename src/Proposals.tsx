@@ -1,4 +1,3 @@
-import type { Models } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   createAccommodation as _createAccommodation,
@@ -18,10 +17,15 @@ import CreateProposalForm from './CreateProposalForm'
 import type { StatusFilter } from './ProposalsGrid'
 import ProposalsGrid from './ProposalsGrid'
 import { borders, colors, fontSizes, fonts } from './theme'
-import type { Accommodation, Proposal, ResortWithEmbedding } from './types.d.ts'
+import type {
+  Accommodation,
+  Proposal,
+  ResortWithEmbedding,
+  User,
+} from './types.d.ts'
 
 interface ProposalsProps {
-  user: Models.User
+  user: User
   tripId: string
   resorts: ResortWithEmbedding[]
   /** Pre-selected status tab — allows parent to navigate directly to a proposals sub-state. */
@@ -154,7 +158,7 @@ export default function Proposals({
     setProposalsLoading(true)
     setProposalsError('')
     Promise.all([
-      listProposals(tripId, user.$id),
+      listProposals(tripId, user.id),
       getCoordinatorParticipant(tripId),
     ])
       .then(([proposalsResult, coordResult]) => {
@@ -162,7 +166,7 @@ export default function Proposals({
         setProposals(proposalsResult.proposals)
         setIsCoordinator(
           coordResult.participants.length > 0 &&
-            coordResult.participants[0].participantUserId === user.$id
+            coordResult.participants[0].participantUserId === user.id
         )
         return proposalsResult.proposals
       })
@@ -199,7 +203,7 @@ export default function Proposals({
       })
   }, [
     tripId,
-    user.$id,
+    user.id,
     listProposals,
     listAccommodations,
     getCoordinatorParticipant,
@@ -277,7 +281,7 @@ export default function Proposals({
       {showCreateForm && tripId && (
         <CreateProposalForm
           tripId={tripId}
-          userId={user.$id}
+          userId={user.id}
           onCreated={handleCreated}
           onDismiss={() => setShowCreateForm(false)}
           createProposal={createProposal}
@@ -295,7 +299,7 @@ export default function Proposals({
       {!proposalsLoading && !proposalsError && (
         <ProposalsGrid
           proposals={proposals}
-          userId={user.$id}
+          userId={user.id}
           userName={user.name || ''}
           isCoordinator={isCoordinator}
           accommodations={accommodations}

@@ -29,7 +29,7 @@ import {
   formStyles,
   mix,
 } from './theme'
-import type { ResortWithEmbedding } from './types.d.ts'
+import type { ResortWithEmbedding, User } from './types.d.ts'
 import { ensureUrlScheme, formatTransferTime, sanitizeUrl } from './utils'
 
 initSearchModel()
@@ -41,7 +41,7 @@ const snowReliabilityLabels: Record<string, string> = {
 }
 
 interface ResortsProps {
-  user: { $id: string; name: string }
+  user: User
   tripId: string
   resorts: ResortWithEmbedding[]
   onNavigateToProposals?: () => void
@@ -307,7 +307,7 @@ export default function Resorts({
         const { createProposal } = await import('./backend')
         const account = (await import('./backend')).account
         const userAccount = await account.get()
-        await createProposal(tripId, user.$id, userAccount.name, {
+        await createProposal(tripId, user.id, userAccount.name, {
           description,
           startDate,
           endDate,
@@ -340,7 +340,7 @@ export default function Resorts({
         setProposalSaving(false)
       }
     },
-    [tripId, user.$id]
+    [tripId, user.id]
   )
 
   const clearLocationFilters = useCallback(() => {
@@ -1009,7 +1009,7 @@ export default function Resorts({
                 }}
                 onAuthError={onAuthError}
                 tripId={tripId}
-                userId={user.$id}
+                userId={user.id}
               />
             )}
           </div>

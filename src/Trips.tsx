@@ -1,4 +1,3 @@
-import type { Models } from 'appwrite'
 import { useCallback, useState } from 'react'
 import {
   createTrip as _createTrip,
@@ -10,10 +9,10 @@ import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'
 import { borders, colors, fontSizes, fonts } from './theme'
-import type { Trip } from './types.d.ts'
+import type { Trip, User } from './types.d.ts'
 
 interface TripsProps {
-  user: Models.User
+  user: User
   trips: Trip[]
   onSelectTrip: (tripId: string) => void
   onJoinedTrip?: () => void
@@ -30,7 +29,7 @@ interface TripsProps {
   ) => Promise<unknown>
   getCoordinatorParticipant?: (
     tripId: string
-  ) => Promise<{ participants: Array<{ participantUserName: string }> }>
+  ) => Promise<{ participants: Array<{ userName: string }> }>
 }
 
 export default function Trips({

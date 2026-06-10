@@ -1,9 +1,5 @@
-import type { Models } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  account as _account,
-  createProposal as _createProposal,
-} from './backend'
+import pb, { createProposal as _createProposal } from './backend'
 import { COUNTRIES } from './countries'
 import DateRangeField from './DateRangeField'
 import Field from './Field'
@@ -16,6 +12,7 @@ import {
   formStyles,
 } from './theme'
 import type { ResortWithEmbedding } from './types.d'
+import type { User } from './types.d.ts'
 import { ensureUrlScheme, isValidUrl } from './utils'
 
 interface CreateProposalFormProps {
@@ -54,7 +51,7 @@ interface CreateProposalFormProps {
       }
     }
   ) => Promise<unknown>
-  accountGet?: () => Promise<Models.User>
+  accountGet?: () => Promise<User>
 }
 
 const EMPTY_FORM = {
@@ -131,7 +128,16 @@ export default function CreateProposalForm({
   onDismiss,
   resorts = [],
   createProposal = _createProposal,
-  accountGet = _account.get.bind(_account),
+  accountGet = () => {
+    const record = pb.authStore.record as Record<string, unknown> | null
+    if (!record) return Promise.reject(new Error('Not authenticated'))
+    return Promise.resolve({
+      id: record.id as string,
+      name: (record.name as string) || '',
+      email: record.email as string,
+      emailVerification: record.verified as boolean,
+    } as User)
+  },
 }: CreateProposalFormProps) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)

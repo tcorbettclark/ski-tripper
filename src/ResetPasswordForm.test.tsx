@@ -7,12 +7,7 @@ const noop = () => {}
 
 function renderResetPasswordForm(props = {}) {
   return render(
-    <ResetPasswordForm
-      userId="user-1"
-      secret="secret-123"
-      onSuccess={noop}
-      {...props}
-    />
+    <ResetPasswordForm token="test-token-123" onSuccess={noop} {...props} />
   )
 }
 
@@ -28,12 +23,12 @@ describe('ResetPasswordForm', () => {
     expect(screen.getByLabelText(/confirm password/i))
   })
 
-  it('calls updateRecovery with userId, secret, and password on submit', async () => {
+  it('calls confirmPasswordReset with token and password on submit', async () => {
     const user = userEvent.setup()
-    const mockUpdateRecovery = mock(() => Promise.resolve())
+    const mockConfirmPasswordReset = mock(() => Promise.resolve())
     const handleSuccess = mock(() => {})
     renderResetPasswordForm({
-      updateRecovery: mockUpdateRecovery,
+      confirmPasswordReset: mockConfirmPasswordReset,
       onSuccess: handleSuccess,
     })
 
@@ -42,9 +37,9 @@ describe('ResetPasswordForm', () => {
     await user.click(screen.getByRole('button', { name: /reset password/i }))
 
     await waitFor(() => {
-      expect(mockUpdateRecovery).toHaveBeenCalledWith(
-        'user-1',
-        'secret-123',
+      expect(mockConfirmPasswordReset).toHaveBeenCalledWith(
+        'test-token-123',
+        'newpass123',
         'newpass123'
       )
       expect(handleSuccess).toHaveBeenCalledTimes(1)
@@ -62,10 +57,11 @@ describe('ResetPasswordForm', () => {
     expect(screen.getByText(/passwords do not match/i))
   })
 
-  it('shows error when updateRecovery fails', async () => {
+  it('shows error when confirmPasswordReset fails', async () => {
     const user = userEvent.setup()
     renderResetPasswordForm({
-      updateRecovery: () => Promise.reject(new Error('Recovery link expired')),
+      confirmPasswordReset: () =>
+        Promise.reject(new Error('Recovery link expired')),
     })
 
     await user.type(screen.getByLabelText(/new password/i), 'newpass123')
@@ -80,7 +76,7 @@ describe('ResetPasswordForm', () => {
   it('disables submit button while saving', async () => {
     const user = userEvent.setup()
     renderResetPasswordForm({
-      updateRecovery: () => new Promise(() => {}),
+      confirmPasswordReset: () => new Promise(() => {}),
     })
 
     await user.type(screen.getByLabelText(/new password/i), 'newpass123')

@@ -1,11 +1,11 @@
-import type { Models } from 'appwrite'
 import { useState } from 'react'
-import { account as _account, createTrip as _createTrip } from './backend'
+import pb, { createTrip as _createTrip } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
+import type { User } from './types.d.ts'
 
 interface CreateTripFormProps {
-  user: Models.User
+  user: User
   onCreated: (trip: unknown) => void
   onDismiss: () => void
   createTrip?: (
@@ -13,7 +13,7 @@ interface CreateTripFormProps {
     userName: string,
     data: { description: string }
   ) => Promise<unknown>
-  accountGet?: () => Promise<Models.User>
+  accountGet?: () => Promise<User>
 }
 
 export default function CreateTripForm({
@@ -21,7 +21,16 @@ export default function CreateTripForm({
   onCreated,
   onDismiss,
   createTrip = _createTrip,
-  accountGet = _account.get.bind(_account),
+  accountGet = () => {
+    const record = pb.authStore.record as Record<string, unknown> | null
+    if (!record) return Promise.reject(new Error('Not authenticated'))
+    return Promise.resolve({
+      id: record.id as string,
+      name: (record.name as string) || '',
+      email: record.email as string,
+      emailVerification: record.verified as boolean,
+    } as User)
+  },
 }: CreateTripFormProps) {
   const [form, setForm] = useState({ description: '' })
   const [saving, setSaving] = useState(false)
@@ -41,7 +50,7 @@ export default function CreateTripForm({
     setSaving(true)
     try {
       const userAccount = await accountGet()
-      const trip = await createTrip(user.$id, userAccount.name, form)
+      const trip = await createTrip(user.id, userAccount.name, form)
       onCreated(trip)
       setForm({ description: '' })
       onDismiss()
