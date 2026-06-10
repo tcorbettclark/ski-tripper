@@ -5,13 +5,7 @@ import * as path from 'node:path'
 import * as readline from 'node:readline/promises'
 import { pipeline } from '@huggingface/transformers'
 import { Command } from 'commander'
-import {
-  Client as NodeClient,
-  Storage as NodeStorage,
-  Permission,
-  Role,
-} from 'node-appwrite'
-import { InputFile } from 'node-appwrite/file'
+import PocketBase from 'pocketbase'
 import * as z from 'zod'
 import {
   type AuditIssue,
@@ -48,16 +42,9 @@ import { loadOpenSkiMapData } from './lib/openski-map'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
 const RESORTS_DIR = 'resorts'
-const RESORTS_BUCKET_ID = process.env
-  .PUBLIC_APPWRITE_RESORTS_BUCKET_ID as string
-const RESORTS_FILE_ID = process.env.PUBLIC_APPWRITE_RESORTS_FILE_ID as string
-
-const adminClient = new NodeClient()
-  .setEndpoint(process.env.PUBLIC_APPWRITE_ENDPOINT as string)
-  .setProject(process.env.PUBLIC_APPWRITE_PROJECT_ID as string)
-  .setKey(process.env.APPWRITE_DATABASE_API_KEY as string)
-
-const adminStorage = new NodeStorage(adminClient)
+const PB_URL = process.env.POCKETBASE_URL || 'http://127.0.0.1:8090'
+const PB_ADMIN_EMAIL = process.env.POCKETBASE_ADMIN_EMAIL || ''
+const PB_ADMIN_PASSWORD = process.env.POCKETBASE_ADMIN_PASSWORD || ''
 
 const EXA_SOURCED_NUM_RESULTS = 5
 const EXA_BROAD_NUM_RESULTS = 5
@@ -1110,22 +1097,30 @@ async function uploadResorts() {
     console.error(`Error: File '${resolved}' does not exist.`)
     process.exit(1)
   }
-  try {
-    await adminStorage.deleteFile({
-      bucketId: RESORTS_BUCKET_ID,
-      fileId: RESORTS_FILE_ID,
-    })
-    console.log('Deleted existing file...')
-  } catch {
-    // File doesn't exist yet, that's fine
+
+  if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASSWORD) {
+    console.error(
+      'Error: POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD must be set'
+    )
+    process.exit(1)
   }
+
+  const pb = new PocketBase(PB_URL)
+  await pb
+    .collection('_superusers')
+    .authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD)
+  console.log('Authenticated as superuser')
+
+  const existing = await pb.collection('resorts').getFullList()
+  for (const record of existing) {
+    await pb.collection('resorts').delete(record.id)
+    console.log(`Deleted existing record: ${record.id}`)
+  }
+
   console.log(`Uploading resort data from '${resolved}'...`)
-  await adminStorage.createFile({
-    bucketId: RESORTS_BUCKET_ID,
-    fileId: RESORTS_FILE_ID,
-    file: InputFile.fromPath(resolved, 'resort-data.jsonl'),
-    permissions: [Permission.read(Role.any())],
-  })
+  const fileBuffer = await fs.promises.readFile(resolved)
+  const file = new File([fileBuffer], 'resort-data.jsonl')
+  await pb.collection('resorts').create({ file })
   console.log('Upload complete!')
 }
 
@@ -1277,9 +1272,7 @@ program
 
 program
   .command('upload')
-  .description(
-    'Upload resort data to Appwrite Storage (overwrites existing file)'
-  )
+  .description('Upload resort data to PocketBase (overwrites existing record)')
   .action(uploadResorts)
 
 program.parse()
