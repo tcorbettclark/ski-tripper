@@ -83,7 +83,7 @@ export default function useSSEStream(
       abortRef.current = null
     }
 
-    let cancelled = false
+    let _cancelled = false
 
     resetTimeout()
 
@@ -197,7 +197,7 @@ export default function useSSEStream(
       })
 
     return () => {
-      cancelled = true
+      _cancelled = true
       clearTimer()
       if (abortRef.current) {
         abortRef.current.abort()
