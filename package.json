@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/tcorbettclark/ski-tripper"
   },
-  "homepage": "https://ski-tripper.appwrite.network",
+  "homepage": "https://www.ski-tripper.com",
   "keywords": [
     "ski",
     "trip",
@@ -35,7 +35,6 @@
     "check": "biome check --write",
     "ci": "biome ci",
     "cors-finder": "bash scripts/find-cors-test.sh",
-    "run-function": "bun run scripts/run-function.ts",
     "resorts": "bun run scripts/resorts.ts",
     "create-collections": "bun run scripts/create-collections.ts",
     "playground": "bun build playground/action-guide-test.tsx --outdir playground-dist --target browser && cp playground/index.html playground-dist/ && echo 'Playground built to playground-dist/'"
@@ -43,7 +42,6 @@
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
     "@huggingface/transformers": "^4.2.0",
-    "appwrite": "^25.2.0",
     "dayjs": "^1.11.21",
     "leven": "^4.1.0",
     "lucide-react": "^1.17.0",
@@ -70,7 +68,6 @@
     "csv-parse": "^6.2.1",
     "exa-js": "^2.13.0",
     "lefthook": "^2.1.8",
-    "node-appwrite": "^25.2.0",
     "typescript": "^6.0.3",
     "zod": "^4.4.3"
   }

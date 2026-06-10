@@ -11,15 +11,7 @@ jobs:
     name: test-app
     runs-on: ubuntu-latest
     env:
-      PUBLIC_APPWRITE_ENDPOINT: https://fra.cloud.appwrite.io/v1
-      PUBLIC_APPWRITE_PROJECT_ID: 69b05f0a00097b02b873
-      PUBLIC_APPWRITE_DATABASE_ID: 69b80ecc00135af5ff33
-      PUBLIC_APPWRITE_TRIPS_TABLE_ID: trips
-      PUBLIC_APPWRITE_PARTICIPANTS_TABLE_ID: participants
-      PUBLIC_APPWRITE_PROPOSALS_TABLE_ID: proposals
-      PUBLIC_APPWRITE_PREFERENCES_TABLE_ID: preferences
-      PUBLIC_APPWRITE_POLLS_TABLE_ID: polls
-      PUBLIC_APPWRITE_VOTES_TABLE_ID: votes
+      PUBLIC_POCKETBASE_URL: http://127.0.0.1:8090
       BUN_TEST: "1"
     steps:
       - name: Checkout

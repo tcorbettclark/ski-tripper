@@ -51,11 +51,10 @@ If any fail, fix issues first before committing.
 - Display errors using `formStyles.error` from `src/theme.ts`.
 - Never swallow errors silently (`.catch(() => {})`).
 
-## Appwrite
+## Environment Variables
 
 - Frontend env vars exposed to the browser have the `PUBLIC_` prefix.
-- Server-side admin env vars have no `PUBLIC_` prefix, e.g. `APPWRITE_API_KEY`
-- Never import Appwrite client directly in components — use helpers from `src/backend.ts`
+- Server-side admin env vars have no `PUBLIC_` prefix, e.g. `POCKETBASE_ADMIN_EMAIL`
 
 ## Testing
 
