@@ -8,8 +8,8 @@ import {
 } from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Participant, Preferences } from './types.d'
-import type { UseLLMCacheStreamResult } from './useLLMCacheStream'
-import useLLMCacheStream from './useLLMCacheStream'
+import type { UseSSEStreamResult } from './useSSEStream'
+import useSSEStream from './useSSEStream'
 
 interface PreferenceSearchPopupProps {
   tripId: string
@@ -21,7 +21,7 @@ interface PreferenceSearchPopupProps {
     tripId: string
   ) => Promise<{ participants: Participant[] }>
   getPreferences?: (userId: string) => Promise<Preferences | null>
-  streamResult?: UseLLMCacheStreamResult
+  streamResult?: UseSSEStreamResult
 }
 
 const NOOP_AUTH_ERROR = () => {}
@@ -36,7 +36,7 @@ export default function PreferenceSearchPopup({
   getPreferences = _getPreferences,
   streamResult,
 }: PreferenceSearchPopupProps) {
-  const hookResult = useLLMCacheStream({
+  const hookResult = useSSEStream({
     type: 'preference-search',
     tripId,
   })

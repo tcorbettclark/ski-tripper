@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import AnalysisTab from './AnalysisTab'
 import type { Participant, Preferences } from './types.d'
-import type { UseLLMCacheStreamResult } from './useLLMCacheStream'
+import type { UseSSEStreamResult } from './useSSEStream'
 
 const mockParticipants: Participant[] = [
   {
@@ -83,7 +83,7 @@ const getPreferencesMock = mock(
 
 const triggerAnalysisMock = mock(async () => {})
 
-let mockStreamResult: UseLLMCacheStreamResult = {
+let mockStreamResult: UseSSEStreamResult = {
   status: null,
   thinking: '',
   content: '',
@@ -91,7 +91,7 @@ let mockStreamResult: UseLLMCacheStreamResult = {
   error: null,
 }
 
-const defaultStreamResult: UseLLMCacheStreamResult = {
+const defaultStreamResult: UseSSEStreamResult = {
   status: null,
   thinking: '',
   content: '',

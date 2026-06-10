@@ -8,8 +8,8 @@ import {
 } from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { Participant, Preferences } from './types.d'
-import type { UseLLMCacheStreamResult } from './useLLMCacheStream'
-import useLLMCacheStream from './useLLMCacheStream'
+import type { UseSSEStreamResult } from './useSSEStream'
+import useSSEStream from './useSSEStream'
 
 interface AnalysisTabProps {
   proposalId: string
@@ -20,7 +20,7 @@ interface AnalysisTabProps {
     tripId: string
   ) => Promise<{ participants: Participant[] }>
   getPreferences?: (userId: string) => Promise<Preferences | null>
-  streamResult?: UseLLMCacheStreamResult
+  streamResult?: UseSSEStreamResult
 }
 
 const noopAuthError = () => {}
@@ -34,7 +34,7 @@ export default function AnalysisTab({
   getPreferences = _getPreferences,
   streamResult,
 }: AnalysisTabProps) {
-  const hookResult = useLLMCacheStream({
+  const hookResult = useSSEStream({
     type: 'analysis',
     proposalId,
     tripId,

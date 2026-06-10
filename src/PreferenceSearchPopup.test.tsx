@@ -3,7 +3,7 @@ import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import PreferenceSearchPopup from './PreferenceSearchPopup'
 import type { Participant, Preferences } from './types.d'
-import type { UseLLMCacheStreamResult } from './useLLMCacheStream'
+import type { UseSSEStreamResult } from './useSSEStream'
 
 const mockParticipants: Participant[] = [
   {
@@ -86,7 +86,7 @@ const triggerPreferenceSearchMock = mock(async () => {})
 const onCloseMock = mock(() => {})
 const onSearchMock = mock((_query: string) => {})
 
-let mockStreamResult: UseLLMCacheStreamResult = {
+let mockStreamResult: UseSSEStreamResult = {
   status: null,
   thinking: '',
   content: '',
@@ -94,7 +94,7 @@ let mockStreamResult: UseLLMCacheStreamResult = {
   error: null,
 }
 
-const defaultStreamResult: UseLLMCacheStreamResult = {
+const defaultStreamResult: UseSSEStreamResult = {
   status: null,
   thinking: '',
   content: '',
