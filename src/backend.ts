@@ -14,7 +14,7 @@ import type {
 } from './types.d'
 import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
-const pb = new PocketBase(process.env.PUBLIC_POCKETBASE_URL as string)
+const pb = new PocketBase(process.env.PUBLIC_POCKETBASE_URL!)
 export default pb
 
 export function hasSession(): boolean {

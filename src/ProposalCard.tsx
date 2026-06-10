@@ -600,6 +600,7 @@ export default function ProposalCard({
               proposalId={proposal.id}
               userId={userId}
               userName={userName}
+              listDiscussion={listDiscussion}
               onCommentsChanged={() => {
                 listDiscussion(proposal.id)
                   .then((rows) => setDiscussionCount(rows.length))

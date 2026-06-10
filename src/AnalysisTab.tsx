@@ -38,6 +38,7 @@ export default function AnalysisTab({
     type: 'analysis',
     proposalId,
     tripId,
+    enabled: !streamResult,
   })
   const { status, thinking, content, model, error } = streamResult ?? hookResult
   const [participants, setParticipants] = useState<Participant[]>([])

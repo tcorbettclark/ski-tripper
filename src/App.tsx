@@ -8,6 +8,7 @@ import pb, {
   hasSession as _hasSession,
   listParticipatedTrips as _listParticipatedTrips,
   listPolls as _listPolls,
+  listTripParticipants as _listTripParticipants,
   listTrips as _listTrips,
   updateName as _updateName,
   updateTrip as _updateTrip,
@@ -27,7 +28,12 @@ import ResetPasswordForm from './ResetPasswordForm'
 import Resorts from './Resorts'
 import Trips from './Trips'
 import { colors, fontSizes, fonts, mix } from './theme'
-import type { Preferences, ResortWithEmbedding, Trip } from './types.d'
+import type {
+  Participant,
+  Preferences,
+  ResortWithEmbedding,
+  Trip,
+} from './types.d'
 import useAuth from './useAuth'
 
 interface ListTripsResult {
@@ -71,6 +77,9 @@ interface AppProps {
   ) => Promise<unknown>
   fetchResortDataWithAuth?: () => Promise<string>
   updateName?: (name: string) => Promise<unknown>
+  listTripParticipants?: (
+    tripId: string
+  ) => Promise<{ participants: Participant[] }>
 }
 
 const defaultConfirmVerification = (token: string) =>
@@ -90,6 +99,7 @@ const defaultConfirmPasswordReset = (
   pb.collection('users').confirmPasswordReset(token, password, passwordConfirm)
 const defaultFetchResortDataWithAuth = _fetchResortDataWithAuth
 const defaultUpdateName = _updateName
+const defaultListTripParticipants = _listTripParticipants
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -111,6 +121,7 @@ export default function App({
   confirmPasswordReset = defaultConfirmPasswordReset,
   fetchResortDataWithAuth = defaultFetchResortDataWithAuth,
   updateName = defaultUpdateName,
+  listTripParticipants = defaultListTripParticipants,
 }: AppProps) {
   const {
     user,
@@ -481,6 +492,7 @@ export default function App({
                 updateTrip={updateTrip}
                 preferencesUpdated={preferencesUpdated}
                 onOpenPreferences={() => setShowPreferencesModal(true)}
+                listTripParticipants={listTripParticipants}
               />
             </ErrorBoundary>
           )}

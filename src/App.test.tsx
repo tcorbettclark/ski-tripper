@@ -72,31 +72,33 @@ const sampleTrip: Trip = {
   description: 'Alps adventure',
 }
 
+const defaultAppProps = {
+  listTrips: () => Promise.resolve({ trips: [], coordinatorUserIds: {} }),
+  listParticipatedTrips: () => Promise.resolve({ trips: [] }),
+  listPolls: () => Promise.resolve({ polls: [] }),
+  getCoordinatorParticipant: () => Promise.resolve({ participants: [] }),
+  getPreferences: () => Promise.resolve(defaultPreferences),
+  fetchResortDataWithAuth: () => Promise.resolve(''),
+  createPreferences: () => Promise.resolve(defaultPreferences),
+  updateTrip: () => Promise.resolve(sampleTrip),
+  confirmPasswordReset: () => Promise.resolve(),
+  confirmVerification: () => Promise.resolve(),
+  hasSession: () => true,
+  updateName: () => Promise.resolve(),
+  listTripParticipants: () => Promise.resolve({ participants: [] }),
+}
+
 function renderApp(props = {}) {
-  return render(
-    <App
-      listTrips={() => Promise.resolve({ trips: [], coordinatorUserIds: {} })}
-      listParticipatedTrips={() => Promise.resolve({ trips: [] })}
-      listPolls={() => Promise.resolve({ polls: [] })}
-      getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
-      getPreferences={() => Promise.resolve(defaultPreferences)}
-      fetchResortDataWithAuth={() => Promise.resolve('')}
-      {...props}
-    />
-  )
+  return render(<App {...defaultAppProps} {...props} />)
 }
 
 function renderAppWithTrip(props = {}) {
   return render(
     <App
+      {...defaultAppProps}
       listTrips={() =>
         Promise.resolve({ trips: [sampleTrip], coordinatorUserIds: {} })
       }
-      listParticipatedTrips={() => Promise.resolve({ trips: [] })}
-      listPolls={() => Promise.resolve({ polls: [] })}
-      getCoordinatorParticipant={() => Promise.resolve({ participants: [] })}
-      getPreferences={() => Promise.resolve(defaultPreferences)}
-      fetchResortDataWithAuth={() => Promise.resolve('')}
       {...props}
     />
   )

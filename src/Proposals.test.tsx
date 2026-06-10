@@ -55,6 +55,7 @@ function renderProposals(props = {}) {
       Promise.resolve({ proposals: sampleProposals })
     ),
     createProposal: mock(() => Promise.resolve({ id: 'p-new' })),
+    listAccommodations: mock((_proposal: string) => Promise.resolve([])),
     updateProposal: mock(() => Promise.resolve({ id: 'p-1' })),
     deleteProposal: mock(() => Promise.resolve()),
     submitProposal: mock(() =>
@@ -63,10 +64,16 @@ function renderProposals(props = {}) {
     rejectProposal: mock(() =>
       Promise.resolve({ id: 'p-1', state: 'REJECTED' })
     ),
+    revertProposalToDraft: mock(() =>
+      Promise.resolve({ id: 'p-1', state: 'DRAFT' })
+    ),
+    createAccommodation: mock(() => Promise.resolve({ id: 'acc-new' })),
+    updateAccommodation: mock(() => Promise.resolve({ id: 'acc-1' })),
+    deleteAccommodation: mock(() => Promise.resolve()),
     getCoordinatorParticipant: mock(() =>
       Promise.resolve({ participants: [] })
     ),
-    listAccommodations: mock((_proposal: string) => Promise.resolve([])),
+    listDiscussion: mock(() => Promise.resolve([])),
     resorts: [] as any[],
   }
   return render(<Proposals {...defaults} {...props} />)
@@ -127,8 +134,8 @@ describe('Proposals', () => {
     const listProposals = mock(() =>
       Promise.resolve({ proposals: sampleProposals })
     )
-    await act(async () => {
-      renderProposals({ tripId: 'trip-1', listProposals })
+    const { rerender } = await act(async () => {
+      return renderProposals({ tripId: 'trip-1', listProposals })
     })
     await waitFor(() => {
       expect(listProposals).toHaveBeenCalledWith('trip-1', 'user-1')
@@ -142,9 +149,6 @@ describe('Proposals', () => {
       Promise.resolve({ proposals: newProposals })
     )
 
-    const { rerender } = await act(async () => {
-      return renderProposals({ tripId: 'trip-1', listProposals })
-    })
     await act(async () => {
       rerender(
         <Proposals
@@ -152,6 +156,7 @@ describe('Proposals', () => {
           tripId="trip-2"
           listProposals={listProposals}
           createProposal={mock(() => Promise.resolve({ id: 'p-new' }))}
+          listAccommodations={mock((_proposal: string) => Promise.resolve([]))}
           updateProposal={mock(() => Promise.resolve({ id: 'p-1' }))}
           deleteProposal={mock(() => Promise.resolve())}
           submitProposal={mock(() =>
@@ -160,9 +165,16 @@ describe('Proposals', () => {
           rejectProposal={mock(() =>
             Promise.resolve({ id: 'p-1', state: 'REJECTED' })
           )}
+          revertProposalToDraft={mock(() =>
+            Promise.resolve({ id: 'p-1', state: 'DRAFT' })
+          )}
+          createAccommodation={mock(() => Promise.resolve({ id: 'acc-new' }))}
+          updateAccommodation={mock(() => Promise.resolve({ id: 'acc-1' }))}
+          deleteAccommodation={mock(() => Promise.resolve())}
           getCoordinatorParticipant={mock(() =>
             Promise.resolve({ participants: [] })
           )}
+          listDiscussion={mock(() => Promise.resolve([]))}
           resorts={[]}
         />
       )

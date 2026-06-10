@@ -39,6 +39,7 @@ export default function PreferenceSearchPopup({
   const hookResult = useSSEStream({
     type: 'preference-search',
     tripId,
+    enabled: !streamResult,
   })
   const { status, thinking, content, model, error } = streamResult ?? hookResult
 

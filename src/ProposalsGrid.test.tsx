@@ -8,6 +8,12 @@ const mockUpdateProposal = mock(async () => ({}))
 const mockDeleteProposal = mock(async () => {})
 const mockSubmitProposal = mock(async () => ({}))
 const mockRejectProposal = mock(async () => ({}))
+const mockRevertProposalToDraft = mock(async () => ({}))
+const mockListAccommodations = mock(async () => [])
+const mockCreateAccommodation = mock(async () => ({}))
+const mockUpdateAccommodation = mock(async () => ({}))
+const mockDeleteAccommodation = mock(async () => {})
+const mockListDiscussion = mock(async () => [])
 
 const proposals: Proposal[] = [
   {
@@ -83,6 +89,12 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
     deleteProposal: mockDeleteProposal,
     submitProposal: mockSubmitProposal,
     rejectProposal: mockRejectProposal,
+    revertProposalToDraft: mockRevertProposalToDraft,
+    listAccommodations: mockListAccommodations,
+    createAccommodation: mockCreateAccommodation,
+    updateAccommodation: mockUpdateAccommodation,
+    deleteAccommodation: mockDeleteAccommodation,
+    listDiscussion: mockListDiscussion,
     debounceMs: 0,
     ...overrides,
   }

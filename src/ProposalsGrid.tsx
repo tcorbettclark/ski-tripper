@@ -4,6 +4,7 @@ import {
   deleteAccommodation as _deleteAccommodation,
   deleteProposal as _deleteProposal,
   listAccommodations as _listAccommodations,
+  listDiscussion as _listDiscussion,
   rejectProposal as _rejectProposal,
   revertProposalToDraft as _revertProposalToDraft,
   submitProposal as _submitProposal,
@@ -12,7 +13,7 @@ import {
 } from './backend'
 import ProposalCard from './ProposalCard'
 import { borders, colors, fontSizes, fonts, mix } from './theme'
-import type { Accommodation, Proposal } from './types.d.ts'
+import type { Accommodation, Discussion, Proposal } from './types.d.ts'
 
 export type StatusFilter = 'DRAFT' | 'SUBMITTED' | 'REJECTED'
 
@@ -65,6 +66,7 @@ interface ProposalsGridProps {
     accommodationId: string,
     userId: string
   ) => Promise<unknown>
+  listDiscussion?: (proposalId: string) => Promise<Discussion[]>
   debounceMs?: number
   onAuthError?: (err: unknown) => void
 }
@@ -94,6 +96,7 @@ export default function ProposalsGrid({
   createAccommodation = _createAccommodation,
   updateAccommodation = _updateAccommodation,
   deleteAccommodation = _deleteAccommodation,
+  listDiscussion = _listDiscussion,
   debounceMs = 300,
   onAuthError,
 }: ProposalsGridProps) {
@@ -273,6 +276,7 @@ export default function ProposalsGrid({
               createAccommodation={createAccommodation}
               updateAccommodation={updateAccommodation}
               deleteAccommodation={deleteAccommodation}
+              listDiscussion={listDiscussion}
               onAuthError={onAuthError}
             />
           ))}

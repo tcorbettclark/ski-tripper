@@ -8,6 +8,7 @@ export interface UseSSEStreamParams {
   type: 'analysis' | 'preference-search'
   proposalId?: string
   tripId: string
+  enabled?: boolean
 }
 
 export interface UseSSEStreamResult {
@@ -27,7 +28,7 @@ const INITIAL_STATE: UseSSEStreamResult = {
 }
 
 function getApiUrl(endpoint: string): string {
-  const pbUrl = process.env.PUBLIC_POCKETBASE_URL || 'http://localhost:8090'
+  const pbUrl = process.env.PUBLIC_POCKETBASE_URL as string
   const baseUrl = new URL(pbUrl)
   return `${baseUrl.protocol}//${baseUrl.host}${endpoint}`
 }
@@ -35,7 +36,7 @@ function getApiUrl(endpoint: string): string {
 export default function useSSEStream(
   params: UseSSEStreamParams
 ): UseSSEStreamResult {
-  const { type, proposalId, tripId } = params
+  const { type, proposalId, tripId, enabled = true } = params
 
   const [state, setState] = useState<UseSSEStreamResult>(INITIAL_STATE)
   const abortRef = useRef<AbortController | null>(null)
@@ -71,6 +72,7 @@ export default function useSSEStream(
   }, [])
 
   useEffect(() => {
+    if (!enabled) return
     const key = `${type}:${tripId}:${proposalId ?? ''}`
     if (key === paramsKeyRef.current) return
     paramsKeyRef.current = key
@@ -204,7 +206,7 @@ export default function useSSEStream(
         abortRef.current = null
       }
     }
-  }, [type, tripId, proposalId, clearTimer, resetTimeout])
+  }, [type, tripId, proposalId, enabled, clearTimer, resetTimeout])
 
   return state
 }

@@ -30,7 +30,6 @@ const MOCK_USER = {
   emailVerification: true,
 } as User
 
-// Factory functions for creating mock data
 function createMockProposal(overrides: Record<string, unknown> = {}) {
   return {
     id: TEST_IDS.PROPOSAL_1,
@@ -67,7 +66,6 @@ function createMockVote(overrides: Record<string, unknown> = {}) {
   }
 }
 
-// Factory functions for creating mock callbacks
 function createMockCallbacks(
   overrides: Record<string, ReturnType<typeof mock>> = {}
 ) {
@@ -91,6 +89,7 @@ function createMockCallbacks(
     getCoordinatorParticipant: mock(() =>
       Promise.resolve({ participants: [] })
     ),
+    listAccommodations: mock(() => Promise.resolve([])),
     ...overrides,
   }
 }
@@ -107,8 +106,6 @@ function createNonCoordinatorMock() {
   return mock(() => Promise.resolve({ participants: [] }))
 }
 
-// Helper function for rendering with proper defaults
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function renderPoll(overrides: any = {}) {
   const callbacks = createMockCallbacks(overrides)
   const result = render(
@@ -129,7 +126,6 @@ describe('Poll', () => {
 
   describe('loading states', () => {
     it('shows loading state while fetching data', async () => {
-      // Create a mock that doesn't resolve immediately so we can see loading state
       let resolvePolls: (value: { polls: [] }) => void
       const listPolls = mock(
         () =>
@@ -142,10 +138,8 @@ describe('Poll', () => {
         renderPoll({ listPolls })
       })
 
-      // Should show loading state before data resolves
       expect(screen.getByText(/Loading poll…/i))
 
-      // Resolve to clear loading state
       await act(async () => {
         resolvePolls?.({ polls: [] })
       })
@@ -693,20 +687,20 @@ describe('Poll', () => {
 
       listPolls.mockClear()
 
+      const fresh = createMockCallbacks()
       await act(async () => {
         rerender(
           <Poll
             user={MOCK_USER}
             tripId="trip-2"
             listPolls={listPolls as any}
-            listProposals={createMockCallbacks().listProposals as any}
-            listVotes={createMockCallbacks().listVotes as any}
-            createPoll={createMockCallbacks().createPoll as any}
-            closePoll={createMockCallbacks().closePoll as any}
-            upsertVote={createMockCallbacks().upsertVote as any}
-            getCoordinatorParticipant={
-              createMockCallbacks().getCoordinatorParticipant as any
-            }
+            listProposals={fresh.listProposals as any}
+            listVotes={fresh.listVotes as any}
+            createPoll={fresh.createPoll as any}
+            closePoll={fresh.closePoll as any}
+            upsertVote={fresh.upsertVote as any}
+            getCoordinatorParticipant={fresh.getCoordinatorParticipant as any}
+            listAccommodations={fresh.listAccommodations as any}
           />
         )
       })
@@ -791,7 +785,6 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        // Should show Create Poll button because there's at least one SUBMITTED proposal
         expect(screen.getByRole('button', { name: /create poll/i }))
       })
     })

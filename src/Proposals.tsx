@@ -6,6 +6,7 @@ import {
   deleteProposal as _deleteProposal,
   getCoordinatorParticipant as _getCoordinatorParticipant,
   listAccommodations as _listAccommodations,
+  listDiscussion as _listDiscussion,
   listProposals as _listProposals,
   rejectProposal as _rejectProposal,
   revertProposalToDraft as _revertProposalToDraft,
@@ -19,6 +20,7 @@ import ProposalsGrid from './ProposalsGrid'
 import { borders, colors, fontSizes, fonts } from './theme'
 import type {
   Accommodation,
+  Discussion,
   Proposal,
   ResortWithEmbedding,
   User,
@@ -103,6 +105,7 @@ interface ProposalsProps {
   getCoordinatorParticipant?: (
     tripId: string
   ) => Promise<{ participants: Array<{ user: string }> }>
+  listDiscussion?: (proposalId: string) => Promise<Discussion[]>
 }
 
 const noopAuthError = () => {}
@@ -128,6 +131,7 @@ export default function Proposals({
   updateAccommodation = _updateAccommodation,
   deleteAccommodation = _deleteAccommodation,
   getCoordinatorParticipant = _getCoordinatorParticipant,
+  listDiscussion = _listDiscussion,
 }: ProposalsProps) {
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [accommodations, setAccommodations] = useState<
@@ -322,6 +326,7 @@ export default function Proposals({
           createAccommodation={createAccommodation}
           updateAccommodation={updateAccommodation}
           deleteAccommodation={deleteAccommodation}
+          listDiscussion={listDiscussion}
           onAuthError={onAuthError}
         />
       )}
