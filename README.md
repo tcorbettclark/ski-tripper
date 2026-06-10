@@ -40,3 +40,12 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 | Run the dev server on a port unique to current worktree | `wtd`               | `wt step dev-server`            |
 | Merge current worktree back to main                     | `wtm`               | `wt step merge-and-continue`    |
 | Sync main back to all worktrees                         | `wts`               | `wt step sync-all-from-main`    |
+
+Testing is done with unit testing and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
+
+# Architecture
+
+- [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination (PENDING).
+- [PocketBase](https://pocketbase.io/) for the backend database and authentication.
+- [Mailgun](https://www.mailgun.com/) for email delivery (PENDING).
+- A bun/typescript server to deliver the frontend files and assets, and run the backend server (LLM functions).
