@@ -1,8 +1,7 @@
-/* global Bun */
-
 import { extname, join } from 'node:path'
+import { handleAnalyseProposal, handlePreferenceSearch } from './src/server/api'
 
-function getArg(flag) {
+function getArg(flag: string): string | undefined {
   const match = Bun.argv.find((arg) => arg.startsWith(`--${flag}=`))
   return match?.split('=')[1]
 }
@@ -45,7 +44,7 @@ async function ensureCertificates() {
 
 await ensureCertificates()
 
-const mimeTypes = {
+const mimeTypes: Record<string, string> = {
   '.css': 'text/css',
   '.js': 'application/javascript',
   '.json': 'application/json',
@@ -63,6 +62,15 @@ Bun.serve({
   },
   fetch: async (req) => {
     const url = new URL(req.url)
+
+    if (url.pathname === '/api/analyse-proposal') {
+      return handleAnalyseProposal(req)
+    }
+
+    if (url.pathname === '/api/preference-search') {
+      return handlePreferenceSearch(req)
+    }
+
     const distFile = Bun.file(join(serveDir, url.pathname))
     if (await distFile.exists()) {
       const ext = extname(url.pathname)

@@ -1127,12 +1127,46 @@ export async function listLlmCacheByTripAndType(
 }
 
 export async function triggerAnalysis(
-  _proposalId: string,
-  _tripId: string
+  proposalId: string,
+  tripId: string
 ): Promise<void> {
-  throw new Error('triggerAnalysis not yet implemented for PocketBase')
+  const pbUrl = process.env.PUBLIC_POCKETBASE_URL as string
+  const baseUrl = new URL(pbUrl)
+  const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/analyse-proposal`
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${pb.authStore.token}`,
+    },
+    body: JSON.stringify({ proposalId, tripId }),
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`Failed to trigger analysis: ${response.status} ${text}`)
+  }
 }
 
-export async function triggerPreferenceSearch(_tripId: string): Promise<void> {
-  throw new Error('triggerPreferenceSearch not yet implemented for PocketBase')
+export async function triggerPreferenceSearch(tripId: string): Promise<void> {
+  const pbUrl = process.env.PUBLIC_POCKETBASE_URL as string
+  const baseUrl = new URL(pbUrl)
+  const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/preference-search`
+
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${pb.authStore.token}`,
+    },
+    body: JSON.stringify({ tripId }),
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(
+      `Failed to trigger preference search: ${response.status} ${text}`
+    )
+  }
 }

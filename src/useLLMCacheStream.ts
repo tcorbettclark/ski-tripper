@@ -1,13 +1,8 @@
-import { Channel, Realtime } from 'appwrite'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import client, { listLlmCacheByTripAndType } from './backend'
+import pb, { listLlmCacheByTripAndType } from './backend'
 import type { LlmCache } from './types.d'
 
-const DATABASE_ID = process.env.PUBLIC_APPWRITE_DATABASE_ID as string
-const LLM_CACHE_TABLE_ID = process.env
-  .PUBLIC_APPWRITE_LLM_CACHE_TABLE_ID as string
-
-const TIMEOUT_MS = 60_000
+const TIMEOUT_MS = 120_000
 
 export interface UseLLMCacheStreamParams {
   type: 'analysis' | 'preference-search'
@@ -31,24 +26,25 @@ const INITIAL_STATE: UseLLMCacheStreamResult = {
   error: null,
 }
 
+function getApiUrl(endpoint: string): string {
+  const pbUrl = process.env.PUBLIC_POCKETBASE_URL || 'http://localhost:8090'
+  const baseUrl = new URL(pbUrl)
+  return `${baseUrl.protocol}//${baseUrl.host}${endpoint}`
+}
+
 export default function useLLMCacheStream(
   params: UseLLMCacheStreamParams,
   options?: {
-    realtime?: Realtime
     listLlmCacheByTripAndType?: typeof listLlmCacheByTripAndType
   }
 ): UseLLMCacheStreamResult {
   const { type, proposalId, tripId } = params
-  const realtimeRef = useRef(options?.realtime ?? new Realtime(client))
-  const listRef = useRef(
-    options?.listLlmCacheByTripAndType ?? listLlmCacheByTripAndType
-  )
+  const listFn = options?.listLlmCacheByTripAndType ?? listLlmCacheByTripAndType
 
   const [state, setState] = useState<UseLLMCacheStreamResult>(INITIAL_STATE)
-  const subscriptionRef = useRef<{ close: () => Promise<void> } | null>(null)
-  const rowIdRef = useRef<string | null>(null)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
   const mountedRef = useRef(true)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const paramsKeyRef = useRef('')
 
   const clearTimer = useCallback(() => {
@@ -61,7 +57,7 @@ export default function useLLMCacheStream(
   const resetTimeout = useCallback(() => {
     clearTimer()
     timeoutRef.current = setTimeout(() => {
-      if (mountedRef.current && rowIdRef.current) {
+      if (mountedRef.current) {
         setState((prev) => ({
           ...prev,
           status: 'error',
@@ -84,71 +80,19 @@ export default function useLLMCacheStream(
     paramsKeyRef.current = key
 
     setState(INITIAL_STATE)
-    rowIdRef.current = null
     clearTimer()
 
-    if (subscriptionRef.current) {
-      subscriptionRef.current.close().catch(() => {})
-      subscriptionRef.current = null
+    if (abortRef.current) {
+      abortRef.current.abort()
+      abortRef.current = null
     }
 
     let cancelled = false
 
-    const channel = Channel.tablesdb(DATABASE_ID)
-      .table(LLM_CACHE_TABLE_ID)
-      .row()
-
-    const subscribe = async () => {
-      const sub = await realtimeRef.current.subscribe(
-        channel,
-        (response: { payload: LlmCache }) => {
-          if (!mountedRef.current) return
-
-          const row = response.payload
-
-          if (type === 'analysis' && row.proposalId !== proposalId) return
-          if (row.tripId !== tripId) return
-          if (row.type !== type) return
-
-          if (rowIdRef.current && row.$id !== rowIdRef.current) return
-
-          if (!rowIdRef.current) {
-            rowIdRef.current = row.$id
-          }
-
-          resetTimeout()
-
-          setState((prev) => ({
-            status: row.status,
-            thinking: row.thinking ?? prev.thinking,
-            content: row.content ?? prev.content,
-            model: row.model ?? prev.model,
-            error:
-              row.status === 'error'
-                ? (row.content ?? 'An error occurred.')
-                : null,
-          }))
-
-          if (row.status === 'complete' || row.status === 'error') {
-            clearTimer()
-          }
-        }
-      )
-
-      if (cancelled) {
-        sub.close().catch(() => {})
-        return
-      }
-
-      subscriptionRef.current = sub
-    }
-
-    subscribe().catch(() => {})
-
-    listRef
-      .current(tripId, type)
-      .then((rows) => {
-        if (!mountedRef.current) return
+    const loadInitial = async () => {
+      try {
+        const rows = await listFn(tripId, type)
+        if (!mountedRef.current || cancelled) return
 
         const matching = rows.filter((row) => {
           if (type === 'analysis' && row.proposalId !== proposalId) return false
@@ -160,10 +104,6 @@ export default function useLLMCacheStream(
         )
 
         if (active) {
-          if (!rowIdRef.current) {
-            rowIdRef.current = active.$id
-          }
-
           if (active.status === 'generating') {
             resetTimeout()
           }
@@ -178,19 +118,144 @@ export default function useLLMCacheStream(
                 ? (active.content ?? 'An error occurred.')
                 : null,
           })
+
+          if (active.status === 'complete' || active.status === 'error') {
+            clearTimer()
+            return
+          }
         }
+
+        connectSse()
+      } catch {
+        if (!mountedRef.current || cancelled) return
+        connectSse()
+      }
+    }
+
+    const connectSse = () => {
+      if (!mountedRef.current || cancelled) return
+
+      const endpoint =
+        type === 'analysis' ? '/api/analyse-proposal' : '/api/preference-search'
+
+      const body: Record<string, string> = { tripId }
+      if (type === 'analysis' && proposalId) {
+        body.proposalId = proposalId
+      }
+
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      fetch(getApiUrl(endpoint), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${pb.authStore.token}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
       })
-      .catch(() => {})
+        .then(async (response) => {
+          if (!response.ok) {
+            const text = await response.text()
+            if (mountedRef.current) {
+              setState((prev) => ({
+                ...prev,
+                status: 'error',
+                error: `Request failed: ${response.status} ${text}`,
+              }))
+            }
+            return
+          }
+
+          if (!response.body) return
+
+          const reader = response.body.getReader()
+          const decoder = new TextDecoder()
+          let buffer = ''
+
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            if (!mountedRef.current) break
+
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ''
+
+            let currentEvent = ''
+            for (const line of lines) {
+              if (line.startsWith('event: ')) {
+                currentEvent = line.slice(7).trim()
+              } else if (line.startsWith('data: ')) {
+                const data = line.slice(6)
+                try {
+                  const parsed = JSON.parse(data)
+
+                  if (currentEvent === 'thinking') {
+                    resetTimeout()
+                    setState((prev) => ({
+                      ...prev,
+                      status: 'generating',
+                      thinking: (prev.thinking ?? '') + (parsed.text ?? ''),
+                    }))
+                  } else if (currentEvent === 'content') {
+                    resetTimeout()
+                    setState((prev) => ({
+                      ...prev,
+                      status: 'generating',
+                      content: (prev.content ?? '') + (parsed.text ?? ''),
+                    }))
+                  } else if (currentEvent === 'done') {
+                    clearTimer()
+                    setState({
+                      status: parsed.status ?? 'complete',
+                      thinking: parsed.thinking ?? '',
+                      content: parsed.content ?? '',
+                      model: parsed.model ?? '',
+                      error: null,
+                    })
+                  } else if (currentEvent === 'error') {
+                    clearTimer()
+                    setState({
+                      status: 'error',
+                      thinking: '',
+                      content: '',
+                      model: '',
+                      error: parsed.message ?? 'An error occurred.',
+                    })
+                  }
+                } catch {
+                  // ignore parse errors
+                }
+                currentEvent = ''
+              }
+            }
+          }
+        })
+        .catch((err) => {
+          if (err instanceof DOMException && err.name === 'AbortError') return
+          if (mountedRef.current) {
+            setState((prev) => ({
+              ...prev,
+              status: 'error',
+              error: err instanceof Error ? err.message : 'Connection failed',
+            }))
+          }
+        })
+    }
+
+    loadInitial()
 
     return () => {
       cancelled = true
       clearTimer()
-      if (subscriptionRef.current) {
-        subscriptionRef.current.close().catch(() => {})
-        subscriptionRef.current = null
+      if (abortRef.current) {
+        abortRef.current.abort()
+        abortRef.current = null
       }
     }
-  }, [type, tripId, proposalId, clearTimer, resetTimeout])
+  }, [type, tripId, proposalId, clearTimer, resetTimeout, listFn])
 
   return state
 }

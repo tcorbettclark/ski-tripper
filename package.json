@@ -24,9 +24,9 @@
     "booking"
   ],
   "scripts": {
-    "dev": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --watch & bun server.js",
+    "dev": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --watch & bun server.ts",
     "build": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --minify && cp index.html dist/ && cp -r public/flags dist/flags",
-    "preview": "bun server.js",
+    "preview": "bun server.ts",
     "test": "bun test --max-concurrency 1",
     "test:watch": "bun test --watch --max-concurrency 1",
     "typecheck": "bun tsc --noEmit",
@@ -53,7 +53,9 @@
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
-    "react-virtuoso": "^4.18.7"
+    "react-virtuoso": "^4.18.7",
+    "canonical-json": "^0.4.0",
+    "ollama": "^0.6.3"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16",
@@ -65,13 +67,11 @@
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
     "ai-json-safe-parse": "^0.3.0",
-    "canonical-json": "^0.4.0",
     "commander": "^14.0.3",
     "csv-parse": "^6.2.1",
     "exa-js": "^2.13.0",
     "lefthook": "^2.1.8",
     "node-appwrite": "^25.2.0",
-    "ollama": "^0.6.3",
     "typescript": "^6.0.3",
     "zod": "^4.4.3"
   }
