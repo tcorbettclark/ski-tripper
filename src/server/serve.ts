@@ -1,10 +1,11 @@
+import { requireEnv } from '../shared/env'
 import { handleAnalyseProposal, handlePreferenceSearch } from './api'
 
-const hostname = process.env.SERVER_HOSTNAME
-if (!hostname) throw new Error('SERVER_HOSTNAME env var is required')
-
-const port = parseInt(process.env.SERVER_PORT ?? '', 10)
-if (!port) throw new Error('SERVER_PORT env var is required')
+const { SERVER_HOSTNAME: hostname, SERVER_PORT: portStr } = requireEnv(
+  'SERVER_HOSTNAME',
+  'SERVER_PORT'
+)
+const port = parseInt(portStr, 10)
 
 Bun.serve({
   hostname,

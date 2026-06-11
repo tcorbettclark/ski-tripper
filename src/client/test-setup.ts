@@ -1,5 +1,6 @@
 import { afterEach, mock } from 'bun:test'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
+import { requireEnv } from '../shared/env'
 import pb from './backend'
 
 GlobalRegistrator.register()
@@ -33,7 +34,7 @@ globalThis.ResizeObserver = class ResizeObserver {
  * Non-PocketBase fetches (e.g. to external APIs) are allowed through unchanged.
  */
 function installBackendCallGuard() {
-  const pbUrl = process.env.PUBLIC_POCKETBASE_URL!
+  const { PUBLIC_POCKETBASE_URL: pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
   const pbHost = new URL(pbUrl).host
   const originalFetch = globalThis.fetch
 

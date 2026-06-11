@@ -1,4 +1,5 @@
 import PocketBase from 'pocketbase'
+import { requireEnv } from '../shared/env'
 
 let adminClient: PocketBase | null = null
 
@@ -7,16 +8,15 @@ export async function getAdminClient(): Promise<PocketBase> {
     return adminClient
   }
 
-  const url = process.env.POCKETBASE_URL
-  if (!url) throw new Error('POCKETBASE_URL env var is required')
-
-  const email = process.env.POCKETBASE_ADMIN_EMAIL
-  const password = process.env.POCKETBASE_ADMIN_PASSWORD
-  if (!email || !password) {
-    throw new Error(
-      'POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD env vars are required'
-    )
-  }
+  const {
+    POCKETBASE_URL: url,
+    POCKETBASE_ADMIN_EMAIL: email,
+    POCKETBASE_ADMIN_PASSWORD: password,
+  } = requireEnv(
+    'POCKETBASE_URL',
+    'POCKETBASE_ADMIN_EMAIL',
+    'POCKETBASE_ADMIN_PASSWORD'
+  )
 
   adminClient = new PocketBase(url)
   await adminClient.collection('_superusers').authWithPassword(email, password)
@@ -24,8 +24,7 @@ export async function getAdminClient(): Promise<PocketBase> {
 }
 
 export function createClient(authToken: string): PocketBase {
-  const url = process.env.PUBLIC_POCKETBASE_URL ?? process.env.POCKETBASE_URL
-  if (!url) throw new Error('POCKETBASE_URL env var is required')
+  const { PUBLIC_POCKETBASE_URL: url } = requireEnv('PUBLIC_POCKETBASE_URL')
   const client = new PocketBase(url)
   client.authStore.save(authToken, {
     id: '',

@@ -3,9 +3,11 @@ import Exa from 'exa-js'
 import { Ollama } from 'ollama'
 import * as z from 'zod'
 import type { JSONSchema } from 'zod/v4/core'
+import { requireEnv } from '../../shared/env'
 
 export const OLLAMA_HOST = 'https://ollama.com'
-export const DEFAULT_MODEL = 'kimi-k2.6:cloud'
+
+const { OLLAMA_API_KEY: _ollamaApiKey } = requireEnv('OLLAMA_API_KEY')
 
 export const SOURCE_WEBSITES = [
   'skiresort.info',
@@ -29,14 +31,13 @@ export const ENRICH_SOURCE_WEBSITES = [
 
 export const ollama = new Ollama({
   host: OLLAMA_HOST,
-  headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
+  headers: { Authorization: `Bearer ${_ollamaApiKey}` },
 })
 
 let _exa: Exa | undefined
 export function getExa(): Exa {
   if (!_exa) {
-    const apiKey = process.env.EXA_API_KEY
-    if (!apiKey) throw new Error('EXA_API_KEY environment variable is not set')
+    const { EXA_API_KEY: apiKey } = requireEnv('EXA_API_KEY')
     _exa = new Exa(apiKey)
   }
   return _exa

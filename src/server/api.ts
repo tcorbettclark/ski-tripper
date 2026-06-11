@@ -1,5 +1,6 @@
 import { Ollama } from 'ollama'
 import type PocketBase from 'pocketbase'
+import { requireEnv } from '../shared/env'
 import {
   type Accommodation,
   buildSystemPrompt as buildAnalysisSystemPrompt,
@@ -18,12 +19,13 @@ import {
 } from './logic/preference-search'
 import { createClient, getAdminClient } from './pocketbase'
 
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'kimi-k2.6:cloud'
+const { OLLAMA_MODEL } = requireEnv('OLLAMA_MODEL')
 
 function createOllama(): Ollama {
+  const { OLLAMA_API_KEY } = requireEnv('OLLAMA_API_KEY')
   return new Ollama({
     host: 'https://ollama.com',
-    headers: { Authorization: `Bearer ${process.env.OLLAMA_API_KEY}` },
+    headers: { Authorization: `Bearer ${OLLAMA_API_KEY}` },
   })
 }
 

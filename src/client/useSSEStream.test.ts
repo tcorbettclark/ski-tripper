@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { act, renderHook } from '@testing-library/react'
+import { requireEnv } from '../shared/env'
 import useSSEStream from './useSSEStream'
 
-const PB_URL = process.env.PUBLIC_POCKETBASE_URL!
+const { PUBLIC_POCKETBASE_URL: PB_URL } = requireEnv('PUBLIC_POCKETBASE_URL')
 
 function sseUrl(endpoint: string): string {
   const base = new URL(PB_URL)

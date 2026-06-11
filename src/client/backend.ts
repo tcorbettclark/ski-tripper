@@ -1,4 +1,5 @@
 import PocketBase from 'pocketbase'
+import { requireEnv } from '../shared/env'
 import type {
   Accommodation,
   Discussion,
@@ -14,7 +15,8 @@ import type {
 } from '../shared/types.d'
 import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
-const pb = new PocketBase(process.env.PUBLIC_POCKETBASE_URL!)
+const { PUBLIC_POCKETBASE_URL: _pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
+const pb = new PocketBase(_pbUrl)
 export default pb
 
 export function hasSession(): boolean {
@@ -1130,7 +1132,7 @@ export async function triggerAnalysis(
   proposalId: string,
   tripId: string
 ): Promise<void> {
-  const pbUrl = process.env.PUBLIC_POCKETBASE_URL as string
+  const { PUBLIC_POCKETBASE_URL: pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
   const baseUrl = new URL(pbUrl)
   const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/analyse-proposal`
 
@@ -1150,7 +1152,7 @@ export async function triggerAnalysis(
 }
 
 export async function triggerPreferenceSearch(tripId: string): Promise<void> {
-  const pbUrl = process.env.PUBLIC_POCKETBASE_URL as string
+  const { PUBLIC_POCKETBASE_URL: pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
   const baseUrl = new URL(pbUrl)
   const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/preference-search`
 

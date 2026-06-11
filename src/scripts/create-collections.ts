@@ -2,10 +2,17 @@
 
 import { Command } from 'commander'
 import PocketBase from 'pocketbase'
+import { requireEnv } from '../shared/env'
 
-const PB_URL = process.env.PB_URL || 'http://127.0.0.1:8090'
-const PB_SUPERUSER_EMAIL = process.env.PB_SUPERUSER_EMAIL || ''
-const PB_SUPERUSER_PASSWORD = process.env.PB_SUPERUSER_PASSWORD || ''
+const {
+  POCKETBASE_URL: PB_URL,
+  POCKETBASE_ADMIN_EMAIL: PB_SUPERUSER_EMAIL,
+  POCKETBASE_ADMIN_PASSWORD: PB_SUPERUSER_PASSWORD,
+} = requireEnv(
+  'POCKETBASE_URL',
+  'POCKETBASE_ADMIN_EMAIL',
+  'POCKETBASE_ADMIN_PASSWORD'
+)
 
 const authRule = "@request.auth.id != ''"
 const adminOnlyRule = null
@@ -28,16 +35,6 @@ const ADMIN_ONLY_RULES = {
 
 async function createCollections() {
   const pb = new PocketBase(PB_URL)
-
-  if (!PB_SUPERUSER_EMAIL || !PB_SUPERUSER_PASSWORD) {
-    console.error(
-      'Error: PB_SUPERUSER_EMAIL and PB_SUPERUSER_PASSWORD must be set'
-    )
-    console.error(
-      '  export PB_SUPERUSER_EMAIL=admin@example.com PB_SUPERUSER_PASSWORD=yourpassword'
-    )
-    process.exit(1)
-  }
 
   await pb
     .collection('_superusers')
@@ -454,13 +451,6 @@ async function createCollections() {
 
 async function deleteCollections() {
   const pb = new PocketBase(PB_URL)
-
-  if (!PB_SUPERUSER_EMAIL || !PB_SUPERUSER_PASSWORD) {
-    console.error(
-      'Error: PB_SUPERUSER_EMAIL and PB_SUPERUSER_PASSWORD must be set'
-    )
-    process.exit(1)
-  }
 
   await pb
     .collection('_superusers')

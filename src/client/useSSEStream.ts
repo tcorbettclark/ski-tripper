@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { requireEnv } from '../shared/env'
 import type { LlmCache } from '../shared/types.d'
 import pb from './backend'
 
@@ -28,7 +29,7 @@ const INITIAL_STATE: UseSSEStreamResult = {
 }
 
 function getApiUrl(endpoint: string): string {
-  const pbUrl = process.env.PUBLIC_POCKETBASE_URL as string
+  const { PUBLIC_POCKETBASE_URL: pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
   const baseUrl = new URL(pbUrl)
   return `${baseUrl.protocol}//${baseUrl.host}${endpoint}`
 }
