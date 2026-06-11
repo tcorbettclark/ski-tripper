@@ -1,13 +1,13 @@
 import { handleAnalyseProposal, handlePreferenceSearch } from './api'
 
-function getArg(flag: string): string | undefined {
-  const match = Bun.argv.find((arg) => arg.startsWith(`--${flag}=`))
-  return match?.split('=')[1]
-}
+const hostname = process.env.SERVER_HOSTNAME
+if (!hostname) throw new Error('SERVER_HOSTNAME env var is required')
 
-const port = parseInt(getArg('port') ?? '5173', 10)
+const port = parseInt(process.env.SERVER_PORT ?? '', 10)
+if (!port) throw new Error('SERVER_PORT env var is required')
 
 Bun.serve({
+  hostname,
   port,
   fetch: async (req) => {
     const url = new URL(req.url)
@@ -24,4 +24,4 @@ Bun.serve({
   },
 })
 
-console.log(`API server listening on http://localhost:${port}`)
+console.log(`API server listening on http://${hostname}:${port}`)
