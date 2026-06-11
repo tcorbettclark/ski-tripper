@@ -11,8 +11,6 @@ jobs:
     name: test-app
     runs-on: ubuntu-latest
     env:
-      PUBLIC_POCKETBASE_URL: https://pb.ski-tripper.localhost
-      POCKETBASE_URL: http://127.0.0.1:8090
       BUN_TEST: "1"
     steps:
       - name: Checkout

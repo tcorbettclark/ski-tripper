@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { User } from '../shared/types.d'
-import pb from './backend'
+import { getPb } from './backend'
 import Field from './Field'
 import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
@@ -37,13 +37,15 @@ export default function AuthForm({
   onSwitchMode,
   onForgotPassword,
   createUser = (email, password, name) =>
-    pb.collection('users').create({ email, password, name }),
+    getPb().collection('users').create({ email, password, name }),
   authWithPassword = async (email, password) => {
-    await pb.collection('users').authWithPassword(email, password)
-    return mapUser(pb.authStore.record as unknown as Record<string, unknown>)
+    await getPb().collection('users').authWithPassword(email, password)
+    return mapUser(
+      getPb().authStore.record as unknown as Record<string, unknown>
+    )
   },
   requestVerification = (email) =>
-    pb.collection('users').requestVerification(email),
+    getPb().collection('users').requestVerification(email),
   sessionExpiredMessage = null,
 }: AuthFormProps) {
   const [name, setName] = useState('')

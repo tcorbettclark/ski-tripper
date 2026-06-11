@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import pb from './backend'
+import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
@@ -18,7 +18,7 @@ export default function ResetPasswordForm({
   token,
   onSuccess,
   confirmPasswordReset = (t, pw, pwc) =>
-    pb.collection('users').confirmPasswordReset(t, pw, pwc),
+    getPb().collection('users').confirmPasswordReset(t, pw, pwc),
 }: ResetPasswordFormProps) {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')

@@ -6,7 +6,7 @@ import type {
   Trip,
 } from '../shared/types.d'
 import AuthForm from './AuthForm'
-import pb, {
+import {
   createPreferences as _createPreferences,
   fetchResortDataWithAuth as _fetchResortDataWithAuth,
   getCoordinatorParticipant as _getCoordinatorParticipant,
@@ -18,6 +18,7 @@ import pb, {
   listTrips as _listTrips,
   updateName as _updateName,
   updateTrip as _updateTrip,
+  getPb,
 } from './backend'
 import EmailVerifyScreen from './EmailVerifyScreen'
 import ErrorBoundary from './ErrorBoundary'
@@ -83,7 +84,7 @@ interface AppProps {
 }
 
 const defaultConfirmVerification = (token: string) =>
-  pb.collection('users').confirmVerification(token)
+  getPb().collection('users').confirmVerification(token)
 const defaultListTrips = _listTrips
 const defaultListParticipatedTrips = _listParticipatedTrips
 const defaultListPolls = _listPolls
@@ -96,7 +97,9 @@ const defaultConfirmPasswordReset = (
   password: string,
   passwordConfirm: string
 ) =>
-  pb.collection('users').confirmPasswordReset(token, password, passwordConfirm)
+  getPb()
+    .collection('users')
+    .confirmPasswordReset(token, password, passwordConfirm)
 const defaultFetchResortDataWithAuth = _fetchResortDataWithAuth
 const defaultUpdateName = _updateName
 const defaultListTripParticipants = _listTripParticipants
@@ -269,7 +272,7 @@ export default function App({
   async function handleLogout() {
     setLogoutError(null)
     try {
-      pb.authStore.clear()
+      getPb().authStore.clear()
       logout()
       setPage('login')
     } catch (err) {
@@ -362,7 +365,7 @@ export default function App({
         email={user.email}
         onBackToLogin={handleLogout}
         requestVerification={(email: string) =>
-          pb.collection('users').requestVerification(email)
+          getPb().collection('users').requestVerification(email)
         }
       />
     )

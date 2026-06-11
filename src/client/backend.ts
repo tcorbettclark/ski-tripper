@@ -15,12 +15,22 @@ import type {
 } from '../shared/types.d'
 import { dayjs, isValidUrl, randomThreeWords } from './utils'
 
-const { PUBLIC_POCKETBASE_URL: _pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
-const pb = new PocketBase(_pbUrl)
-export default pb
+let _pb: PocketBase | undefined
+
+export function getPb(): PocketBase {
+  if (!_pb) {
+    const { PUBLIC_POCKETBASE_URL: url } = requireEnv('PUBLIC_POCKETBASE_URL')
+    _pb = new PocketBase(url)
+  }
+  return _pb
+}
+
+export function setPb(pb: PocketBase): void {
+  _pb = pb
+}
 
 export function hasSession(): boolean {
-  return pb.authStore.isValid
+  return getPb().authStore.isValid
 }
 
 function mapParticipant(row: Record<string, unknown>): Participant {
@@ -153,7 +163,7 @@ function mapPreferences(row: Record<string, unknown>): Preferences {
 
 export async function getCoordinatorParticipant(
   tripId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{ participants: Participant[] }> {
   const rows = await client.collection('participants').getFullList({
     filter: client.filter('trip = {:tripId} && role = {:role}', {
@@ -170,7 +180,7 @@ export async function getCoordinatorParticipant(
 
 export async function listTripParticipants(
   tripId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{ participants: Participant[] }> {
   const rows = await client.collection('participants').getFullList({
     filter: client.filter('trip = {:tripId}', { tripId }),
@@ -185,7 +195,7 @@ export async function listTripParticipants(
 
 export async function listTrips(
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{
   trips: Trip[]
   coordinatorUserIds: Record<string, string>
@@ -228,7 +238,7 @@ export async function listTrips(
 
 export async function getTrip(
   tripId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Trip> {
   const row = await client.collection('trips').getOne(tripId)
   return mapTrip(row as unknown as Record<string, unknown>)
@@ -236,7 +246,7 @@ export async function getTrip(
 
 export async function getTripByCode(
   code: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{ trips: Trip[] }> {
   const rows = await client.collection('trips').getFullList({
     filter: client.filter('code = {:code}', { code }),
@@ -246,7 +256,7 @@ export async function getTripByCode(
   }
 }
 
-async function findUniqueCode(client: PocketBase = pb): Promise<string> {
+async function findUniqueCode(client: PocketBase = getPb()): Promise<string> {
   for (let attempt = 0; attempt < 100; attempt++) {
     const code = randomThreeWords()
     const rows = await client.collection('trips').getFullList({
@@ -261,7 +271,7 @@ export async function createTrip(
   userId: string,
   userName: string,
   data: Partial<Trip>,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Trip> {
   const code = await findUniqueCode(client)
   const tripRow = await client.collection('trips').create({
@@ -282,7 +292,7 @@ export async function updateTrip(
   tripId: string,
   data: Partial<Trip>,
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Trip> {
   const { participants } = await getCoordinatorParticipant(tripId, client)
   if (participants.length === 0 || participants[0].user !== userId) {
@@ -298,7 +308,7 @@ export async function updateTrip(
 export async function deleteTrip(
   tripId: string,
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<void> {
   const { participants: coordinatorDocs } = await getCoordinatorParticipant(
     tripId,
@@ -312,7 +322,7 @@ export async function deleteTrip(
 
 export async function listParticipatedTrips(
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{ trips: Trip[] }> {
   const participants = await client.collection('participants').getFullList({
     filter: client.filter('user = {:userId}', { userId }),
@@ -336,7 +346,7 @@ export async function joinTrip(
   userId: string,
   userName: string,
   tripId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Participant> {
   try {
     await client.collection('trips').getOne(tripId)
@@ -362,7 +372,7 @@ export async function joinTrip(
 export async function leaveTrip(
   userId: string,
   tripId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<void> {
   const rows = await client.collection('participants').getFullList({
     filter: client.filter('user = {:userId} && trip = {:tripId}', {
@@ -433,7 +443,7 @@ export async function createProposal(
       linkedResortsDescription: string
     }
   },
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Proposal> {
   await _verifyParticipant(tripId, proposerUserId, client)
   const { resortData, ...userData } = data
@@ -470,7 +480,7 @@ export async function createProposal(
 export async function listProposals(
   tripId: string,
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{ proposals: Proposal[] }> {
   await _verifyParticipant(tripId, userId, client)
   const rows = await client.collection('proposals').getFullList({
@@ -487,7 +497,7 @@ export async function listProposals(
 export async function getProposal(
   proposalId: string,
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Proposal> {
   const row = await client.collection('proposals').getOne(proposalId)
   const proposal = mapProposal(row as unknown as Record<string, unknown>)
@@ -499,7 +509,7 @@ export async function updateProposal(
   proposalId: string,
   proposerUserId: string,
   data: Partial<Proposal>,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Proposal> {
   const row = await client.collection('proposals').getOne(proposalId)
   const proposal = mapProposal(row as unknown as Record<string, unknown>)
@@ -548,7 +558,7 @@ export async function updateProposal(
 export async function deleteProposal(
   proposalId: string,
   proposerUserId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<void> {
   const row = await client.collection('proposals').getOne(proposalId)
   const proposal = mapProposal(row as unknown as Record<string, unknown>)
@@ -562,7 +572,7 @@ export async function deleteProposal(
 export async function submitProposal(
   proposalId: string,
   proposerUserId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Proposal> {
   const row = await client.collection('proposals').getOne(proposalId)
   const proposal = mapProposal(row as unknown as Record<string, unknown>)
@@ -591,7 +601,7 @@ export async function submitProposal(
 export async function rejectProposal(
   proposalId: string,
   pollCreatorUserId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Proposal> {
   const row = await client.collection('proposals').getOne(proposalId)
   const proposal = mapProposal(row as unknown as Record<string, unknown>)
@@ -619,7 +629,7 @@ export async function rejectProposal(
 export async function revertProposalToDraft(
   proposalId: string,
   pollCreatorUserId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Proposal> {
   const row = await client.collection('proposals').getOne(proposalId)
   const proposal = mapProposal(row as unknown as Record<string, unknown>)
@@ -651,7 +661,7 @@ export async function createPoll(
   pollCreatorUserId: string,
   pollCreatorUserName: string,
   durationDays: number,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Poll> {
   const { participants: coordDocs } = await getCoordinatorParticipant(
     tripId,
@@ -698,7 +708,7 @@ export async function closePoll(
   pollId: string,
   pollCreatorUserId: string,
   outcome: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Poll> {
   if (!outcome.trim()) throw new Error('Outcome is required to close a poll.')
   const pollRow = await client.collection('polls').getOne(pollId)
@@ -717,7 +727,7 @@ export async function closePoll(
 export async function listPolls(
   tripId: string,
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{ polls: Poll[] }> {
   await _verifyParticipant(tripId, userId, client)
   const rows = await client.collection('polls').getFullList({
@@ -734,7 +744,7 @@ export async function upsertVote(
   voterUserId: string,
   proposalIds: string[],
   tokenCounts: number[],
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Vote> {
   const pollRow = await client.collection('polls').getOne(pollId)
   const poll = mapPoll(pollRow as unknown as Record<string, unknown>)
@@ -780,7 +790,7 @@ export async function upsertVote(
 export async function listVotes(
   pollId: string,
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<{ votes: Vote[] }> {
   await _verifyParticipantByPoll(pollId, userId, client)
   const rows = await client.collection('votes').getFullList({
@@ -807,7 +817,7 @@ export async function createAccommodation(
     cost?: string
     description?: string
   },
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Accommodation> {
   const proposalRow = await client.collection('proposals').getOne(proposalId)
   const proposal = mapProposal(
@@ -829,7 +839,7 @@ export async function createAccommodation(
 
 export async function listAccommodations(
   proposalId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Accommodation[]> {
   const rows = await client.collection('accommodations').getFullList({
     filter: client.filter('proposal = {:proposalId}', { proposalId }),
@@ -849,7 +859,7 @@ export async function updateAccommodation(
     cost?: string
     description?: string
   },
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Accommodation> {
   const accommodationRow = await client
     .collection('accommodations')
@@ -881,7 +891,7 @@ export async function updateAccommodation(
 export async function deleteAccommodation(
   accommodationId: string,
   proposerUserId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<void> {
   const accommodationRow = await client
     .collection('accommodations')
@@ -904,7 +914,7 @@ export async function deleteAccommodation(
 
 export async function getPreferences(
   userId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Preferences | null> {
   const rows = await client.collection('preferences').getFullList({
     filter: client.filter('user = {:userId}', { userId }),
@@ -915,7 +925,7 @@ export async function getPreferences(
 
 export async function updateName(
   name: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Record<string, unknown>> {
   const userId = (client.authStore.record as Record<string, unknown>)
     ?.id as string
@@ -927,7 +937,7 @@ export async function updateName(
 export async function createPreferences(
   userId: string,
   data: Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Preferences> {
   const row = await client.collection('preferences').create({
     user: userId,
@@ -947,7 +957,7 @@ export async function createPreferences(
 export async function updatePreferences(
   userId: string,
   data: Partial<Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>>,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Preferences> {
   const existing = await getPreferences(userId, client)
   if (!existing) throw new Error('Preferences not found.')
@@ -971,7 +981,7 @@ export async function updatePreferences(
 
 export async function listDiscussion(
   proposalId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Discussion[]> {
   const rows = await client.collection('discussion').getFullList({
     filter: client.filter('proposal = {:proposalId}', { proposalId }),
@@ -985,7 +995,7 @@ export async function createDiscussionComment(
   authorUserId: string,
   authorUserName: string,
   body: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Discussion> {
   const row = await client.collection('discussion').create({
     proposal: proposalId,
@@ -1001,7 +1011,7 @@ export async function updateDiscussionComment(
   commentId: string,
   authorUserId: string,
   body: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Discussion> {
   const row = await client.collection('discussion').getOne(commentId)
   const comment = mapDiscussion(row as unknown as Record<string, unknown>)
@@ -1018,7 +1028,7 @@ export async function updateDiscussionComment(
 export async function deleteDiscussionComment(
   commentId: string,
   authorUserId: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<void> {
   const row = await client.collection('discussion').getOne(commentId)
   const comment = mapDiscussion(row as unknown as Record<string, unknown>)
@@ -1032,7 +1042,7 @@ export async function deleteDiscussionComment(
 export async function createSystemMessage(
   proposalId: string,
   body: string,
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<Discussion> {
   const row = await client.collection('discussion').create({
     proposal: proposalId,
@@ -1045,7 +1055,7 @@ export async function createSystemMessage(
 }
 
 export async function getResortData(): Promise<LocalResort[]> {
-  const rows = await pb.collection('resorts').getFullList()
+  const rows = await getPb().collection('resorts').getFullList()
   return rows.map((r) => ({
     id: r.id as string,
     resortName: r.resort_name as string,
@@ -1071,7 +1081,7 @@ export async function getResortData(): Promise<LocalResort[]> {
 }
 
 export async function fetchResortDataWithAuth(): Promise<string> {
-  const rows = await pb.collection('resorts').getFullList()
+  const rows = await getPb().collection('resorts').getFullList()
   const resorts: ResortWithEmbedding[] = rows.map((r) => ({
     id: r.id as string,
     resortName: r.resort_name as string,
@@ -1117,7 +1127,7 @@ function mapLlmCache(row: Record<string, unknown>): LlmCache {
 export async function listLlmCacheByTripAndType(
   tripId: string,
   type: LlmCache['type'],
-  client: PocketBase = pb
+  client: PocketBase = getPb()
 ): Promise<LlmCache[]> {
   const rows = await client.collection('llm_cache').getFullList({
     filter: client.filter('trip = {:tripId} && type = {:type}', {
@@ -1132,15 +1142,14 @@ export async function triggerAnalysis(
   proposalId: string,
   tripId: string
 ): Promise<void> {
-  const { PUBLIC_POCKETBASE_URL: pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
-  const baseUrl = new URL(pbUrl)
+  const baseUrl = new URL(getPb().baseUrl)
   const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/analyse-proposal`
 
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${pb.authStore.token}`,
+      Authorization: `Bearer ${getPb().authStore.token}`,
     },
     body: JSON.stringify({ proposalId, tripId }),
   })
@@ -1152,15 +1161,14 @@ export async function triggerAnalysis(
 }
 
 export async function triggerPreferenceSearch(tripId: string): Promise<void> {
-  const { PUBLIC_POCKETBASE_URL: pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
-  const baseUrl = new URL(pbUrl)
+  const baseUrl = new URL(getPb().baseUrl)
   const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/preference-search`
 
   const response = await fetch(apiUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${pb.authStore.token}`,
+      Authorization: `Bearer ${getPb().authStore.token}`,
     },
     body: JSON.stringify({ tripId }),
   })

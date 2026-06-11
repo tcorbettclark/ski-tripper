@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { COUNTRIES } from '../shared/countries'
 import type { ResortWithEmbedding, User } from '../shared/types.d'
-import pb, { createProposal as _createProposal } from './backend'
+import { createProposal as _createProposal, getPb } from './backend'
 import DateRangeField from './DateRangeField'
 import Field from './Field'
 import {
@@ -128,7 +128,7 @@ export default function CreateProposalForm({
   resorts = [],
   createProposal = _createProposal,
   accountGet = () => {
-    const record = pb.authStore.record as Record<string, unknown> | null
+    const record = getPb().authStore.record as Record<string, unknown> | null
     if (!record) return Promise.reject(new Error('Not authenticated'))
     return Promise.resolve({
       id: record.id as string,

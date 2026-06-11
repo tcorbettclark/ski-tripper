@@ -1,7 +1,7 @@
 import { ClientResponseError } from 'pocketbase'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { User } from '../shared/types.d'
-import pb, { hasSession as _hasSession } from './backend'
+import { hasSession as _hasSession, getPb } from './backend'
 
 const IDLE_TIMEOUT_MS = 5 * 60_000
 const ACTIVITY_THROTTLE_MS = 1_000
@@ -20,7 +20,7 @@ export default function useAuth(options?: {
   getUser?: () => User | null
 }) {
   const hasSessionRef = useRef(options?.hasSession ?? _hasSession)
-  const pbRef = useRef(pb)
+  const pbRef = useRef(getPb())
 
   const [user, setUser] = useState<User | null>(null)
   const [checking, setChecking] = useState(true)

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import pb from './backend'
+import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, formStyles } from './theme'
@@ -12,7 +12,7 @@ interface ForgotPasswordFormProps {
 export default function ForgotPasswordForm({
   onBackToLogin,
   requestPasswordReset = (email) =>
-    pb.collection('users').requestPasswordReset(email),
+    getPb().collection('users').requestPasswordReset(email),
 }: ForgotPasswordFormProps) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')

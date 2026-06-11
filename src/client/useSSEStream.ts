@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { requireEnv } from '../shared/env'
 import type { LlmCache } from '../shared/types.d'
-import pb from './backend'
+import { getPb } from './backend'
 
 const TIMEOUT_MS = 120_000
 
@@ -29,8 +28,7 @@ const INITIAL_STATE: UseSSEStreamResult = {
 }
 
 function getApiUrl(endpoint: string): string {
-  const { PUBLIC_POCKETBASE_URL: pbUrl } = requireEnv('PUBLIC_POCKETBASE_URL')
-  const baseUrl = new URL(pbUrl)
+  const baseUrl = new URL(getPb().baseUrl)
   return `${baseUrl.protocol}//${baseUrl.host}${endpoint}`
 }
 
@@ -105,7 +103,7 @@ export default function useSSEStream(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${pb.authStore.token}`,
+        Authorization: `Bearer ${getPb().authStore.token}`,
       },
       body: JSON.stringify(body),
       signal: controller.signal,

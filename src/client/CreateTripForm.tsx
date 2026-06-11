@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { User } from '../shared/types.d'
-import pb, { createTrip as _createTrip } from './backend'
+import { createTrip as _createTrip, getPb } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
 
@@ -22,7 +22,7 @@ export default function CreateTripForm({
   onDismiss,
   createTrip = _createTrip,
   accountGet = () => {
-    const record = pb.authStore.record as Record<string, unknown> | null
+    const record = getPb().authStore.record as Record<string, unknown> | null
     if (!record) return Promise.reject(new Error('Not authenticated'))
     return Promise.resolve({
       id: record.id as string,
