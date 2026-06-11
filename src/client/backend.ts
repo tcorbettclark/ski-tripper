@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase'
-import { requireEnv } from '../shared/env'
+import { require } from '../shared/env'
 import type {
   Accommodation,
   Discussion,
@@ -19,7 +19,7 @@ let _pb: PocketBase | undefined
 
 export function getPb(): PocketBase {
   if (!_pb) {
-    const { PUBLIC_POCKETBASE_URL: url } = requireEnv('PUBLIC_POCKETBASE_URL')
+    const url = require(import.meta.env.PUBLIC_POCKETBASE_URL)
     _pb = new PocketBase(url)
   }
   return _pb

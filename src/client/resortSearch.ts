@@ -23,7 +23,7 @@ function notifyReady(): void {
 }
 
 const initPromise =
-  typeof process !== 'undefined' && process.env.BUN_TEST
+  typeof Bun !== 'undefined' && Bun.env.BUN_TEST
     ? (async () => {
         modelFailed = true
         notifyReady()
