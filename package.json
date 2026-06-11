@@ -24,9 +24,19 @@
     "booking"
   ],
   "scripts": {
-    "dev": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --watch & bun server.ts",
-    "build": "bun build src/main.tsx --outdir dist --target browser --env 'PUBLIC_*' --minify && cp index.html dist/ && cp -r public/flags dist/flags",
-    "preview": "bun server.ts",
+    "dev": "bun run build:copy && concurrently -n client,playground,server,pb,caddy -c blue,magenta,green,yellow,cyan 'bun run dev:client' 'bun run dev:playground' 'bun run dev:server' 'bun run dev:pb' 'bun run dev:caddy'",
+    "dev:client": "bun build src/client/main.tsx --outdir output/static --target browser --env 'PUBLIC_*' --watch --no-clear-screen",
+    "dev:playground": "bun build src/playground/action-guide-test.tsx --outdir output/static/playground --target browser --watch --no-clear-screen",
+    "dev:server": "bun build src/server/serve.ts --outdir output/server --target bun --watch --no-clear-screen",
+    "dev:pb": "pocketbase serve --http 127.0.0.1:8090 --migrationsDir src/pb_migrations --dir pb_data",
+    "dev:caddy": "sh -c 'set -a && . .env && exec caddy run'",
+    "setup:caddy": "caddy trust",
+    "build": "bun run build:client && bun run build:playground && bun run build:server && bun run build:copy",
+    "build:client": "bun build src/client/main.tsx --outdir output/static --target browser --env 'PUBLIC_*' --minify",
+    "build:playground": "bun build src/playground/action-guide-test.tsx --outdir output/static/playground --target browser --minify",
+    "build:server": "bun build src/server/serve.ts --outdir output/server --target bun",
+    "build:copy": "cp src/static/index.html output/static/ && cp -r src/static/flags output/static/flags && cp src/playground/index.html output/static/playground/ && mkdir -p output/pb_migrations && cp src/pb_migrations/*.js output/pb_migrations/ && cp Caddyfile output/",
+    "preview": "CADDY_DOMAIN=ski-tripper.localhost CADDY_PB_DOMAIN=pb.ski-tripper.localhost CADDY_SERVER_PORT=5173 CADDY_PB_PORT=8090 bun output/server/serve.js",
     "test": "bun test --max-concurrency 1",
     "test:watch": "bun test --watch --max-concurrency 1",
     "typecheck": "bun tsc --noEmit",
@@ -34,10 +44,8 @@
     "format": "biome format --write",
     "check": "biome check --write",
     "ci": "biome ci",
-    "cors-finder": "bash scripts/find-cors-test.sh",
-    "resorts": "bun run scripts/resorts.ts",
-    "create-collections": "bun run scripts/create-collections.ts",
-    "playground": "bun build playground/action-guide-test.tsx --outdir playground-dist --target browser && cp playground/index.html playground-dist/ && echo 'Playground built to playground-dist/'"
+    "resorts": "bun run src/scripts/resorts.ts",
+    "create-collections": "bun run src/scripts/create-collections.ts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
@@ -65,6 +73,7 @@
     "@types/react-dom": "^19.2.3",
     "ai-json-safe-parse": "^0.3.0",
     "commander": "^14.0.3",
+    "concurrently": "^10.0.3",
     "csv-parse": "^6.2.1",
     "exa-js": "^2.13.0",
     "lefthook": "^2.1.8",

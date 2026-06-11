@@ -1,0 +1,75 @@
+import type { Trip } from '../shared/types.d'
+import { getCoordinatorParticipant as _getCoordinatorParticipant } from './backend'
+import TripRow from './TripRow'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
+
+interface TripTableProps {
+  trips: Trip[]
+  onSelectTrip: (tripId: string) => void
+  emptyMessage?: string
+  getCoordinatorParticipant?: (
+    tripId: string
+  ) => Promise<{ participants: Array<{ userName: string }> }>
+}
+
+export default function TripTable({
+  trips,
+  onSelectTrip,
+  emptyMessage = 'No trips yet. Add one above.',
+  getCoordinatorParticipant = _getCoordinatorParticipant,
+}: TripTableProps) {
+  if (trips.length === 0) {
+    return <p style={styles.empty}>{emptyMessage}</p>
+  }
+
+  return (
+    <table className="trip-table" style={styles.table}>
+      <style>{`.trip-table tr:hover td { background: ${mix('--color-accent', 0.25)}; color: ${colors.textPrimary}; }`}</style>
+      <thead>
+        <tr>
+          <th style={styles.th}>Description</th>
+          <th style={styles.th}>Co-ordinator</th>
+        </tr>
+      </thead>
+      <tbody>
+        {trips.map((trip) => (
+          <TripRow
+            key={trip.id}
+            trip={trip}
+            onSelectTrip={onSelectTrip}
+            getCoordinatorParticipant={getCoordinatorParticipant}
+          />
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+const styles = {
+  empty: {
+    color: colors.textSecondary,
+    fontFamily: fonts.body,
+    padding: '60px 40px',
+    textAlign: 'center',
+    fontSize: fontSizes.md,
+    fontStyle: 'italic',
+  },
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+    fontFamily: fonts.body,
+    fontSize: fontSizes.base,
+  },
+  th: {
+    textAlign: 'left',
+    padding: '12px 16px',
+    background: colors.bgCard,
+    borderBottom: borders.subtle,
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    fontWeight: '500',
+    color: colors.textSecondary,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+  },
+} as const

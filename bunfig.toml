@@ -4,7 +4,7 @@ configVersion = 1
 linker = "isolated"
 
 [test]
-preload = ["./src/test-setup.js"]
+preload = ["./src/client/test-setup.ts"]
 
 [test.env]
 BUN_TEST = "1"

@@ -1,0 +1,22 @@
+{$CADDY_DOMAIN} {
+	handle /api/* {
+		reverse_proxy localhost:{$CADDY_SERVER_PORT}
+	}
+
+	handle /playground/* {
+		uri strip_prefix /playground
+		root * output/static/playground
+		file_server
+		try_files {path} /index.html
+	}
+
+	handle {
+		root * output/static
+		file_server
+		try_files {path} /index.html
+	}
+}
+
+{$CADDY_PB_DOMAIN} {
+	reverse_proxy localhost:{$CADDY_PB_PORT}
+}

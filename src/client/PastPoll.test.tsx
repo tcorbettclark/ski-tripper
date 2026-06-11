@@ -1,0 +1,229 @@
+import { afterEach, describe, expect, it, mock } from 'bun:test'
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import type { Poll, Proposal, Vote } from '../shared/types.d'
+import PastPoll from './PastPoll'
+import { dayjs } from './utils'
+
+const TEST_IDS = {
+  POLL: 'poll-1',
+  TRIP: 'trip-1',
+  USER: 'user-1',
+  PROPOSAL_1: 'p-1',
+  VOTE_1: 'v-1',
+} as const
+
+function createMockPoll(overrides: Partial<Poll> = {}): Poll {
+  const baseDate = dayjs('2026-04-05T00:00:00.000Z')
+  const startDate = baseDate.subtract(7, 'day').toISOString()
+  const endDate = baseDate.subtract(1, 'day').toISOString()
+  return {
+    id: TEST_IDS.POLL,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    pollCreator: TEST_IDS.USER,
+    pollCreatorUserName: 'Alice',
+    state: 'CLOSED',
+    trip: TEST_IDS.TRIP,
+    proposalIds: [TEST_IDS.PROPOSAL_1],
+    startDate,
+    endDate,
+    outcome: '',
+    ...overrides,
+  }
+}
+
+function createMockProposal(overrides: Partial<Proposal> = {}): Proposal {
+  return {
+    id: TEST_IDS.PROPOSAL_1,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    proposer: TEST_IDS.USER,
+    proposerUserName: 'Alice',
+    trip: TEST_IDS.TRIP,
+    state: 'SUBMITTED',
+    description: 'French Alps',
+    resortName: 'Chamonix',
+    startDate: '2026-03-29T00:00:00.000Z',
+    endDate: '2026-04-05T00:00:00.000Z',
+    nearestAirport: 'Geneva Airport',
+    transferTime: 60,
+    country: 'France',
+    region: 'Alps',
+    summitAltitude: 3842,
+    baseAltitude: 1000,
+    pisteKm: 150,
+    beginnerPct: 0,
+    intermediatePct: 0,
+    advancedPct: 0,
+    liftCount: 50,
+    snowReliability: 'high',
+    skiSeasonMonths: 'Dec-Apr',
+    websites: ['https://chamonix.com'],
+    latitude: '45.9237',
+    longitude: '6.8694',
+    linkedResortsDescription: '',
+    ...overrides,
+  }
+}
+
+function createMockVote(overrides: Partial<Vote> = {}): Vote {
+  return {
+    id: TEST_IDS.VOTE_1,
+    created: new Date().toISOString(),
+    updated: new Date().toISOString(),
+    poll: TEST_IDS.POLL,
+    voter: TEST_IDS.USER,
+    voterUserName: 'Alice',
+    proposalIds: [TEST_IDS.PROPOSAL_1],
+    tokenCounts: [5],
+    ...overrides,
+  }
+}
+
+function renderPastPoll(
+  overrides: {
+    poll?: Poll
+    proposals?: Proposal[]
+    listVotes?: (pollId: string, userId: string) => Promise<{ votes: Vote[] }>
+  } = {}
+) {
+  const poll = overrides.poll ?? createMockPoll()
+  const proposals = overrides.proposals ?? [createMockProposal()]
+  const listVotes =
+    overrides.listVotes ?? mock(() => Promise.resolve({ votes: [] }))
+  const result = render(
+    <PastPoll
+      poll={poll}
+      proposals={proposals}
+      userId={TEST_IDS.USER}
+      listVotes={listVotes}
+    />
+  )
+  return { ...result, listVotes, poll, proposals }
+}
+
+describe('PastPoll', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
+  it('renders loading state before votes load', async () => {
+    let resolveVotes: (value: { votes: Vote[] }) => void
+    const listVotes = mock(
+      () =>
+        new Promise<{ votes: Vote[] }>((resolve) => {
+          resolveVotes = resolve
+        })
+    )
+
+    await act(async () => {
+      render(
+        <PastPoll
+          poll={createMockPoll()}
+          proposals={[createMockProposal()]}
+          userId={TEST_IDS.USER}
+          listVotes={listVotes}
+        />
+      )
+    })
+
+    expect(screen.getByText(/Loading…/i)).toBeTruthy()
+
+    await act(async () => {
+      resolveVotes?.({ votes: [] })
+    })
+  })
+
+  it('calls listVotes with correct pollId and userId', async () => {
+    const poll = createMockPoll()
+    const listVotes = mock(() => Promise.resolve({ votes: [] }))
+
+    await act(async () => {
+      render(
+        <PastPoll
+          poll={poll}
+          proposals={[createMockProposal()]}
+          userId={TEST_IDS.USER}
+          listVotes={listVotes}
+        />
+      )
+    })
+
+    expect(listVotes).toHaveBeenCalledWith(poll.id, TEST_IDS.USER)
+  })
+
+  it('renders PollResults after votes load', async () => {
+    const vote = createMockVote()
+
+    await act(async () => {
+      renderPastPoll({
+        listVotes: mock(() => Promise.resolve({ votes: [vote] })),
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/1 vote/i))
+    })
+  })
+
+  it('displays error when listVotes rejects', async () => {
+    const listVotes = mock(() =>
+      Promise.reject(new Error('Failed to load votes'))
+    )
+
+    await act(async () => {
+      renderPastPoll({ listVotes })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to load votes'))
+    })
+  })
+
+  it('renders formatDate(poll.startDate) in output', async () => {
+    await act(async () => {
+      renderPastPoll()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/29 Mar 2026/i))
+    })
+  })
+
+  it('renders "Poll · CLOSED" label', async () => {
+    await act(async () => {
+      renderPastPoll()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/Poll · CLOSED/i))
+    })
+  })
+
+  it('renders outcome text when present', async () => {
+    await act(async () => {
+      renderPastPoll({
+        poll: createMockPoll({
+          outcome: 'Chamonix through to next round, Annecy rejected',
+        }),
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText('Outcome'))
+      expect(
+        screen.getByText('Chamonix through to next round, Annecy rejected')
+      )
+    })
+  })
+
+  it('does not render outcome element when outcome is empty', async () => {
+    await act(async () => {
+      renderPastPoll()
+    })
+
+    await waitFor(() => {
+      expect(screen.getByText(/Poll · CLOSED/i))
+    })
+  })
+})

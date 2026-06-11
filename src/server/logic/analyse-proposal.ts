@@ -1,63 +1,64 @@
 import { hash } from 'canonical-json/hash'
+import type {
+  Accommodation as SharedAccommodation,
+  Participant as SharedParticipant,
+  Preferences as SharedPreferences,
+  Proposal as SharedProposal,
+} from '../../shared/types.d'
 
-interface Proposal {
-  id: string
-  updated: string
-  proposer: string
-  proposerUserName: string
-  trip: string
-  state: string
-  description: string
-  resortName: string
-  startDate: string
-  endDate: string
-  nearestAirport: string
-  transferTime: number | null
-  country: string
-  region: string
-  summitAltitude: number
-  baseAltitude: number
-  pisteKm: number
-  beginnerPct: number
-  intermediatePct: number
-  advancedPct: number
-  liftCount: number
-  snowReliability: string
-  skiSeasonMonths: string
-  websites: string[]
-  linkedResortsDescription: string
-}
+type Proposal = Pick<
+  SharedProposal,
+  | 'id'
+  | 'updated'
+  | 'proposer'
+  | 'proposerUserName'
+  | 'trip'
+  | 'state'
+  | 'description'
+  | 'resortName'
+  | 'startDate'
+  | 'endDate'
+  | 'nearestAirport'
+  | 'transferTime'
+  | 'country'
+  | 'region'
+  | 'summitAltitude'
+  | 'baseAltitude'
+  | 'pisteKm'
+  | 'beginnerPct'
+  | 'intermediatePct'
+  | 'advancedPct'
+  | 'liftCount'
+  | 'snowReliability'
+  | 'skiSeasonMonths'
+  | 'websites'
+  | 'linkedResortsDescription'
+>
 
-interface Accommodation {
-  id: string
-  proposal: string
-  name: string
-  url: string
-  cost: string
-  description: string
-}
+type Accommodation = Pick<
+  SharedAccommodation,
+  'id' | 'proposal' | 'name' | 'url' | 'cost' | 'description'
+>
 
-interface Participant {
-  id: string
-  user: string
-  userName: string
-  trip: string
-  role: string
-}
+type Participant = Pick<
+  SharedParticipant,
+  'id' | 'user' | 'userName' | 'trip' | 'role'
+>
 
-interface Preferences {
-  id: string
-  user: string
-  skiSnowboard: string[]
-  difficulty: string[]
-  piste: string[]
-  timeSlopes: number
-  timeEating: number
-  timeApres: number
-  timeHotel: number
-  accommodation: string[]
-  notes: string
-}
+type Preferences = Pick<
+  SharedPreferences,
+  | 'id'
+  | 'user'
+  | 'skiSnowboard'
+  | 'difficulty'
+  | 'piste'
+  | 'timeSlopes'
+  | 'timeEating'
+  | 'timeApres'
+  | 'timeHotel'
+  | 'accommodation'
+  | 'notes'
+>
 
 export type { Accommodation, Participant, Preferences, Proposal }
 

@@ -54,7 +54,7 @@ async function fetchProposal(
     proposer: row.proposer as string,
     proposerUserName: row.proposer_user_name as string,
     trip: row.trip as string,
-    state: row.state as string,
+    state: row.state as Proposal['state'],
     description: row.description as string,
     resortName: row.resort_name as string,
     startDate: row.start_date as string,
@@ -70,7 +70,7 @@ async function fetchProposal(
     intermediatePct: row.intermediate_pct as number,
     advancedPct: row.advanced_pct as number,
     liftCount: row.lift_count as number,
-    snowReliability: row.snow_reliability as string,
+    snowReliability: row.snow_reliability as Proposal['snowReliability'],
     skiSeasonMonths: row.ski_season_months as string,
     websites: row.websites as string[],
     linkedResortsDescription: row.linked_resorts_description as string,
@@ -106,7 +106,7 @@ async function fetchParticipants(
     user: r.user as string,
     userName: r.user_name as string,
     trip: r.trip as string,
-    role: r.role as string,
+    role: r.role as Participant['role'],
   }))
 }
 

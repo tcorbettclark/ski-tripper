@@ -6,7 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!!**/dist"]
+    "includes": ["**", "!!**/output", "!!**/data", "!!**/node_modules"]
   },
   "formatter": {
     "enabled": true,
