@@ -261,7 +261,7 @@ describe('createTrip', () => {
       .calls[0]
     expect(createCall[0].role).toBe('coordinator')
     expect(createCall[0].user).toBe('user-1')
-    expect(createCall[0].user_name).toBe('Alice')
+    expect(createCall[0].name).toBe('Alice')
   })
 
   it('propagates create errors', async () => {
@@ -342,7 +342,7 @@ describe('joinTrip', () => {
     const createCall = (client.collection('participants').create as MockFn).mock
       .calls[0]
     expect(createCall[0].role).toBe('participant')
-    expect(createCall[0].user_name).toBe('Alice')
+    expect(createCall[0].name).toBe('Alice')
   })
 
   it('throws when the trip does not exist', async () => {
@@ -491,6 +491,15 @@ describe('createProposal', () => {
           Promise.resolve([{ id: 'p-1', user: 'user-1', trip: 'trip-1' }])
         ),
       },
+      proposals: {
+        create: mock(() =>
+          Promise.resolve({
+            id: 'new-id',
+            description: 'New Trip',
+            state: 'draft',
+          })
+        ),
+      },
     })
     const result = await createProposal(
       'trip-1',
@@ -528,8 +537,8 @@ describe('createProposal', () => {
       .calls[0]
     expect(createCall[0].trip).toBe('trip-1')
     expect(createCall[0].proposer).toBe('user-1')
-    expect(createCall[0].proposer_user_name).toBe('Alice')
-    expect(createCall[0].state).toBe('DRAFT')
+    expect(createCall[0].proposer_name).toBe('Alice')
+    expect(createCall[0].state).toBe('draft')
     expect(createCall[0].description).toBe('Alps Trip')
     expect(result.id).toBe('new-id')
   })
@@ -553,7 +562,7 @@ describe('listProposals', () => {
       },
       proposals: {
         getFullList: mock(() =>
-          Promise.resolve([{ id: 'prop-1', trip: 'trip-1' }])
+          Promise.resolve([{ id: 'prop-1', trip: 'trip-1', state: 'draft' }])
         ),
       },
     })
@@ -590,7 +599,7 @@ describe('getProposal', () => {
             id: 'prop-1',
             trip: 'trip-1',
             proposer: 'user-1',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -612,7 +621,7 @@ describe('getProposal', () => {
             id: 'prop-1',
             trip: 'trip-1',
             proposer: 'other-user',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -640,7 +649,14 @@ describe('updateProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'DRAFT',
+            state: 'draft',
+          })
+        ),
+        update: mock(() =>
+          Promise.resolve({
+            id: '1',
+            description: 'Updated Trip',
+            state: 'draft',
           })
         ),
       },
@@ -662,7 +678,7 @@ describe('updateProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'other-user',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -680,7 +696,7 @@ describe('updateProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
           })
         ),
       },
@@ -700,7 +716,7 @@ describe('deleteProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
         delete: mock(() => Promise.resolve()),
@@ -718,7 +734,7 @@ describe('deleteProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'other-user',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -736,7 +752,7 @@ describe('deleteProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
           })
         ),
       },
@@ -756,8 +772,15 @@ describe('submitProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'DRAFT',
-            proposer_user_name: 'Alice',
+            state: 'draft',
+            proposer_name: 'Alice',
+          })
+        ),
+        update: mock(() =>
+          Promise.resolve({
+            id: '1',
+            description: 'Updated Trip',
+            state: 'submitted',
           })
         ),
       },
@@ -769,7 +792,7 @@ describe('submitProposal', () => {
     expect(client.collection('proposals').update).toHaveBeenCalledTimes(1)
     const updateCall = (client.collection('proposals').update as MockFn).mock
       .calls[0]
-    expect(updateCall[1].state).toBe('SUBMITTED')
+    expect(updateCall[1].state).toBe('submitted')
   })
 
   it('throws when user is not the creator', async () => {
@@ -779,7 +802,7 @@ describe('submitProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'other-user',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -797,7 +820,7 @@ describe('submitProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
           })
         ),
       },
@@ -815,7 +838,7 @@ describe('submitProposal', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -839,7 +862,14 @@ describe('rejectProposal', () => {
             id: 'p-1',
             proposer: 'creator-1',
             trip: 'trip-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
+          })
+        ),
+        update: mock(() =>
+          Promise.resolve({
+            id: '1',
+            description: 'Updated Trip',
+            state: 'rejected',
           })
         ),
       },
@@ -855,7 +885,7 @@ describe('rejectProposal', () => {
     expect(client.collection('proposals').update).toHaveBeenCalledTimes(1)
     const updateCall = (client.collection('proposals').update as MockFn).mock
       .calls[0]
-    expect(updateCall[1].state).toBe('REJECTED')
+    expect(updateCall[1].state).toBe('rejected')
   })
 
   it('throws when proposal state is not SUBMITTED', async () => {
@@ -866,7 +896,7 @@ describe('rejectProposal', () => {
             id: 'p-1',
             proposer: 'creator-1',
             trip: 'trip-1',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -885,7 +915,7 @@ describe('rejectProposal', () => {
             id: 'p-1',
             proposer: 'creator-1',
             trip: 'trip-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
           })
         ),
       },
@@ -916,6 +946,7 @@ describe('createPoll', () => {
       },
       polls: {
         getFullList: mock(() => Promise.resolve([])),
+        create: mock(() => Promise.resolve({ id: 'new-id', state: 'open' })),
       },
       proposals: {
         getFullList: mock(() =>
@@ -927,11 +958,11 @@ describe('createPoll', () => {
     expect(client.collection('polls').create).toHaveBeenCalledTimes(1)
     const createCall = (client.collection('polls').create as MockFn).mock
       .calls[0]
-    expect(createCall[0].state).toBe('OPEN')
+    expect(createCall[0].state).toBe('open')
     expect(createCall[0].proposal_ids).toEqual(['prop-1', 'prop-2'])
     expect(createCall[0].trip).toBe('trip-1')
-    expect(createCall[0].poll_creator).toBe('coord-1')
-    expect(createCall[0].poll_creator_user_name).toBe('Coordinator Name')
+    expect(createCall[0].creator).toBe('coord-1')
+    expect(createCall[0].creator_name).toBe('Coordinator Name')
     expect(createCall[0].start_date).toBeDefined()
     expect(createCall[0].end_date).toBeDefined()
   })
@@ -963,7 +994,7 @@ describe('createPoll', () => {
       },
       polls: {
         getFullList: mock(() =>
-          Promise.resolve([{ id: 'poll-1', state: 'OPEN' }])
+          Promise.resolve([{ id: 'poll-1', state: 'open' }])
         ),
       },
     })
@@ -1001,7 +1032,14 @@ describe('closePoll', () => {
     const client = createMockClient({
       polls: {
         getOne: mock(() =>
-          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'OPEN' })
+          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'open' })
+        ),
+        update: mock(() =>
+          Promise.resolve({
+            id: '1',
+            description: 'Updated Trip',
+            state: 'closed',
+          })
         ),
       },
       participants: {
@@ -1021,7 +1059,7 @@ describe('closePoll', () => {
     expect(client.collection('polls').update).toHaveBeenCalledTimes(1)
     const updateCall = (client.collection('polls').update as MockFn).mock
       .calls[0]
-    expect(updateCall[1].state).toBe('CLOSED')
+    expect(updateCall[1].state).toBe('closed')
     expect(updateCall[1].outcome).toBe('Chamonix through, Annecy rejected')
   })
 
@@ -1045,7 +1083,7 @@ describe('closePoll', () => {
     const client = createMockClient({
       polls: {
         getOne: mock(() =>
-          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'CLOSED' })
+          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'closed' })
         ),
       },
     })
@@ -1059,7 +1097,7 @@ describe('closePoll', () => {
     const client = createMockClient({
       polls: {
         getOne: mock(() =>
-          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'OPEN' })
+          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'open' })
         ),
       },
       participants: {
@@ -1087,7 +1125,7 @@ describe('listPolls', () => {
       },
       polls: {
         getFullList: mock(() =>
-          Promise.resolve([{ id: 'poll-1', trip: 'trip-1', state: 'OPEN' }])
+          Promise.resolve([{ id: 'poll-1', trip: 'trip-1', state: 'open' }])
         ),
       },
     })
@@ -1123,7 +1161,7 @@ describe('upsertVote', () => {
         getOne: mock(() =>
           Promise.resolve({
             id: 'poll-1',
-            state: 'OPEN',
+            state: 'open',
             proposal_ids: ['p-1', 'p-2', 'p-3'],
             trip: 'trip-1',
           })
@@ -1154,7 +1192,7 @@ describe('upsertVote', () => {
         getOne: mock(() =>
           Promise.resolve({
             id: 'poll-1',
-            state: 'OPEN',
+            state: 'open',
             proposal_ids: ['p-1', 'p-2', 'p-3'],
             trip: 'trip-1',
           })
@@ -1180,7 +1218,7 @@ describe('upsertVote', () => {
         getOne: mock(() =>
           Promise.resolve({
             id: 'poll-1',
-            state: 'CLOSED',
+            state: 'closed',
             proposal_ids: ['p-1'],
             trip: 'trip-1',
           })
@@ -1203,7 +1241,7 @@ describe('upsertVote', () => {
         getOne: mock(() =>
           Promise.resolve({
             id: 'poll-1',
-            state: 'OPEN',
+            state: 'open',
             proposal_ids: ['p-1', 'p-2'],
             trip: 'trip-1',
           })
@@ -1233,7 +1271,7 @@ describe('upsertVote', () => {
         getOne: mock(() =>
           Promise.resolve({
             id: 'poll-1',
-            state: 'OPEN',
+            state: 'open',
             proposal_ids: ['p-1', 'p-2'],
             trip: 'trip-1',
           })
@@ -1265,7 +1303,7 @@ describe('upsertVote', () => {
         getOne: mock(() =>
           Promise.resolve({
             id: 'poll-1',
-            state: 'OPEN',
+            state: 'open',
             proposal_ids: ['p-1', 'p-2'],
             trip: 'trip-1',
           })
@@ -1280,7 +1318,18 @@ describe('upsertVote', () => {
   })
 
   it('throws when user is not a participant', async () => {
-    const client = createMockClient()
+    const client = createMockClient({
+      polls: {
+        getOne: mock(() =>
+          Promise.resolve({
+            id: 'poll-1',
+            state: 'open',
+            trip: 'trip-1',
+            proposal_ids: [],
+          })
+        ),
+      },
+    })
     expect(upsertVote('poll-1', 'user-1', [], [], client)).rejects.toThrow(
       'You must be a participant to access this trip.'
     )
@@ -1303,7 +1352,9 @@ describe('listVotes', () => {
         ),
       },
       polls: {
-        getOne: mock(() => Promise.resolve({ id: 'poll-1', trip: 'trip-1' })),
+        getOne: mock(() =>
+          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'open' })
+        ),
       },
       votes: {
         getFullList: mock(() =>
@@ -1317,7 +1368,13 @@ describe('listVotes', () => {
   })
 
   it('throws when user is not a participant', async () => {
-    const client = createMockClient()
+    const client = createMockClient({
+      polls: {
+        getOne: mock(() =>
+          Promise.resolve({ id: 'poll-1', trip: 'trip-1', state: 'open' })
+        ),
+      },
+    })
     expect(listVotes('poll-1', 'user-1', client)).rejects.toThrow(
       'You must be a participant to access this trip.'
     )
@@ -1369,7 +1426,7 @@ describe('createAccommodation', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -1400,7 +1457,7 @@ describe('createAccommodation', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'other-user',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -1417,7 +1474,7 @@ describe('createAccommodation', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
           })
         ),
       },
@@ -1456,7 +1513,7 @@ describe('updateAccommodation', () => {
       },
       proposals: {
         getOne: mock(() =>
-          Promise.resolve({ id: 'prop-1', proposer: 'user-1', state: 'DRAFT' })
+          Promise.resolve({ id: 'prop-1', proposer: 'user-1', state: 'draft' })
         ),
       },
     })
@@ -1481,7 +1538,7 @@ describe('updateAccommodation', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'other-user',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -1503,7 +1560,7 @@ describe('updateAccommodation', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
           })
         ),
       },
@@ -1524,7 +1581,7 @@ describe('deleteAccommodation', () => {
       },
       proposals: {
         getOne: mock(() =>
-          Promise.resolve({ id: 'prop-1', proposer: 'user-1', state: 'DRAFT' })
+          Promise.resolve({ id: 'prop-1', proposer: 'user-1', state: 'draft' })
         ),
       },
     })
@@ -1544,7 +1601,7 @@ describe('deleteAccommodation', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'other-user',
-            state: 'DRAFT',
+            state: 'draft',
           })
         ),
       },
@@ -1566,7 +1623,7 @@ describe('deleteAccommodation', () => {
           Promise.resolve({
             id: 'prop-1',
             proposer: 'user-1',
-            state: 'SUBMITTED',
+            state: 'submitted',
           })
         ),
       },
@@ -1746,7 +1803,7 @@ describe('createDiscussionComment', () => {
       .calls[0]
     expect(createCall[0].proposal).toBe('prop-1')
     expect(createCall[0].author).toBe('user-1')
-    expect(createCall[0].author_user_name).toBe('Alice')
+    expect(createCall[0].author_name).toBe('Alice')
     expect(createCall[0].body).toBe('Great proposal!')
     expect(createCall[0].type).toBe('comment')
     expect(result.id).toBe('new-id')

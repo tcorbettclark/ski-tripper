@@ -21,6 +21,7 @@ export function getPb(): PocketBase {
   if (!_pb) {
     const url = browser_get_pocketbase_url()
     _pb = new PocketBase(url)
+    _pb.autoCancellation(false)
   }
   return _pb
 }
@@ -39,7 +40,7 @@ function mapParticipant(row: Record<string, unknown>): Participant {
     created: row.created as string,
     updated: row.updated as string,
     user: row.user as string,
-    userName: row.user_name as string,
+    userName: row.name as string,
     trip: row.trip as string,
     role: row.role as 'coordinator' | 'participant',
   }
@@ -61,9 +62,12 @@ function mapProposal(row: Record<string, unknown>): Proposal {
     created: row.created as string,
     updated: row.updated as string,
     proposer: row.proposer as string,
-    proposerUserName: row.proposer_user_name as string,
+    proposerUserName: row.proposer_name as string,
     trip: row.trip as string,
-    state: row.state as 'DRAFT' | 'SUBMITTED' | 'REJECTED',
+    state: (row.state as string).toUpperCase() as
+      | 'DRAFT'
+      | 'SUBMITTED'
+      | 'REJECTED',
     description: row.description as string,
     resortName: row.resort_name as string,
     startDate: row.start_date as string,
@@ -106,9 +110,9 @@ function mapPoll(row: Record<string, unknown>): Poll {
     id: row.id as string,
     created: row.created as string,
     updated: row.updated as string,
-    pollCreator: row.poll_creator as string,
-    pollCreatorUserName: row.poll_creator_user_name as string,
-    state: row.state as 'OPEN' | 'CLOSED',
+    pollCreator: row.creator as string,
+    pollCreatorUserName: row.creator_name as string,
+    state: (row.state as string).toUpperCase() as 'OPEN' | 'CLOSED',
     trip: row.trip as string,
     proposalIds: row.proposal_ids as string[],
     startDate: row.start_date as string,
@@ -137,7 +141,7 @@ function mapDiscussion(row: Record<string, unknown>): Discussion {
     updated: row.updated as string,
     proposal: row.proposal as string,
     author: row.author as string,
-    authorUserName: row.author_user_name as string,
+    authorUserName: row.author_name as string,
     body: row.body as string,
     type: row.type as 'comment' | 'system',
   }
@@ -281,7 +285,7 @@ export async function createTrip(
   const trip = mapTrip(tripRow as unknown as Record<string, unknown>)
   await client.collection('participants').create({
     user: userId,
-    user_name: userName,
+    name: userName,
     trip: trip.id,
     role: 'coordinator',
   })
@@ -362,7 +366,7 @@ export async function joinTrip(
   if (existing.length > 0) throw new Error('You have already joined this trip.')
   const row = await client.collection('participants').create({
     user: userId,
-    user_name: userName,
+    name: userName,
     trip: tripId,
     role: 'participant',
   })
@@ -450,8 +454,8 @@ export async function createProposal(
   const row = await client.collection('proposals').create({
     trip: tripId,
     proposer: proposerUserId,
-    proposer_user_name: proposerUserName,
-    state: 'DRAFT',
+    proposer_name: proposerUserName,
+    state: 'draft',
     description: userData.description,
     start_date: userData.startDate,
     end_date: userData.endDate,
@@ -589,7 +593,7 @@ export async function submitProposal(
     )
   const updated = await client
     .collection('proposals')
-    .update(proposalId, { state: 'SUBMITTED' })
+    .update(proposalId, { state: 'submitted' })
   await createSystemMessage(
     proposalId,
     `${proposal.proposerUserName} submitted this proposal`,
@@ -617,7 +621,7 @@ export async function rejectProposal(
   }
   const updated = await client
     .collection('proposals')
-    .update(proposalId, { state: 'REJECTED' })
+    .update(proposalId, { state: 'rejected' })
   await createSystemMessage(
     proposalId,
     `${participants[0].userName} rejected this proposal`,
@@ -647,7 +651,7 @@ export async function revertProposalToDraft(
   }
   const updated = await client
     .collection('proposals')
-    .update(proposalId, { state: 'DRAFT' })
+    .update(proposalId, { state: 'draft' })
   await createSystemMessage(
     proposalId,
     `${participants[0].userName} moved this proposal back to draft`,
@@ -673,7 +677,7 @@ export async function createPoll(
   const openPolls = await client.collection('polls').getFullList({
     filter: client.filter('trip = {:tripId} && state = {:state}', {
       tripId,
-      state: 'OPEN',
+      state: 'open',
     }),
   })
   if (openPolls.length > 0) {
@@ -682,7 +686,7 @@ export async function createPoll(
   const proposals = await client.collection('proposals').getFullList({
     filter: client.filter('trip = {:tripId} && state = {:state}', {
       tripId,
-      state: 'SUBMITTED',
+      state: 'submitted',
     }),
   })
   if (proposals.length === 0) {
@@ -693,9 +697,9 @@ export async function createPoll(
   const endDate = dayjs().add(durationDays, 'day').toISOString()
   const pollRow = await client.collection('polls').create({
     trip: tripId,
-    poll_creator: pollCreatorUserId,
-    poll_creator_user_name: pollCreatorUserName,
-    state: 'OPEN',
+    creator: pollCreatorUserId,
+    creator_name: pollCreatorUserName,
+    state: 'open',
     proposal_ids: proposalIds,
     start_date: startDate,
     end_date: endDate,
@@ -720,7 +724,7 @@ export async function closePoll(
   }
   const updated = await client
     .collection('polls')
-    .update(pollId, { state: 'CLOSED', outcome })
+    .update(pollId, { state: 'closed', outcome })
   return mapPoll(updated as unknown as Record<string, unknown>)
 }
 
@@ -1000,7 +1004,7 @@ export async function createDiscussionComment(
   const row = await client.collection('discussion').create({
     proposal: proposalId,
     author: authorUserId,
-    author_user_name: authorUserName,
+    author_name: authorUserName,
     body,
     type: 'comment',
   })

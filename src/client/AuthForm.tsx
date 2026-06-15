@@ -37,7 +37,9 @@ export default function AuthForm({
   onSwitchMode,
   onForgotPassword,
   createUser = (email, password, name) =>
-    getPb().collection('users').create({ email, password, name }),
+    getPb()
+      .collection('users')
+      .create({ email, password, passwordConfirm: password, name }),
   authWithPassword = async (email, password) => {
     await getPb().collection('users').authWithPassword(email, password)
     return mapUser(
@@ -80,7 +82,6 @@ export default function AuthForm({
           await requestVerification(email)
         }
         onSuccess(user)
-        window.location.reload()
       } else {
         const user = await authWithPassword(email, password)
         onSuccess(user)

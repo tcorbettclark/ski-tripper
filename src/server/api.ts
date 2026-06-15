@@ -57,9 +57,9 @@ async function fetchProposal(
     id: row.id,
     updated: row.updated as string,
     proposer: row.proposer as string,
-    proposerUserName: row.proposer_user_name as string,
+    proposerUserName: row.proposer_name as string,
     trip: row.trip as string,
-    state: row.state as Proposal['state'],
+    state: (row.state as string).toUpperCase() as Proposal['state'],
     description: row.description as string,
     resortName: row.resort_name as string,
     startDate: row.start_date as string,
@@ -109,7 +109,7 @@ async function fetchParticipants(
   return rows.map((r) => ({
     id: r.id,
     user: r.user as string,
-    userName: r.user_name as string,
+    userName: r.name as string,
     trip: r.trip as string,
     role: r.role as Participant['role'],
   }))

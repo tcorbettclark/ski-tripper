@@ -142,7 +142,14 @@ export default function useAuth(options?: {
   }, [])
 
   const login = useCallback((loggedInUser: User) => {
-    setUser(loggedInUser)
+    setUser((prev) =>
+      prev &&
+      prev.id === loggedInUser.id &&
+      prev.email === loggedInUser.email &&
+      prev.emailVerification === loggedInUser.emailVerification
+        ? prev
+        : loggedInUser
+    )
     setSessionExpiredMessage(null)
   }, [])
 
