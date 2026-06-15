@@ -5,7 +5,7 @@ function serverRequire(name: string): string {
 }
 
 export function browser_get_pocketbase_url(): string {
-  const value = import.meta.env.PUBLIC_POCKETBASE_URL as string | undefined
+  const value: string | undefined = process.env.PUBLIC_POCKETBASE_URL
   if (!value) throw new Error('Missing required env var PUBLIC_POCKETBASE_URL')
   return value
 }
