@@ -1,6 +1,9 @@
 import { Ollama } from 'ollama'
 import type PocketBase from 'pocketbase'
-import { requireEnv } from '../shared/env'
+import {
+  server_get_ollama_api_key,
+  server_get_ollama_model,
+} from '../shared/env'
 import {
   type Accommodation,
   buildSystemPrompt as buildAnalysisSystemPrompt,
@@ -19,13 +22,13 @@ import {
 } from './logic/preference-search'
 import { createClient, getAdminClient } from './pocketbase'
 
-const { OLLAMA_MODEL } = requireEnv('OLLAMA_MODEL')
+const ollamaModel = server_get_ollama_model()
 
 function createOllama(): Ollama {
-  const { OLLAMA_API_KEY } = requireEnv('OLLAMA_API_KEY')
+  const ollamaApiKey = server_get_ollama_api_key()
   return new Ollama({
     host: 'https://ollama.com',
-    headers: { Authorization: `Bearer ${OLLAMA_API_KEY}` },
+    headers: { Authorization: `Bearer ${ollamaApiKey}` },
   })
 }
 
@@ -357,7 +360,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
       status: 'generating',
       thinking: '',
       content: '',
-      model: OLLAMA_MODEL,
+      model: ollamaModel,
     })
     cacheRow = {
       id: created.id,
@@ -406,7 +409,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
       try {
         const llmStream = await ollama.chat({
-          model: OLLAMA_MODEL,
+          model: ollamaModel,
           stream: true,
           think: true,
           messages: [
@@ -457,7 +460,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: accumulatedContent || null,
-            model: OLLAMA_MODEL,
+            model: ollamaModel,
           })
         )
       } catch (err) {
@@ -679,7 +682,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
       status: 'generating',
       thinking: '',
       content: '',
-      model: OLLAMA_MODEL,
+      model: ollamaModel,
     })
     cacheRow = {
       id: created.id,
@@ -723,7 +726,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
 
       try {
         const llmStream = await ollama.chat({
-          model: OLLAMA_MODEL,
+          model: ollamaModel,
           stream: true,
           think: true,
           messages: [
@@ -774,7 +777,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: accumulatedContent || null,
-            model: OLLAMA_MODEL,
+            model: ollamaModel,
           })
         )
       } catch (err) {

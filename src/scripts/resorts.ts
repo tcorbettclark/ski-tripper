@@ -7,7 +7,12 @@ import { pipeline } from '@huggingface/transformers'
 import { Command } from 'commander'
 import PocketBase from 'pocketbase'
 import * as z from 'zod'
-import { requireEnv } from '../shared/env'
+import {
+  server_get_ollama_model,
+  server_get_pocketbase_admin_email,
+  server_get_pocketbase_admin_password,
+  server_get_pocketbase_url,
+} from '../shared/env'
 import {
   type AuditIssue,
   auditEnrichedData,
@@ -42,15 +47,9 @@ import { loadOpenSkiMapData } from './lib/openski-map'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
 const RESORTS_DIR = '../../../data/resorts'
-const {
-  POCKETBASE_URL: PB_URL,
-  POCKETBASE_ADMIN_EMAIL: PB_ADMIN_EMAIL,
-  POCKETBASE_ADMIN_PASSWORD: PB_ADMIN_PASSWORD,
-} = requireEnv(
-  'POCKETBASE_URL',
-  'POCKETBASE_ADMIN_EMAIL',
-  'POCKETBASE_ADMIN_PASSWORD'
-)
+const PB_URL = server_get_pocketbase_url()
+const PB_ADMIN_EMAIL = server_get_pocketbase_admin_email()
+const PB_ADMIN_PASSWORD = server_get_pocketbase_admin_password()
 
 const EXA_SOURCED_NUM_RESULTS = 5
 const EXA_BROAD_NUM_RESULTS = 5
@@ -619,7 +618,7 @@ async function enrich(options: {
   resort?: string
   region?: string
 }) {
-  const model = options.model ?? requireEnv('OLLAMA_MODEL').OLLAMA_MODEL
+  const model = options.model ?? server_get_ollama_model()
   const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
   const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
   let mode: EnrichMode = 'new'

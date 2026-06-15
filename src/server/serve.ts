@@ -1,11 +1,11 @@
-import { requireEnv } from '../shared/env'
+import {
+  server_get_server_hostname,
+  server_get_server_port,
+} from '../shared/env'
 import { handleAnalyseProposal, handlePreferenceSearch } from './api'
 
-const { SERVER_HOSTNAME: hostname, SERVER_PORT: portStr } = requireEnv(
-  'SERVER_HOSTNAME',
-  'SERVER_PORT'
-)
-const port = parseInt(portStr, 10)
+const hostname = server_get_server_hostname()
+const port = server_get_server_port()
 
 Bun.serve({
   hostname,

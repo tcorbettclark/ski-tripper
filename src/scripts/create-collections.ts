@@ -2,17 +2,15 @@
 
 import { Command } from 'commander'
 import PocketBase from 'pocketbase'
-import { requireEnv } from '../shared/env'
+import {
+  server_get_pocketbase_admin_email,
+  server_get_pocketbase_admin_password,
+  server_get_pocketbase_url,
+} from '../shared/env'
 
-const {
-  POCKETBASE_URL: PB_URL,
-  POCKETBASE_ADMIN_EMAIL: PB_SUPERUSER_EMAIL,
-  POCKETBASE_ADMIN_PASSWORD: PB_SUPERUSER_PASSWORD,
-} = requireEnv(
-  'POCKETBASE_URL',
-  'POCKETBASE_ADMIN_EMAIL',
-  'POCKETBASE_ADMIN_PASSWORD'
-)
+const PB_URL = server_get_pocketbase_url()
+const PB_SUPERUSER_EMAIL = server_get_pocketbase_admin_email()
+const PB_SUPERUSER_PASSWORD = server_get_pocketbase_admin_password()
 
 const authRule = "@request.auth.id != ''"
 const adminOnlyRule = null

@@ -1,35 +1,32 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
-import { requireEnv } from './env'
+import { server_get_pocketbase_url, server_get_server_port } from './env'
 
-describe('requireEnv', () => {
+describe('server_* env functions', () => {
   beforeEach(() => {
-    delete process.env.TEST_A
-    delete process.env.TEST_B
+    delete process.env.POCKETBASE_URL
+    delete process.env.SERVER_PORT
   })
 
-  it('returns values when all env vars are set', () => {
-    process.env.TEST_A = 'hello'
-    process.env.TEST_B = 'world'
-    const env = requireEnv('TEST_A', 'TEST_B')
-    expect(env.TEST_A).toBe('hello')
-    expect(env.TEST_B).toBe('world')
+  it('returns values when env vars are set', () => {
+    process.env.POCKETBASE_URL = 'http://localhost:8090'
+    expect(server_get_pocketbase_url()).toBe('http://localhost:8090')
   })
 
-  it('throws listing multiple missing env vars', () => {
-    expect(() => requireEnv('TEST_A', 'TEST_B')).toThrow(
-      'Required env vars not set: TEST_A, TEST_B'
+  it('throws for missing env var', () => {
+    expect(() => server_get_pocketbase_url()).toThrow(
+      'Required env var not set: POCKETBASE_URL'
     )
   })
 
-  it('throws with singular message for single missing var', () => {
-    expect(() => requireEnv('TEST_A')).toThrow(
-      'Required env var not set: TEST_A'
-    )
+  it('server_get_server_port returns a number', () => {
+    process.env.SERVER_PORT = '3000'
+    expect(server_get_server_port()).toBe(3000)
   })
 
-  it('returns a single var', () => {
-    process.env.TEST_A = 'x'
-    const env = requireEnv('TEST_A')
-    expect(env.TEST_A).toBe('x')
+  it('server_get_server_port throws for non-numeric port', () => {
+    process.env.SERVER_PORT = 'abc'
+    expect(() => server_get_server_port()).toThrow(
+      'SERVER_PORT must be a valid number'
+    )
   })
 })

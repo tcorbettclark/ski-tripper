@@ -1,42 +1,49 @@
-// Server-side: reads env vars by name from process.env at runtime.
-// Use in server code: const { FOO } = requireEnv('FOO')
-// Do not use in client code — use require(import.meta.env.PUBLIC_FOO) instead.
-export function requireEnv<T extends string>(
-  ...names: [string, ...string[]]
-): Record<string, T> {
-  if (typeof process === 'undefined') {
-    throw new Error(
-      'requireEnv() cannot be used in browser code — use require(import.meta.env.PUBLIC_FOO) instead'
-    )
-  }
-  const env: Record<string, T> = {}
-  const missing: string[] = []
-  for (const name of names) {
-    const value = process.env[name]
-    if (!value) {
-      missing.push(name)
-    } else {
-      env[name] = value as T
-    }
-  }
-  if (missing.length > 0) {
-    throw new Error(
-      `Required env var${missing.length > 1 ? 's' : ''} not set: ${missing.join(', ')}`
-    )
-  }
-  return env
+function serverRequire(name: string): string {
+  const value = process.env[name]
+  if (!value) throw new Error(`Required env var not set: ${name}`)
+  return value
 }
 
-// Client-side: validates that a value (typically from import.meta.env) is set.
-// Use in client code: const url = require(import.meta.env.PUBLIC_FOO)
-// import.meta.env values are inlined at build time by Bun's --env flag.
-// Do not use in server code — use requireEnv('FOO') instead.
-export function require<T extends string>(value: T | undefined): T {
-  if (typeof process !== 'undefined' && process.env) {
-    throw new Error(
-      'require() is for client-side env vars — use requireEnv() in server code instead'
-    )
-  }
-  if (!value) throw new Error('Missing required env var')
+export function browser_get_pocketbase_url(): string {
+  const value = import.meta.env.PUBLIC_POCKETBASE_URL as string | undefined
+  if (!value) throw new Error('Missing required env var PUBLIC_POCKETBASE_URL')
   return value
+}
+
+export function server_get_pocketbase_url(): string {
+  return serverRequire('POCKETBASE_URL')
+}
+
+export function server_get_pocketbase_admin_email(): string {
+  return serverRequire('POCKETBASE_ADMIN_EMAIL')
+}
+
+export function server_get_pocketbase_admin_password(): string {
+  return serverRequire('POCKETBASE_ADMIN_PASSWORD')
+}
+
+export function server_get_public_pocketbase_url(): string {
+  return serverRequire('PUBLIC_POCKETBASE_URL')
+}
+
+export function server_get_server_hostname(): string {
+  return serverRequire('SERVER_HOSTNAME')
+}
+
+export function server_get_server_port(): number {
+  const port = parseInt(serverRequire('SERVER_PORT'), 10)
+  if (Number.isNaN(port)) throw new Error('SERVER_PORT must be a valid number')
+  return port
+}
+
+export function server_get_ollama_model(): string {
+  return serverRequire('OLLAMA_MODEL')
+}
+
+export function server_get_ollama_api_key(): string {
+  return serverRequire('OLLAMA_API_KEY')
+}
+
+export function server_get_exa_api_key(): string {
+  return serverRequire('EXA_API_KEY')
 }

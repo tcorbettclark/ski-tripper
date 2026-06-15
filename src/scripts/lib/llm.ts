@@ -3,11 +3,14 @@ import Exa from 'exa-js'
 import { Ollama } from 'ollama'
 import * as z from 'zod'
 import type { JSONSchema } from 'zod/v4/core'
-import { requireEnv } from '../../shared/env'
+import {
+  server_get_exa_api_key,
+  server_get_ollama_api_key,
+} from '../../shared/env'
 
 export const OLLAMA_HOST = 'https://ollama.com'
 
-const { OLLAMA_API_KEY: _ollamaApiKey } = requireEnv('OLLAMA_API_KEY')
+const ollamaApiKey = server_get_ollama_api_key()
 
 export const SOURCE_WEBSITES = [
   'skiresort.info',
@@ -31,13 +34,13 @@ export const ENRICH_SOURCE_WEBSITES = [
 
 export const ollama = new Ollama({
   host: OLLAMA_HOST,
-  headers: { Authorization: `Bearer ${_ollamaApiKey}` },
+  headers: { Authorization: `Bearer ${ollamaApiKey}` },
 })
 
 let _exa: Exa | undefined
 export function getExa(): Exa {
   if (!_exa) {
-    const { EXA_API_KEY: apiKey } = requireEnv('EXA_API_KEY')
+    const apiKey = server_get_exa_api_key()
     _exa = new Exa(apiKey)
   }
   return _exa
