@@ -54,6 +54,7 @@ const EXA_BROAD_NUM_RESULTS = 5
 const EXA_TRAVEL_NUM_RESULTS = 3
 const EXA_LINKED_NUM_RESULTS = 3
 const EXA_MAX_CHARS = 12000 as const
+const MAX_SOURCE_TEXT_CHARS = 120000 as const
 const EXA_GENERAL_QUERY = (resortName: string, country: string) =>
   `Ski resort review and guide for ${resortName} in ${country}, including terrain difficulty, off-piste, apres-ski, nightlife, family suitability, value, lift quality, resort atmosphere`
 const EXA_TRAVEL_QUERY = (resortName: string, country: string) =>
@@ -248,7 +249,7 @@ async function enrichResort(
     log('info', 'enrich', `  [${tags.join('+')}] ${r.url}`, 2)
   }
 
-  const sourceText = dedupedResults
+  const sourceBlocks = dedupedResults
     .filter((r) => r.text)
     .map((r) => {
       const host = new URL(r.url).hostname
@@ -266,11 +267,27 @@ async function enrichResort(
       parts.push(r.text!)
       return parts.join('\n')
     })
-    .join('\n\n')
+
+  let sourceText = ''
+  let includedCount = 0
+  for (const block of sourceBlocks) {
+    if (sourceText.length + block.length + 2 > MAX_SOURCE_TEXT_CHARS) break
+    sourceText += (sourceText ? '\n\n' : '') + block
+    includedCount++
+  }
 
   if (!sourceText) {
     log('error', 'enrich', 'No source text found', 1)
     return null
+  }
+
+  if (includedCount < sourceBlocks.length) {
+    log(
+      'info',
+      'enrich',
+      `Including ${includedCount}/${sourceBlocks.length} sources (${sourceText.length} chars) to fit context window`,
+      1
+    )
   }
 
   log(
@@ -312,6 +329,14 @@ async function enrichResort(
     { role: 'user', content: userPrompt },
   ]
 
+  const totalPromptChars = systemPrompt.length + userPrompt.length
+  log(
+    'info',
+    'enrich',
+    `Prompt size: ${totalPromptChars} chars (${(totalPromptChars / 1024).toFixed(1)} KB)`,
+    1
+  )
+
   let lastContent = ''
   let lastThinking = ''
   let numPredict = 8192
@@ -325,23 +350,30 @@ async function enrichResort(
       1
     )
 
+    log(
+      'info',
+      'enrich',
+      `Ollama request: model=${model}, messages=${messages.length}, user_prompt=${messages[1].content.length} chars`,
+      1
+    )
     const stream = await getOllama().chat({
       stream: true,
       model,
       messages,
-      think: true,
-      options: { num_predict: numPredict },
+      options: { num_ctx: 32768, num_predict: 8192 },
     })
 
     let content = ''
     let thinking = ''
     let doneReason: string | null = null
+    let chunkCount = 0
     try {
       const streamResult = await streamThinking(stream, (chunk) => {
         content += chunk
       })
       thinking = streamResult.thinking
       doneReason = streamResult.doneReason
+      chunkCount = streamResult.chunkCount
     } catch (err) {
       log(
         'warn',
@@ -375,8 +407,8 @@ async function enrichResort(
         'warn',
         'enrich',
         attempt < maxRetries
-          ? `LLM returned empty content (${thinking.length} chars of thinking), retrying...`
-          : `LLM returned empty content (${thinking.length} chars of thinking)`,
+          ? `LLM returned empty content (${chunkCount} chunks, ${thinking.length} chars of thinking, done: ${doneReason ?? 'unknown'}), retrying...`
+          : `LLM returned empty content (${chunkCount} chunks, ${thinking.length} chars of thinking, done: ${doneReason ?? 'unknown'})`,
         1
       )
       if (attempt < maxRetries) {

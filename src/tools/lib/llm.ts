@@ -101,6 +101,7 @@ export function jsonCodec<T extends z.core.$ZodType>(schema: T) {
 export interface StreamResult {
   thinking: string
   doneReason: string | null
+  chunkCount: number
 }
 
 export function streamThinking(
@@ -115,9 +116,11 @@ export function streamThinking(
     let thinking = ''
     let isThinking = true
     let doneReason: string | null = null
+    let chunkCount = 0
     ;(async () => {
       try {
         for await (const chunk of stream) {
+          chunkCount++
           const thinkPart = (
             chunk.message as unknown as Record<string, unknown>
           ).thinking
@@ -136,7 +139,7 @@ export function streamThinking(
             doneReason = chunk.done_reason ?? null
           }
         }
-        resolve({ thinking, doneReason })
+        resolve({ thinking, doneReason, chunkCount })
       } catch (err) {
         reject(err instanceof Error ? err : new Error(String(err)))
       }
