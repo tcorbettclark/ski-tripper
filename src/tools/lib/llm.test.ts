@@ -3,6 +3,8 @@ import * as z from 'zod'
 import {
   buildJsonSchema,
   jsonCodec,
+  LLM_RETRY_EMPTY_PROMPT,
+  LLM_RETRY_PARSE_PROMPT,
   LLM_SYSTEM_PROMPT,
   LLM_USER_PROMPT,
 } from './llm'
@@ -105,5 +107,17 @@ describe('LLM prompts', () => {
     )
     expect(prompt).toContain('Known facts already captured')
     expect(prompt).toContain('pisteKm: 110')
+  })
+
+  it('LLM_RETRY_EMPTY_PROMPT instructs the LLM to retry', () => {
+    expect(LLM_RETRY_EMPTY_PROMPT).toContain('empty')
+    expect(LLM_RETRY_EMPTY_PROMPT).toContain('JSON')
+  })
+
+  it('LLM_RETRY_PARSE_PROMPT includes the invalid content', () => {
+    const prompt = LLM_RETRY_PARSE_PROMPT('broken json here')
+    expect(prompt).toContain('broken json here')
+    expect(prompt).toContain('not valid JSON')
+    expect(prompt).toContain('valid JSON')
   })
 })

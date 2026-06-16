@@ -147,6 +147,12 @@ export const WEB_SEARCH_TOOL_DEFINITION = {
   },
 }
 
+export const LLM_RETRY_EMPTY_PROMPT =
+  'Your previous response was empty. Please extract the ski resort data as a JSON object matching the schema. Return valid JSON only, no explanatory text.'
+
+export const LLM_RETRY_PARSE_PROMPT = (invalidContent: string) =>
+  `Your previous response was not valid JSON. Here is what you returned:\n\n${invalidContent}\n\nPlease try again. Return ONLY a valid JSON object matching the schema, with no explanatory text before or after it. If you cannot determine a value, set it to null.`
+
 export const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given source text from web searches, extract data about the ski resort into a JSON object matching this schema:
 
 {SCHEMA}

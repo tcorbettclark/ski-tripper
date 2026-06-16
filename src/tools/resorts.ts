@@ -2,7 +2,7 @@
 
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import * as readline from 'node:readline/promises'
+
 import { pipeline } from '@huggingface/transformers'
 import { Command } from 'commander'
 import PocketBase from 'pocketbase'
@@ -29,6 +29,8 @@ import {
   getExa,
   getOllama,
   jsonCodec,
+  LLM_RETRY_EMPTY_PROMPT,
+  LLM_RETRY_PARSE_PROMPT,
   LLM_SYSTEM_PROMPT,
   LLM_USER_PROMPT,
   streamThinking,
@@ -41,7 +43,6 @@ import {
   ANSI_RESET,
   ANSI_YELLOW,
   log,
-  logSummary,
 } from './lib/log'
 import { loadOpenSkiMapData } from './lib/openski-map'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
@@ -118,15 +119,6 @@ const enrichDefaults: Record<string, string | string[] | number | null> = {
   linkedResortsDescription: '',
 }
 
-function formatTransferTime(minutes: number): string {
-  if (minutes <= 0) return '0 mins'
-  const hrs = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  if (hrs === 0) return mins === 1 ? '1 min' : `${mins} mins`
-  if (mins === 0) return hrs === 1 ? '1 hr' : `${hrs} hrs`
-  return `${hrs} hr${hrs > 1 ? 's' : ''} ${mins} min${mins > 1 ? 's' : ''}`
-}
-
 function withDefaults(data: EnrichData): ResolvedEnrichData {
   const result = { ...data } as Record<string, unknown>
   for (const [key, fallback] of Object.entries(enrichDefaults)) {
@@ -168,7 +160,8 @@ async function enrichResort(
   resortName: string,
   country: string,
   model: string,
-  seeded: SeededResort
+  seeded: SeededResort,
+  maxRetries: number
 ): Promise<ResolvedEnrichData | null> {
   const responseCodec = jsonCodec(enrichSchema)
 
@@ -310,169 +303,89 @@ async function enrichResort(
     knownFacts
   )
 
-  log('info', 'enrich', 'Streaming LLM extraction...', 1)
-  const stream = await getOllama().chat({
-    stream: true,
-    model,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-  })
+  const messages: Array<{
+    role: 'system' | 'user' | 'assistant'
+    content: string
+  }> = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user', content: userPrompt },
+  ]
 
-  let content = ''
-  const thinking = await streamThinking(stream, (chunk) => {
-    content += chunk
-  })
-
-  if (!thinking && !content) {
-    log('error', 'enrich', 'LLM returned empty content', 1)
-    return null
-  }
-  if (!content) {
-    log('error', 'enrich', 'LLM returned empty content after thinking', 1)
-    return null
-  }
-  try {
-    console.log(JSON.stringify(JSON.parse(content), null, 2))
-  } catch {
-    console.log(content)
-  }
-  log('info', 'enrich', `LLM response received (${content.length} chars)`, 1)
-
-  const result = responseCodec.decode(content, { reportInput: true })
-  if (!result) {
+  let lastContent = ''
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
     log(
-      'error',
+      'info',
       'enrich',
-      `Failed to parse LLM response: ${content.slice(0, 300)}`,
+      attempt === 0
+        ? 'Streaming LLM extraction...'
+        : `Retrying LLM extraction (attempt ${attempt + 1}/${maxRetries + 1})...`,
       1
     )
-    return null
-  }
 
-  log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
-  const defaulted = withDefaults(result)
-  defaulted.websites = cleanUrls(defaulted.websites)
-  return defaulted
-}
+    const stream = await getOllama().chat({
+      stream: true,
+      model,
+      messages,
+    })
 
-function displayEnrichedData(
-  resortName: string,
-  country: string,
-  region: string,
-  data: ResolvedEnrichData,
-  seeded: SeededResort
-) {
-  console.log()
-  const location = region ? `${country}, ${region}` : country
-  console.log(
-    `  ${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}(${location})${ANSI_RESET}`
-  )
-  console.log()
-  logSummary(
-    'Altitude',
-    `${seeded.baseAltitude}m - ${seeded.summitAltitude}m`,
-    2
-  )
-  logSummary(
-    'Airport',
-    data.nearestAirport
-      ? `${data.nearestAirport} (${data.transferTime != null ? formatTransferTime(data.transferTime) : 'unknown'})`
-      : 'unknown',
-    2
-  )
-  logSummary('Piste', `${seeded.pisteKm} km`, 2)
-  logSummary('Beginner', `${seeded.beginnerPct}%`, 2)
-  logSummary('Intermediate', `${seeded.intermediatePct}%`, 2)
-  logSummary('Advanced', `${seeded.advancedPct}%`, 2)
-  logSummary('Lifts', `${seeded.liftCount}`, 2)
-  logSummary('Snow', data.snowReliability, 2)
-  logSummary('Season', data.skiSeasonMonths, 2)
-  logSummary('Websites', data.websites.join(', '), 2)
-  logSummary('Linked Resorts', data.linkedResortsDescription, 2)
-  logSummary('Description', `${data.description.slice(0, 200)}...`, 2)
-}
+    let content = ''
+    await streamThinking(stream, (chunk) => {
+      content += chunk
+    })
 
-async function confirmEnrichedData(
-  resortName: string,
-  country: string,
-  region: string,
-  data: ResolvedEnrichData,
-  seeded: SeededResort,
-  autoAccept: boolean
-): Promise<{
-  accepted: boolean
-  data: ResolvedEnrichData
-  autoAcceptRest: boolean
-}> {
-  if (autoAccept) {
-    return { accepted: true, data, autoAcceptRest: true }
-  }
-
-  displayEnrichedData(resortName, country, region, data, seeded)
-
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  })
-
-  try {
-    const answer = await rl.question('\n  Accept? (y/modify/auto/skip/quit): ')
-    const trimmed = answer.trim().toLowerCase()
-
-    if (trimmed === 'y' || trimmed === '') {
-      return { accepted: true, data, autoAcceptRest: false }
-    }
-
-    if (trimmed === 'auto') {
-      log('info', 'enrich', 'Auto-accepting all remaining resorts.', 1)
-      return { accepted: true, data, autoAcceptRest: true }
-    }
-
-    if (trimmed === 'skip') {
-      return { accepted: false, data, autoAcceptRest: false }
-    }
-
-    if (trimmed === 'quit') {
-      log('warn', 'enrich', 'Stopping enrichment.', 1)
-      return { accepted: false, data, autoAcceptRest: false }
-    }
-
-    if (trimmed === 'modify') {
-      console.log(
-        '  Current values (edit in JSON format, or press Enter to keep):'
+    if (!content) {
+      log(
+        'warn',
+        'enrich',
+        attempt < maxRetries
+          ? 'LLM returned empty content, retrying...'
+          : 'LLM returned empty content',
+        1
       )
-      const fieldNames = Object.keys(data) as (keyof EnrichData)[]
-      const modified = { ...data }
-
-      for (const field of fieldNames) {
-        const currentVal =
-          typeof data[field] === 'string' ? data[field] : String(data[field])
-        const newVal = await rl.question(`    ${field} [${currentVal}]: `)
-        if (newVal.trim()) {
-          const coerced = enrichSchema.shape[field]
-          const parsed = coerced.safeParse(newVal.trim())
-          if (parsed.success) {
-            ;(modified[field] as typeof parsed.data) = parsed.data
-          } else {
-            log(
-              'warn',
-              'enrich',
-              `Invalid value for ${field}, keeping original.`,
-              3
-            )
-          }
-        }
+      if (attempt < maxRetries) {
+        messages.push({ role: 'assistant', content: '' })
+        messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
+        continue
       }
-
-      return { accepted: true, data: modified, autoAcceptRest: false }
+      return null
     }
 
-    return { accepted: true, data, autoAcceptRest: false }
-  } finally {
-    rl.close()
+    try {
+      console.log(JSON.stringify(JSON.parse(content), null, 2))
+    } catch {
+      console.log(content)
+    }
+    log('info', 'enrich', `LLM response received (${content.length} chars)`, 1)
+
+    const result = responseCodec.decode(content, { reportInput: true })
+    if (result) {
+      log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
+      const defaulted = withDefaults(result)
+      defaulted.websites = cleanUrls(defaulted.websites)
+      return defaulted
+    }
+
+    lastContent = content
+    log(
+      'warn',
+      'enrich',
+      attempt < maxRetries
+        ? `Failed to parse LLM response, retrying...`
+        : `Failed to parse LLM response: ${content.slice(0, 300)}`,
+      1
+    )
+    if (attempt >= maxRetries) {
+      return null
+    }
+
+    messages.push({ role: 'assistant', content: lastContent })
+    messages.push({
+      role: 'user',
+      content: LLM_RETRY_PARSE_PROMPT(lastContent.slice(0, 500)),
+    })
   }
+
+  return null
 }
 
 function toEnrichedEntry(
@@ -609,7 +522,8 @@ type EnrichMode = 'new' | 'fill' | 'all'
 
 async function enrich(options: {
   model?: string
-  autoAccept?: boolean
+  maxResorts?: number
+  retries?: number
   fill?: boolean
   all?: boolean
   resort?: string
@@ -768,9 +682,21 @@ async function enrich(options: {
   )
   log('info', 'enrich', `Model: ${model}`)
 
+  const maxRetries = options.retries ?? 2
+  log('info', 'enrich', `Retries: ${maxRetries}`)
+
   let enrichedCount = 0
   let skipped = 0
-  let autoAccept = options.autoAccept ?? false
+
+  const maxResorts = options.maxResorts
+  if (maxResorts != null && maxResorts < toEnrich.length) {
+    log(
+      'info',
+      'enrich',
+      `--max-resorts ${maxResorts}: limiting from ${toEnrich.length} to ${maxResorts} resort(s)`
+    )
+    toEnrich = toEnrich.slice(0, maxResorts)
+  }
 
   for (let i = 0; i < toEnrich.length; i++) {
     const seededResort = toEnrich[i]
@@ -791,7 +717,8 @@ async function enrich(options: {
       seededResort.resortName,
       seededResort.country,
       model,
-      seededResort
+      seededResort,
+      maxRetries
     )
     if (!result) {
       log(
@@ -804,43 +731,28 @@ async function enrich(options: {
       continue
     }
 
-    const confirmed = await confirmEnrichedData(
-      seededResort.resortName,
-      seededResort.country,
-      seededResort.region,
-      result,
-      seededResort,
-      autoAccept
-    )
-    autoAccept = confirmed.autoAcceptRest
-
-    if (confirmed.accepted) {
-      let enrichedEntry: EnrichedResort
-      if (reEnrichMode && existing && mode === 'fill') {
-        const merged = mergeEnriched(existing, confirmed.data, seededResort)
-        const lowFields = listLowQualityFields(existing)
-        log('info', 'enrich', `Filled fields: ${lowFields.join(', ')}`, 1)
-        enrichedEntry = merged
-      } else {
-        enrichedEntry = toEnrichedEntry(seededResort, confirmed.data)
-      }
-      enrichedById.set(seededResort.id, enrichedEntry)
-      enrichedCount++
-      log(
-        'success',
-        'enrich',
-        `Written ${seededResort.resortName} to enriched.jsonl`,
-        1
-      )
-
-      writeJsonl(
-        enrichedPath,
-        [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
-      )
+    let enrichedEntry: EnrichedResort
+    if (reEnrichMode && existing && mode === 'fill') {
+      const merged = mergeEnriched(existing, result, seededResort)
+      const lowFields = listLowQualityFields(existing)
+      log('info', 'enrich', `Filled fields: ${lowFields.join(', ')}`, 1)
+      enrichedEntry = merged
     } else {
-      skipped++
-      log('warn', 'enrich', `Skipped ${seededResort.resortName}.`, 1)
+      enrichedEntry = toEnrichedEntry(seededResort, result)
     }
+    enrichedById.set(seededResort.id, enrichedEntry)
+    enrichedCount++
+    log(
+      'success',
+      'enrich',
+      `Written ${seededResort.resortName} to enriched.jsonl`,
+      1
+    )
+
+    writeJsonl(
+      enrichedPath,
+      [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
+    )
   }
 
   log(
@@ -1231,7 +1143,12 @@ program
     '--model <model>',
     'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
   )
-  .option('--auto-accept', 'Auto-accept all enriched data without prompting')
+  .option('--max-resorts <n>', 'Maximum number of resorts to enrich', parseInt)
+  .option(
+    '--retries <n>',
+    'Maximum number of LLM retries on empty or malformed response (default: 2)',
+    parseInt
+  )
   .option(
     '--resort <id>',
     'Enrich a specific resort by id (e.g. "chamonix-alps-france")'
