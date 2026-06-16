@@ -46,7 +46,7 @@ import {
 import { loadOpenSkiMapData } from './lib/openski-map'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
-const RESORTS_DIR = '../../../data/resorts'
+const RESORTS_DIR = '../../data/resorts'
 
 const EXA_SOURCED_NUM_RESULTS = 5
 const EXA_BROAD_NUM_RESULTS = 5
