@@ -45,7 +45,7 @@ Testing is done with unit testing and [Playwright](https://playwright.dev/) + [M
 
 # Architecture
 
-- [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination (PENDING).
+- [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
 - [PocketBase](https://pocketbase.io/) for the backend database and authentication.
 - [Mailgun](https://www.mailgun.com/) for email delivery (PENDING).
 - A bun/typescript server to deliver the frontend files and assets, and run the backend server (LLM functions).
