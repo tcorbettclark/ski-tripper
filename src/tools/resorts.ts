@@ -824,7 +824,7 @@ async function encode() {
     log(
       'warn',
       'encode',
-      `Skipping ${notEnriched.length} seeded resort(s) without enriched data: ${notEnriched.map((s) => s.resortName).join(', ')}`
+      `Skipping ${notEnriched.length} seeded resort(s) without enriched data`
     )
   }
 
@@ -835,6 +835,7 @@ async function encode() {
     enriched: EnrichedResort
     searchText: string
   }> = []
+  let skipped = 0
 
   for (const s of seeded) {
     const e = enrichedById.get(s.id)
@@ -845,11 +846,15 @@ async function encode() {
     const existing = encodedById.get(s.id)
 
     if (existing && existing.searchText === hash) {
-      log('info', 'encode', `Skipping ${s.resortName} (unchanged)`, 1)
+      skipped++
       continue
     }
 
     toEncode.push({ seeded: s, enriched: e, searchText })
+  }
+
+  if (skipped > 0) {
+    log('info', 'encode', `Skipping ${skipped} resort(s) (unchanged)`, 1)
   }
 
   if (toEncode.length === 0) {
