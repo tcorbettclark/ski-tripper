@@ -549,7 +549,7 @@ export default function Overview({
               <p style={overviewStyles.empty}>No participants</p>
             ) : (
               <div style={overviewStyles.participantGrid}>
-                <style>{`.participant-name-cell { background: var(--color-bgCard); transition: background 0.15s; } .participant-grid-row-clickable { transition: background 0.15s; } .participant-grid-row-clickable:hover { background: color-mix(in srgb, var(--color-accent) 25%, transparent); cursor: pointer; } .participant-grid-row-clickable:hover .participant-name-cell { background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bgCard)); }`}</style>
+                <style>{`.participant-name-cell { background: transparent; transition: background 0.15s; } .participant-grid-row-clickable { transition: background 0.15s; } .participant-grid-row-clickable:hover { background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bgCard)); cursor: pointer; } .participant-grid-row-clickable:hover .participant-name-cell { background: transparent; }`}</style>
                 {sortedParticipants.map((p) => {
                   const prefs = preferencesMap[p.user]
                   const isCurrentUser =
