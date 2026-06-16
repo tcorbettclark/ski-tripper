@@ -39,7 +39,7 @@ async function createCollections() {
     .authWithPassword(PB_SUPERUSER_EMAIL, PB_SUPERUSER_PASSWORD)
   console.log('Authenticated as superuser')
 
-  const usersId = (await pb.collections.getFirstListItem('name ~ "users"')).id
+  const usersId = (await pb.collections.getFirstListItem('name = "users"')).id
   console.log(`Found users collection: ${usersId}`)
 
   const collectionsToCreate = [
