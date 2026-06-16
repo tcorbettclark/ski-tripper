@@ -42,8 +42,7 @@
     "format": "biome format --write",
     "check": "biome check --write",
     "ci": "biome ci",
-    "resorts": "bun run src/tools/resorts.ts",
-    "create-collections": "bun run src/tools/create-collections.ts"
+    "resorts": "bun run src/tools/resorts.ts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
