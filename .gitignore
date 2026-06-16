@@ -5,3 +5,6 @@
 node_modules/
 output/
 pb_data/
+data/resorts/ski_areas.csv
+data/resorts/lifts.csv
+data/resorts/runs.csv
