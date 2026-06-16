@@ -410,6 +410,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
           model: server_get_ollama_model(),
           stream: true,
           think: true,
+          options: { num_predict: 8192 },
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
@@ -727,6 +728,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
           model: server_get_ollama_model(),
           stream: true,
           think: true,
+          options: { num_predict: 8192 },
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },

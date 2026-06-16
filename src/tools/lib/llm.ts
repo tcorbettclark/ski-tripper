@@ -98,32 +98,48 @@ export function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   })
 }
 
+export interface StreamResult {
+  thinking: string
+  doneReason: string | null
+}
+
 export function streamThinking(
   stream: AsyncIterable<{
     message: { content: string; thinking?: string }
+    done?: boolean
+    done_reason?: string
   }>,
   onContent: (content: string) => void
-): Promise<string> {
-  return new Promise((resolve) => {
+): Promise<StreamResult> {
+  return new Promise((resolve, reject) => {
     let thinking = ''
     let isThinking = true
+    let doneReason: string | null = null
     ;(async () => {
-      for await (const chunk of stream) {
-        const thinkPart = (chunk.message as unknown as Record<string, unknown>)
-          .thinking
-        if (typeof thinkPart === 'string' && thinkPart) {
-          thinking += thinkPart
-          process.stdout.write(`\x1b[2m${thinkPart as string}\x1b[0m`)
-        }
-        if (chunk.message.content) {
-          if (isThinking) {
-            isThinking = false
-            console.log()
+      try {
+        for await (const chunk of stream) {
+          const thinkPart = (
+            chunk.message as unknown as Record<string, unknown>
+          ).thinking
+          if (typeof thinkPart === 'string' && thinkPart) {
+            thinking += thinkPart
+            process.stdout.write(`\x1b[2m${thinkPart as string}\x1b[0m`)
           }
-          onContent(chunk.message.content)
+          if (chunk.message.content) {
+            if (isThinking) {
+              isThinking = false
+              console.log()
+            }
+            onContent(chunk.message.content)
+          }
+          if (chunk.done) {
+            doneReason = chunk.done_reason ?? null
+          }
         }
+        resolve({ thinking, doneReason })
+      } catch (err) {
+        reject(err instanceof Error ? err : new Error(String(err)))
       }
-      resolve(thinking)
     })()
   })
 }
@@ -161,7 +177,7 @@ Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - For description, websites, and linkedResortsDescription: extract only information that is explicitly stated in the source text
 - For nearestAirport and transferTime: these are a pair — nearestAirport is the nearest international airport, and transferTime is the road transfer time in minutes from that airport. You may infer both using common knowledge. For example, if the text says "80km from Geneva", you should output "Geneva Airport" and 120 for transferTime; if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
-- For description: write 4-6 factual paragraphs. Do NOT repeat facts provided in the user prompt (altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, linkedResortsDescription). Where the source text provides detail, cover: (1) terrain character — e.g. "wide, gentle cruising runs above the treeline" not "fantastic terrain for all", (2) off-piste quality — e.g. "steep north-facing couloirs accessed from the top lift" not "superb off-piste", (3) value — e.g. "one of the cheaper French resorts for lift passes" not "great value", (4) suitability for families vs groups — e.g. "nursery slopes are at resort level, separate from faster traffic" not "perfect for families", (5) apres-ski and nightlife — e.g. "cosy old-town bars cluster around the church" not "vibrant nightlife", (6) whether picturesque or purpose-built — e.g. "a purpose-built 1970s station with concrete apartment blocks" not "charming resort", (7) lift system quality and age — e.g. "the lift network is modern and efficient, with heated chairlifts on the main sectors" not "excellent lift system", (8) overall atmosphere. Write like a guidebook, not a brochure — concrete facts over adjectives. Only include details grounded in the source text; do not fabricate plausible-sounding specifics. Do not infer specific facts from aggregate data — e.g. do not colour-code a named run based on the resort's trail percentages; only describe named runs as the source text describes them. If the source text lacks detail on a topic, skip that topic rather than padding with generalities
+- For description: write 4-6 factual paragraphs. Do NOT repeat facts provided in the user prompt (altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, linkedResortsDescription). Where the source text provides detail, cover: (1) terrain character — e.g. "wide, gentle cruising runs above the treeline" not "fantastic terrain for all", (2) off-piste quality — e.g. "steep north-facing couloirs accessed from the top lift" not "superor off-piste", (3) value — e.g. "one of the cheaper French resorts for lift passes" not "great value", (4) suitability for families vs groups — e.g. "nursery slopes are at resort level, separate from faster traffic" not "perfect for families", (5) apres-ski and nightlife — e.g. "cosy old-town bars cluster around the church" not "vibrant nightlife", (6) whether picturesque or purpose-built — e.g. "a purpose-built 1970s station with concrete apartment blocks" not "charming resort", (7) lift system quality and age — e.g. "the lift network is modern and efficient, with heated chairlifts on the main sectors" not "excellent lift system", (8) overall atmosphere. Write like a guidebook, not a brochure — concrete facts over adjectives. Only include details grounded in the source text; do not fabricate plausible-sounding specifics. Do not infer specific facts from aggregate data — e.g. do not colour-code a named run based on the resort's trail percentages; only describe named runs as the source text describes them. If the source text lacks detail on a topic, skip that topic rather than padding with generalities
 - If a value truly cannot be determined even with reasonable inference, set it to null
 - For websites, include every relevant URL found in the source text; do not attempt to consolidate or deduplicate
 - Return valid JSON only, no explanatory text`
@@ -195,7 +211,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
     properties: {
       description: nullable(
         { type: 'string' },
-        'A factual description (4-6 paragraphs) adding concrete detail not already provided in the user prompt. Do NOT repeat facts like altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, or linkedResortsDescription. Instead cover: terrain character; off-piste quality; value and budget-friendliness; family vs group suitability; apres-ski and nightlife; whether picturesque or purpose-built; lift system quality; overall atmosphere. Write like a guidebook, not a brochure — prefer specific nouns and observable facts over adjectives and subjective opinion. Avoid marketing phrases like "offers something for everyone", "great for all abilities", "vibrant", "fantastic", "superb", or "satisfying sense of space".'
+        'A factual description (4-6 paragraphs) adding concrete detail not already provided in the user prompt. Do NOT repeat facts like altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, or linkedResortsDescription. Instead cover: terrain character; off-piste quality; value and budget-friendliness; family vs group suitability; apres-ski and nightlife; whether picturesque or purpose-built; lift system quality; overall atmosphere. Write like a guidebook, not a brochure — prefer specific nouns and observable facts over adjectives and subjective opinion. Avoid marketing phrases like "offers something for everyone", "great for all ability", "vibrant", "fantastic", "superb", or "satisfying sense of space".'
       ),
       nearestAirport: nullable(
         { type: 'string' },
@@ -208,30 +224,35 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         'Infer from distance or transport details if exact time is not given'
       ),
       snowReliability: nullable(
-        {
-          type: 'string',
-          enum: ['high', 'medium', 'low'],
-        },
-        'Snow reliability rating (high/medium/low)',
-        'Infer from altitude, glacier cover, or snow history descriptions'
+        { type: 'string', enum: ['high', 'medium', 'low'] },
+        'Snow reliability rating',
+        'Infer from altitude, glacier coverage, or seasonal descriptions'
       ),
       skiSeasonMonths: nullable(
         { type: 'string' },
         'Typical ski season, e.g. "Dec-Apr"',
-        'Infer from opening/closing dates or general season descriptions'
+        'Infer from descriptions of opening/closing months'
       ),
-      websites: nullable(
-        {
-          type: 'array',
-          items: { type: 'string' },
-        },
-        'All URLs of websites with information about skiing at the resort. Include every relevant URL found in the source text; do not attempt to consolidate or deduplicate.'
-      ),
+      websites: {
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          'All relevant website URLs found in the source text for this resort',
+      },
       linkedResortsDescription: nullable(
         { type: 'string' },
-        'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."'
+        'Description of linked/connected resorts and the wider ski area',
+        'Only include if the source text mentions linked resorts or a connected ski area'
       ),
     },
-    required: [],
+    required: [
+      'description',
+      'nearestAirport',
+      'transferTime',
+      'snowReliability',
+      'skiSeasonMonths',
+      'websites',
+      'linkedResortsDescription',
+    ],
   }
 }

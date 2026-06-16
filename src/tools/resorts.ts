@@ -306,12 +306,15 @@ async function enrichResort(
   const messages: Array<{
     role: 'system' | 'user' | 'assistant'
     content: string
+    thinking?: string
   }> = [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt },
   ]
 
   let lastContent = ''
+  let lastThinking = ''
+  let numPredict = 8192
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     log(
       'info',
@@ -326,24 +329,58 @@ async function enrichResort(
       stream: true,
       model,
       messages,
+      think: true,
+      options: { num_predict: numPredict },
     })
 
     let content = ''
-    await streamThinking(stream, (chunk) => {
-      content += chunk
-    })
+    let thinking = ''
+    let doneReason: string | null = null
+    try {
+      const streamResult = await streamThinking(stream, (chunk) => {
+        content += chunk
+      })
+      thinking = streamResult.thinking
+      doneReason = streamResult.doneReason
+    } catch (err) {
+      log(
+        'warn',
+        'enrich',
+        `Stream error: ${err instanceof Error ? err.message : String(err)}`,
+        1
+      )
+      if (attempt < maxRetries) {
+        messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
+        continue
+      }
+      return null
+    }
 
     if (!content) {
+      if (doneReason === 'length') {
+        numPredict *= 2
+        log(
+          'warn',
+          'enrich',
+          `LLM hit token limit, increasing to ${numPredict} and retrying...`,
+          1
+        )
+        if (attempt < maxRetries) {
+          messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
+          continue
+        }
+        return null
+      }
       log(
         'warn',
         'enrich',
         attempt < maxRetries
-          ? 'LLM returned empty content, retrying...'
-          : 'LLM returned empty content',
+          ? `LLM returned empty content (${thinking.length} chars of thinking), retrying...`
+          : `LLM returned empty content (${thinking.length} chars of thinking)`,
         1
       )
       if (attempt < maxRetries) {
-        messages.push({ role: 'assistant', content: '' })
+        messages.push({ role: 'assistant', content: '', thinking })
         messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
         continue
       }
@@ -366,6 +403,7 @@ async function enrichResort(
     }
 
     lastContent = content
+    lastThinking = thinking
     log(
       'warn',
       'enrich',
@@ -378,7 +416,11 @@ async function enrichResort(
       return null
     }
 
-    messages.push({ role: 'assistant', content: lastContent })
+    messages.push({
+      role: 'assistant',
+      content: lastContent,
+      thinking: lastThinking,
+    })
     messages.push({
       role: 'user',
       content: LLM_RETRY_PARSE_PROMPT(lastContent.slice(0, 500)),
@@ -742,16 +784,15 @@ async function enrich(options: {
     }
     enrichedById.set(seededResort.id, enrichedEntry)
     enrichedCount++
+    writeJsonl(
+      enrichedPath,
+      [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
+    )
     log(
       'success',
       'enrich',
       `Written ${seededResort.resortName} to enriched.jsonl`,
       1
-    )
-
-    writeJsonl(
-      enrichedPath,
-      [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
     )
   }
 
