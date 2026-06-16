@@ -109,9 +109,23 @@ export default function PreferencesForm({
   const timeError =
     totalTime !== 100 ? 'Time allocations must sum to 100%.' : null
 
+  const missingFields: string[] = []
+  if (skiSnowboard.length === 0) missingFields.push('Ski / Snowboard')
+  if (difficulty.length === 0) missingFields.push('Difficulty')
+  if (piste.length === 0) missingFields.push('Piste')
+  if (accommodation.length === 0) missingFields.push('Accommodation')
+  const selectionError =
+    missingFields.length > 0
+      ? `Please select at least one option for: ${missingFields.join(', ')}.`
+      : null
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    if (selectionError) {
+      setError(selectionError)
+      return
+    }
     if (timeError) {
       setError(timeError)
       return

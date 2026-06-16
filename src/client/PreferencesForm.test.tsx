@@ -47,13 +47,88 @@ describe('PreferencesForm', () => {
     expect(skiCheckbox.checked).toBe(true)
   })
 
+  it('validates required select fields are not empty on submit', async () => {
+    const ue = userEvent.setup()
+    await act(async () => {
+      render(<PreferencesForm userId="user-1" onSaved={mock(() => {})} />)
+    })
+
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      const errorText = screen.getByText(
+        /please select at least one option for/i
+      )
+      expect(errorText.textContent).toContain('Ski / Snowboard')
+      expect(errorText.textContent).toContain('Difficulty')
+      expect(errorText.textContent).toContain('Piste')
+      expect(errorText.textContent).toContain('Accommodation')
+    })
+  })
+
+  it('shows selection error only for fields that are empty', async () => {
+    const ue = userEvent.setup()
+    await act(async () => {
+      render(<PreferencesForm userId="user-1" onSaved={mock(() => {})} />)
+    })
+
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      const errorText = screen.getByText(
+        /please select at least one option for/i
+      )
+      expect(errorText.textContent).not.toContain('Ski / Snowboard')
+      expect(errorText.textContent).toContain('Difficulty')
+      expect(errorText.textContent).toContain('Piste')
+      expect(errorText.textContent).toContain('Accommodation')
+    })
+  })
+
+  it('clears selection error when all required fields are selected', async () => {
+    const ue = userEvent.setup()
+    const mockCreate = mock(() => Promise.resolve(defaultPreferences))
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          onSaved={mock(() => {})}
+          createPreferences={mockCreate}
+        />
+      )
+    })
+
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/please select at least one option for/i)
+      ).toBeDefined()
+    })
+
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Red' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'On-Piste' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Chalet' }))
+    await ue.click(screen.getByRole('button', { name: /save preferences/i }))
+
+    await waitFor(() => {
+      expect(mockCreate).toHaveBeenCalledTimes(1)
+    })
+  })
+
   it('validates time allocation sums to 100%', async () => {
     const ue = userEvent.setup()
     await act(async () => {
       render(<PreferencesForm userId="user-1" onSaved={mock(() => {})} />)
     })
 
-    // Adjust sliders to make total != 100
+    await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Red' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'On-Piste' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Chalet' }))
+
     const slopesSlider = screen.getAllByRole('slider')[0] as HTMLInputElement
     fireEvent.change(slopesSlider, { target: { value: '0' } })
 
@@ -222,6 +297,9 @@ describe('PreferencesForm', () => {
     await ue.type(nameInput, 'Bob')
 
     await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Red' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'On-Piste' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Chalet' }))
     await ue.click(screen.getByRole('button', { name: /save preferences/i }))
 
     await waitFor(() => {
@@ -250,6 +328,9 @@ describe('PreferencesForm', () => {
     })
 
     await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Red' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'On-Piste' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Chalet' }))
     await ue.click(screen.getByRole('button', { name: /save preferences/i }))
 
     await waitFor(() => {
@@ -282,6 +363,9 @@ describe('PreferencesForm', () => {
     await ue.type(nameInput, 'Bob')
 
     await ue.click(screen.getByRole('checkbox', { name: 'Ski' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Red' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'On-Piste' }))
+    await ue.click(screen.getByRole('checkbox', { name: 'Chalet' }))
     await ue.click(screen.getByRole('button', { name: /save preferences/i }))
 
     await waitFor(() => {
