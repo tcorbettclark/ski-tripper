@@ -1,11 +1,7 @@
-pb_data
+.DS_Store
+.env
+.env.*.local
+.env.local
 node_modules/
 output/
-!output/pb_migrations/
-data/
-.env
-.env.local
-.env.*.local
-.backups/
-.DS_Store
-.playwright-cli
+pb_data/
