@@ -10,8 +10,6 @@ import {
 
 export const OLLAMA_HOST = 'https://ollama.com'
 
-const ollamaApiKey = server_get_ollama_api_key()
-
 export const SOURCE_WEBSITES = [
   'skiresort.info',
   'onthesnow.com',
@@ -32,10 +30,17 @@ export const ENRICH_SOURCE_WEBSITES = [
   'en.wikipedia.org',
 ] as const
 
-export const ollama = new Ollama({
-  host: OLLAMA_HOST,
-  headers: { Authorization: `Bearer ${ollamaApiKey}` },
-})
+let _ollama: Ollama | undefined
+export function getOllama(): Ollama {
+  if (!_ollama) {
+    const apiKey = server_get_ollama_api_key()
+    _ollama = new Ollama({
+      host: OLLAMA_HOST,
+      headers: { Authorization: `Bearer ${apiKey}` },
+    })
+  }
+  return _ollama
+}
 
 let _exa: Exa | undefined
 export function getExa(): Exa {

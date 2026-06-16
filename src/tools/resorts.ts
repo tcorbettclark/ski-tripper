@@ -27,10 +27,10 @@ import {
   buildJsonSchema,
   ENRICH_SOURCE_WEBSITES,
   getExa,
+  getOllama,
   jsonCodec,
   LLM_SYSTEM_PROMPT,
   LLM_USER_PROMPT,
-  ollama,
   streamThinking,
 } from './lib/llm'
 import {
@@ -47,9 +47,6 @@ import { loadOpenSkiMapData } from './lib/openski-map'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
 const RESORTS_DIR = '../../../data/resorts'
-const PB_URL = server_get_pocketbase_url()
-const PB_ADMIN_EMAIL = server_get_pocketbase_admin_email()
-const PB_ADMIN_PASSWORD = server_get_pocketbase_admin_password()
 
 const EXA_SOURCED_NUM_RESULTS = 5
 const EXA_BROAD_NUM_RESULTS = 5
@@ -314,7 +311,7 @@ async function enrichResort(
   )
 
   log('info', 'enrich', 'Streaming LLM extraction...', 1)
-  const stream = await ollama.chat({
+  const stream = await getOllama().chat({
     stream: true,
     model,
     messages: [
@@ -1095,18 +1092,14 @@ function build() {
 }
 
 async function uploadResorts() {
+  const PB_URL = server_get_pocketbase_url()
+  const PB_ADMIN_EMAIL = server_get_pocketbase_admin_email()
+  const PB_ADMIN_PASSWORD = server_get_pocketbase_admin_password()
   const resolved = path.resolve(RESORTS_DIR, 'all.jsonl')
   try {
     await fs.promises.stat(resolved)
   } catch {
     console.error(`Error: File '${resolved}' does not exist.`)
-    process.exit(1)
-  }
-
-  if (!PB_ADMIN_EMAIL || !PB_ADMIN_PASSWORD) {
-    console.error(
-      'Error: POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD must be set'
-    )
     process.exit(1)
   }
 

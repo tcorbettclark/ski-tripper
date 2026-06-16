@@ -8,10 +8,6 @@ import {
   server_get_pocketbase_url,
 } from '../shared/env'
 
-const PB_URL = server_get_pocketbase_url()
-const PB_SUPERUSER_EMAIL = server_get_pocketbase_admin_email()
-const PB_SUPERUSER_PASSWORD = server_get_pocketbase_admin_password()
-
 const authRule = "@request.auth.id != ''"
 const adminOnlyRule = null
 
@@ -32,6 +28,9 @@ const ADMIN_ONLY_RULES = {
 }
 
 async function createCollections() {
+  const PB_URL = server_get_pocketbase_url()
+  const PB_SUPERUSER_EMAIL = server_get_pocketbase_admin_email()
+  const PB_SUPERUSER_PASSWORD = server_get_pocketbase_admin_password()
   const pb = new PocketBase(PB_URL)
 
   await pb
@@ -470,6 +469,9 @@ async function createCollections() {
 }
 
 async function deleteCollections() {
+  const PB_URL = server_get_pocketbase_url()
+  const PB_SUPERUSER_EMAIL = server_get_pocketbase_admin_email()
+  const PB_SUPERUSER_PASSWORD = server_get_pocketbase_admin_password()
   const pb = new PocketBase(PB_URL)
 
   await pb

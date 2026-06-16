@@ -22,8 +22,6 @@ import {
 } from './logic/preference-search'
 import { createClient, getAdminClient } from './pocketbase'
 
-const ollamaModel = server_get_ollama_model()
-
 function createOllama(): Ollama {
   const ollamaApiKey = server_get_ollama_api_key()
   return new Ollama({
@@ -360,7 +358,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
       status: 'generating',
       thinking: '',
       content: '',
-      model: ollamaModel,
+      model: server_get_ollama_model(),
     })
     cacheRow = {
       id: created.id,
@@ -409,7 +407,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
       try {
         const llmStream = await ollama.chat({
-          model: ollamaModel,
+          model: server_get_ollama_model(),
           stream: true,
           think: true,
           messages: [
@@ -460,7 +458,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: accumulatedContent || null,
-            model: ollamaModel,
+            model: server_get_ollama_model(),
           })
         )
       } catch (err) {
@@ -682,7 +680,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
       status: 'generating',
       thinking: '',
       content: '',
-      model: ollamaModel,
+      model: server_get_ollama_model(),
     })
     cacheRow = {
       id: created.id,
@@ -726,7 +724,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
 
       try {
         const llmStream = await ollama.chat({
-          model: ollamaModel,
+          model: server_get_ollama_model(),
           stream: true,
           think: true,
           messages: [
@@ -777,7 +775,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: accumulatedContent || null,
-            model: ollamaModel,
+            model: server_get_ollama_model(),
           })
         )
       } catch (err) {
