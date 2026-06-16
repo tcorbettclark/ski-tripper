@@ -4,12 +4,10 @@ import type {
   Accommodation,
   Discussion,
   LlmCache,
-  LocalResort,
   Participant,
   Poll,
   Preferences,
   Proposal,
-  ResortWithEmbedding,
   Trip,
   Vote,
 } from '../shared/types.d'
@@ -1058,58 +1056,20 @@ export async function createSystemMessage(
   return mapDiscussion(row as unknown as Record<string, unknown>)
 }
 
-export async function getResortData(): Promise<LocalResort[]> {
-  const rows = await getPb().collection('resorts').getFullList()
-  return rows.map((r) => ({
-    id: r.id as string,
-    resortName: r.resort_name as string,
-    country: r.country as string,
-    region: r.region as string,
-    description: r.description as string,
-    latitude: r.latitude as string,
-    longitude: r.longitude as string,
-    summitAltitude: r.summit_altitude as number,
-    baseAltitude: r.base_altitude as number,
-    nearestAirport: r.nearest_airport as string,
-    transferTime: r.transfer_time as number | null,
-    pisteKm: r.piste_km as number,
-    beginnerPct: r.beginner_pct as number,
-    intermediatePct: r.intermediate_pct as number,
-    advancedPct: r.advanced_pct as number,
-    liftCount: r.lift_count as number,
-    snowReliability: r.snow_reliability as 'high' | 'medium' | 'low',
-    skiSeasonMonths: r.ski_season_months as string,
-    websites: r.websites as string[],
-    linkedResortsDescription: r.linked_resorts_description as string,
-  }))
-}
-
-export async function fetchResortDataWithAuth(): Promise<string> {
-  const rows = await getPb().collection('resorts').getFullList()
-  const resorts: ResortWithEmbedding[] = rows.map((r) => ({
-    id: r.id as string,
-    resortName: r.resort_name as string,
-    country: r.country as string,
-    region: r.region as string,
-    description: r.description as string,
-    latitude: r.latitude as string,
-    longitude: r.longitude as string,
-    summitAltitude: r.summit_altitude as number,
-    baseAltitude: r.base_altitude as number,
-    nearestAirport: r.nearest_airport as string,
-    transferTime: r.transfer_time as number | null,
-    pisteKm: r.piste_km as number,
-    beginnerPct: r.beginner_pct as number,
-    intermediatePct: r.intermediate_pct as number,
-    advancedPct: r.advanced_pct as number,
-    liftCount: r.lift_count as number,
-    snowReliability: r.snow_reliability as 'high' | 'medium' | 'low',
-    skiSeasonMonths: r.ski_season_months as string,
-    websites: r.websites as string[],
-    linkedResortsDescription: r.linked_resorts_description as string,
-    embedding: (r.embedding as number[] | undefined) || [],
-  }))
-  return resorts.map((r) => JSON.stringify(r)).join('\n')
+export async function fetchResortDataWithAuth(
+  client: PocketBase = getPb()
+): Promise<string> {
+  const rows = await client.collection('resorts').getFullList()
+  if (rows.length === 0) return ''
+  const fileToken = await client.files.getToken()
+  const url = client.files.getURL(rows[0], rows[0].file, { token: fileToken })
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch resort data: ${response.status} ${response.statusText}`
+    )
+  }
+  return response.text()
 }
 
 function mapLlmCache(row: Record<string, unknown>): LlmCache {

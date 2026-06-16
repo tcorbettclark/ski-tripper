@@ -13,6 +13,7 @@ import {
   deleteDiscussionComment,
   deleteProposal,
   deleteTrip,
+  fetchResortDataWithAuth,
   getPreferences,
   getProposal,
   getTrip,
@@ -1944,5 +1945,159 @@ describe('createSystemMessage', () => {
     expect(createCall[0].body).toBe('Alice submitted this proposal')
     expect(createCall[0].type).toBe('system')
     expect(result.id).toBe('new-id')
+  })
+})
+
+describe('fetchResortDataWithAuth', () => {
+  const resortJsonlLine = JSON.stringify({
+    id: 'chamonix-alps-france',
+    resortName: 'Chamonix',
+    country: 'France',
+    region: 'Alps',
+    description: 'A famous resort',
+    latitude: '45.9237',
+    longitude: '6.8694',
+    summitAltitude: 3842,
+    baseAltitude: 1000,
+    nearestAirport: 'Geneva Airport',
+    transferTime: 60,
+    pisteKm: 150,
+    beginnerPct: 10,
+    intermediatePct: 40,
+    advancedPct: 50,
+    liftCount: 50,
+    snowReliability: 'high',
+    skiSeasonMonths: 'Dec-Apr',
+    websites: ['https://chamonix.com'],
+    linkedResortsDescription: 'Linked with Courmayeur',
+    embedding: [0.1, 0.2, 0.3],
+  })
+
+  function createResortClient(
+    overrides: {
+      rows?: unknown[]
+      fileUrl?: string
+      fileContent?: string
+      fetchError?: Error
+    } = {}
+  ): PocketBase {
+    const rows = overrides.rows ?? [{ id: 'rec-1', file: 'resort-data.jsonl' }]
+    const fileUrl =
+      overrides.fileUrl ??
+      'https://pb.test.local/api/files/resorts/rec-1/resort-data.jsonl?token=abc'
+    const fileContent = overrides.fileContent ?? resortJsonlLine
+
+    const client = createMockClient({
+      resorts: {
+        getFullList: mock(() => Promise.resolve(rows)),
+      },
+    })
+    ;(client as unknown as Record<string, unknown>).files = {
+      getToken: mock(() => Promise.resolve('abc')),
+      getURL: mock(() => fileUrl),
+    }
+
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = mock((input: RequestInfo | URL) => {
+      if (overrides.fetchError) {
+        return Promise.reject(overrides.fetchError)
+      }
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.href
+            : input.url
+      if (url.includes('pb.test.local')) {
+        return Promise.resolve(new Response(fileContent, { status: 200 }))
+      }
+      return originalFetch(input)
+    }) as unknown as typeof globalThis.fetch
+
+    return client
+  }
+
+  it('downloads and returns JSONL content from the resort file', async () => {
+    const client = createResortClient()
+    const result = await fetchResortDataWithAuth(client)
+    expect(result.trim()).toBe(resortJsonlLine)
+
+    const resort = JSON.parse(result.trim())
+    expect(resort.resortName).toBe('Chamonix')
+    expect(resort.country).toBe('France')
+    expect(resort.summitAltitude).toBe(3842)
+    expect(resort.embedding).toEqual([0.1, 0.2, 0.3])
+  })
+
+  it('returns empty string when no resort records exist', async () => {
+    const client = createResortClient({ rows: [] })
+    const result = await fetchResortDataWithAuth(client)
+    expect(result).toBe('')
+  })
+
+  it('throws when fetch fails with non-ok status', async () => {
+    const client = createResortClient()
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        new Response('not found', { status: 404, statusText: 'Not Found' })
+      )
+    ) as unknown as typeof globalThis.fetch
+    try {
+      await expect(fetchResortDataWithAuth(client)).rejects.toThrow(
+        'Failed to fetch resort data: 404 Not Found'
+      )
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  it('returns JSONL with multiple resort lines', async () => {
+    const resort2 = JSON.stringify({
+      id: 'zermatt-alps-switzerland',
+      resortName: 'Zermatt',
+      country: 'Switzerland',
+      region: 'Alps',
+      description: 'Matterhorn resort',
+      latitude: '46.0207',
+      longitude: '7.7491',
+      summitAltitude: 3883,
+      baseAltitude: 1620,
+      nearestAirport: 'Geneva Airport',
+      transferTime: 240,
+      pisteKm: 360,
+      beginnerPct: 15,
+      intermediatePct: 50,
+      advancedPct: 35,
+      liftCount: 36,
+      snowReliability: 'high',
+      skiSeasonMonths: 'Nov-Apr',
+      websites: ['https://zermatt.ch'],
+      linkedResortsDescription: 'Linked with Cervinia',
+      embedding: [0.4, 0.5, 0.6],
+    })
+    const twoLineJsonl = `${resortJsonlLine}\n${resort2}`
+    const client = createResortClient({ fileContent: twoLineJsonl })
+    const result = await fetchResortDataWithAuth(client)
+    const lines = result.trim().split('\n')
+    expect(lines).toHaveLength(2)
+    expect(JSON.parse(lines[0]).resortName).toBe('Chamonix')
+    expect(JSON.parse(lines[1]).resortName).toBe('Zermatt')
+  })
+
+  it('uses camelCase field names from JSONL (not snake_case)', async () => {
+    const client = createResortClient()
+    const result = await fetchResortDataWithAuth(client)
+    const resort = JSON.parse(result.trim())
+    expect(resort).toHaveProperty('resortName')
+    expect(resort).toHaveProperty('summitAltitude')
+    expect(resort).toHaveProperty('pisteKm')
+    expect(resort).toHaveProperty('beginnerPct')
+    expect(resort).toHaveProperty('linkedResortsDescription')
+    expect(resort).not.toHaveProperty('resort_name')
+    expect(resort).not.toHaveProperty('summit_altitude')
+    expect(resort).not.toHaveProperty('piste_km')
+    expect(resort).not.toHaveProperty('beginner_pct')
+    expect(resort).not.toHaveProperty('linked_resorts_description')
   })
 })
