@@ -63,11 +63,47 @@ const EXA_LINKED_QUERY = (resortName: string, country: string) =>
   `${resortName} ${country} linked ski areas, connected resorts, lift-linked domain, ski area name`
 
 const enrichSchema = z.object({
-  description: z
+  terrainDescription: z
     .string()
     .nullable()
     .describe(
-      'A detailed description (4-6 paragraphs) of the ski resort covering: terrain difficulty and character; off-piste quality; whether it is expensive or budget-friendly; suitability for families vs groups; quality of apres-ski and nightlife; whether the resort is picturesque or purpose-built; lift system quality and age; and overall atmosphere and highlights'
+      'One paragraph about terrain character: e.g. "wide, gentle cruising runs above the treeline" not "fantastic terrain for all". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+    ),
+  offPisteDescription: z
+    .string()
+    .nullable()
+    .describe(
+      'One paragraph about off-piste quality: e.g. "steep north-facing couloirs accessed from the top lift" not "superior off-piste". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+    ),
+  valueDescription: z
+    .string()
+    .nullable()
+    .describe(
+      'One paragraph about value: e.g. "one of the cheaper French resorts for lift passes" not "great value". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+    ),
+  familyDescription: z
+    .string()
+    .nullable()
+    .describe(
+      'One paragraph about suitability for families vs groups: e.g. "nursery slopes are at resort level, separate from faster traffic" not "perfect for families". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+    ),
+  apresSkiDescription: z
+    .string()
+    .nullable()
+    .describe(
+      'One paragraph about apres-ski and nightlife: e.g. "cosy old-town bars cluster around the church" not "vibrant nightlife". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+    ),
+  resortCharacterDescription: z
+    .string()
+    .nullable()
+    .describe(
+      'One paragraph about whether the resort is picturesque or purpose-built: e.g. "a purpose-built 1970s station with concrete apartment blocks" not "charming resort". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+    ),
+  liftSystemDescription: z
+    .string()
+    .nullable()
+    .describe(
+      'One paragraph about lift system quality and age: e.g. "the lift network is modern and efficient, with heated chairlifts on the main sectors" not "excellent lift system". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
     ),
   nearestAirport: z
     .string()
@@ -111,7 +147,13 @@ type ResolvedEnrichData = Omit<
 > & { transferTime: number | null }
 
 const enrichDefaults: Record<string, string | string[] | number | null> = {
-  description: '',
+  terrainDescription: '',
+  offPisteDescription: '',
+  valueDescription: '',
+  familyDescription: '',
+  apresSkiDescription: '',
+  resortCharacterDescription: '',
+  liftSystemDescription: '',
   nearestAirport: '',
   transferTime: null,
   snowReliability: '',
@@ -468,7 +510,13 @@ function toEnrichedEntry(
 ): EnrichedResort {
   return {
     id: seededResort.id,
-    description: data.description,
+    terrainDescription: data.terrainDescription,
+    offPisteDescription: data.offPisteDescription,
+    valueDescription: data.valueDescription,
+    familyDescription: data.familyDescription,
+    apresSkiDescription: data.apresSkiDescription,
+    resortCharacterDescription: data.resortCharacterDescription,
+    liftSystemDescription: data.liftSystemDescription,
     nearestAirport: data.nearestAirport,
     transferTime: data.transferTime,
     snowReliability: data.snowReliability as 'high' | 'medium' | 'low' | '',
@@ -481,13 +529,19 @@ function toEnrichedEntry(
 const ANSI_MAGENTA = '\x1b[35m'
 
 const FIELD_COLOURS: Record<string, string> = {
-  description: '\x1b[38;5;46m',
+  terrainDescription: '\x1b[38;5;46m',
+  offPisteDescription: '\x1b[38;5;83m',
+  valueDescription: '\x1b[38;5;221m',
+  familyDescription: '\x1b[38;5;117m',
+  apresSkiDescription: '\x1b[38;5;213m',
+  resortCharacterDescription: '\x1b[38;5;208m',
+  liftSystemDescription: '\x1b[38;5;153m',
   nearestAirport: '\x1b[38;5;51m',
   transferTime: '\x1b[38;5;99m',
   snowReliability: '\x1b[38;5;196m',
   skiSeasonMonths: '\x1b[38;5;220m',
   websites: '\x1b[38;5;87m',
-  linkedResortsDescription: '\x1b[38;5;208m',
+  linkedResortsDescription: '\x1b[38;5;178m',
 }
 
 function formatIssueTags(issues: AuditIssue[]): string {
@@ -843,7 +897,13 @@ function computeSearchText(
     seeded.resortName,
     seeded.country,
     seeded.region,
-    enriched?.description ?? '',
+    enriched?.terrainDescription ?? '',
+    enriched?.offPisteDescription ?? '',
+    enriched?.valueDescription ?? '',
+    enriched?.familyDescription ?? '',
+    enriched?.apresSkiDescription ?? '',
+    enriched?.resortCharacterDescription ?? '',
+    enriched?.liftSystemDescription ?? '',
     enriched?.linkedResortsDescription ?? '',
   ]
   if (enriched?.skiSeasonMonths) {
@@ -995,6 +1055,30 @@ async function encode() {
   log('success', 'encode', `Written to ${encodedPath}`)
 }
 
+function cleanParagraph(text: string): string {
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/\n{2,}/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim()
+}
+
+function buildDescription(e: EnrichedResort): string {
+  const paragraphs = [
+    e.terrainDescription,
+    e.offPisteDescription,
+    e.valueDescription,
+    e.familyDescription,
+    e.apresSkiDescription,
+    e.resortCharacterDescription,
+    e.liftSystemDescription,
+  ]
+    .filter((p): p is string => !!p)
+    .map(cleanParagraph)
+    .filter((p) => p.length > 0)
+  return paragraphs.join('\n\n')
+}
+
 function build() {
   const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
   const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
@@ -1053,7 +1137,7 @@ function build() {
         resortName: s.resortName,
         country: s.country,
         region: s.region,
-        description: e.description,
+        description: buildDescription(e),
         latitude: s.latitude,
         longitude: s.longitude,
         summitAltitude: s.summitAltitude,

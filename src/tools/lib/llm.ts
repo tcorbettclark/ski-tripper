@@ -178,10 +178,8 @@ export const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given sou
 
 Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
-- For description, websites, and linkedResortsDescription: extract only information that is explicitly stated in the source text
+- For each description field, write exactly one factual paragraph on that specific topic. Use concrete nouns and observable facts — not adjectives, not marketing language. If the source text lacks detail on a topic, set that field to null rather than writing vague generalities
 - For nearestAirport and transferTime: these are a pair — nearestAirport is the nearest international airport, and transferTime is the road transfer time in minutes from that airport. You may infer both using common knowledge. For example, if the text says "80km from Geneva", you should output "Geneva Airport" and 120 for transferTime; if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
-- For description: write 4-6 factual paragraphs. Do NOT repeat facts provided in the user prompt (altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, linkedResortsDescription). Where the source text provides detail, cover: (1) terrain character — e.g. "wide, gentle cruising runs above the treeline" not "fantastic terrain for all", (2) off-piste quality — e.g. "steep north-facing couloirs accessed from the top lift" not "superor off-piste", (3) value — e.g. "one of the cheaper French resorts for lift passes" not "great value", (4) suitability for families vs groups — e.g. "nursery slopes are at resort level, separate from faster traffic" not "perfect for families", (5) apres-ski and nightlife — e.g. "cosy old-town bars cluster around the church" not "vibrant nightlife", (6) whether picturesque or purpose-built — e.g. "a purpose-built 1970s station with concrete apartment blocks" not "charming resort", (7) lift system quality and age — e.g. "the lift network is modern and efficient, with heated chairlifts on the main sectors" not "excellent lift system", (8) overall atmosphere. Write like a guidebook, not a brochure — concrete facts over adjectives. Only include details grounded in the source text; do not fabricate plausible-sounding specifics. Do not infer specific facts from aggregate data — e.g. do not colour-code a named run based on the resort's trail percentages; only describe named runs as the source text describes them. If the source text lacks detail on a topic, skip that topic rather than padding with generalities
-- If a value truly cannot be determined even with reasonable inference, set it to null
 - For websites, include every relevant URL found in the source text; do not attempt to consolidate or deduplicate
 - Return valid JSON only, no explanatory text`
 
@@ -192,9 +190,11 @@ export const LLM_USER_PROMPT = (
   knownFacts?: string
 ) => {
   const factsSection = knownFacts
-    ? `\n\nKnown facts already captured (do NOT repeat these in the description field):\n${knownFacts}\n`
+    ? `\n\nKnown facts already captured (do NOT repeat these in any description field — each description field should add new detail from the source text):\n${knownFacts}\n`
     : ''
   return `Extract ski resort data for "${resortName}" in ${country} from the following source text:${factsSection}
+
+For each description field, write exactly one paragraph on that specific topic. Use concrete facts from the source text. If the source text does not mention a topic, set that field to null — do not write vague generalities.
 
 ${sourceText}`
 }
@@ -209,12 +209,67 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
     description: hint ? `${desc}. ${hint}` : `${desc}, or null if not found`,
   })
 
+  const topicDesc = (topic: string, example: string, antiExample: string) =>
+    `One paragraph about ${topic}. Use concrete facts, not adjectives. For example, write "${example}" not "${antiExample}". If the source text lacks detail on this topic, set to null.`
+
   return {
     type: 'object',
     properties: {
-      description: nullable(
+      terrainDescription: nullable(
         { type: 'string' },
-        'A factual description (4-6 paragraphs) adding concrete detail not already provided in the user prompt. Do NOT repeat facts like altitudes, piste km, lift count, trail percentages, nearestAirport, transferTime, snowReliability, skiSeasonMonths, or linkedResortsDescription. Instead cover: terrain character; off-piste quality; value and budget-friendliness; family vs group suitability; apres-ski and nightlife; whether picturesque or purpose-built; lift system quality; overall atmosphere. Write like a guidebook, not a brochure — prefer specific nouns and observable facts over adjectives and subjective opinion. Avoid marketing phrases like "offers something for everyone", "great for all ability", "vibrant", "fantastic", "superb", or "satisfying sense of space".'
+        topicDesc(
+          'terrain character',
+          'wide, gentle cruising runs above the treeline',
+          'fantastic terrain for all'
+        )
+      ),
+      offPisteDescription: nullable(
+        { type: 'string' },
+        topicDesc(
+          'off-piste quality',
+          'steep north-facing couloirs accessed from the top lift',
+          'superior off-piste'
+        )
+      ),
+      valueDescription: nullable(
+        { type: 'string' },
+        topicDesc(
+          'value and budget-friendliness',
+          'one of the cheaper French resorts for lift passes',
+          'great value'
+        )
+      ),
+      familyDescription: nullable(
+        { type: 'string' },
+        topicDesc(
+          'suitability for families vs groups',
+          'nursery slopes are at resort level, separate from faster traffic',
+          'perfect for families'
+        )
+      ),
+      apresSkiDescription: nullable(
+        { type: 'string' },
+        topicDesc(
+          'apres-ski and nightlife',
+          'cosy old-town bars cluster around the church',
+          'vibrant nightlife'
+        )
+      ),
+      resortCharacterDescription: nullable(
+        { type: 'string' },
+        topicDesc(
+          'whether the resort is picturesque or purpose-built',
+          'a purpose-built 1970s station with concrete apartment blocks',
+          'charming resort'
+        )
+      ),
+      liftSystemDescription: nullable(
+        { type: 'string' },
+        topicDesc(
+          'lift system quality and age',
+          'the lift network is modern and efficient, with heated chairlifts on the main sectors',
+          'excellent lift system'
+        )
       ),
       nearestAirport: nullable(
         { type: 'string' },
@@ -249,7 +304,13 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
       ),
     },
     required: [
-      'description',
+      'terrainDescription',
+      'offPisteDescription',
+      'valueDescription',
+      'familyDescription',
+      'apresSkiDescription',
+      'resortCharacterDescription',
+      'liftSystemDescription',
       'nearestAirport',
       'transferTime',
       'snowReliability',

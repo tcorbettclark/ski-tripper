@@ -21,7 +21,13 @@ const seededResort: SeededResort = {
 
 const goodEnriched: EnrichedResort = {
   id: 'chamonix-alps-france',
-  description: 'A world-class resort...',
+  terrainDescription: 'Wide cruising runs above the treeline.',
+  offPisteDescription: 'Steep north-facing couloirs.',
+  valueDescription: 'One of the cheaper French resorts.',
+  familyDescription: 'Nursery slopes at resort level.',
+  apresSkiDescription: 'Cosy old-town bars.',
+  resortCharacterDescription: 'Traditional alpine town.',
+  liftSystemDescription: 'Modern and efficient lifts.',
   nearestAirport: 'Geneva Airport',
   transferTime: 90,
   snowReliability: 'high',

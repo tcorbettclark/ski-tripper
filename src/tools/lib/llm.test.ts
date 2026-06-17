@@ -69,7 +69,13 @@ describe('buildJsonSchema', () => {
   it('returns an object schema with expected properties', () => {
     const schema = buildJsonSchema()
     expect(schema.type).toBe('object')
-    expect(schema.properties).toHaveProperty('description')
+    expect(schema.properties).toHaveProperty('terrainDescription')
+    expect(schema.properties).toHaveProperty('offPisteDescription')
+    expect(schema.properties).toHaveProperty('valueDescription')
+    expect(schema.properties).toHaveProperty('familyDescription')
+    expect(schema.properties).toHaveProperty('apresSkiDescription')
+    expect(schema.properties).toHaveProperty('resortCharacterDescription')
+    expect(schema.properties).toHaveProperty('liftSystemDescription')
     expect(schema.properties).toHaveProperty('nearestAirport')
     expect(schema.properties).toHaveProperty('transferTime')
     expect(schema.properties).toHaveProperty('snowReliability')
@@ -80,9 +86,11 @@ describe('buildJsonSchema', () => {
 
   it('makes fields nullable via anyOf', () => {
     const schema = buildJsonSchema()
-    const desc = schema.properties!.description as { anyOf: unknown[] }
-    expect(desc.anyOf).toBeDefined()
-    expect(desc.anyOf).toHaveLength(2)
+    const terrain = schema.properties!.terrainDescription as {
+      anyOf: unknown[]
+    }
+    expect(terrain.anyOf).toBeDefined()
+    expect(terrain.anyOf).toHaveLength(2)
   })
 })
 

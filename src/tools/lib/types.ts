@@ -17,7 +17,13 @@ export interface SeededResort {
 
 export interface EnrichedResort {
   id: string
-  description: string
+  terrainDescription: string
+  offPisteDescription: string
+  valueDescription: string
+  familyDescription: string
+  apresSkiDescription: string
+  resortCharacterDescription: string
+  liftSystemDescription: string
   nearestAirport: string
   transferTime: number | null
   snowReliability: string

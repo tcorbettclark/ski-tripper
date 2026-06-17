@@ -21,7 +21,13 @@ export interface AuditResult {
 
 export const QUALITY_FIELDS: Record<string, string | string[] | number | null> =
   {
-    description: '',
+    terrainDescription: '',
+    offPisteDescription: '',
+    valueDescription: '',
+    familyDescription: '',
+    apresSkiDescription: '',
+    resortCharacterDescription: '',
+    liftSystemDescription: '',
     nearestAirport: '',
     transferTime: null,
     snowReliability: '',
