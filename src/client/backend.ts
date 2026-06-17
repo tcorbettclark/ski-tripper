@@ -1126,23 +1126,3 @@ export async function triggerAnalysis(
     throw new Error(`Failed to trigger analysis: ${response.status} ${text}`)
   }
 }
-
-export async function triggerPreferenceSearch(tripId: string): Promise<void> {
-  const apiUrl = getApiUrl('/api/preference-search')
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getPb().authStore.token}`,
-    },
-    body: JSON.stringify({ tripId }),
-  })
-
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(
-      `Failed to trigger preference search: ${response.status} ${text}`
-    )
-  }
-}

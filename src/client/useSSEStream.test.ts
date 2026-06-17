@@ -39,13 +39,12 @@ describe('useSSEStream', () => {
     const { result } = renderHook(() =>
       useSSEStream({ type: 'analysis', tripId: 'trip-1', enabled: false })
     )
-    expect(result.current).toEqual({
-      status: null,
-      thinking: '',
-      content: '',
-      model: '',
-      error: null,
-    })
+    expect(result.current.status).toBeNull()
+    expect(result.current.thinking).toBe('')
+    expect(result.current.content).toBe('')
+    expect(result.current.model).toBe('')
+    expect(result.current.error).toBeNull()
+    expect(typeof result.current.refetch).toBe('function')
   })
 
   it('does not fetch when disabled', () => {
@@ -151,13 +150,11 @@ describe('useSSEStream', () => {
 
     await act(() => new Promise((r) => setTimeout(r, 100)))
 
-    expect(result.current).toEqual({
-      status: 'complete',
-      thinking: 'thoughts',
-      content: 'result',
-      model: 'gpt-4',
-      error: null,
-    })
+    expect(result.current.status).toBe('complete')
+    expect(result.current.thinking).toBe('thoughts')
+    expect(result.current.content).toBe('result')
+    expect(result.current.model).toBe('gpt-4')
+    expect(result.current.error).toBeNull()
   })
 
   it('handles error event from server', async () => {
@@ -289,5 +286,132 @@ describe('useSSEStream', () => {
 
     rerender({ type: 'analysis', tripId: 'trip-1', proposalId: 'prop-2' })
     expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('handles done event split across network chunks', async () => {
+    const encoder = new TextEncoder()
+    const donePayload = JSON.stringify({
+      status: 'complete',
+      thinking: 'long thinking text',
+      content: 'final content',
+      model: 'test-model',
+    })
+    const chunk1 = encoder.encode(
+      `event: content\ndata: {"text":"hello"}\n\nevent: done\ndata: ${donePayload.slice(0, 20)}`
+    )
+    const chunk2 = encoder.encode(`${donePayload.slice(20)}\n\n`)
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(chunk1)
+        controller.enqueue(chunk2)
+        controller.close()
+      },
+    })
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      )
+    ) as unknown as typeof globalThis.fetch
+
+    const { result } = renderHook(() =>
+      useSSEStream({ type: 'analysis', tripId: 'trip-1' })
+    )
+
+    await act(() => new Promise((r) => setTimeout(r, 100)))
+
+    expect(result.current.status).toBe('complete')
+    expect(result.current.thinking).toBe('long thinking text')
+    expect(result.current.content).toBe('final content')
+    expect(result.current.model).toBe('test-model')
+    expect(result.current.error).toBeNull()
+  })
+
+  it('handles done event arriving in final chunk without trailing newline', async () => {
+    const encoder = new TextEncoder()
+    const contentEvent = `event: content\ndata: {"text":"hello"}\n\n`
+    const donePayload = JSON.stringify({
+      status: 'complete',
+      thinking: 'thoughts',
+      content: 'hello',
+      model: 'gpt-4',
+    })
+    const doneEvent = `event: done\ndata: ${donePayload}\n\n`
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(contentEvent))
+        controller.enqueue(encoder.encode(doneEvent))
+        controller.close()
+      },
+    })
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      )
+    ) as unknown as typeof globalThis.fetch
+
+    const { result } = renderHook(() =>
+      useSSEStream({ type: 'analysis', tripId: 'trip-1' })
+    )
+
+    await act(() => new Promise((r) => setTimeout(r, 100)))
+
+    expect(result.current.status).toBe('complete')
+    expect(result.current.thinking).toBe('thoughts')
+    expect(result.current.content).toBe('hello')
+    expect(result.current.model).toBe('gpt-4')
+    expect(result.current.error).toBeNull()
+  })
+
+  it('refetch resets state and fetches again', async () => {
+    const stream = createSSEStream([
+      sseLine('content', { text: 'first result' }),
+      sseLine('done', {
+        status: 'complete',
+        thinking: '',
+        content: 'first result',
+        model: 'test-model',
+      }),
+    ])
+    const stream2 = createSSEStream([
+      sseLine('content', { text: 'second result' }),
+      sseLine('done', {
+        status: 'complete',
+        thinking: '',
+        content: 'second result',
+        model: 'test-model-2',
+      }),
+    ])
+    let callCount = 0
+    globalThis.fetch = mock(() => {
+      callCount++
+      const s = callCount === 1 ? stream : stream2
+      return Promise.resolve(
+        new Response(s, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      )
+    }) as unknown as typeof globalThis.fetch
+
+    const { result } = renderHook(() =>
+      useSSEStream({ type: 'analysis', tripId: 'trip-1' })
+    )
+
+    await act(() => new Promise((r) => setTimeout(r, 100)))
+    expect(result.current.content).toBe('first result')
+
+    act(() => {
+      result.current.refetch()
+    })
+
+    await act(() => new Promise((r) => setTimeout(r, 100)))
+    expect(callCount).toBe(2)
+    expect(result.current.content).toBe('second result')
   })
 })

@@ -29,7 +29,7 @@ const INITIAL_STATE: UseSSEStreamResult = {
 
 export default function useSSEStream(
   params: UseSSEStreamParams
-): UseSSEStreamResult {
+): UseSSEStreamResult & { refetch: () => void } {
   const { type, proposalId, tripId, enabled = true } = params
 
   const [state, setState] = useState<UseSSEStreamResult>(INITIAL_STATE)
@@ -37,6 +37,9 @@ export default function useSSEStream(
   const mountedRef = useRef(true)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const paramsKeyRef = useRef('')
+  const fetchCountRef = useRef(0)
+
+  const [fetchCount, setFetchCount] = useState(0)
 
   const clearTimer = useCallback(() => {
     if (timeoutRef.current) {
@@ -58,6 +61,10 @@ export default function useSSEStream(
     }, TIMEOUT_MS)
   }, [clearTimer])
 
+  const refetch = useCallback(() => {
+    setFetchCount((c) => c + 1)
+  }, [])
+
   useEffect(() => {
     mountedRef.current = true
     return () => {
@@ -67,9 +74,12 @@ export default function useSSEStream(
 
   useEffect(() => {
     if (!enabled) return
+
     const key = `${type}:${tripId}:${proposalId ?? ''}`
-    if (key === paramsKeyRef.current) return
+    if (key === paramsKeyRef.current && fetchCount === fetchCountRef.current)
+      return
     paramsKeyRef.current = key
+    fetchCountRef.current = fetchCount
 
     setState(INITIAL_STATE)
     clearTimer()
@@ -78,8 +88,6 @@ export default function useSSEStream(
       abortRef.current.abort()
       abortRef.current = null
     }
-
-    let _cancelled = false
 
     resetTimeout()
 
@@ -121,6 +129,55 @@ export default function useSSEStream(
         const reader = response.body.getReader()
         const decoder = new TextDecoder()
         let buffer = ''
+        let currentEvent = ''
+
+        function processLine(line: string): void {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim()
+          } else if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            try {
+              const parsed = JSON.parse(data)
+
+              if (currentEvent === 'thinking') {
+                resetTimeout()
+                setState((prev) => ({
+                  ...prev,
+                  status: 'generating',
+                  thinking: (prev.thinking ?? '') + (parsed.text ?? ''),
+                }))
+              } else if (currentEvent === 'content') {
+                resetTimeout()
+                setState((prev) => ({
+                  ...prev,
+                  status: 'generating',
+                  content: (prev.content ?? '') + (parsed.text ?? ''),
+                }))
+              } else if (currentEvent === 'done') {
+                clearTimer()
+                setState({
+                  status: parsed.status ?? 'complete',
+                  thinking: parsed.thinking ?? '',
+                  content: parsed.content ?? '',
+                  model: parsed.model ?? '',
+                  error: null,
+                })
+              } else if (currentEvent === 'error') {
+                clearTimer()
+                setState({
+                  status: 'error',
+                  thinking: '',
+                  content: '',
+                  model: '',
+                  error: parsed.message ?? 'An error occurred.',
+                })
+              }
+            } catch {
+              // ignore parse errors
+            }
+            currentEvent = ''
+          }
+        }
 
         while (true) {
           const { done, value } = await reader.read()
@@ -131,53 +188,15 @@ export default function useSSEStream(
           const lines = buffer.split('\n')
           buffer = lines.pop() ?? ''
 
-          let currentEvent = ''
           for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              currentEvent = line.slice(7).trim()
-            } else if (line.startsWith('data: ')) {
-              const data = line.slice(6)
-              try {
-                const parsed = JSON.parse(data)
+            processLine(line)
+          }
+        }
 
-                if (currentEvent === 'thinking') {
-                  resetTimeout()
-                  setState((prev) => ({
-                    ...prev,
-                    status: 'generating',
-                    thinking: (prev.thinking ?? '') + (parsed.text ?? ''),
-                  }))
-                } else if (currentEvent === 'content') {
-                  resetTimeout()
-                  setState((prev) => ({
-                    ...prev,
-                    status: 'generating',
-                    content: (prev.content ?? '') + (parsed.text ?? ''),
-                  }))
-                } else if (currentEvent === 'done') {
-                  clearTimer()
-                  setState({
-                    status: parsed.status ?? 'complete',
-                    thinking: parsed.thinking ?? '',
-                    content: parsed.content ?? '',
-                    model: parsed.model ?? '',
-                    error: null,
-                  })
-                } else if (currentEvent === 'error') {
-                  clearTimer()
-                  setState({
-                    status: 'error',
-                    thinking: '',
-                    content: '',
-                    model: '',
-                    error: parsed.message ?? 'An error occurred.',
-                  })
-                }
-              } catch {
-                // ignore parse errors
-              }
-              currentEvent = ''
-            }
+        buffer += decoder.decode()
+        if (buffer.trim()) {
+          for (const line of buffer.split('\n')) {
+            processLine(line)
           }
         }
       })
@@ -191,16 +210,7 @@ export default function useSSEStream(
           }))
         }
       })
+  }, [type, tripId, proposalId, enabled, fetchCount, clearTimer, resetTimeout])
 
-    return () => {
-      _cancelled = true
-      clearTimer()
-      if (abortRef.current) {
-        abortRef.current.abort()
-        abortRef.current = null
-      }
-    }
-  }, [type, tripId, proposalId, enabled, clearTimer, resetTimeout])
-
-  return state
+  return { ...state, refetch }
 }

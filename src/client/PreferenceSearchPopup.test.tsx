@@ -81,25 +81,27 @@ const getPreferencesMock = mock(
   }
 )
 
-const triggerPreferenceSearchMock = mock(async () => {})
+const refetchMock = mock(() => {})
 
 const onCloseMock = mock(() => {})
 const onSearchMock = mock((_query: string) => {})
 
-let mockStreamResult: UseSSEStreamResult = {
+let mockStreamResult: UseSSEStreamResult & { refetch: () => void } = {
   status: null,
   thinking: '',
   content: '',
   model: '',
   error: null,
+  refetch: refetchMock,
 }
 
-const defaultStreamResult: UseSSEStreamResult = {
+const defaultStreamResult: UseSSEStreamResult & { refetch: () => void } = {
   status: null,
   thinking: '',
   content: '',
   model: '',
   error: null,
+  refetch: refetchMock,
 }
 
 describe('PreferenceSearchPopup', () => {
@@ -109,7 +111,7 @@ describe('PreferenceSearchPopup', () => {
     }
     listTripParticipantsMock.mockClear()
     getPreferencesMock.mockClear()
-    triggerPreferenceSearchMock.mockClear()
+    refetchMock.mockClear()
     onCloseMock.mockClear()
     onSearchMock.mockClear()
   })
@@ -121,7 +123,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -142,7 +143,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -161,7 +161,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -174,11 +173,10 @@ describe('PreferenceSearchPopup', () => {
 
   it('shows loading state when generating', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'generating',
       thinking: 'Let me think...',
       content: '',
-      model: '',
-      error: null,
     }
 
     await act(async () => {
@@ -187,7 +185,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -200,11 +197,10 @@ describe('PreferenceSearchPopup', () => {
 
   it('shows thinking section with collapsed toggle', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'generating',
       thinking: 'I should consider the slope preferences...',
       content: '',
-      model: '',
-      error: null,
     }
 
     await act(async () => {
@@ -213,7 +209,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -226,11 +221,11 @@ describe('PreferenceSearchPopup', () => {
 
   it('shows content as markdown when complete', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'complete',
       thinking: 'Some internal reasoning',
       content: 'A ski resort with good intermediate slopes and après-ski',
       model: 'kimi-k2.6:cloud',
-      error: null,
     }
 
     await act(async () => {
@@ -239,7 +234,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -256,11 +250,10 @@ describe('PreferenceSearchPopup', () => {
 
   it('shows model label when complete', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'complete',
-      thinking: '',
       content: 'Search query content',
       model: 'kimi-k2.6:cloud',
-      error: null,
     }
 
     await act(async () => {
@@ -269,7 +262,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -282,11 +274,10 @@ describe('PreferenceSearchPopup', () => {
 
   it('shows Search button when complete', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'complete',
-      thinking: '',
       content: 'A resort suitable for intermediate skiers',
       model: 'test-model',
-      error: null,
     }
 
     await act(async () => {
@@ -295,7 +286,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -309,11 +299,10 @@ describe('PreferenceSearchPopup', () => {
   it('calls onSearch with content and onClose when Search button clicked', async () => {
     const user = userEvent.setup()
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'complete',
-      thinking: '',
       content: 'Resort with great après-ski',
       model: 'test-model',
-      error: null,
     }
 
     await act(async () => {
@@ -322,7 +311,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -337,10 +325,8 @@ describe('PreferenceSearchPopup', () => {
 
   it('shows error state with retry button', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'error',
-      thinking: '',
-      content: '',
-      model: '',
       error: 'Something went wrong',
     }
 
@@ -350,7 +336,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -362,7 +347,7 @@ describe('PreferenceSearchPopup', () => {
     expect(screen.getByText('Retry')).toBeTruthy()
   })
 
-  it('calls triggerPreferenceSearch when trigger button clicked', async () => {
+  it('calls refetch when trigger button clicked', async () => {
     const user = userEvent.setup()
 
     await act(async () => {
@@ -371,7 +356,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -382,15 +366,13 @@ describe('PreferenceSearchPopup', () => {
     await user.click(
       screen.getByRole('button', { name: /search from preferences/i })
     )
-    expect(triggerPreferenceSearchMock).toHaveBeenCalledWith('trip-1')
+    expect(refetchMock).toHaveBeenCalled()
   })
 
-  it('calls triggerPreferenceSearch when Retry button clicked', async () => {
+  it('calls refetch when Retry button clicked', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'error',
-      thinking: '',
-      content: '',
-      model: '',
       error: 'Something went wrong',
     }
     const user = userEvent.setup()
@@ -401,7 +383,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -410,7 +391,7 @@ describe('PreferenceSearchPopup', () => {
     })
 
     await user.click(screen.getByText('Retry'))
-    expect(triggerPreferenceSearchMock).toHaveBeenCalledWith('trip-1')
+    expect(refetchMock).toHaveBeenCalled()
   })
 
   it('calls onClose when close button clicked', async () => {
@@ -422,7 +403,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -442,11 +422,11 @@ describe('PreferenceSearchPopup', () => {
 
   it('expands thinking section on toggle click', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'complete',
       thinking: 'Internal reasoning here',
       content: 'Final content',
       model: 'test-model',
-      error: null,
     }
     const user = userEvent.setup()
 
@@ -456,7 +436,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}
@@ -471,11 +450,9 @@ describe('PreferenceSearchPopup', () => {
 
   it('does not show Search button while generating', async () => {
     mockStreamResult = {
+      ...mockStreamResult,
       status: 'generating',
-      thinking: '',
       content: 'Some partial content',
-      model: '',
-      error: null,
     }
 
     await act(async () => {
@@ -484,7 +461,6 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
-          triggerPreferenceSearch={triggerPreferenceSearchMock}
           listTripParticipants={listTripParticipantsMock}
           getPreferences={getPreferencesMock}
           streamResult={mockStreamResult}

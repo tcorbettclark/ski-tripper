@@ -5,7 +5,6 @@ import type { Participant, Preferences } from '../shared/types.d'
 import {
   getPreferences as _getPreferences,
   listTripParticipants as _listTripParticipants,
-  triggerPreferenceSearch as _triggerPreferenceSearch,
 } from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { UseSSEStreamResult } from './useSSEStream'
@@ -16,12 +15,11 @@ interface PreferenceSearchPopupProps {
   onClose: () => void
   onSearch: (query: string) => void
   onAuthError?: (err: unknown) => void
-  triggerPreferenceSearch?: (tripId: string) => Promise<void>
   listTripParticipants?: (
     tripId: string
   ) => Promise<{ participants: Participant[] }>
   getPreferences?: (userId: string) => Promise<Preferences | null>
-  streamResult?: UseSSEStreamResult
+  streamResult?: UseSSEStreamResult & { refetch: () => void }
 }
 
 const NOOP_AUTH_ERROR = () => {}
@@ -31,7 +29,6 @@ export default function PreferenceSearchPopup({
   onClose,
   onSearch,
   onAuthError = NOOP_AUTH_ERROR,
-  triggerPreferenceSearch = _triggerPreferenceSearch,
   listTripParticipants = _listTripParticipants,
   getPreferences = _getPreferences,
   streamResult,
@@ -41,7 +38,8 @@ export default function PreferenceSearchPopup({
     tripId,
     enabled: !streamResult,
   })
-  const { status, thinking, content, model, error } = streamResult ?? hookResult
+  const { status, thinking, content, model, error, refetch } =
+    streamResult ?? hookResult
 
   const [participants, setParticipants] = useState<Participant[]>([])
   const [preferencesMap, setPreferencesMap] = useState<
@@ -49,8 +47,6 @@ export default function PreferenceSearchPopup({
   >({})
   const [participantsLoaded, setParticipantsLoaded] = useState(false)
   const [thinkingExpanded, setThinkingExpanded] = useState(false)
-  const [triggering, setTriggering] = useState(false)
-  const [triggerError, setTriggerError] = useState<string | null>(null)
 
   if (!participantsLoaded) {
     setParticipantsLoaded(true)
@@ -79,20 +75,6 @@ export default function PreferenceSearchPopup({
     (p) => p.user in preferencesMap && preferencesMap[p.user] == null
   )
 
-  async function handleTrigger() {
-    setTriggering(true)
-    setTriggerError(null)
-    try {
-      await triggerPreferenceSearch(tripId)
-    } catch (err) {
-      setTriggerError(
-        err instanceof Error ? err.message : 'Failed to trigger search'
-      )
-    } finally {
-      setTriggering(false)
-    }
-  }
-
   function handleSearch() {
     if (content) {
       onSearch(content)
@@ -106,7 +88,7 @@ export default function PreferenceSearchPopup({
     }
   }
 
-  const showRetry = (status === 'error' && error) || triggerError
+  const showRetry = status === 'error' && error
 
   return (
     <div
@@ -206,12 +188,11 @@ export default function PreferenceSearchPopup({
             </p>
             <button
               type="button"
-              onClick={handleTrigger}
-              disabled={triggering}
+              onClick={refetch}
               style={popupStyles.triggerButton}
             >
               <Sparkles size={14} />
-              {triggering ? 'Starting…' : 'Search from preferences'}
+              Search from preferences
             </button>
           </div>
         )}
@@ -219,15 +200,13 @@ export default function PreferenceSearchPopup({
         {showRetry && (
           <div style={popupStyles.errorSection}>
             {error && <p style={formStyles.error}>{error}</p>}
-            {triggerError && <p style={formStyles.error}>{triggerError}</p>}
             <button
               type="button"
-              onClick={handleTrigger}
-              disabled={triggering}
+              onClick={refetch}
               style={popupStyles.retryButton}
             >
               <RotateCw size={14} />
-              {triggering ? 'Retrying…' : 'Retry'}
+              Retry
             </button>
           </div>
         )}
