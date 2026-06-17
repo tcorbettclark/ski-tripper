@@ -172,6 +172,68 @@ function sseEvent(event: string, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function streamCachedResponse(
+  controller: ReadableStreamDefaultController,
+  cacheId: string,
+  thinking: string | null,
+  content: string | null,
+  model: string,
+  label: string
+): Promise<void> {
+  console.log(`[${label}] Streaming cached result (id: ${cacheId})`)
+  if (thinking) {
+    const words = thinking.split(/(\s+)/)
+    let buffer = ''
+    for (const word of words) {
+      if (!word) continue
+      buffer += word
+      if (/\s/.test(word) || buffer.length >= 8) {
+        controller.enqueue(sseEvent('thinking', { text: buffer }))
+        buffer = ''
+        await sleep(15 + Math.random() * 25)
+      }
+    }
+    if (buffer) {
+      controller.enqueue(sseEvent('thinking', { text: buffer }))
+      await sleep(15 + Math.random() * 25)
+    }
+  }
+
+  if (content) {
+    const trimmed = content.trim()
+    const words = trimmed.split(/(\s+)/)
+    let buffer = ''
+    for (const word of words) {
+      if (!word) continue
+      buffer += word
+      if (/\s/.test(word) || buffer.length >= 8) {
+        controller.enqueue(sseEvent('content', { text: buffer }))
+        buffer = ''
+        await sleep(20 + Math.random() * 40)
+      }
+    }
+    if (buffer) {
+      controller.enqueue(sseEvent('content', { text: buffer }))
+    }
+  }
+
+  console.log(`[${label}] Returning cached result (id: ${cacheId})`)
+  controller.enqueue(
+    sseEvent('done', {
+      cacheId,
+      status: 'complete',
+      thinking: thinking || null,
+      content: content?.trim() || null,
+      model,
+    })
+  )
+  controller.close()
+}
+
 export async function handleAnalyseProposal(req: Request): Promise<Response> {
   console.log('[analysis] Received request')
   if (req.method !== 'POST') {
@@ -286,21 +348,16 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
   const completeRow = cacheRows.find((r) => r.status === 'complete')
   if (completeRow && completeRow.inputHash === inputHash) {
-    console.log(
-      `[analysis] Returning cached complete result for proposal ${proposalId}`
-    )
     const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          sseEvent('done', {
-            cacheId: completeRow.id,
-            status: 'complete',
-            thinking: completeRow.thinking,
-            content: (completeRow.content || '').trim(),
-            model: completeRow.model,
-          })
+      async start(controller) {
+        await streamCachedResponse(
+          controller,
+          completeRow.id,
+          completeRow.thinking,
+          (completeRow.content || '').trim(),
+          completeRow.model,
+          'analysis'
         )
-        controller.close()
       },
     })
     return new Response(stream, {
@@ -553,21 +610,16 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
 
   const completeRow = cacheRows.find((r) => r.status === 'complete')
   if (completeRow && completeRow.inputHash === inputHash) {
-    console.log(
-      `[preference-search] Returning cached complete result for trip ${tripId}`
-    )
     const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          sseEvent('done', {
-            cacheId: completeRow.id,
-            status: 'complete',
-            thinking: completeRow.thinking,
-            content: (completeRow.content || '').trim(),
-            model: completeRow.model,
-          })
+      async start(controller) {
+        await streamCachedResponse(
+          controller,
+          completeRow.id,
+          completeRow.thinking,
+          (completeRow.content || '').trim(),
+          completeRow.model,
+          'preference-search'
         )
-        controller.close()
       },
     })
     return new Response(stream, {
