@@ -5,6 +5,12 @@ interface ParagraphsProps {
   style?: CSSProperties
 }
 
+const paragraphsStyles = {
+  paragraph: {
+    margin: '0 0 16px 0',
+  } as CSSProperties,
+}
+
 export default function Paragraphs({ text, style }: ParagraphsProps) {
   const paragraphs = text
     .split(/\n+/)
@@ -15,8 +21,15 @@ export default function Paragraphs({ text, style }: ParagraphsProps) {
 
   return (
     <>
-      {paragraphs.map((paragraph) => (
-        <p key={paragraph.slice(0, 40)} style={style}>
+      {paragraphs.map((paragraph, index) => (
+        <p
+          key={paragraph.slice(0, 40)}
+          style={{
+            ...paragraphsStyles.paragraph,
+            ...(index === paragraphs.length - 1 ? { marginBottom: 0 } : {}),
+            ...style,
+          }}
+        >
           {paragraph}
         </p>
       ))}

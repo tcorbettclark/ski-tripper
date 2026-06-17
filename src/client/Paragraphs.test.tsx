@@ -76,4 +76,12 @@ describe('Paragraphs', () => {
     const p = container.querySelector('p')
     expect(p?.style.color).toBe('red')
   })
+
+  it('adds vertical spacing between paragraphs', () => {
+    const text = 'First\n\nSecond'
+    render(<Paragraphs text={text} />)
+    const paragraphs = screen.getAllByRole('paragraph')
+    expect(paragraphs[0].style.marginBottom).toBe('16px')
+    expect(paragraphs[1].style.marginBottom).toBe('0px')
+  })
 })
