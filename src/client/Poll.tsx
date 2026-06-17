@@ -47,6 +47,7 @@ interface PollComponentProps {
   upsertVote?: (
     pollId: string,
     userId: string,
+    userName: string,
     proposalIds: string[],
     tokenCounts: number[]
   ) => Promise<Vote>
@@ -295,6 +296,7 @@ export default function Poll({
                 accommodations={accommodations}
                 myVote={myVote}
                 userId={user.id}
+                userName={user.name}
                 onVoteSaved={handleVoteSaved}
                 upsertVote={upsertVote}
               />

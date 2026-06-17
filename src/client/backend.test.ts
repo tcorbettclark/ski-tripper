@@ -1172,12 +1172,13 @@ describe('upsertVote', () => {
         getFullList: mock(() => Promise.resolve([])),
       },
     })
-    await upsertVote('poll-1', 'user-1', ['p-1'], [2], client)
+    await upsertVote('poll-1', 'user-1', 'Alice', ['p-1'], [2], client)
     expect(client.collection('votes').create).toHaveBeenCalledTimes(1)
     const createCall = (client.collection('votes').create as MockFn).mock
       .calls[0]
     expect(createCall[0].poll).toBe('poll-1')
     expect(createCall[0].voter).toBe('user-1')
+    expect(createCall[0].voter_name).toBe('Alice')
     expect(createCall[0].proposal_ids).toEqual(['p-1'])
     expect(createCall[0].token_counts).toEqual([2])
   })
@@ -1203,7 +1204,7 @@ describe('upsertVote', () => {
         getFullList: mock(() => Promise.resolve([{ id: 'vote-1' }])),
       },
     })
-    await upsertVote('poll-1', 'user-1', ['p-2'], [1], client)
+    await upsertVote('poll-1', 'user-1', 'Bob', ['p-2'], [1], client)
     expect(client.collection('votes').update).toHaveBeenCalledTimes(1)
     expect(client.collection('votes').create).not.toHaveBeenCalled()
   })
@@ -1226,9 +1227,9 @@ describe('upsertVote', () => {
         ),
       },
     })
-    expect(upsertVote('poll-1', 'user-1', [], [], client)).rejects.toThrow(
-      'Voting is only allowed on open polls.'
-    )
+    expect(
+      upsertVote('poll-1', 'user-1', 'Alice', [], [], client)
+    ).rejects.toThrow('Voting is only allowed on open polls.')
   })
 
   it('throws when total tokens exceed the number of proposals', async () => {
@@ -1250,7 +1251,7 @@ describe('upsertVote', () => {
       },
     })
     expect(
-      upsertVote('poll-1', 'user-1', ['p-1'], [3], client)
+      upsertVote('poll-1', 'user-1', 'Alice', ['p-1'], [3], client)
     ).rejects.toThrow('Total tokens cannot exceed 2.')
   })
 
@@ -1280,7 +1281,7 @@ describe('upsertVote', () => {
       },
     })
     expect(
-      upsertVote('poll-1', 'user-1', ['p-99'], [1], client)
+      upsertVote('poll-1', 'user-1', 'Alice', ['p-99'], [1], client)
     ).rejects.toThrow('Vote contains proposal IDs not in this poll.')
     expect(client.collection('votes').create).not.toHaveBeenCalled()
     expect(client.collection('votes').update).not.toHaveBeenCalled()
@@ -1312,7 +1313,7 @@ describe('upsertVote', () => {
       },
     })
     expect(
-      upsertVote('poll-1', 'user-1', ['p-1', 'p-2'], [1], client)
+      upsertVote('poll-1', 'user-1', 'Alice', ['p-1', 'p-2'], [1], client)
     ).rejects.toThrow('proposalIds and tokenCounts must have the same length.')
     expect(client.collection('votes').create).not.toHaveBeenCalled()
     expect(client.collection('votes').update).not.toHaveBeenCalled()
@@ -1331,9 +1332,9 @@ describe('upsertVote', () => {
         ),
       },
     })
-    expect(upsertVote('poll-1', 'user-1', [], [], client)).rejects.toThrow(
-      'You must be a participant to access this trip.'
-    )
+    expect(
+      upsertVote('poll-1', 'user-1', 'Alice', [], [], client)
+    ).rejects.toThrow('You must be a participant to access this trip.')
   })
 })
 

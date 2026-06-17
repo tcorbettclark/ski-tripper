@@ -11,10 +11,12 @@ interface PollVotingProps {
   accommodations?: Record<string, Accommodation[]>
   myVote: Vote | null
   userId: string
+  userName: string
   onVoteSaved: (vote: unknown) => void
   upsertVote?: (
     pollId: string,
     userId: string,
+    userName: string,
     proposalIds: string[],
     tokenCounts: number[]
   ) => Promise<unknown>
@@ -26,6 +28,7 @@ export default function PollVoting({
   accommodations = {},
   myVote,
   userId,
+  userName,
   onVoteSaved,
   upsertVote = _upsertVote,
 }: PollVotingProps) {
@@ -83,6 +86,7 @@ export default function PollVoting({
       const result = await upsertVote(
         poll.id,
         userId,
+        userName,
         nonZeroIds,
         nonZeroIds.map((id) => allocations[id])
       )

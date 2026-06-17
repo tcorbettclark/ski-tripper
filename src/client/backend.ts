@@ -126,7 +126,7 @@ function mapVote(row: Record<string, unknown>): Vote {
     updated: row.updated as string,
     poll: row.poll as string,
     voter: row.voter as string,
-    voterUserName: row.voter_user_name as string,
+    voterUserName: row.voter_name as string,
     proposalIds: row.proposal_ids as string[],
     tokenCounts: row.token_counts as number[],
   }
@@ -744,6 +744,7 @@ export async function listPolls(
 export async function upsertVote(
   pollId: string,
   voterUserId: string,
+  voterUserName: string,
   proposalIds: string[],
   tokenCounts: number[],
   client: PocketBase = getPb()
@@ -783,6 +784,7 @@ export async function upsertVote(
   const row = await client.collection('votes').create({
     poll: pollId,
     voter: voterUserId,
+    voter_name: voterUserName,
     proposal_ids: proposalIds,
     token_counts: tokenCounts,
   })

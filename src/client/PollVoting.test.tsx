@@ -124,6 +124,7 @@ function renderPollVoting(props = {}) {
     proposals,
     myVote: null,
     userId: 'user-1',
+    userName: 'Test User',
     onVoteSaved: mock(() => {}),
     upsertVote: mock(() => Promise.resolve({ id: 'v-new' })),
   }
@@ -252,6 +253,7 @@ describe('PollVoting', () => {
       expect(upsertVote).toHaveBeenCalledWith(
         'poll-1',
         'user-1',
+        'Test User',
         ['p-1', 'p-2'],
         [2, 1]
       )
