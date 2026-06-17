@@ -2004,7 +2004,7 @@ describe('createSystemMessage', () => {
       .calls[0]
     expect(createCall[0].proposal).toBe('prop-1')
     expect(createCall[0].author).toBe('')
-    expect(createCall[0].author_user_name).toBe('System')
+    expect(createCall[0].author_name).toBe('System')
     expect(createCall[0].body).toBe('Alice submitted this proposal')
     expect(createCall[0].type).toBe('system')
     expect(result.id).toBe('new-id')

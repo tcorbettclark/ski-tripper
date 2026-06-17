@@ -1051,7 +1051,7 @@ export async function createSystemMessage(
   const row = await client.collection('discussion').create({
     proposal: proposalId,
     author: '',
-    author_user_name: 'System',
+    author_name: 'System',
     body,
     type: 'system',
   })
