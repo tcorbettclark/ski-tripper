@@ -9,7 +9,6 @@ interface PreferenceSearchPopupProps {
   tripId: string
   onClose: () => void
   onSearch: (query: string) => void
-  onAuthError?: (err: unknown) => void
   streamResult?: UseSSEStreamResult & { refetch: () => void }
 }
 
@@ -17,7 +16,6 @@ export default function PreferenceSearchPopup({
   tripId,
   onClose,
   onSearch,
-  onAuthError: _onAuthError,
   streamResult,
 }: PreferenceSearchPopupProps) {
   const [triggered, setTriggered] = useState(false)

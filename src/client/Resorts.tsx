@@ -1025,7 +1025,6 @@ export default function Resorts({
           tripId={tripId}
           onClose={() => setShowPreferenceSearch(false)}
           onSearch={(query) => setSearchQuery(query)}
-          onAuthError={onAuthError}
         />
       )}
     </div>
