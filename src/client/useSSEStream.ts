@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { LlmCache } from '../shared/types.d'
+import type { LlmStreamStatus } from '../shared/types.d'
 import { getApiUrl, getPb } from './backend'
 
 const TIMEOUT_MS = 120_000
@@ -12,7 +12,7 @@ export interface UseSSEStreamParams {
 }
 
 export interface UseSSEStreamResult {
-  status: LlmCache['status'] | null
+  status: LlmStreamStatus | null
   thinking: string
   content: string
   model: string
@@ -69,8 +69,13 @@ export default function useSSEStream(
     mountedRef.current = true
     return () => {
       mountedRef.current = false
+      if (abortRef.current) {
+        abortRef.current.abort()
+        abortRef.current = null
+      }
+      clearTimer()
     }
-  }, [])
+  }, [clearTimer])
 
   useEffect(() => {
     if (!enabled) return

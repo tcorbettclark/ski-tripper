@@ -1081,7 +1081,7 @@ function mapLlmCache(row: Record<string, unknown>): LlmCache {
     type: row.type as 'analysis' | 'preference-search',
     proposalId: (row.proposal as string) || null,
     tripId: row.trip as string,
-    status: row.status as 'generating' | 'complete' | 'error',
+    status: row.status as 'complete',
     thinking: (row.thinking as string) || null,
     content: (row.content as string) || null,
     model: row.model as string,

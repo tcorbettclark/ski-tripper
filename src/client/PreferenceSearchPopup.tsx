@@ -19,6 +19,15 @@ export default function PreferenceSearchPopup({
   streamResult,
 }: PreferenceSearchPopupProps) {
   const [triggered, setTriggered] = useState(false)
+
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `.thinking-content ul, .thinking-content ol { margin: 0; padding-left: 1.5em; } .thinking-content p { margin: 0 0 0.5em; } .thinking-content p:last-child { margin-bottom: 0; }`
+    document.head.appendChild(style)
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
   const hookResult = useSSEStream({
     type: 'preference-search',
     tripId,
@@ -102,7 +111,6 @@ export default function PreferenceSearchPopup({
 
         {(thinking || isGenerating) && hasContent && (
           <div style={popupStyles.thinkingSection}>
-            <style>{`.thinking-content ul, .thinking-content ol { margin: 0; padding-left: 1.5em; } .thinking-content p { margin: 0 0 0.5em; } .thinking-content p:last-child { margin-bottom: 0; }`}</style>
             <button
               type="button"
               onClick={() => setThinkingCollapsed(!thinkingCollapsed)}

@@ -152,8 +152,10 @@ export interface LlmCache {
   type: 'analysis' | 'preference-search'
   proposalId: string | null
   tripId: string
-  status: 'generating' | 'complete' | 'error'
+  status: 'complete'
   thinking: string | null
   content: string | null
   model: string
 }
+
+export type LlmStreamStatus = 'generating' | 'complete' | 'error'
