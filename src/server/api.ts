@@ -312,13 +312,19 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     })
   }
 
+  const matchingComplete = cacheRows.filter(
+    (r) => r.status === 'complete' && r.inputHash === inputHash
+  )
+  const latestCompleteId = matchingComplete[matchingComplete.length - 1]?.id
   for (const row of cacheRows) {
-    if (row.status !== 'complete' || row.inputHash !== inputHash) {
-      try {
-        await adminPb.collection('llm_cache').delete(row.id)
-      } catch {
-        // best effort cleanup
-      }
+    if (row.id === latestCompleteId) continue
+    try {
+      await adminPb.collection('llm_cache').delete(row.id)
+      console.log(
+        `[analysis] Deleted stale cache row ${row.id} (status: ${row.status})`
+      )
+    } catch {
+      // best effort cleanup
     }
   }
 
@@ -573,13 +579,19 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
     })
   }
 
+  const matchingComplete = cacheRows.filter(
+    (r) => r.status === 'complete' && r.inputHash === inputHash
+  )
+  const latestCompleteId = matchingComplete[matchingComplete.length - 1]?.id
   for (const row of cacheRows) {
-    if (row.status !== 'complete' || row.inputHash !== inputHash) {
-      try {
-        await adminPb.collection('llm_cache').delete(row.id)
-      } catch {
-        // best effort cleanup
-      }
+    if (row.id === latestCompleteId) continue
+    try {
+      await adminPb.collection('llm_cache').delete(row.id)
+      console.log(
+        `[preference-search] Deleted stale cache row ${row.id} (status: ${row.status})`
+      )
+    } catch {
+      // best effort cleanup
     }
   }
 
