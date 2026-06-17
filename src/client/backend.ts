@@ -1102,12 +1102,15 @@ export async function listLlmCacheByTripAndType(
   return rows.map((r) => mapLlmCache(r as unknown as Record<string, unknown>))
 }
 
+export function getApiUrl(endpoint: string): string {
+  return `${window.location.origin}${endpoint}`
+}
+
 export async function triggerAnalysis(
   proposalId: string,
   tripId: string
 ): Promise<void> {
-  const baseUrl = new URL(getPb().baseUrl)
-  const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/analyse-proposal`
+  const apiUrl = getApiUrl('/api/analyse-proposal')
 
   const response = await fetch(apiUrl, {
     method: 'POST',
@@ -1125,8 +1128,7 @@ export async function triggerAnalysis(
 }
 
 export async function triggerPreferenceSearch(tripId: string): Promise<void> {
-  const baseUrl = new URL(getPb().baseUrl)
-  const apiUrl = `${baseUrl.protocol}//${baseUrl.host}/api/preference-search`
+  const apiUrl = getApiUrl('/api/preference-search')
 
   const response = await fetch(apiUrl, {
     method: 'POST',

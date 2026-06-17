@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LlmCache } from '../shared/types.d'
-import { getPb } from './backend'
+import { getApiUrl, getPb } from './backend'
 
 const TIMEOUT_MS = 120_000
 
@@ -25,11 +25,6 @@ const INITIAL_STATE: UseSSEStreamResult = {
   content: '',
   model: '',
   error: null,
-}
-
-function getApiUrl(endpoint: string): string {
-  const baseUrl = new URL(getPb().baseUrl)
-  return `${baseUrl.protocol}//${baseUrl.host}${endpoint}`
 }
 
 export default function useSSEStream(

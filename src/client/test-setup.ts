@@ -24,12 +24,11 @@ globalThis.ResizeObserver = class ResizeObserver {
  * HOW: We replace two low-level mechanisms that all backend calls go through:
  *
  *   1. pb.collection()  — every DB query (listTrips, listParticipants, etc.)
- *   2. globalThis.fetch  — direct HTTP calls (triggerAnalysis, useSSEStream)
+ *   2. globalThis.fetch  — direct HTTP calls to PocketBase (e.g. auth operations)
  *
  * If either is called with the PocketBase URL, we throw with a message that
  * tells the developer exactly which call leaked and includes a stack trace
- * pointing to the offending test. The fix is always the same: pass a mock
- * function via the component's DI props.
+ * pointing to the offending test.
  *
  * Non-PocketBase fetches (e.g. to external APIs) are allowed through unchanged.
  */

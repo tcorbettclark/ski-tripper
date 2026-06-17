@@ -20,7 +20,7 @@ import {
   type Participant as PSParticipant,
   type Preferences as PSPreferences,
 } from './logic/preference-search'
-import { createClient, getAdminClient } from './pocketbase'
+import { extractUserIdFromToken, getAdminClient } from './pocketbase'
 
 function createOllama(): Ollama {
   const ollamaApiKey = server_get_ollama_api_key()
@@ -44,6 +44,7 @@ async function verifyParticipantMembership(
   if (rows.length === 0) {
     throw new Error('You must be a participant of this trip.')
   }
+  console.log(`[auth] User ${userId} verified as participant of trip ${tripId}`)
 }
 
 async function fetchProposal(
@@ -172,6 +173,7 @@ function sseEvent(event: string, data: unknown): string {
 }
 
 export async function handleAnalyseProposal(req: Request): Promise<Response> {
+  console.log('[analysis] Received request')
   if (req.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 })
   }
@@ -185,6 +187,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
   const { proposalId, tripId } = body
   if (!proposalId || !tripId) {
+    console.log('[analysis] Missing proposalId or tripId')
     return Response.json(
       { error: 'Missing proposalId or tripId' },
       { status: 400 }
@@ -193,36 +196,35 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
+    console.log('[analysis] Missing or invalid Authorization header')
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const authToken = authHeader.slice(7)
 
-  let userClient: PocketBase
-  let adminPb: PocketBase
-  let userId: string
-
-  try {
-    userClient = createClient(authToken)
-    const authRecord = userClient.authStore.record
-    if (!authRecord) {
-      return Response.json({ error: 'Invalid token' }, { status: 401 })
-    }
-    userId = authRecord.id
-  } catch {
+  const userId = extractUserIdFromToken(authToken)
+  if (!userId) {
+    console.log('[analysis] Invalid auth token - could not extract user ID')
     return Response.json({ error: 'Invalid token' }, { status: 401 })
   }
+  console.log(
+    `[analysis] Authenticated user ${userId} for proposal ${proposalId}`
+  )
+
+  let adminPb: PocketBase
 
   try {
     adminPb = await getAdminClient()
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Admin auth failed'
+    console.error(`[analysis] Admin auth failed: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
   try {
-    await verifyParticipantMembership(userClient, tripId, userId)
+    await verifyParticipantMembership(adminPb, tripId, userId)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Authorization failed'
+    console.log(`[analysis] Participant verification failed: ${msg}`)
     return Response.json({ error: msg }, { status: 403 })
   }
 
@@ -234,8 +236,12 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     proposal = await fetchProposal(adminPb, proposalId)
     accommodations = await fetchAccommodations(adminPb, proposalId)
     participants = await fetchParticipants(adminPb, tripId)
+    console.log(
+      `[analysis] Fetched proposal ${proposalId}, ${participants.length} participants`
+    )
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to fetch data'
+    console.error(`[analysis] Failed to fetch data: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
@@ -274,11 +280,15 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to check cache'
+    console.error(`[analysis] Failed to check cache: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
   const generatingRow = cacheRows.find((r) => r.status === 'generating')
   if (generatingRow) {
+    console.log(
+      `[analysis] Returning cached generating result for proposal ${proposalId}`
+    )
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(
@@ -304,6 +314,9 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
   const completeRow = cacheRows.find((r) => r.status === 'complete')
   if (completeRow && completeRow.inputHash === inputHash) {
+    console.log(
+      `[analysis] Returning cached complete result for proposal ${proposalId}`
+    )
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(
@@ -384,6 +397,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     participantPrefsData
   )
 
+  console.log(`[analysis] Starting LLM stream for proposal ${proposalId}`)
   const ollama = createOllama()
 
   const stream = new ReadableStream({
@@ -465,6 +479,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : 'LLM generation failed'
+        console.error(`[analysis] LLM error: ${errorMsg}`)
 
         try {
           await adminPb.collection('llm_cache').update(cacheRow.id, {
@@ -492,6 +507,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 }
 
 export async function handlePreferenceSearch(req: Request): Promise<Response> {
+  console.log('[preference-search] Received request')
   if (req.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 })
   }
@@ -505,41 +521,42 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
 
   const { tripId } = body
   if (!tripId) {
+    console.log('[preference-search] Missing tripId')
     return Response.json({ error: 'Missing tripId' }, { status: 400 })
   }
 
+  console.log(`[preference-search] Trip ${tripId}`)
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
+    console.log('[preference-search] Missing or invalid Authorization header')
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const authToken = authHeader.slice(7)
 
-  let userClient: PocketBase
-  let adminPb: PocketBase
-  let userId: string
-
-  try {
-    userClient = createClient(authToken)
-    const authRecord = userClient.authStore.record
-    if (!authRecord) {
-      return Response.json({ error: 'Invalid token' }, { status: 401 })
-    }
-    userId = authRecord.id
-  } catch {
+  const userId = extractUserIdFromToken(authToken)
+  if (!userId) {
+    console.log(
+      '[preference-search] Invalid auth token - could not extract user ID'
+    )
     return Response.json({ error: 'Invalid token' }, { status: 401 })
   }
+  console.log(`[preference-search] Authenticated user ${userId}`)
+
+  let adminPb: PocketBase
 
   try {
     adminPb = await getAdminClient()
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Admin auth failed'
+    console.error(`[preference-search] Admin auth failed: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
   try {
-    await verifyParticipantMembership(userClient, tripId, userId)
+    await verifyParticipantMembership(adminPb, tripId, userId)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Authorization failed'
+    console.log(`[preference-search] Participant verification failed: ${msg}`)
     return Response.json({ error: msg }, { status: 403 })
   }
 
@@ -550,9 +567,13 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
       adminPb,
       tripId
     )) as PSParticipant[]
+    console.log(
+      `[preference-search] Fetched ${participantsRaw.length} participants for trip ${tripId}`
+    )
   } catch (err) {
     const msg =
       err instanceof Error ? err.message : 'Failed to fetch participants'
+    console.error(`[preference-search] Failed to fetch participants: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
@@ -578,6 +599,9 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
   }
 
   if (participantPrefsData.length === 0) {
+    console.log(
+      `[preference-search] No participants with preferences for trip ${tripId}`
+    )
     return Response.json(
       { error: 'No participants with preferences found' },
       { status: 400 }
@@ -597,11 +621,15 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to check cache'
+    console.error(`[preference-search] Failed to check cache: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
   const generatingRow = cacheRows.find((r) => r.status === 'generating')
   if (generatingRow) {
+    console.log(
+      `[preference-search] Returning cached generating result for trip ${tripId}`
+    )
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(
@@ -627,6 +655,9 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
 
   const completeRow = cacheRows.find((r) => r.status === 'complete')
   if (completeRow && completeRow.inputHash === inputHash) {
+    console.log(
+      `[preference-search] Returning cached complete result for trip ${tripId}`
+    )
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(
@@ -702,6 +733,9 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
 
   const systemPrompt = buildPreferenceSearchSystemPrompt()
   const userPrompt = buildPreferenceSearchUserPrompt(participantPrefsData)
+  console.log(
+    `[preference-search] Starting LLM stream for trip ${tripId} with ${participantPrefsData.length} participants`
+  )
   const ollama = createOllama()
 
   const stream = new ReadableStream({
@@ -783,6 +817,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : 'LLM generation failed'
+        console.error(`[preference-search] LLM error: ${errorMsg}`)
 
         try {
           await adminPb.collection('llm_cache').update(cacheRow.id, {
