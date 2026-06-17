@@ -221,7 +221,7 @@ async function streamCachedResponse(
     }
   }
 
-  console.log(`[${label}] Returning cached result (id: ${cacheId})`)
+  console.log(`[${label}] Completed streaming cached result (id: ${cacheId})`)
   controller.enqueue(
     sseEvent('done', {
       cacheId,
