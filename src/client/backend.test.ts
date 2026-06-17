@@ -1514,7 +1514,8 @@ describe('createAccommodation', () => {
       { name: 'Hotel Nevai', url: 'example.com' },
       client
     )
-    const callArgs = client.collection('accommodations').create.mock.calls[0]
+    const callArgs = (client.collection('accommodations').create as MockFn).mock
+      .calls[0]
     expect(callArgs[0].url).toBe('https://example.com')
   })
 
@@ -1545,7 +1546,8 @@ describe('createAccommodation', () => {
       { name: 'Hotel Nevai' },
       client
     )
-    const callArgs = client.collection('accommodations').create.mock.calls[0]
+    const callArgs = (client.collection('accommodations').create as MockFn).mock
+      .calls[0]
     expect(callArgs[0].url).toBeUndefined()
   })
 })
