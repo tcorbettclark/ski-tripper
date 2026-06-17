@@ -162,10 +162,10 @@ describe('AnalysisTab', () => {
     expect(screen.getByText('Carol')).toBeTruthy()
   })
 
-  it('shows loading state when generating', async () => {
+  it('shows thinking placeholder while generating with no thinking content', async () => {
     mockStreamResult = {
       status: 'generating',
-      thinking: 'Let me think...',
+      thinking: '',
       content: '',
       model: '',
       error: null,
@@ -184,10 +184,10 @@ describe('AnalysisTab', () => {
       )
     })
 
-    expect(screen.getByText('Generating analysis…')).toBeTruthy()
+    expect(screen.getByText('Thinking…')).toBeTruthy()
   })
 
-  it('shows thinking section with collapsed toggle', async () => {
+  it('shows thinking inline when generating', async () => {
     mockStreamResult = {
       status: 'generating',
       thinking: 'I should consider the slope preferences...',
@@ -209,7 +209,9 @@ describe('AnalysisTab', () => {
       )
     })
 
-    expect(screen.getByText('Thinking…')).toBeTruthy()
+    expect(
+      screen.getByText('I should consider the slope preferences...')
+    ).toBeTruthy()
   })
 
   it('shows content as markdown when complete', async () => {

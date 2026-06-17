@@ -1,6 +1,7 @@
-import { ChevronDown, ChevronRight, RotateCw, Sparkles, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { RotateCw, Sparkles, X } from 'lucide-react'
+import { useState } from 'react'
 import Markdown from 'react-markdown'
+import ThinkingContent from './ThinkingContent'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { UseSSEStreamResult } from './useSSEStream'
 import useSSEStream from './useSSEStream'
@@ -19,15 +20,6 @@ export default function PreferenceSearchPopup({
   streamResult,
 }: PreferenceSearchPopupProps) {
   const [triggered, setTriggered] = useState(false)
-
-  useEffect(() => {
-    const style = document.createElement('style')
-    style.textContent = `.thinking-content ul, .thinking-content ol { margin: 0; padding-left: 1.5em; } .thinking-content p { margin: 0 0 0.5em; } .thinking-content p:last-child { margin-bottom: 0; }`
-    document.head.appendChild(style)
-    return () => {
-      document.head.removeChild(style)
-    }
-  }, [])
   const hookResult = useSSEStream({
     type: 'preference-search',
     tripId,
@@ -38,14 +30,6 @@ export default function PreferenceSearchPopup({
 
   const isGenerating = status === 'generating'
   const hasContent = !!content?.trim()
-
-  const [thinkingCollapsed, setThinkingCollapsed] = useState(false)
-
-  useEffect(() => {
-    if (hasContent) {
-      setThinkingCollapsed(true)
-    }
-  }, [hasContent])
 
   function handleSearch() {
     if (content) {
@@ -99,40 +83,11 @@ export default function PreferenceSearchPopup({
           </p>
         )}
 
-        {(thinking || isGenerating) && !hasContent && (
-          <div style={popupStyles.thinkingInline}>
-            {thinking ? (
-              <Markdown>{thinking}</Markdown>
-            ) : (
-              <p style={popupStyles.thinkingPlaceholder}>Thinking…</p>
-            )}
-          </div>
-        )}
-
-        {(thinking || isGenerating) && hasContent && (
-          <div style={popupStyles.thinkingSection}>
-            <button
-              type="button"
-              onClick={() => setThinkingCollapsed(!thinkingCollapsed)}
-              style={popupStyles.thinkingToggle}
-            >
-              {thinkingCollapsed ? (
-                <ChevronRight size={14} />
-              ) : (
-                <ChevronDown size={14} />
-              )}
-              <span>Thinking</span>
-            </button>
-            {!thinkingCollapsed && (
-              <div
-                className="thinking-content"
-                style={popupStyles.thinkingContent}
-              >
-                <Markdown>{thinking}</Markdown>
-              </div>
-            )}
-          </div>
-        )}
+        <ThinkingContent
+          thinking={thinking}
+          isGenerating={isGenerating}
+          hasContent={hasContent}
+        />
 
         {content && (
           <div style={popupStyles.contentSection}>
@@ -246,46 +201,6 @@ const popupStyles = {
     color: colors.textSecondary,
     margin: '0 0 16px',
     lineHeight: '1.5',
-  },
-  thinkingInline: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: '1.5',
-    marginBottom: '12px',
-  },
-  thinkingPlaceholder: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textSecondary,
-    margin: 0,
-    fontStyle: 'italic' as const,
-  },
-  thinkingSection: {
-    marginBottom: '12px',
-    borderRadius: '8px',
-    border: borders.subtle,
-  },
-  thinkingToggle: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    width: '100%',
-    padding: '8px 12px',
-    background: 'transparent',
-    border: 'none',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    cursor: 'pointer',
-  },
-  thinkingContent: {
-    padding: '8px 12px 12px',
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: '1.5',
-    borderTop: borders.subtle,
   },
   contentSection: {
     fontFamily: fonts.body,

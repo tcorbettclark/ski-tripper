@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, RotateCw } from 'lucide-react'
+import { RotateCw } from 'lucide-react'
 import { useState } from 'react'
 import Markdown from 'react-markdown'
 import type { Participant, Preferences } from '../shared/types.d'
@@ -7,7 +7,8 @@ import {
   listTripParticipants as _listTripParticipants,
   triggerAnalysis as _triggerAnalysis,
 } from './backend'
-import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import ThinkingContent from './ThinkingContent'
+import { colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { UseSSEStreamResult } from './useSSEStream'
 import useSSEStream from './useSSEStream'
 
@@ -46,7 +47,6 @@ export default function AnalysisTab({
     Record<string, Preferences | null>
   >({})
   const [participantsLoaded, setParticipantsLoaded] = useState(false)
-  const [thinkingExpanded, setThinkingExpanded] = useState(false)
   const [triggering, setTriggering] = useState(false)
   const [triggerError, setTriggerError] = useState<string | null>(null)
 
@@ -92,6 +92,8 @@ export default function AnalysisTab({
   }
 
   const showRetry = (status === 'error' && error) || triggerError
+  const isGenerating = status === 'generating'
+  const hasContent = !!content?.trim()
 
   return (
     <div style={analysisStyles.container}>
@@ -120,34 +122,11 @@ export default function AnalysisTab({
         )}
       </div>
 
-      {status === 'generating' && (
-        <div style={analysisStyles.loadingContainer}>
-          <div style={analysisStyles.spinner} />
-          <p style={analysisStyles.loadingText}>Generating analysis…</p>
-        </div>
-      )}
-
-      {thinking && (
-        <div style={analysisStyles.thinkingSection}>
-          <button
-            type="button"
-            onClick={() => setThinkingExpanded(!thinkingExpanded)}
-            style={analysisStyles.thinkingToggle}
-          >
-            {thinkingExpanded ? (
-              <ChevronDown size={14} />
-            ) : (
-              <ChevronRight size={14} />
-            )}
-            <span>{status === 'generating' ? 'Thinking…' : 'Thinking'}</span>
-          </button>
-          {thinkingExpanded && (
-            <div style={analysisStyles.thinkingContent}>
-              <Markdown>{thinking}</Markdown>
-            </div>
-          )}
-        </div>
-      )}
+      <ThinkingContent
+        thinking={thinking}
+        isGenerating={isGenerating}
+        hasContent={hasContent}
+      />
 
       {content && (
         <div style={analysisStyles.contentSection}>
@@ -240,54 +219,6 @@ const analysisStyles = {
     background: mix('--color-textSecondary', 0.08),
     padding: '2px 8px',
     borderRadius: '4px',
-  },
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: '12px',
-    padding: '32px 0',
-  },
-  spinner: {
-    width: '28px',
-    height: '28px',
-    border: `3px solid ${mix('--color-accent', 0.2)}`,
-    borderTopColor: colors.accent,
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
-  loadingText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colors.textSecondary,
-    margin: 0,
-  },
-  thinkingSection: {
-    marginBottom: '12px',
-    borderRadius: '8px',
-    border: borders.subtle,
-    overflow: 'hidden',
-  },
-  thinkingToggle: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    width: '100%',
-    padding: '8px 12px',
-    background: 'transparent',
-    border: 'none',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    cursor: 'pointer',
-  },
-  thinkingContent: {
-    padding: '8px 12px 12px',
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textSecondary,
-    lineHeight: '1.5',
-    borderTop: borders.subtle,
   },
   contentSection: {
     fontFamily: fonts.body,
