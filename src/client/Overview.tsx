@@ -34,6 +34,7 @@ import {
   SkiIcon,
   SnowboardIcon,
 } from './Icons'
+import Paragraphs from './Paragraphs'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 
 interface OverviewProps {
@@ -646,7 +647,10 @@ export default function Overview({
               <X size={12} />
             </button>
           </div>
-          <span style={overviewStyles.aspectPopupText}>{aspectPopup.text}</span>
+          <Paragraphs
+            text={aspectPopup.text}
+            style={overviewStyles.aspectPopupText}
+          />
         </div>
       )}
     </div>
@@ -879,7 +883,6 @@ const overviewStyles = {
     fontSize: fontSizes.sm,
     color: colors.textData,
     lineHeight: '1.5',
-    whiteSpace: 'pre-line' as const,
     wordBreak: 'break-word' as const,
   },
   participantName: {

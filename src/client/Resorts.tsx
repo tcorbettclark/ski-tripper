@@ -10,6 +10,7 @@ import { COMMON_REGIONS, REGIONS } from '../shared/regions'
 import type { ResortWithEmbedding, User } from '../shared/types.d'
 import DateRangeField from './DateRangeField'
 import DetailField from './DetailField'
+import Paragraphs from './Paragraphs'
 import PisteBreakdown from './PisteBreakdown'
 import PreferenceSearchPopup from './PreferenceSearchPopup'
 import type { ScoredResort } from './resortSearch'
@@ -947,9 +948,10 @@ export default function Resorts({
                 {selectedResort.linkedResortsDescription && (
                   <div style={resortsStyles.detailDescriptionSection}>
                     <DetailField label="Linked Resorts">
-                      <p style={detailStyles.descriptionText}>
-                        {selectedResort.linkedResortsDescription}
-                      </p>
+                      <Paragraphs
+                        text={selectedResort.linkedResortsDescription}
+                        style={detailStyles.descriptionText}
+                      />
                     </DetailField>
                   </div>
                 )}
@@ -957,9 +959,10 @@ export default function Resorts({
                 {selectedResort.description && (
                   <div style={resortsStyles.detailDescriptionSection}>
                     <DetailField label="Description">
-                      <p style={detailStyles.descriptionText}>
-                        {selectedResort.description}
-                      </p>
+                      <Paragraphs
+                        text={selectedResort.description}
+                        style={detailStyles.descriptionText}
+                      />
                     </DetailField>
                   </div>
                 )}

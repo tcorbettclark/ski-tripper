@@ -26,13 +26,12 @@ describe('InfoBanner', () => {
     expect(dots.length).toBe(testSlides.length)
   })
 
-  it('renders newlines in slide text', () => {
-    const newlineSlides = [{ icon: Snowflake, text: 'Hello\nWorld' }]
+  it('renders newlines in slide text as separate paragraphs', () => {
+    const text = 'Hello\nWorld'
+    const newlineSlides = [{ icon: Snowflake, text }]
     render(<InfoBanner intervalMs={60000} slides={newlineSlides} />)
-    const paragraph = screen.getByText((_content, element) => {
-      return element?.tagName === 'P' && element.textContent === 'Hello\nWorld'
-    })
-    expect(paragraph.style.whiteSpace).toBe('pre-line')
+    expect(screen.getByText('Hello')).toBeTruthy()
+    expect(screen.getByText('World')).toBeTruthy()
   })
 
   it('advances to the next slide after the interval and fade', () => {

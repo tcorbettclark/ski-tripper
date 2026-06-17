@@ -10,6 +10,7 @@ import {
   Users,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import Paragraphs from './Paragraphs'
 import { colors, fontSizes, fonts, mix } from './theme'
 
 const slideColorKeys: (keyof typeof colors)[] = [
@@ -119,15 +120,13 @@ export default function InfoBanner({
           )
         })()}
         <div style={bannerStyles.textWrap}>
-          <p
+          <Paragraphs
+            text={slides[active].text}
             style={{
               ...bannerStyles.text,
               color: colors[slideColorKeys[active % slideColorKeys.length]],
-              whiteSpace: 'pre-line' as const,
             }}
-          >
-            {slides[active].text}
-          </p>
+          />
         </div>
         <div style={bannerStyles.dots}>
           {slides.map((_, i) => (

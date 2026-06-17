@@ -18,6 +18,7 @@ import {
 import DetailField from './DetailField'
 import DiscussionSection from './DiscussionSection'
 import EditProposalForm from './EditProposalForm'
+import Paragraphs from './Paragraphs'
 import PisteBreakdown from './PisteBreakdown'
 import {
   borders,
@@ -457,17 +458,20 @@ export default function ProposalCard({
                 {proposal.linkedResortsDescription && (
                   <div style={styles.descriptionSection}>
                     <DetailField label="Linked Resorts">
-                      <p style={detailStyles.descriptionText}>
-                        {proposal.linkedResortsDescription}
-                      </p>
+                      <Paragraphs
+                        text={proposal.linkedResortsDescription}
+                        style={detailStyles.descriptionText}
+                      />
                     </DetailField>
                   </div>
                 )}
                 {proposal.description && (
-                  <DetailField
-                    label="Description"
-                    value={proposal.description}
-                  />
+                  <DetailField label="Description">
+                    <Paragraphs
+                      text={proposal.description}
+                      style={detailStyles.descriptionText}
+                    />
+                  </DetailField>
                 )}
                 {canAct && (
                   <div style={styles.editButtonRow}>

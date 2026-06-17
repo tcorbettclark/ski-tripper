@@ -187,7 +187,6 @@ export const detailStyles = {
     color: colors.textData,
     lineHeight: '1.6',
     margin: '4px 0 0',
-    whiteSpace: 'pre-line' as const,
   },
 } as const
 
