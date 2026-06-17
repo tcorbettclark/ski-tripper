@@ -284,34 +284,6 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     return Response.json({ error: msg }, { status: 500 })
   }
 
-  const generatingRow = cacheRows.find((r) => r.status === 'generating')
-  if (generatingRow) {
-    console.log(
-      `[analysis] Returning cached generating result for proposal ${proposalId}`
-    )
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          sseEvent('done', {
-            cacheId: generatingRow.id,
-            status: 'generating',
-            thinking: generatingRow.thinking,
-            content: generatingRow.content,
-            model: generatingRow.model,
-          })
-        )
-        controller.close()
-      },
-    })
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    })
-  }
-
   const completeRow = cacheRows.find((r) => r.status === 'complete')
   if (completeRow && completeRow.inputHash === inputHash) {
     console.log(
@@ -340,54 +312,14 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     })
   }
 
-  if (completeRow && completeRow.inputHash !== inputHash) {
-    try {
-      await adminPb.collection('llm_cache').delete(completeRow.id)
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to delete stale cache'
-      return Response.json({ error: msg }, { status: 500 })
+  for (const row of cacheRows) {
+    if (row.status !== 'complete' || row.inputHash !== inputHash) {
+      try {
+        await adminPb.collection('llm_cache').delete(row.id)
+      } catch {
+        // best effort cleanup
+      }
     }
-  }
-
-  const errorRow = cacheRows.find((r) => r.status === 'error')
-  if (errorRow) {
-    try {
-      await adminPb.collection('llm_cache').delete(errorRow.id)
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to delete error cache'
-      return Response.json({ error: msg }, { status: 500 })
-    }
-  }
-
-  let cacheRow: LlmCacheRow
-  try {
-    const created = await adminPb.collection('llm_cache').create({
-      input_hash: inputHash,
-      type: 'analysis',
-      proposal: proposalId,
-      trip: tripId,
-      status: 'generating',
-      thinking: '',
-      content: '',
-      model: server_get_ollama_model(),
-    })
-    cacheRow = {
-      id: created.id,
-      inputHash: created.input_hash as string,
-      type: created.type as string,
-      proposal: (created.proposal as string) || null,
-      trip: created.trip as string,
-      status: created.status as string,
-      thinking: (created.thinking as string) || null,
-      content: (created.content as string) || null,
-      model: created.model as string,
-    }
-  } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : 'Failed to create cache row'
-    return Response.json({ error: msg }, { status: 500 })
   }
 
   const systemPrompt = buildAnalysisSystemPrompt()
@@ -404,20 +336,6 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     async start(controller) {
       let accumulatedThinking = ''
       let accumulatedContent = ''
-      let lastUpdateTime = Date.now()
-      const UPDATE_INTERVAL_MS = 500
-
-      async function flushToDb(): Promise<void> {
-        try {
-          await adminPb.collection('llm_cache').update(cacheRow.id, {
-            thinking: accumulatedThinking || null,
-            content: accumulatedContent || null,
-          })
-          lastUpdateTime = Date.now()
-        } catch {
-          // best effort flush
-        }
-      }
 
       try {
         const llmStream = await ollama.chat({
@@ -452,26 +370,36 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
               sseEvent('content', { text: chunk.message.content })
             )
           }
-
-          const now = Date.now()
-          if (now - lastUpdateTime >= UPDATE_INTERVAL_MS) {
-            await flushToDb()
-          }
         }
-
-        await flushToDb()
 
         const trimmedContent = (accumulatedContent || '').trim()
 
-        await adminPb.collection('llm_cache').update(cacheRow.id, {
-          status: 'complete',
-          thinking: accumulatedThinking || null,
-          content: trimmedContent || null,
-        })
+        let cacheId: string
+        try {
+          const created = await adminPb.collection('llm_cache').create({
+            input_hash: inputHash,
+            type: 'analysis',
+            proposal: proposalId,
+            trip: tripId,
+            status: 'complete',
+            thinking: accumulatedThinking || null,
+            content: trimmedContent || null,
+            model: server_get_ollama_model(),
+          })
+          cacheId = created.id
+          console.log(
+            `[analysis] Cached result for proposal ${proposalId} (id: ${cacheId})`
+          )
+        } catch (err) {
+          cacheId = ''
+          console.error(
+            `[analysis] Failed to cache result: ${err instanceof Error ? err.message : String(err)}`
+          )
+        }
 
         controller.enqueue(
           sseEvent('done', {
-            cacheId: cacheRow.id,
+            cacheId,
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: trimmedContent || null,
@@ -482,16 +410,6 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
         const errorMsg =
           err instanceof Error ? err.message : 'LLM generation failed'
         console.error(`[analysis] LLM error: ${errorMsg}`)
-
-        try {
-          await adminPb.collection('llm_cache').update(cacheRow.id, {
-            status: 'error',
-            content: errorMsg,
-          })
-        } catch {
-          // best effort
-        }
-
         controller.enqueue(sseEvent('error', { message: errorMsg }))
       }
 
@@ -627,34 +545,6 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
     return Response.json({ error: msg }, { status: 500 })
   }
 
-  const generatingRow = cacheRows.find((r) => r.status === 'generating')
-  if (generatingRow) {
-    console.log(
-      `[preference-search] Returning cached generating result for trip ${tripId}`
-    )
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(
-          sseEvent('done', {
-            cacheId: generatingRow.id,
-            status: 'generating',
-            thinking: generatingRow.thinking,
-            content: generatingRow.content,
-            model: generatingRow.model,
-          })
-        )
-        controller.close()
-      },
-    })
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
-    })
-  }
-
   const completeRow = cacheRows.find((r) => r.status === 'complete')
   if (completeRow && completeRow.inputHash === inputHash) {
     console.log(
@@ -683,54 +573,14 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
     })
   }
 
-  if (completeRow && completeRow.inputHash !== inputHash) {
-    try {
-      await adminPb.collection('llm_cache').delete(completeRow.id)
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to delete stale cache'
-      return Response.json({ error: msg }, { status: 500 })
+  for (const row of cacheRows) {
+    if (row.status !== 'complete' || row.inputHash !== inputHash) {
+      try {
+        await adminPb.collection('llm_cache').delete(row.id)
+      } catch {
+        // best effort cleanup
+      }
     }
-  }
-
-  const errorRow = cacheRows.find((r) => r.status === 'error')
-  if (errorRow) {
-    try {
-      await adminPb.collection('llm_cache').delete(errorRow.id)
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to delete error cache'
-      return Response.json({ error: msg }, { status: 500 })
-    }
-  }
-
-  let cacheRow: LlmCacheRow
-  try {
-    const created = await adminPb.collection('llm_cache').create({
-      input_hash: inputHash,
-      type: 'preference-search',
-      proposal: null,
-      trip: tripId,
-      status: 'generating',
-      thinking: '',
-      content: '',
-      model: server_get_ollama_model(),
-    })
-    cacheRow = {
-      id: created.id,
-      inputHash: created.input_hash as string,
-      type: created.type as string,
-      proposal: (created.proposal as string) || null,
-      trip: created.trip as string,
-      status: created.status as string,
-      thinking: (created.thinking as string) || null,
-      content: (created.content as string) || null,
-      model: created.model as string,
-    }
-  } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : 'Failed to create cache row'
-    return Response.json({ error: msg }, { status: 500 })
   }
 
   const systemPrompt = buildPreferenceSearchSystemPrompt()
@@ -744,20 +594,6 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
     async start(controller) {
       let accumulatedThinking = ''
       let accumulatedContent = ''
-      let lastUpdateTime = Date.now()
-      const UPDATE_INTERVAL_MS = 500
-
-      async function flushToDb(): Promise<void> {
-        try {
-          await adminPb.collection('llm_cache').update(cacheRow.id, {
-            thinking: accumulatedThinking || null,
-            content: accumulatedContent || null,
-          })
-          lastUpdateTime = Date.now()
-        } catch {
-          // best effort flush
-        }
-      }
 
       try {
         const llmStream = await ollama.chat({
@@ -792,26 +628,36 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
               sseEvent('content', { text: chunk.message.content })
             )
           }
-
-          const now = Date.now()
-          if (now - lastUpdateTime >= UPDATE_INTERVAL_MS) {
-            await flushToDb()
-          }
         }
-
-        await flushToDb()
 
         const trimmedContent = (accumulatedContent || '').trim()
 
-        await adminPb.collection('llm_cache').update(cacheRow.id, {
-          status: 'complete',
-          thinking: accumulatedThinking || null,
-          content: trimmedContent || null,
-        })
+        let cacheId: string
+        try {
+          const created = await adminPb.collection('llm_cache').create({
+            input_hash: inputHash,
+            type: 'preference-search',
+            proposal: null,
+            trip: tripId,
+            status: 'complete',
+            thinking: accumulatedThinking || null,
+            content: trimmedContent || null,
+            model: server_get_ollama_model(),
+          })
+          cacheId = created.id
+          console.log(
+            `[preference-search] Cached result for trip ${tripId} (id: ${cacheId})`
+          )
+        } catch (err) {
+          cacheId = ''
+          console.error(
+            `[preference-search] Failed to cache result: ${err instanceof Error ? err.message : String(err)}`
+          )
+        }
 
         controller.enqueue(
           sseEvent('done', {
-            cacheId: cacheRow.id,
+            cacheId,
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: trimmedContent || null,
@@ -822,16 +668,6 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
         const errorMsg =
           err instanceof Error ? err.message : 'LLM generation failed'
         console.error(`[preference-search] LLM error: ${errorMsg}`)
-
-        try {
-          await adminPb.collection('llm_cache').update(cacheRow.id, {
-            status: 'error',
-            content: errorMsg,
-          })
-        } catch {
-          // best effort
-        }
-
         controller.enqueue(sseEvent('error', { message: errorMsg }))
       }
 
