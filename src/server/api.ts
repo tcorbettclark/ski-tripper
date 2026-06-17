@@ -437,6 +437,8 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
         const trimmedContent = (accumulatedContent || '').trim()
 
+        console.log(`[analysis] LLM stream complete for proposal ${proposalId}`)
+
         let cacheId: string
         try {
           const created = await adminPb.collection('llm_cache').create({
@@ -695,6 +697,10 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
         }
 
         const trimmedContent = (accumulatedContent || '').trim()
+
+        console.log(
+          `[preference-search] LLM stream complete for trip ${tripId}`
+        )
 
         let cacheId: string
         try {
