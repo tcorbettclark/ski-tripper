@@ -7,6 +7,7 @@ import {
 } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
+import { getErrorMessage } from './utils'
 
 interface JoinTripFormProps {
   user: User
@@ -57,7 +58,7 @@ export default function JoinTripForm({
       setCode('')
       onDismiss()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }

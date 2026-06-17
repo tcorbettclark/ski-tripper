@@ -3,6 +3,7 @@ import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
+import { getErrorMessage } from './utils'
 
 interface ResetPasswordFormProps {
   token: string
@@ -37,7 +38,7 @@ export default function ResetPasswordForm({
       await confirmPasswordReset(token, password, password)
       onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }

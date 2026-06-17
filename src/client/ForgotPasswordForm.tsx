@@ -3,6 +3,7 @@ import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, formStyles } from './theme'
+import { getErrorMessage } from './utils'
 
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void
@@ -27,7 +28,7 @@ export default function ForgotPasswordForm({
       await requestPasswordReset(email)
       setSent(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }

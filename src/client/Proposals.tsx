@@ -25,6 +25,7 @@ import CreateProposalForm from './CreateProposalForm'
 import type { StatusFilter } from './ProposalsGrid'
 import ProposalsGrid from './ProposalsGrid'
 import { borders, colors, fontSizes, fonts } from './theme'
+import { getErrorMessage } from './utils'
 
 interface ProposalsProps {
   user: User
@@ -199,8 +200,7 @@ export default function Proposals({
         setAccommodations(accMap)
       })
       .catch((err) => {
-        if (mountedRef.current)
-          setProposalsError(err instanceof Error ? err.message : String(err))
+        if (mountedRef.current) setProposalsError(getErrorMessage(err))
       })
       .finally(() => {
         if (mountedRef.current) setProposalsLoading(false)

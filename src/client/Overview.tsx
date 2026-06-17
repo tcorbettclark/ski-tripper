@@ -36,6 +36,7 @@ import {
 } from './Icons'
 import Paragraphs from './Paragraphs'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { getErrorMessage } from './utils'
 
 interface OverviewProps {
   user: User
@@ -143,7 +144,7 @@ export default function Overview({
       })
       .catch((err) => {
         if (!mountedRef.current) return
-        const msg = err instanceof Error ? err.message : String(err)
+        const msg = getErrorMessage(err)
         setParticipantsError(msg)
         onAuthError(err)
       })

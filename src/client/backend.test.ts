@@ -1484,6 +1484,69 @@ describe('createAccommodation', () => {
       createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, client)
     ).rejects.toThrow('Accommodations can only be added to draft proposals.')
   })
+
+  it('prepends https:// to URL missing a scheme', async () => {
+    const client = createMockClient({
+      proposals: {
+        getOne: mock(() =>
+          Promise.resolve({
+            id: 'prop-1',
+            proposer: 'user-1',
+            state: 'draft',
+          })
+        ),
+      },
+      accommodations: {
+        create: mock(() =>
+          Promise.resolve({
+            id: 'acc-1',
+            name: 'Hotel Nevai',
+            url: 'https://example.com',
+            proposal: 'prop-1',
+          })
+        ),
+      },
+    })
+    await createAccommodation(
+      'prop-1',
+      'user-1',
+      { name: 'Hotel Nevai', url: 'example.com' },
+      client
+    )
+    const callArgs = client.collection('accommodations').create.mock.calls[0]
+    expect(callArgs[0].url).toBe('https://example.com')
+  })
+
+  it('passes undefined url through without error', async () => {
+    const client = createMockClient({
+      proposals: {
+        getOne: mock(() =>
+          Promise.resolve({
+            id: 'prop-1',
+            proposer: 'user-1',
+            state: 'draft',
+          })
+        ),
+      },
+      accommodations: {
+        create: mock(() =>
+          Promise.resolve({
+            id: 'acc-1',
+            name: 'Hotel Nevai',
+            proposal: 'prop-1',
+          })
+        ),
+      },
+    })
+    await createAccommodation(
+      'prop-1',
+      'user-1',
+      { name: 'Hotel Nevai' },
+      client
+    )
+    const callArgs = client.collection('accommodations').create.mock.calls[0]
+    expect(callArgs[0].url).toBeUndefined()
+  })
 })
 
 describe('listAccommodations', () => {

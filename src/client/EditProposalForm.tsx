@@ -12,7 +12,7 @@ import {
   fonts,
   formStyles,
 } from './theme'
-import { ensureUrlScheme, isValidUrl } from './utils'
+import { ensureUrlScheme, getErrorMessage, isValidUrl } from './utils'
 
 interface EditProposalFormProps {
   proposal: Proposal
@@ -98,7 +98,7 @@ export default function EditProposalForm({
       })
       onUpdated(updatedProposal)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }

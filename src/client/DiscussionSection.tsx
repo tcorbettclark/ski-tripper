@@ -8,7 +8,7 @@ import {
   updateDiscussionComment as _updateDiscussionComment,
 } from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
-import { formatRelativeTime } from './utils'
+import { formatRelativeTime, getErrorMessage } from './utils'
 
 interface DiscussionSectionProps {
   proposalId: string
@@ -51,9 +51,7 @@ export default function DiscussionSection({
     setError(null)
     listDiscussion(proposalId)
       .then((result) => setComments(result))
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : String(err))
-      )
+      .catch((err) => setError(getErrorMessage(err)))
       .finally(() => setLoading(false))
   }, [proposalId, listDiscussion])
 
@@ -78,7 +76,7 @@ export default function DiscussionSection({
       setNewBody('')
       onCommentsChanged?.()
     } catch (err) {
-      setPostError(err instanceof Error ? err.message : String(err))
+      setPostError(getErrorMessage(err))
     } finally {
       setPosting(false)
     }
@@ -98,7 +96,7 @@ export default function DiscussionSection({
       setEditingId(null)
       setEditBody('')
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : String(err))
+      setEditError(getErrorMessage(err))
     } finally {
       setEditPosting(false)
     }
@@ -114,7 +112,7 @@ export default function DiscussionSection({
       setDeleteConfirmId(null)
       onCommentsChanged?.()
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : String(err))
+      setDeleteError(getErrorMessage(err))
     } finally {
       setDeleting(false)
     }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, formStyles } from './theme'
+import { getErrorMessage } from './utils'
 
 interface EmailVerifyScreenProps {
   email: string
@@ -24,7 +25,7 @@ export default function EmailVerifyScreen({
       await requestVerification(email)
       setResent(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }

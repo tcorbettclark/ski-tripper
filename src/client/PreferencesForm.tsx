@@ -18,6 +18,7 @@ import {
   SnowboardIcon,
 } from './Icons'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { getErrorMessage } from './utils'
 
 const skiSnowboardOptions = ['Ski', 'Snowboard']
 const difficultyOptions = ['Black', 'Red', 'Blue']
@@ -152,7 +153,7 @@ export default function PreferencesForm({
       }
       onSaved(result)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }

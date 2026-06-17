@@ -35,7 +35,12 @@ import {
   formStyles,
   mix,
 } from './theme'
-import { ensureUrlScheme, formatTransferTime, sanitizeUrl } from './utils'
+import {
+  ensureUrlScheme,
+  formatTransferTime,
+  getErrorMessage,
+  sanitizeUrl,
+} from './utils'
 
 initSearchModel()
 
@@ -338,7 +343,7 @@ export default function Resorts({
         setProposalSuccessName(customResortName || resort.resortName)
         setProposalSuccess(true)
       } catch (err: unknown) {
-        setProposalError(err instanceof Error ? err.message : String(err))
+        setProposalError(getErrorMessage(err))
       } finally {
         setProposalSaving(false)
       }

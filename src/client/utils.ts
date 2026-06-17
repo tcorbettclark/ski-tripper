@@ -72,3 +72,32 @@ export function formatRelativeTime(iso: string) {
   if (diffDays < 3) return date.fromNow()
   return formatDate(iso)
 }
+
+export function getErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) return String(err)
+  const response = (err as unknown as Record<string, unknown>).response
+  if (response && typeof response === 'object') {
+    const data = (response as Record<string, unknown>).data
+    if (data && typeof data === 'object') {
+      const fieldErrors = Object.entries(data as Record<string, unknown>)
+        .filter(([, v]) => v && typeof v === 'object')
+        .map(([field, messages]) => {
+          const msg = messages as Record<string, unknown>
+          if (msg.message && typeof msg.message === 'string') {
+            return `${field}: ${msg.message}`
+          }
+          const vals = Object.values(msg)
+          if (vals.length > 0 && typeof vals[0] === 'string') {
+            return `${field}: ${vals[0]}`
+          }
+          return null
+        })
+        .filter(Boolean)
+      if (fieldErrors.length > 0) return fieldErrors.join('; ')
+    }
+    if (typeof (response as Record<string, unknown>).message === 'string') {
+      return (response as Record<string, unknown>).message as string
+    }
+  }
+  return err.message
+}

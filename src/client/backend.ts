@@ -11,7 +11,7 @@ import type {
   Trip,
   Vote,
 } from '../shared/types.d'
-import { dayjs, isValidUrl, randomThreeWords } from './utils'
+import { dayjs, ensureUrlScheme, isValidUrl, randomThreeWords } from './utils'
 
 let _pb: PocketBase | undefined
 
@@ -804,10 +804,12 @@ export async function listVotes(
 }
 
 function validateUrl(url: string | undefined): string | undefined {
-  if (!isValidUrl(url)) {
+  if (!url) return undefined
+  const withScheme = ensureUrlScheme(url)
+  if (!isValidUrl(withScheme)) {
     throw new Error('Invalid URL: only http and https schemes are allowed.')
   }
-  return url
+  return withScheme
 }
 
 export async function createAccommodation(

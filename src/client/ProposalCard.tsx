@@ -33,6 +33,7 @@ import {
   ensureUrlScheme,
   formatDate,
   formatTransferTime,
+  getErrorMessage,
   isValidUrl,
   sanitizeUrl,
 } from './utils'
@@ -191,7 +192,7 @@ export default function ProposalCard({
       const result = await submitProposal(proposal.id, userId)
       onSubmitted(result)
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : String(err))
+      setSubmitError(getErrorMessage(err))
     } finally {
       setSubmitting(false)
     }
@@ -204,7 +205,7 @@ export default function ProposalCard({
       const result = await rejectProposal(proposal.id, userId)
       onRejected(result)
     } catch (err) {
-      setRejectError(err instanceof Error ? err.message : String(err))
+      setRejectError(getErrorMessage(err))
     } finally {
       setRejecting(false)
     }
@@ -217,7 +218,7 @@ export default function ProposalCard({
       const result = await revertProposalToDraft(proposal.id, userId)
       onRevertedToDraft(result)
     } catch (err) {
-      setRevertError(err instanceof Error ? err.message : String(err))
+      setRevertError(getErrorMessage(err))
     } finally {
       setReverting(false)
     }
@@ -230,7 +231,7 @@ export default function ProposalCard({
       await deleteProposal(proposal.id, userId)
       onDeleted(proposal.id)
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : String(err))
+      setDeleteError(getErrorMessage(err))
     } finally {
       setDeleting(false)
     }
@@ -253,7 +254,7 @@ export default function ProposalCard({
       setAddingAccommodation(false)
       handleAccommodationsChanged()
     } catch (err) {
-      setAccommodationError(err instanceof Error ? err.message : String(err))
+      setAccommodationError(getErrorMessage(err))
     }
   }
 
@@ -267,7 +268,7 @@ export default function ProposalCard({
       setEditingAccommodationId(null)
       handleAccommodationsChanged()
     } catch (err) {
-      setAccommodationError(err instanceof Error ? err.message : String(err))
+      setAccommodationError(getErrorMessage(err))
     }
   }
 
@@ -281,9 +282,7 @@ export default function ProposalCard({
       handleAccommodationsChanged()
     } catch (err) {
       setDeletingAccommodationId(null)
-      setDeletingAccommodationError(
-        err instanceof Error ? err.message : String(err)
-      )
+      setDeletingAccommodationError(getErrorMessage(err))
     }
   }
 

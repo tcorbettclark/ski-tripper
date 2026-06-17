@@ -3,6 +3,7 @@ import type { User } from '../shared/types.d'
 import { createTrip as _createTrip, getPb } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
+import { getErrorMessage } from './utils'
 
 interface CreateTripFormProps {
   user: User
@@ -55,7 +56,7 @@ export default function CreateTripForm({
       setForm({ description: '' })
       onDismiss()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }

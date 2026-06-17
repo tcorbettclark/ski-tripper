@@ -12,7 +12,7 @@ import {
   fonts,
   formStyles,
 } from './theme'
-import { ensureUrlScheme, isValidUrl } from './utils'
+import { ensureUrlScheme, getErrorMessage, isValidUrl } from './utils'
 
 interface CreateProposalFormProps {
   tripId: string
@@ -245,7 +245,7 @@ export default function CreateProposalForm({
       setForm(EMPTY_FORM)
       onDismiss()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }

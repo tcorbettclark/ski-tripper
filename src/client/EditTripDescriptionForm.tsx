@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Trip } from '../shared/types.d'
 import { updateTrip as _updateTrip } from './backend'
 import { fieldStyles, formStyles } from './theme'
+import { getErrorMessage } from './utils'
 
 interface EditTripDescriptionFormProps {
   trip: Trip
@@ -34,7 +35,7 @@ export default function EditTripDescriptionForm({
       const updated = await updateTrip(trip.id, { description }, userId)
       onUpdated(updated)
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }

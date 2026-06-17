@@ -5,6 +5,7 @@ import {
   formatRelativeTime,
   formatTimeRemaining,
   formatTransferTime,
+  getErrorMessage,
 } from './utils'
 
 const OriginalDate = Date
@@ -140,5 +141,76 @@ describe('ensureUrlScheme', () => {
 
   it('returns whitespace-only string unchanged', () => {
     expect(ensureUrlScheme('   ')).toBe('   ')
+  })
+})
+
+describe('getErrorMessage', () => {
+  it('returns the message from a plain Error', () => {
+    expect(getErrorMessage(new Error('something failed'))).toBe(
+      'something failed'
+    )
+  })
+
+  it('returns String of non-Error values', () => {
+    expect(getErrorMessage('plain string')).toBe('plain string')
+    expect(getErrorMessage(42)).toBe('42')
+  })
+
+  it('extracts PocketBase field-level errors from response.data', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          url: { message: 'Must be a valid url' },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('url: Must be a valid url')
+  })
+
+  it('extracts multiple field errors', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          url: { message: 'Must be a valid url' },
+          name: { message: 'Cannot be empty' },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe(
+      'url: Must be a valid url; name: Cannot be empty'
+    )
+  })
+
+  it('extracts array-style field errors', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          url: { message: 'Must be a valid url' },
+          name: ['Cannot be empty'],
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe(
+      'url: Must be a valid url; name: Cannot be empty'
+    )
+  })
+
+  it('falls back to response.message when no field errors', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        message: 'Unauthorized',
+      },
+    })
+    expect(getErrorMessage(err)).toBe('Unauthorized')
+  })
+
+  it('falls back to err.message when response has no useful data', () => {
+    const err = new Error('Something went wrong')
+    Object.assign(err, { response: {} })
+    expect(getErrorMessage(err)).toBe('Something went wrong')
   })
 })

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Poll, Proposal, Vote } from '../shared/types.d'
 import PollResults from './PollResults'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
-import { formatDate, formatDateTime } from './utils'
+import { formatDate, formatDateTime, getErrorMessage } from './utils'
 
 interface PastPollProps {
   poll: Poll
@@ -40,7 +40,7 @@ export default function PastPoll({
       })
       .catch((err) => {
         if (!mountedRef.current) return
-        setError(err instanceof Error ? err.message : String(err))
+        setError(getErrorMessage(err))
       })
       .finally(() => {
         if (mountedRef.current) setLoading(false)

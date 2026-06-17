@@ -6,6 +6,7 @@ import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, fontSizes, formStyles } from './theme'
+import { getErrorMessage } from './utils'
 
 interface AuthFormProps {
   mode?: 'login' | 'signup'
@@ -87,7 +88,7 @@ export default function AuthForm({
         onSuccess(user)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }

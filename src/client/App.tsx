@@ -36,6 +36,7 @@ import Resorts from './Resorts'
 import Trips from './Trips'
 import { colors, fontSizes, fonts, mix } from './theme'
 import useAuth from './useAuth'
+import { getErrorMessage } from './utils'
 
 interface ListTripsResult {
   trips: Trip[]
@@ -276,7 +277,7 @@ export default function App({
       logout()
       setPage('login')
     } catch (err) {
-      setLogoutError(err instanceof Error ? err.message : String(err))
+      setLogoutError(getErrorMessage(err))
     }
   }
 

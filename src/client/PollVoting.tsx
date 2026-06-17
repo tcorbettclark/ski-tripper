@@ -3,6 +3,7 @@ import type { Accommodation, Poll, Proposal, Vote } from '../shared/types.d'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { getErrorMessage } from './utils'
 
 interface PollVotingProps {
   poll: Poll
@@ -87,7 +88,7 @@ export default function PollVoting({
       )
       onVoteSaved(result)
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : String(err))
+      setSaveError(getErrorMessage(err))
     } finally {
       setSaving(false)
     }

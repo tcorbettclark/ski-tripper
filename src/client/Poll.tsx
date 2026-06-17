@@ -20,7 +20,7 @@ import PastPoll from './PastPoll'
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
-import { formatDate } from './utils'
+import { formatDate, getErrorMessage } from './utils'
 
 interface PollComponentProps {
   user: User
@@ -150,8 +150,7 @@ export default function Poll({
         }
       })
       .catch((err) => {
-        if (mountedRef.current)
-          setPollsError(err instanceof Error ? err.message : String(err))
+        if (mountedRef.current) setPollsError(getErrorMessage(err))
       })
       .finally(() => {
         if (mountedRef.current) setPollsLoading(false)
@@ -190,7 +189,7 @@ export default function Poll({
       setVotes([])
       onActivePollChange?.(poll.endDate)
     } catch (err) {
-      setCreatePollError(err instanceof Error ? err.message : String(err))
+      setCreatePollError(getErrorMessage(err))
     } finally {
       setCreatingPoll(false)
     }
@@ -208,7 +207,7 @@ export default function Poll({
       setShowOutcomeForm(false)
       setOutcomeText('')
     } catch (err) {
-      setClosePollError(err instanceof Error ? err.message : String(err))
+      setClosePollError(getErrorMessage(err))
     } finally {
       setClosingPoll(false)
     }
