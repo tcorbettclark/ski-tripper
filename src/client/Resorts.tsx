@@ -452,8 +452,7 @@ export default function Resorts({
       <div style={resortsStyles.filtersGrid}>
         <div style={resortsStyles.searchRow}>
           <div style={resortsStyles.searchInputWrapper}>
-            <input
-              type="text"
+            <textarea
               placeholder={
                 modelReady
                   ? 'Semantic search (more words are better)'
@@ -462,6 +461,7 @@ export default function Resorts({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               disabled={!modelReady}
+              rows={1}
               style={{
                 ...resortsStyles.searchInput,
                 ...(modelReady ? {} : resortsStyles.searchInputDisabled),
@@ -485,7 +485,6 @@ export default function Resorts({
             title="Search from preferences"
           >
             <Sparkles size={14} />
-            Preferences
           </button>
         </div>
         <fieldset style={resortsStyles.filterGroup}>
@@ -1190,26 +1189,24 @@ const resortsStyles = {
   searchRow: {
     display: 'flex',
     gap: '8px',
+    alignItems: 'flex-start',
   },
   preferenceSearchButton: {
     display: 'inline-flex',
     alignItems: 'center',
-    gap: '6px',
-    padding: '8px 14px',
+    justifyContent: 'center',
+    padding: '10px',
     borderRadius: '8px',
     border: `1px solid ${mix('--color-accent', 0.3)}`,
     background: 'transparent',
     color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    fontWeight: '600' as const,
     cursor: 'pointer',
-    whiteSpace: 'nowrap' as const,
+    flexShrink: 0,
   },
   searchInputWrapper: {
     position: 'relative' as const,
     display: 'flex',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     width: '100%',
   },
   searchInput: {
@@ -1223,6 +1220,11 @@ const resortsStyles = {
     outline: 'none',
     width: '100%',
     boxSizing: 'border-box' as const,
+    resize: 'none' as const,
+    overflow: 'hidden' as const,
+    lineHeight: '1.5' as const,
+    fieldSizing: 'content' as const,
+    minHeight: '44px',
   },
   searchInputDisabled: {
     opacity: 0.5,
@@ -1231,8 +1233,7 @@ const resortsStyles = {
   searchClearButton: {
     position: 'absolute' as const,
     right: '8px',
-    top: '50%',
-    transform: 'translateY(-50%)',
+    top: '12px',
     background: 'none',
     border: 'none',
     color: colors.textSecondary,

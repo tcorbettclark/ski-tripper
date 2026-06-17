@@ -81,7 +81,7 @@ export default function useSSEStream(
     paramsKeyRef.current = key
     fetchCountRef.current = fetchCount
 
-    setState(INITIAL_STATE)
+    setState({ ...INITIAL_STATE, status: 'generating' })
     clearTimer()
 
     if (abortRef.current) {

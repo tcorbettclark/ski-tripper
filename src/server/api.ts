@@ -324,7 +324,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
             cacheId: completeRow.id,
             status: 'complete',
             thinking: completeRow.thinking,
-            content: completeRow.content,
+            content: (completeRow.content || '').trim(),
             model: completeRow.model,
           })
         )
@@ -461,10 +461,12 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
         await flushToDb()
 
+        const trimmedContent = (accumulatedContent || '').trim()
+
         await adminPb.collection('llm_cache').update(cacheRow.id, {
           status: 'complete',
           thinking: accumulatedThinking || null,
-          content: accumulatedContent || null,
+          content: trimmedContent || null,
         })
 
         controller.enqueue(
@@ -472,7 +474,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
             cacheId: cacheRow.id,
             status: 'complete',
             thinking: accumulatedThinking || null,
-            content: accumulatedContent || null,
+            content: trimmedContent || null,
             model: server_get_ollama_model(),
           })
         )
@@ -665,7 +667,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
             cacheId: completeRow.id,
             status: 'complete',
             thinking: completeRow.thinking,
-            content: completeRow.content,
+            content: (completeRow.content || '').trim(),
             model: completeRow.model,
           })
         )
@@ -799,10 +801,12 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
 
         await flushToDb()
 
+        const trimmedContent = (accumulatedContent || '').trim()
+
         await adminPb.collection('llm_cache').update(cacheRow.id, {
           status: 'complete',
           thinking: accumulatedThinking || null,
-          content: accumulatedContent || null,
+          content: trimmedContent || null,
         })
 
         controller.enqueue(
@@ -810,7 +814,7 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
             cacheId: cacheRow.id,
             status: 'complete',
             thinking: accumulatedThinking || null,
-            content: accumulatedContent || null,
+            content: trimmedContent || null,
             model: server_get_ollama_model(),
           })
         )

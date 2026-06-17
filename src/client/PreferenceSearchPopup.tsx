@@ -1,11 +1,6 @@
 import { ChevronDown, ChevronRight, RotateCw, Sparkles, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Markdown from 'react-markdown'
-import type { Participant, Preferences } from '../shared/types.d'
-import {
-  getPreferences as _getPreferences,
-  listTripParticipants as _listTripParticipants,
-} from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { UseSSEStreamResult } from './useSSEStream'
 import useSSEStream from './useSSEStream'
@@ -15,65 +10,35 @@ interface PreferenceSearchPopupProps {
   onClose: () => void
   onSearch: (query: string) => void
   onAuthError?: (err: unknown) => void
-  listTripParticipants?: (
-    tripId: string
-  ) => Promise<{ participants: Participant[] }>
-  getPreferences?: (userId: string) => Promise<Preferences | null>
   streamResult?: UseSSEStreamResult & { refetch: () => void }
 }
-
-const NOOP_AUTH_ERROR = () => {}
 
 export default function PreferenceSearchPopup({
   tripId,
   onClose,
   onSearch,
-  onAuthError = NOOP_AUTH_ERROR,
-  listTripParticipants = _listTripParticipants,
-  getPreferences = _getPreferences,
+  onAuthError: _onAuthError,
   streamResult,
 }: PreferenceSearchPopupProps) {
+  const [triggered, setTriggered] = useState(false)
   const hookResult = useSSEStream({
     type: 'preference-search',
     tripId,
-    enabled: !streamResult,
+    enabled: !streamResult && triggered,
   })
   const { status, thinking, content, model, error, refetch } =
     streamResult ?? hookResult
 
-  const [participants, setParticipants] = useState<Participant[]>([])
-  const [preferencesMap, setPreferencesMap] = useState<
-    Record<string, Preferences | null>
-  >({})
-  const [participantsLoaded, setParticipantsLoaded] = useState(false)
-  const [thinkingExpanded, setThinkingExpanded] = useState(false)
+  const isGenerating = status === 'generating'
+  const hasContent = !!content?.trim()
 
-  if (!participantsLoaded) {
-    setParticipantsLoaded(true)
-    listTripParticipants(tripId)
-      .then(({ participants: p }) => {
-        setParticipants(p)
-        return Promise.all(
-          p.map((participant) =>
-            getPreferences(participant.user)
-              .then((prefs) => [participant.user, prefs] as const)
-              .catch(() => [participant.user, null] as const)
-          )
-        ).then((entries) => {
-          const map: Record<string, Preferences | null> = {}
-          for (const [userId, prefs] of entries) {
-            map[userId] = prefs
-          }
-          setPreferencesMap(map)
-        })
-      })
-      .catch(onAuthError)
-  }
+  const [thinkingCollapsed, setThinkingCollapsed] = useState(false)
 
-  const included = participants.filter((p) => preferencesMap[p.user] != null)
-  const excluded = participants.filter(
-    (p) => p.user in preferencesMap && preferencesMap[p.user] == null
-  )
+  useEffect(() => {
+    if (hasContent) {
+      setThinkingCollapsed(true)
+    }
+  }, [hasContent])
 
   function handleSearch() {
     if (content) {
@@ -109,7 +74,7 @@ export default function PreferenceSearchPopup({
         <div style={popupStyles.header}>
           <div style={popupStyles.headerLeft}>
             <Sparkles size={18} style={{ color: colors.accent }} />
-            <h3 style={popupStyles.title}>Search from preferences</h3>
+            <h3 style={popupStyles.title}>AI assist</h3>
           </div>
           <button
             type="button"
@@ -121,54 +86,42 @@ export default function PreferenceSearchPopup({
           </button>
         </div>
 
-        <div style={popupStyles.participantsSection}>
-          {included.length > 0 && (
-            <div style={popupStyles.participantGroup}>
-              <span style={popupStyles.participantLabel}>Included: </span>
-              {included.map((p) => (
-                <span key={p.id} style={popupStyles.participantName}>
-                  {p.userName}
-                </span>
-              ))}
-            </div>
-          )}
-          {excluded.length > 0 && (
-            <div style={popupStyles.participantGroup}>
-              <span style={popupStyles.participantLabelExcluded}>
-                No preferences:{' '}
-              </span>
-              {excluded.map((p) => (
-                <span key={p.id} style={popupStyles.participantNameExcluded}>
-                  {p.userName}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+        {!triggered && (
+          <p style={popupStyles.description}>
+            Generate resort search text from everyone's ski holiday preferences
+          </p>
+        )}
 
-        {status === 'generating' && (
-          <div style={popupStyles.loadingContainer}>
-            <div style={popupStyles.spinner} />
-            <p style={popupStyles.loadingText}>Generating search query…</p>
+        {(thinking || isGenerating) && !hasContent && (
+          <div style={popupStyles.thinkingInline}>
+            {thinking ? (
+              <Markdown>{thinking}</Markdown>
+            ) : (
+              <p style={popupStyles.thinkingPlaceholder}>Thinking…</p>
+            )}
           </div>
         )}
 
-        {thinking && (
+        {(thinking || isGenerating) && hasContent && (
           <div style={popupStyles.thinkingSection}>
+            <style>{`.thinking-content ul, .thinking-content ol { margin: 0; padding-left: 1.5em; } .thinking-content p { margin: 0 0 0.5em; } .thinking-content p:last-child { margin-bottom: 0; }`}</style>
             <button
               type="button"
-              onClick={() => setThinkingExpanded(!thinkingExpanded)}
+              onClick={() => setThinkingCollapsed(!thinkingCollapsed)}
               style={popupStyles.thinkingToggle}
             >
-              {thinkingExpanded ? (
-                <ChevronDown size={14} />
-              ) : (
+              {thinkingCollapsed ? (
                 <ChevronRight size={14} />
+              ) : (
+                <ChevronDown size={14} />
               )}
-              <span>{status === 'generating' ? 'Thinking…' : 'Thinking'}</span>
+              <span>Thinking</span>
             </button>
-            {thinkingExpanded && (
-              <div style={popupStyles.thinkingContent}>
+            {!thinkingCollapsed && (
+              <div
+                className="thinking-content"
+                style={popupStyles.thinkingContent}
+              >
                 <Markdown>{thinking}</Markdown>
               </div>
             )}
@@ -181,18 +134,17 @@ export default function PreferenceSearchPopup({
           </div>
         )}
 
-        {status === null && !content && !thinking && (
+        {status === null && !content && !thinking && !triggered && (
           <div style={popupStyles.emptyState}>
-            <p style={popupStyles.emptyText}>
-              No preference search available yet.
-            </p>
             <button
               type="button"
-              onClick={refetch}
+              onClick={() => {
+                setTriggered(true)
+              }}
               style={popupStyles.triggerButton}
             >
               <Sparkles size={14} />
-              Search from preferences
+              Generate search
             </button>
           </div>
         )}
@@ -218,7 +170,7 @@ export default function PreferenceSearchPopup({
               onClick={handleSearch}
               style={popupStyles.searchButton}
             >
-              Search
+              Apply
             </button>
           </div>
         )}
@@ -282,76 +234,31 @@ const popupStyles = {
     padding: '4px 8px',
     lineHeight: 1,
   },
-  participantsSection: {
-    marginBottom: '16px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '6px',
-  },
-  participantGroup: {
-    display: 'flex',
-    flexWrap: 'wrap' as const,
-    alignItems: 'center',
-    gap: '4px',
-  },
-  participantLabel: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    fontWeight: '500' as const,
-    color: colors.textSecondary,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-  },
-  participantLabelExcluded: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    fontWeight: '500' as const,
-    color: colors.error,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-  },
-  participantName: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textPrimary,
-    background: mix('--color-accent', 0.08),
-    padding: '2px 8px',
-    borderRadius: '4px',
-  },
-  participantNameExcluded: {
+  description: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     color: colors.textSecondary,
-    background: mix('--color-textSecondary', 0.08),
-    padding: '2px 8px',
-    borderRadius: '4px',
+    margin: '0 0 16px',
+    lineHeight: '1.5',
   },
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: '12px',
-    padding: '32px 0',
-  },
-  spinner: {
-    width: '28px',
-    height: '28px',
-    border: `3px solid ${mix('--color-accent', 0.2)}`,
-    borderTopColor: colors.accent,
-    borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite',
-  },
-  loadingText: {
+  thinkingInline: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.base,
+    fontSize: fontSizes.sm,
+    color: colors.textSecondary,
+    lineHeight: '1.5',
+    marginBottom: '12px',
+  },
+  thinkingPlaceholder: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
     color: colors.textSecondary,
     margin: 0,
+    fontStyle: 'italic' as const,
   },
   thinkingSection: {
     marginBottom: '12px',
     borderRadius: '8px',
     border: borders.subtle,
-    overflow: 'hidden',
   },
   thinkingToggle: {
     display: 'flex',
@@ -386,12 +293,6 @@ const popupStyles = {
     alignItems: 'center',
     gap: '12px',
     padding: '24px 0',
-  },
-  emptyText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colors.textSecondary,
-    margin: 0,
   },
   triggerButton: {
     display: 'inline-flex',
