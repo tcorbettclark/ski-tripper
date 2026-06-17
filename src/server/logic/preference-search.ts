@@ -61,6 +61,7 @@ Rules:
 - Mention minority preferences as secondary considerations
 - Include ski/snowboard discipline, difficulty levels, piste types, time allocation preferences, accommodation preferences, and any special notes
 - Consider airport proximity or transfer time preferences if mentioned in notes
+- Use concrete, descriptive language about resort characteristics (terrain types, atmosphere, facilities) rather than abstract or metaphorical language, since the output will be matched against real resort descriptions using embedding similarity
 - The paragraph should read naturally, not as a list — aim for something like: "A resort with mostly red and black runs, good off-piste opportunities, lively après-ski, near Geneva airport, with chalet-style accommodation"
 - Output ONLY the search query paragraph with no additional text, headers, or commentary`
 }
