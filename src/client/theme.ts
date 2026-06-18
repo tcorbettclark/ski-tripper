@@ -180,6 +180,7 @@ export const detailStyles = {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     color: colors.accent,
+    wordBreak: 'break-all' as const,
   },
   descriptionText: {
     fontFamily: fonts.body,

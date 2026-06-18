@@ -936,31 +936,31 @@ export default function Resorts({
                         label="Websites"
                         style={{ gridColumn: 'span 2' }}
                       >
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '2px',
-                          }}
-                        >
+                        <ul style={resortsStyles.websiteList}>
                           {selectedResort.websites.map((url) => (
-                            <a
-                              key={url}
-                              href={sanitizeUrl(ensureUrlScheme(url))}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                ...detailStyles.websiteLink,
-                                textDecoration:
-                                  hoveredWebsite === url ? 'underline' : 'none',
-                              }}
-                              onMouseEnter={() => setHoveredWebsite(url)}
-                              onMouseLeave={() => setHoveredWebsite(null)}
-                            >
-                              {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
-                            </a>
+                            <li key={url}>
+                              <a
+                                href={sanitizeUrl(ensureUrlScheme(url))}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  ...detailStyles.websiteLink,
+                                  textDecoration:
+                                    hoveredWebsite === url
+                                      ? 'underline'
+                                      : 'none',
+                                }}
+                                onMouseEnter={() => setHoveredWebsite(url)}
+                                onMouseLeave={() => setHoveredWebsite(null)}
+                              >
+                                {ensureUrlScheme(url).replace(
+                                  /^https?:\/\//,
+                                  ''
+                                )}
+                              </a>
+                            </li>
                           ))}
-                        </div>
+                        </ul>
                       </DetailField>
                     )}
                 </div>
@@ -1444,6 +1444,14 @@ const resortsStyles = {
     cursor: 'pointer',
     padding: '4px 8px',
     lineHeight: 1,
+  },
+  websiteList: {
+    listStyleType: 'disc' as const,
+    paddingLeft: '20px',
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
   },
   detailGrid: {
     display: 'grid',

@@ -432,31 +432,26 @@ export default function ProposalCard({
                       label="Websites"
                       style={{ gridColumn: 'span 2' }}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '2px',
-                        }}
-                      >
+                      <ul style={styles.websiteList}>
                         {proposal.websites.map((url) => (
-                          <a
-                            key={url}
-                            href={sanitizeUrl(ensureUrlScheme(url))}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              ...detailStyles.websiteLink,
-                              textDecoration:
-                                hoveredWebsite === url ? 'underline' : 'none',
-                            }}
-                            onMouseEnter={() => setHoveredWebsite(url)}
-                            onMouseLeave={() => setHoveredWebsite(null)}
-                          >
-                            {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
-                          </a>
+                          <li key={url}>
+                            <a
+                              href={sanitizeUrl(ensureUrlScheme(url))}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                ...detailStyles.websiteLink,
+                                textDecoration:
+                                  hoveredWebsite === url ? 'underline' : 'none',
+                              }}
+                              onMouseEnter={() => setHoveredWebsite(url)}
+                              onMouseLeave={() => setHoveredWebsite(null)}
+                            >
+                              {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
+                            </a>
+                          </li>
                         ))}
-                      </div>
+                      </ul>
                     </DetailField>
                   )}
                 </div>
@@ -1092,6 +1087,14 @@ const styles = {
     fontSize: fontSizes.sm,
     fontWeight: '500' as const,
     cursor: 'pointer',
+  },
+  websiteList: {
+    listStyleType: 'disc' as const,
+    paddingLeft: '20px',
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
   },
   grid: {
     display: 'grid',
