@@ -127,6 +127,7 @@ export function streamThinking(
     let doneReason: string | null = null
     let chunkCount = 0
     let thinkingBytes = 0
+    let contentBytes = 0
     let contentStarted = false
     ;(async () => {
       try {
@@ -148,15 +149,20 @@ export function streamThinking(
           if (chunk.message.content) {
             if (!contentStarted) {
               contentStarted = true
-              process.stdout.write('\x1b[2K\r')
             }
+            contentBytes += Buffer.byteLength(chunk.message.content)
+            process.stdout.write(
+              `\x1b[2K\r📝 Generating... ${formatBytes(contentBytes)}`
+            )
             onContent(chunk.message.content)
           }
           if (chunk.done) {
             doneReason = chunk.done_reason ?? null
           }
         }
-        if (!contentStarted) {
+        if (contentStarted) {
+          process.stdout.write('\x1b[2K\r')
+        } else if (thinking) {
           process.stdout.write('\x1b[2K\r')
         }
         resolve({
@@ -207,7 +213,7 @@ export const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given sou
 Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - When sources conflict on facts that change over time (e.g. lift counts, piste km, transfer routes, operating status, resort status), prefer data from more recent sources. Each source header includes a publication date — use it to resolve conflicts. If no source is newer than 3 years, note uncertainty
-- For each description field, write a detailed paragraph of 2–3 sentences on that specific topic. Use concrete nouns and observable facts — not adjectives, not marketing language. If the source text lacks detail on a topic, set that field to null rather than writing vague generalities
+- For each description field, write a detailed paragraph on that specific topic. Use concrete nouns and observable facts — not adjectives, not marketing language. If the source text lacks detail on a topic, set that field to null rather than writing vague generalities
 - For nearestAirport and transferTime: these are a pair — nearestAirport is the nearest international airport, and transferTime is the road transfer time in minutes from that airport. You may infer both using common knowledge. For example, if the text says "80km from Geneva", you should output "Geneva Airport" and 120 for transferTime; if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
 - For websites, include every relevant URL found in the source text; do not attempt to consolidate or deduplicate
 - Return valid JSON only, no explanatory text`
@@ -223,7 +229,7 @@ export const LLM_USER_PROMPT = (
     : ''
   return `Extract ski resort data for "${resortName}" in ${country} from the following source text:${factsSection}
 
-For each description field, write a detailed paragraph of 2–3 sentences on that specific topic. Use concrete facts from the source text. If the source text does not mention a topic, set that field to null — do not write vague generalities.
+For each description field, write a detailed paragraph on that specific topic. Use concrete facts from the source text. If the source text does not mention a topic, set that field to null — do not write vague generalities.
 
 ${sourceText}`
 }
@@ -239,7 +245,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
   })
 
   const topicDesc = (topic: string, example: string, antiExample: string) =>
-    `A detailed paragraph of 2–3 sentences about ${topic}. Use concrete facts, not adjectives. For example, write "${example}" not "${antiExample}". If the source text lacks detail on this topic, set to null.`
+    `A detailed paragraph about ${topic}. Use concrete facts, not adjectives. For example, write "${example}" not "${antiExample}". If the source text lacks detail on this topic, set to null.`
 
   return {
     type: 'object',
