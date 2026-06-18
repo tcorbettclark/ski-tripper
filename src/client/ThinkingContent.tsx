@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Markdown from 'react-markdown'
 import { borders, fontSizes, fonts } from './theme'
 
@@ -15,10 +15,13 @@ export default function ThinkingContent({
   hasContent,
 }: ThinkingContentProps) {
   const [collapsed, setCollapsed] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const userScrolledUpRef = useRef(false)
 
   useEffect(() => {
     if (hasContent) {
       setCollapsed(true)
+      userScrolledUpRef.current = false
     }
   }, [hasContent])
 
@@ -31,18 +34,43 @@ export default function ThinkingContent({
     }
   }, [])
 
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 20
+    userScrolledUpRef.current = !atBottom
+  }, [])
+
+  useEffect(() => {
+    if (!isGenerating || collapsed) return
+    const el = scrollRef.current
+    if (!el || userScrolledUpRef.current) return
+    void thinking.length
+    el.scrollTop = el.scrollHeight
+  }, [isGenerating, collapsed, thinking])
+
   const showThinking = thinking || isGenerating
 
   if (!showThinking) return null
 
   if (!hasContent) {
     return (
-      <div style={thinkingStyles.inline}>
-        {thinking ? (
-          <Markdown>{thinking}</Markdown>
-        ) : (
-          <p style={thinkingStyles.placeholder}>Thinking…</p>
-        )}
+      <div style={thinkingStyles.section}>
+        <div style={thinkingStyles.generatingLabel}>
+          <span>Thinking…</span>
+        </div>
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="thinking-content"
+          style={thinkingStyles.generatingContent}
+        >
+          {thinking ? (
+            <Markdown>{thinking}</Markdown>
+          ) : (
+            <p style={thinkingStyles.placeholder}>Starting…</p>
+          )}
+        </div>
       </div>
     )
   }
@@ -67,22 +95,34 @@ export default function ThinkingContent({
 }
 
 const thinkingStyles = {
-  inline: {
+  section: {
+    marginBottom: '12px',
+    borderRadius: '8px',
+    border: borders.subtle,
+  },
+  generatingLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '8px 12px',
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: 'inherit',
+  },
+  generatingContent: {
+    height: '200px',
+    overflowY: 'auto' as const,
+    padding: '8px 12px 12px',
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     lineHeight: '1.5',
-    marginBottom: '12px',
+    borderTop: borders.subtle,
   },
   placeholder: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     margin: 0,
     fontStyle: 'italic' as const,
-  },
-  section: {
-    marginBottom: '12px',
-    borderRadius: '8px',
-    border: borders.subtle,
   },
   toggle: {
     display: 'flex',

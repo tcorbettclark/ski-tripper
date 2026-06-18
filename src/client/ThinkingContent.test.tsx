@@ -11,14 +11,15 @@ describe('ThinkingContent', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  it('shows thinking placeholder when generating with no thinking content', () => {
+  it('shows Thinking… label and Starting… placeholder when generating with no thinking content', () => {
     render(
       <ThinkingContent thinking="" isGenerating={true} hasContent={false} />
     )
     expect(screen.getByText('Thinking…')).toBeTruthy()
+    expect(screen.getByText('Starting…')).toBeTruthy()
   })
 
-  it('shows thinking inline when thinking and no content yet', () => {
+  it('shows thinking in fixed-height box when generating with no content yet', () => {
     render(
       <ThinkingContent
         thinking="I should consider..."
@@ -27,6 +28,8 @@ describe('ThinkingContent', () => {
       />
     )
     expect(screen.getByText('I should consider...')).toBeTruthy()
+    expect(screen.getByText('Thinking…')).toBeTruthy()
+    expect(screen.queryByText('Thinking')).toBeNull()
   })
 
   it('shows collapsed thinking toggle when content arrives', () => {
