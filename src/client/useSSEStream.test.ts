@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { act, renderHook } from '@testing-library/react'
-import { getApiUrl } from './backend'
+import { browser_get_api_url } from '../shared/env'
 import useSSEStream from './useSSEStream'
 
 function createSSEStream(events: string[]): ReadableStream<Uint8Array> {
@@ -24,6 +24,7 @@ describe('useSSEStream', () => {
   let fetchMock: ReturnType<typeof mock>
 
   beforeEach(() => {
+    process.env.PUBLIC_DOMAIN = 'test-host'
     fetchMock = mock(() =>
       Promise.resolve(
         new Response(createSSEStream([]), {
@@ -60,7 +61,7 @@ describe('useSSEStream', () => {
     )
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, options] = fetchMock.mock.calls[0]
-    expect(url).toBe(getApiUrl('/api/analyse-proposal'))
+    expect(url).toBe(browser_get_api_url('/api/analyse-proposal'))
     expect(options.method).toBe('POST')
     expect(JSON.parse(options.body)).toEqual({
       tripId: 'trip-1',
@@ -74,7 +75,7 @@ describe('useSSEStream', () => {
     )
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url] = fetchMock.mock.calls[0]
-    expect(url).toBe(getApiUrl('/api/preference-search'))
+    expect(url).toBe(browser_get_api_url('/api/preference-search'))
   })
 
   it('accumulates thinking events', async () => {

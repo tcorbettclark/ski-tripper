@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
 import {
+  browser_get_api_url,
   browser_get_pocketbase_url,
   server_get_pocketbase_hostname,
   server_get_pocketbase_port,
@@ -68,6 +69,25 @@ describe('browser_get_pocketbase_url', () => {
   it('throws for missing env var', () => {
     expect(() => browser_get_pocketbase_url()).toThrow(
       'Missing required env var PUBLIC_POCKETBASE_DOMAIN'
+    )
+  })
+})
+
+describe('browser_get_api_url', () => {
+  beforeEach(() => {
+    delete process.env.PUBLIC_DOMAIN
+  })
+
+  it('returns https URL with endpoint', () => {
+    process.env.PUBLIC_DOMAIN = 'example.com'
+    expect(browser_get_api_url('/api/test')).toBe(
+      'https://example.com/api/test'
+    )
+  })
+
+  it('throws for missing env var', () => {
+    expect(() => browser_get_api_url('/api/test')).toThrow(
+      'Missing required env var PUBLIC_DOMAIN'
     )
   })
 })

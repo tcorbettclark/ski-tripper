@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { browser_get_api_url } from '../shared/env'
 import type { LlmStreamStatus } from '../shared/types.d'
-import { getApiUrl, getPb } from './backend'
+import { getPb } from './backend'
 
 const TIMEOUT_MS = 120_000
 
@@ -107,7 +108,7 @@ export default function useSSEStream(
     const controller = new AbortController()
     abortRef.current = controller
 
-    fetch(getApiUrl(endpoint), {
+    fetch(browser_get_api_url(endpoint), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

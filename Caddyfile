@@ -1,4 +1,4 @@
-{$DOMAIN} {
+{$PUBLIC_DOMAIN} {
 	handle /api/* {
 		reverse_proxy {$SERVER_HOSTNAME}:{$SERVER_PORT}
 	}
