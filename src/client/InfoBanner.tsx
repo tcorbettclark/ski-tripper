@@ -5,6 +5,7 @@ import {
   type LucideIcon,
   Mountain,
   Snowflake,
+  Sparkles,
   ThumbsUp,
   UserPlus,
   Users,
@@ -42,8 +43,16 @@ const defaultSlides = [
     text: 'Browse thousands of resorts from an AI-enriched catalogue.',
   },
   {
+    icon: Sparkles,
+    text: "Use built-in AI to find resorts matching people's likes and dislikes.",
+  },
+  {
     icon: FileText,
     text: 'Create proposals with dates and descriptions, discuss with comments, then submit for voting.',
+  },
+  {
+    icon: Sparkles,
+    text: 'Use built-in AI to identify the pros/cons of a proposal.',
   },
   {
     icon: CircleDot,
