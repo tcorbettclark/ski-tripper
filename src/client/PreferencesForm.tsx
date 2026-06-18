@@ -98,7 +98,7 @@ export default function PreferencesForm({
   }
 
   function handleTimeChange(index: number, value: number) {
-    const clamped = Math.max(0, Math.min(100, Math.round(value / 10) * 10))
+    const clamped = Math.max(0, Math.min(100, Math.round(value / 5) * 5))
     setTimeAllocation((prev) => {
       const next = [...prev]
       next[index] = clamped
@@ -259,7 +259,7 @@ export default function PreferencesForm({
                 type="range"
                 min={0}
                 max={100}
-                step={10}
+                step={5}
                 value={timeAllocation[i]}
                 onChange={(e) => handleTimeChange(i, Number(e.target.value))}
                 style={styles.slider}
