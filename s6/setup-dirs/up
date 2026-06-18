@@ -1,0 +1,2 @@
+#!/command/with-contenv sh
+s6-mkdir -p /data/pb_data

@@ -1,0 +1,2 @@
+#!/command/with-contenv sh
+exec /app/pocketbase/pocketbase serve --http "${POCKETBASE_HOSTNAME}:${POCKETBASE_PORT}" --migrationsDir /app/pb_migrations --dir /data/pb_data

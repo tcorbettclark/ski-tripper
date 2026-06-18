@@ -39,7 +39,11 @@
     "test": "bun test --max-concurrency 1",
     "check-and-fix": "bun tsc --noEmit && biome check --write",
     "check": "bun tsc --noEmit && biome ci",
-    "resorts": "bun run src/tools/resorts.ts"
+    "resorts": "bun run src/tools/resorts.ts",
+    "docker:build": "bun run scripts/docker-build.ts",
+    "docker:run": "bun run scripts/docker-run.ts",
+    "docker:trust-ca": "bun run scripts/docker-trust-ca.ts",
+    "provision": "bun run scripts/digitalocean-provision.ts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
@@ -66,6 +70,7 @@
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "@xec-sh/core": "^0.9.0",
     "ai-json-safe-parse": "^0.3.0",
     "commander": "^14.0.3",
     "concurrently": "^10.0.3",
