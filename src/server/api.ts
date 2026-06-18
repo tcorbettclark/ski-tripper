@@ -1,5 +1,6 @@
 import { Ollama } from 'ollama'
 import type PocketBase from 'pocketbase'
+import { ClientResponseError } from 'pocketbase'
 import {
   server_get_ollama_api_key,
   server_get_ollama_model_analysis,
@@ -366,8 +367,12 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
           console.log(`[${label}] Cached result (id: ${cacheId})`)
         } catch (err) {
           cacheId = ''
+          const errData =
+            err instanceof ClientResponseError
+              ? JSON.stringify({ status: err.status, response: err.response })
+              : ''
           console.error(
-            `[${label}] Failed to cache result: ${err instanceof Error ? err.message : String(err)}`
+            `[${label}] Failed to cache result: ${err instanceof Error ? err.message : String(err)}${errData ? ` (${errData})` : ''}`
           )
         }
 
