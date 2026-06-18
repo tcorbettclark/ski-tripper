@@ -24,7 +24,7 @@
     "booking"
   ],
   "scripts": {
-    "dev": "bun run build:copy && concurrently -n client,playground,server,pb,caddy -c blue,magenta,green,yellow,cyan 'bun run dev:client' 'bun run dev:playground' 'bun run dev:server' 'bun run dev:pocketbase' 'bun run dev:caddy'",
+    "dev": "bun run build:copy && concurrently --kill-others-on-fail --names client,playground,server,pb,caddy --prefix-colors blue,magenta,green,yellow,cyan 'bun run dev:client' 'bun run dev:playground' 'bun run dev:server' 'bun run dev:pocketbase' 'bun run dev:caddy'",
     "dev:client": "bun build src/client/main.tsx --outdir output/static --target browser --env 'PUBLIC_*' --watch --no-clear-screen",
     "dev:playground": "bun build src/playground/action-guide-test.tsx --outdir output/static/playground --target browser --watch --no-clear-screen",
     "dev:server": "bun --watch --no-clear-screen src/server/serve.ts",
