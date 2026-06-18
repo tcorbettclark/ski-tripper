@@ -207,7 +207,7 @@ export const LLM_SYSTEM_PROMPT = `You are a ski resort data extractor. Given sou
 Rules:
 - Prefer data from "Authoritative source" sections over "General source" sections when values conflict
 - When sources conflict on facts that change over time (e.g. lift counts, piste km, transfer routes, operating status, resort status), prefer data from more recent sources. Each source header includes a publication date — use it to resolve conflicts. If no source is newer than 3 years, note uncertainty
-- For each description field, write exactly one factual paragraph on that specific topic. Use concrete nouns and observable facts — not adjectives, not marketing language. If the source text lacks detail on a topic, set that field to null rather than writing vague generalities
+- For each description field, write a detailed paragraph of 2–3 sentences on that specific topic. Use concrete nouns and observable facts — not adjectives, not marketing language. If the source text lacks detail on a topic, set that field to null rather than writing vague generalities
 - For nearestAirport and transferTime: these are a pair — nearestAirport is the nearest international airport, and transferTime is the road transfer time in minutes from that airport. You may infer both using common knowledge. For example, if the text says "80km from Geneva", you should output "Geneva Airport" and 120 for transferTime; if it describes a high-altitude glacier resort, you should output "high" for snowReliability; if it mentions the season runs December to April, output "Dec-Apr"
 - For websites, include every relevant URL found in the source text; do not attempt to consolidate or deduplicate
 - Return valid JSON only, no explanatory text`
@@ -223,7 +223,7 @@ export const LLM_USER_PROMPT = (
     : ''
   return `Extract ski resort data for "${resortName}" in ${country} from the following source text:${factsSection}
 
-For each description field, write exactly one paragraph on that specific topic. Use concrete facts from the source text. If the source text does not mention a topic, set that field to null — do not write vague generalities.
+For each description field, write a detailed paragraph of 2–3 sentences on that specific topic. Use concrete facts from the source text. If the source text does not mention a topic, set that field to null — do not write vague generalities.
 
 ${sourceText}`
 }
@@ -239,7 +239,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
   })
 
   const topicDesc = (topic: string, example: string, antiExample: string) =>
-    `One paragraph about ${topic}. Use concrete facts, not adjectives. For example, write "${example}" not "${antiExample}". If the source text lacks detail on this topic, set to null.`
+    `A detailed paragraph of 2–3 sentences about ${topic}. Use concrete facts, not adjectives. For example, write "${example}" not "${antiExample}". If the source text lacks detail on this topic, set to null.`
 
   return {
     type: 'object',
@@ -248,7 +248,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         { type: 'string' },
         topicDesc(
           'terrain character',
-          'wide, gentle cruising runs above the treeline',
+          'The terrain is dominated by wide, gentle cruising runs above the treeline, with a few steeper pitches dropping into the trees on the north side of the mountain. Most runs face south-east, so conditions soften early in the afternoon.',
           'fantastic terrain for all'
         )
       ),
@@ -256,7 +256,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         { type: 'string' },
         topicDesc(
           'off-piste quality',
-          'steep north-facing couloirs accessed from the top lift',
+          'Steep north-facing couloirs can be accessed from the top lift with a short hike along the ridge, holding cold powder days after a storm. The lower trees offer mellow gladed runs that are popular with locals when the upper mountain is wind-affected.',
           'superior off-piste'
         )
       ),
@@ -264,7 +264,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         { type: 'string' },
         topicDesc(
           'value and budget-friendliness',
-          'one of the cheaper French resorts for lift passes',
+          'One of the cheaper French resorts for lift passes, with a six-day adult pass around €250 and good-value family packages. Self-catering apartments near the slopes keep accommodation costs down compared to purpose-built rivals.',
           'great value'
         )
       ),
@@ -272,7 +272,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         { type: 'string' },
         topicDesc(
           'suitability for families vs groups',
-          'nursery slopes are at resort level, separate from faster traffic',
+          'Nursery slopes are at resort level, separate from faster traffic, giving beginners a safe area to learn. The ski school offers English-speaking group lessons for children from age four, and the traffic-free village centre means families can walk everywhere in boots.',
           'perfect for families'
         )
       ),
@@ -280,7 +280,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         { type: 'string' },
         topicDesc(
           'apres-ski and nightlife',
-          'cosy old-town bars cluster around the church',
+          'Cosy old-town bars cluster around the church, with live music most weekends at Le Bar and a fondue restaurant that stays open until midnight. The scene is relaxed rather than rowdy — more vin chaud than vodka shots.',
           'vibrant nightlife'
         )
       ),
@@ -288,7 +288,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         { type: 'string' },
         topicDesc(
           'whether the resort is picturesque or purpose-built',
-          'a purpose-built 1970s station with concrete apartment blocks',
+          'A purpose-built 1970s station with concrete apartment blocks stacked along the access road, offering ski-in/ski-out convenience but little alpine charm. Recent investment has added a swimming pool and refurbished the main lift-base area.',
           'charming resort'
         )
       ),
@@ -296,7 +296,7 @@ export function buildJsonSchema(): JSONSchema.JSONSchema {
         { type: 'string' },
         topicDesc(
           'lift system quality and age',
-          'the lift network is modern and efficient, with heated chairlifts on the main sectors',
+          'The lift network is modern and efficient, with heated chairlifts on the main sectors and high-speed gondolas from the village. Queues are rare outside peak weeks, though the link to the next valley can close in high winds.',
           'excellent lift system'
         )
       ),
