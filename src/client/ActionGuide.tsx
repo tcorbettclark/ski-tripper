@@ -16,7 +16,7 @@ type NodeStatus = 'pending' | 'active'
 
 export type ProposalDetail = {
   proposalId: string
-  subTab: 'proposal' | 'accommodations' | 'discussion' | 'analysis'
+  subTab: 'proposal' | 'accommodations' | 'discussion'
 }
 
 interface ActionChip {

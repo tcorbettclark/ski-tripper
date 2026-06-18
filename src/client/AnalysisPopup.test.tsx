@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import AnalysisTab from './AnalysisTab'
+import AnalysisPopup from './AnalysisPopup'
 import type { UseSSEStreamResult } from './useSSEStream'
+
+const onCloseMock = (() => {}) as () => void
 
 let mockStreamResult: UseSSEStreamResult = {
   status: null,
@@ -20,7 +22,7 @@ const defaultStreamResult: UseSSEStreamResult = {
   error: null,
 }
 
-describe('AnalysisTab', () => {
+describe('AnalysisPopup', () => {
   beforeEach(() => {
     mockStreamResult = {
       ...defaultStreamResult,
@@ -30,9 +32,10 @@ describe('AnalysisTab', () => {
   it('renders generate button in initial state', async () => {
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
@@ -43,25 +46,27 @@ describe('AnalysisTab', () => {
     ).toBeTruthy()
   })
 
-  it('shows description in initial state', async () => {
+  it('shows title and description', async () => {
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
     })
 
+    expect(screen.getByText('AI Analysis')).toBeTruthy()
     expect(
       screen.getByText(
-        /Generate an AI analysis of this proposal against everyone's ski holiday preferences/
+        /Use AI to analyse this proposal against everyone's ski holiday preferences/
       )
     ).toBeTruthy()
   })
 
-  it('shows thinking placeholder while generating with no thinking content', async () => {
+  it('shows thinking placeholder while waiting for thinking content', async () => {
     mockStreamResult = {
       status: 'generating',
       thinking: '',
@@ -72,9 +77,10 @@ describe('AnalysisTab', () => {
 
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
@@ -86,7 +92,7 @@ describe('AnalysisTab', () => {
   it('shows thinking inline when generating', async () => {
     mockStreamResult = {
       status: 'generating',
-      thinking: 'I should consider the slope preferences...',
+      thinking: 'Let me consider the slope preferences...',
       content: '',
       model: '',
       error: null,
@@ -94,16 +100,17 @@ describe('AnalysisTab', () => {
 
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
     })
 
     expect(
-      screen.getByText('I should consider the slope preferences...')
+      screen.getByText('Let me consider the slope preferences...')
     ).toBeTruthy()
   })
 
@@ -118,9 +125,10 @@ describe('AnalysisTab', () => {
 
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
@@ -141,9 +149,10 @@ describe('AnalysisTab', () => {
 
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
@@ -163,9 +172,10 @@ describe('AnalysisTab', () => {
 
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
@@ -187,9 +197,10 @@ describe('AnalysisTab', () => {
 
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
@@ -198,6 +209,34 @@ describe('AnalysisTab', () => {
     expect(screen.getByText('Thinking')).toBeTruthy()
     await user.click(screen.getByText('Thinking'))
     expect(screen.getByText('Internal reasoning here')).toBeTruthy()
+  })
+
+  it('calls onClose when close button clicked', async () => {
+    let closed = false
+    const handleClose = () => {
+      closed = true
+    }
+    const user = userEvent.setup()
+
+    await act(async () => {
+      render(
+        <AnalysisPopup
+          proposalId="prop-1"
+          tripId="trip-1"
+          onClose={handleClose}
+          streamResult={mockStreamResult}
+        />
+      )
+    })
+
+    const closeButtons = screen.getAllByRole('button')
+    const closeButton = closeButtons.find((b) =>
+      b.getAttribute('aria-label')?.includes('Close')
+    )
+    if (closeButton) {
+      await user.click(closeButton)
+    }
+    expect(closed).toBe(true)
   })
 
   it('does not show description once triggered', async () => {
@@ -211,9 +250,10 @@ describe('AnalysisTab', () => {
 
     await act(async () => {
       render(
-        <AnalysisTab
+        <AnalysisPopup
           proposalId="prop-1"
           tripId="trip-1"
+          onClose={onCloseMock}
           streamResult={mockStreamResult}
         />
       )
@@ -221,7 +261,7 @@ describe('AnalysisTab', () => {
 
     expect(
       screen.queryByText(
-        /Generate an AI analysis of this proposal against everyone's ski holiday preferences/
+        /Use AI to analyse this proposal against everyone's ski holiday preferences/
       )
     ).toBeNull()
   })

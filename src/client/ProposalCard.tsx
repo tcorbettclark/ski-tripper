@@ -1,8 +1,8 @@
-import { MapPin } from 'lucide-react'
+import { MapPin, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { getCountryFlagUrl } from '../shared/countries'
 import type { Accommodation, Discussion, Proposal } from '../shared/types.d'
-import AnalysisTab from './AnalysisTab'
+import AnalysisPopup from './AnalysisPopup'
 import {
   createAccommodation as _createAccommodation,
   deleteAccommodation as _deleteAccommodation,
@@ -50,7 +50,7 @@ interface ProposalCardProps {
   userName?: string
   isCoordinator?: boolean
   previewMode?: boolean
-  initialTab?: 'proposal' | 'accommodations' | 'discussion' | 'analysis'
+  initialTab?: 'proposal' | 'accommodations' | 'discussion'
   accommodations?: Accommodation[]
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
@@ -120,7 +120,7 @@ export default function ProposalCard({
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [activeTab, setActiveTab] = useState<
-    'proposal' | 'accommodations' | 'discussion' | 'analysis'
+    'proposal' | 'accommodations' | 'discussion'
   >(initialTab ?? 'proposal')
   const cardRef = useRef<HTMLDivElement>(null)
 
@@ -132,6 +132,7 @@ export default function ProposalCard({
   }, [initialTab])
   const [discussionCount, setDiscussionCount] = useState(0)
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
+  const [showAnalysisPopup, setShowAnalysisPopup] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
@@ -290,41 +291,55 @@ export default function ProposalCard({
     <>
       <div ref={cardRef} style={previewMode ? styles.previewCard : styles.card}>
         <div style={styles.header}>
-          <span style={detailStyles.title}>
-            {(() => {
-              const flagUrl =
-                proposal.country && getCountryFlagUrl(proposal.country)
-              return flagUrl ? (
-                <img src={flagUrl} alt={proposal.country} style={styles.flag} />
-              ) : null
-            })()}
+          <div style={styles.headerLeft}>
+            <span style={detailStyles.title}>
+              {(() => {
+                const flagUrl =
+                  proposal.country && getCountryFlagUrl(proposal.country)
+                return flagUrl ? (
+                  <img
+                    src={flagUrl}
+                    alt={proposal.country}
+                    style={styles.flag}
+                  />
+                ) : null
+              })()}
 
-            {proposal.resortName || '—'}
-            {proposal.country
-              ? ` in ${proposal.region ? `${proposal.region}, ` : ''}${proposal.country}`
-              : proposal.region
-                ? ` in ${proposal.region}`
-                : ''}
-            {proposal.latitude && proposal.longitude && (
-              <a
-                href={`https://www.google.com/maps?q=${proposal.latitude},${proposal.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.mapPinLink}
-                aria-label="Open in Google Maps"
-              >
-                <MapPin size={16} />
-              </a>
-            )}
-          </span>
-          {proposal.proposerUserName && (
-            <span style={styles.headerRight}>
-              {proposal.state === 'DRAFT'
-                ? `...being drafted by ${proposal.proposerUserName}`
-                : proposal.state === 'SUBMITTED'
-                  ? `Proposed by ${proposal.proposerUserName}`
-                  : `(was proposed by ${proposal.proposerUserName})`}
+              {proposal.resortName || '—'}
+              {proposal.country
+                ? ` in ${proposal.region ? `${proposal.region}, ` : ''}${proposal.country}`
+                : proposal.region
+                  ? ` in ${proposal.region}`
+                  : ''}
+              {proposal.latitude && proposal.longitude && (
+                <a
+                  href={`https://www.google.com/maps?q=${proposal.latitude},${proposal.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.mapPinLink}
+                  aria-label="Open in Google Maps"
+                >
+                  <MapPin size={16} />
+                </a>
+              )}
             </span>
+            {proposal.proposerUserName && (
+              <span style={styles.proposerLabel}>
+                {proposal.state === 'DRAFT'
+                  ? `Being drafted by ${proposal.proposerUserName}`
+                  : `Proposed by ${proposal.proposerUserName}`}
+              </span>
+            )}
+          </div>
+          {!previewMode && (
+            <button
+              type="button"
+              onClick={() => setShowAnalysisPopup(true)}
+              style={styles.aiButton}
+              aria-label="AI Analysis"
+            >
+              <Sparkles size={16} />
+            </button>
           )}
         </div>
 
@@ -360,15 +375,6 @@ export default function ProposalCard({
               }
             >
               Discussion {discussionCount > 0 && `(${discussionCount})`}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('analysis')}
-              style={
-                activeTab === 'analysis' ? styles.tabActive : styles.tabInactive
-              }
-            >
-              Analysis
             </button>
           </div>
         )}
@@ -611,10 +617,6 @@ export default function ProposalCard({
               }}
             />
           )}
-
-          {!previewMode && activeTab === 'analysis' && (
-            <AnalysisTab proposalId={proposal.id} tripId={proposal.trip} />
-          )}
         </div>
 
         {!previewMode && hasActions && (
@@ -675,6 +677,14 @@ export default function ProposalCard({
           </div>
         )}
       </div>
+
+      {showAnalysisPopup && (
+        <AnalysisPopup
+          proposalId={proposal.id}
+          tripId={proposal.trip}
+          onClose={() => setShowAnalysisPopup(false)}
+        />
+      )}
 
       {showDeleteConfirm && (
         <div
@@ -995,16 +1005,34 @@ const styles = {
     paddingBottom: '20px',
     display: 'flex',
     alignItems: 'flex-start',
+    justifyContent: 'space-between',
     gap: '12px',
     flexShrink: 0,
   },
-  headerRight: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes.xl,
-    fontWeight: '600',
+  headerLeft: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '2px',
+    minWidth: 0,
+  },
+  proposerLabel: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
     color: colors.textSecondary,
-    marginLeft: 'auto',
-    fontStyle: 'italic',
+    fontStyle: 'italic' as const,
+  },
+  aiButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'transparent',
+    border: `1px solid ${mix('--color-accent', 0.3)}`,
+    borderRadius: '6px',
+    color: colors.accent,
+    cursor: 'pointer',
+    padding: '6px',
+    lineHeight: 1,
+    flexShrink: 0,
   },
   mapPinLink: {
     display: 'inline-flex',

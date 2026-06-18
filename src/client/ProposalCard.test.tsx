@@ -66,7 +66,7 @@ describe('ProposalCard', () => {
     render(<ProposalCard {...defaultProps()} />)
 
     expect(screen.getByText(/Test Resort/)).toBeDefined()
-    expect(screen.getByText(/being drafted by John Doe/)).toBeDefined()
+    expect(screen.getByText(/Being drafted by John Doe/)).toBeDefined()
   })
 
   it('displays new resort fields', () => {
