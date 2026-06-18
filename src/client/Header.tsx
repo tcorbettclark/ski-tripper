@@ -23,6 +23,7 @@ interface HeaderProps {
   logoutError?: string | null
   onOpenPreferences?: () => void
   activePollEndDate?: string | null
+  useIsSmallScreenHook?: () => boolean
 }
 
 function UserMenu({
@@ -274,11 +275,12 @@ export default function Header({
   logoutError,
   onOpenPreferences,
   activePollEndDate,
+  useIsSmallScreenHook = useIsSmallScreen,
 }: HeaderProps) {
   const [_now, _setNow] = useState(Date.now())
   const _intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const isSmall = useIsSmallScreen()
+  const isSmall = useIsSmallScreenHook()
   const prevIsSmallRef = useRef(isSmall)
 
   useEffect(() => {

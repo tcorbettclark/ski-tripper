@@ -44,6 +44,9 @@ interface ListTripsResult {
 }
 
 interface AppProps {
+  useAuthHook?: typeof useAuth
+  useIsSmallScreenHook?: () => boolean
+  useAutoHideFooterHook?: () => 'visible' | 'hidden'
   hasSession?: () => boolean
   confirmVerification?: (token: string) => Promise<unknown>
   listTrips?: (userId: string) => Promise<ListTripsResult>
@@ -113,6 +116,9 @@ type ProposalDetail = {
 }
 
 export default function App({
+  useAuthHook = useAuth,
+  useIsSmallScreenHook,
+  useAutoHideFooterHook,
   hasSession = _hasSession,
   confirmVerification = defaultConfirmVerification,
   listTrips = defaultListTrips,
@@ -135,7 +141,7 @@ export default function App({
     logout,
     onAuthError,
     refreshUser,
-  } = useAuth({ hasSession })
+  } = useAuthHook({ hasSession })
   const [page, setPage] = useState<'login' | 'signup' | 'forgotPassword'>(
     'login'
   )
@@ -330,7 +336,7 @@ export default function App({
             }}
             confirmPasswordReset={confirmPasswordReset}
           />
-          <Footer />
+          <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         </>
       )
     }
@@ -338,7 +344,7 @@ export default function App({
       return (
         <>
           <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
-          <Footer />
+          <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         </>
       )
     }
@@ -355,7 +361,7 @@ export default function App({
               : sessionExpiredMessage
           }
         />
-        <Footer />
+        <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
       </>
     )
   }
@@ -458,6 +464,7 @@ export default function App({
         logoutError={logoutError}
         onOpenPreferences={() => setShowPreferencesModal(true)}
         activePollEndDate={activePollEndDate}
+        useIsSmallScreenHook={useIsSmallScreenHook}
       />
 
       {view === 'tripList' &&
@@ -555,7 +562,7 @@ export default function App({
         createPreferences={createPreferences}
         updateName={updateName}
       />
-      <Footer />
+      <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
     </div>
   )
 }

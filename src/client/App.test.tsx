@@ -1,45 +1,33 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Preferences, Trip, User } from '../shared/types.d'
 import App from './App'
 import { dayjs } from './utils'
 
-let isSmallScreen = false
-let mockUser: User | null = null
-let mockSessionExpiredMessage: string | null = null
-let mockChecking = false
+const mockLogin = mock((_user: User) => {})
+const mockLogout = mock((_message?: string) => {})
+const mockAutoLogout = mock((_message?: string) => {})
 
-const mockLogin = mock((_user: User) => {
-  mockUser = _user
-})
-const mockLogout = mock((_message?: string) => {
-  mockUser = null
-})
-const mockAutoLogout = mock((_message?: string) => {
-  mockUser = null
-})
-const mockRefreshUser = mock(() => {})
-
-mock.module('./useIsSmallScreen', () => ({
-  default: () => isSmallScreen,
-}))
-
-mock.module('./useAuth', () => ({
-  default: (_options?: { hasSession?: () => boolean }) => {
-    return {
-      user: mockUser,
-      checking: mockChecking,
-      sessionExpiredMessage: mockSessionExpiredMessage,
-      login: mockLogin,
-      logout: mockLogout,
-      autoLogout: mockAutoLogout,
-      onAuthError: mock(() => {}),
-      setSessionExpiredMessage: mock(() => {}),
-      refreshUser: mockRefreshUser,
-    }
-  },
-}))
+function createMockAuth(
+  overrides: {
+    user?: User | null
+    checking?: boolean
+    sessionExpiredMessage?: string | null
+  } = {}
+) {
+  return (_options?: { hasSession?: () => boolean }) => ({
+    user: overrides.user ?? null,
+    checking: overrides.checking ?? false,
+    sessionExpiredMessage: overrides.sessionExpiredMessage ?? null,
+    login: mockLogin,
+    logout: mockLogout,
+    autoLogout: mockAutoLogout,
+    onAuthError: mock(() => {}),
+    setSessionExpiredMessage: mock(() => {}),
+    refreshUser: mock(() => {}),
+  })
+}
 
 const defaultUser: User = {
   id: 'user-1',
@@ -86,6 +74,9 @@ const defaultAppProps = {
   hasSession: () => true,
   updateName: () => Promise.resolve(),
   listTripParticipants: () => Promise.resolve({ participants: [] }),
+  useAuthHook: createMockAuth(),
+  useIsSmallScreenHook: () => false,
+  useAutoHideFooterHook: (() => 'visible') as () => 'visible' | 'hidden',
 }
 
 function renderApp(props = {}) {
@@ -105,13 +96,6 @@ function renderAppWithTrip(props = {}) {
 }
 
 describe('App', () => {
-  beforeEach(() => {
-    isSmallScreen = false
-    mockUser = null
-    mockSessionExpiredMessage = null
-    mockChecking = false
-  })
-
   it('shows the login form when not authenticated', async () => {
     renderApp()
     await waitFor(() => {
@@ -120,9 +104,11 @@ describe('App', () => {
   })
 
   it('fetches resort data after login', async () => {
-    mockUser = defaultUser
     const mockFetchResortDataWithAuth = mock(() => Promise.resolve(''))
-    renderApp({ fetchResortDataWithAuth: mockFetchResortDataWithAuth })
+    renderApp({
+      useAuthHook: createMockAuth({ user: defaultUser }),
+      fetchResortDataWithAuth: mockFetchResortDataWithAuth,
+    })
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /test user/i }))
     })
@@ -130,8 +116,7 @@ describe('App', () => {
   })
 
   it('shows the user menu when authenticated', async () => {
-    mockUser = defaultUser
-    renderApp()
+    renderApp({ useAuthHook: createMockAuth({ user: defaultUser }) })
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /test user/i }))
     })
@@ -198,25 +183,23 @@ describe('App', () => {
   })
 
   it('auto-selects the single trip and goes to trip detail', async () => {
-    mockUser = defaultUser
-    renderAppWithTrip()
+    renderAppWithTrip({ useAuthHook: createMockAuth({ user: defaultUser }) })
     await waitFor(() => {
       expect(screen.getAllByText('Alps adventure').length).toBeGreaterThan(0)
     })
   })
 
   it('defaults to the Overview tab for a single trip with no active polls', async () => {
-    mockUser = defaultUser
-    renderAppWithTrip()
+    renderAppWithTrip({ useAuthHook: createMockAuth({ user: defaultUser }) })
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /^overview$/i }))
     })
   })
 
   it('shows countdown in header when an active poll exists', async () => {
-    mockUser = defaultUser
     const future = dayjs().add(2, 'day').toISOString()
     renderAppWithTrip({
+      useAuthHook: createMockAuth({ user: defaultUser }),
       listPolls: () =>
         Promise.resolve({
           polls: [
@@ -233,13 +216,11 @@ describe('App', () => {
   })
 
   describe('on small screens', () => {
-    beforeEach(() => {
-      isSmallScreen = true
-      mockUser = defaultUser
-    })
-
     it('shows hamburger menu instead of user name button on trip list', async () => {
-      renderApp()
+      renderApp({
+        useAuthHook: createMockAuth({ user: defaultUser }),
+        useIsSmallScreenHook: () => true,
+      })
       await waitFor(() => {
         expect(screen.getByRole('button', { name: /open menu/i })).toBeDefined()
       })
@@ -247,7 +228,10 @@ describe('App', () => {
     })
 
     it('shows user name text beside hamburger on trip list', async () => {
-      renderApp()
+      renderApp({
+        useAuthHook: createMockAuth({ user: defaultUser }),
+        useIsSmallScreenHook: () => true,
+      })
       await waitFor(() => {
         expect(screen.getByText('Test User')).toBeDefined()
       })

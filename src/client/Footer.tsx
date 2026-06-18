@@ -9,8 +9,14 @@ const GITHUB_URL = 'https://github.com/tcorbettclark/ski-tripper'
 const ISSUES_URL = `${GITHUB_URL}/issues`
 const AUTHOR_URL = 'https://www.corbettclark.com'
 
-export default function Footer() {
-  const visibility = useAutoHideFooter()
+interface FooterProps {
+  useAutoHideFooterHook?: () => 'visible' | 'hidden'
+}
+
+export default function Footer({
+  useAutoHideFooterHook = useAutoHideFooter,
+}: FooterProps = {}) {
+  const visibility = useAutoHideFooterHook()
   const [footerHeight, setFooterHeight] = useState(0)
   const footerRef = useRef<HTMLElement>(null)
 

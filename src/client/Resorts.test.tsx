@@ -3,19 +3,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ResortWithEmbedding } from '../shared/types.d'
 import Resorts from './Resorts'
-import type { ScoredResort } from './resortSearch'
-
-mock.module('./resortSearch', () => ({
-  initSearchModel: mock(() => {}),
-  getIsModelReady: mock(() => true),
-  onModelReady: mock((cb: () => void) => cb()),
-  searchResorts: mock(
-    async (
-      _query: string,
-      resorts: ResortWithEmbedding[]
-    ): Promise<ScoredResort[]> => resorts
-  ),
-}))
 
 const user = {
   id: 'user-1',
@@ -119,6 +106,13 @@ const sampleResorts: ResortWithEmbedding[] = [
   },
 ]
 
+const mockSearchResorts = mock(
+  async (
+    _query: string,
+    resorts: ResortWithEmbedding[]
+  ): Promise<typeof resorts> => resorts
+)
+
 function defaultProps(overrides: Record<string, unknown> = {}) {
   return {
     user,
@@ -126,6 +120,10 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
     resorts: sampleResorts,
     onNavigateToProposals: mock(() => {}),
     onAuthError: mock(() => {}),
+    initSearchModel: mock(() => {}),
+    getIsModelReady: () => true,
+    onModelReady: (cb: () => void) => cb(),
+    searchResorts: mockSearchResorts,
     ...overrides,
   }
 }
@@ -550,11 +548,12 @@ describe('Resorts', () => {
   })
 
   it('disables search input when model is not ready', () => {
-    mock.module('./resortSearch', () => ({
-      initSearchModel: mock(() => {}),
-      getIsModelReady: mock(() => false),
-      onModelReady: mock(() => {}),
-      searchResorts: mock(async () => []),
-    }))
+    render(
+      <Resorts
+        {...defaultProps()}
+        getIsModelReady={() => false}
+        onModelReady={() => {}}
+      />
+    )
   })
 })

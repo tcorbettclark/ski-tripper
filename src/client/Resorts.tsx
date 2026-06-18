@@ -15,10 +15,10 @@ import PisteBreakdown from './PisteBreakdown'
 import PreferenceSearchPopup from './PreferenceSearchPopup'
 import type { ScoredResort } from './resortSearch'
 import {
-  getIsModelReady,
-  initSearchModel,
-  onModelReady,
-  searchResorts,
+  getIsModelReady as _getIsModelReady,
+  initSearchModel as _initSearchModel,
+  onModelReady as _onModelReady,
+  searchResorts as _searchResorts,
 } from './resortSearch'
 import {
   TROPHY_BRONZE_THRESHOLD,
@@ -42,8 +42,6 @@ import {
   sanitizeUrl,
 } from './utils'
 
-initSearchModel()
-
 const snowReliabilityLabels: Record<string, string> = {
   high: 'High',
   medium: 'Medium',
@@ -56,9 +54,21 @@ interface ResortsProps {
   resorts: ResortWithEmbedding[]
   onNavigateToProposals?: () => void
   onAuthError?: (err: unknown) => void
+  initSearchModel?: () => void
+  getIsModelReady?: () => boolean
+  onModelReady?: (callback: () => void) => void
+  searchResorts?: (
+    query: string,
+    resorts: ResortWithEmbedding[]
+  ) => Promise<ScoredResort[]>
 }
 
 const NOOP_AUTH_ERROR = () => {}
+
+const _defaultInitSearchModel = _initSearchModel
+const _defaultGetIsModelReady = _getIsModelReady
+const _defaultOnModelReady = _onModelReady
+const _defaultSearchResorts = _searchResorts
 
 export default function Resorts({
   user,
@@ -66,7 +76,12 @@ export default function Resorts({
   resorts,
   onNavigateToProposals,
   onAuthError = NOOP_AUTH_ERROR,
+  initSearchModel: initSearch = _defaultInitSearchModel,
+  getIsModelReady: isModelReady = _defaultGetIsModelReady,
+  onModelReady: onModelReadyCb = _defaultOnModelReady,
+  searchResorts: searchResortsFn = _defaultSearchResorts,
 }: ResortsProps) {
+  initSearch()
   const [searchQuery, setSearchQuery] = useState('')
   const [countryFilter, setCountryFilter] = useState<Set<string>>(new Set())
   const [regionFilter, setRegionFilter] = useState<Set<string>>(new Set())
@@ -77,14 +92,14 @@ export default function Resorts({
   const [pisteProfiles, setPisteProfiles] = useState<Set<string>>(new Set())
   const [selectedResort, setSelectedResort] =
     useState<ResortWithEmbedding | null>(null)
-  const [modelReady, setModelReady] = useState(getIsModelReady())
+  const [modelReady, setModelReady] = useState(isModelReady())
   const [searchResults, setSearchResults] = useState<ScoredResort[] | null>(
     null
   )
 
   useEffect(() => {
-    onModelReady(() => setModelReady(getIsModelReady()))
-  }, [])
+    onModelReadyCb(() => setModelReady(isModelReady()))
+  }, [onModelReadyCb, isModelReady])
 
   const maxTransferTimeFromData = useMemo(
     () =>
@@ -145,7 +160,7 @@ export default function Resorts({
       }
       return true
     })
-    searchResorts(searchQuery, filteredByDropdowns)
+    searchResortsFn(searchQuery, filteredByDropdowns)
       .then((results) => {
         setSearchResults(results)
       })
@@ -164,6 +179,7 @@ export default function Resorts({
     maxTransferTime,
     maxTransferTimeFromData,
     pisteProfiles,
+    searchResortsFn,
   ])
 
   const toggleCountry = useCallback((country: string) => {
