@@ -16,12 +16,12 @@ describe('InfoBanner', () => {
     expect(screen.getByText('First slide'))
   })
 
-  it('renders a dot span for each slide', () => {
+  it('renders a dot button for each slide', () => {
     const { container } = render(
       <InfoBanner intervalMs={60000} slides={testSlides} />
     )
-    const dots = container.querySelectorAll<HTMLSpanElement>(
-      '[style*="border-radius: 50%"]'
+    const dots = container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Go to slide"]'
     )
     expect(dots.length).toBe(testSlides.length)
   })
@@ -143,5 +143,114 @@ describe('InfoBanner', () => {
       fireEvent.mouseLeave(section)
     })
     expect(container.textContent).not.toContain('\u25AE\u25AE')
+  })
+
+  it('switches slide instantly when clicking a dot (touch)', () => {
+    const { container } = render(
+      <InfoBanner
+        intervalMs={60000}
+        slides={testSlides}
+        useIsSmallScreenHook={() => true}
+      />
+    )
+    expect(screen.getByText('First slide'))
+
+    const dots = container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Go to slide"]'
+    )
+    act(() => {
+      fireEvent.click(dots[2])
+    })
+
+    expect(screen.getByText('Third slide')).toBeTruthy()
+  })
+
+  it('switches slide instantly on dot hover (desktop)', () => {
+    const { container } = render(
+      <InfoBanner
+        intervalMs={60000}
+        slides={testSlides}
+        useIsSmallScreenHook={() => false}
+      />
+    )
+    expect(screen.getByText('First slide'))
+
+    const dots = container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Go to slide"]'
+    )
+    act(() => {
+      fireEvent.mouseEnter(dots[1])
+    })
+
+    expect(screen.getByText('Second slide'))
+  })
+
+  it('skips CSS transition when switching via dot', () => {
+    const { container } = render(
+      <InfoBanner
+        intervalMs={60000}
+        slides={testSlides}
+        useIsSmallScreenHook={() => false}
+      />
+    )
+    const dots = container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Go to slide"]'
+    )
+
+    act(() => {
+      fireEvent.mouseEnter(dots[1])
+    })
+
+    const p = screen.getByText('Second slide')
+    const wrapper = p.parentElement!.parentElement! as HTMLElement
+    expect(wrapper.style.transition).toBe('none')
+  })
+
+  it('cancels pending fade when switching via dot mid-transition', () => {
+    vi.useFakeTimers()
+    const { container } = render(
+      <InfoBanner intervalMs={4000} slides={testSlides} />
+    )
+
+    act(() => {
+      vi.advanceTimersByTime(4000)
+    })
+
+    const dots = container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Go to slide"]'
+    )
+    act(() => {
+      fireEvent.click(dots[2])
+    })
+
+    expect(screen.getByText('Third slide')).toBeTruthy()
+
+    act(() => {
+      vi.advanceTimersByTime(FADE_DURATION_MS)
+    })
+
+    expect(screen.getByText('Third slide')).toBeTruthy()
+
+    vi.useRealTimers()
+  })
+
+  it('does not switch on hover when isSmallScreen is true', () => {
+    const { container } = render(
+      <InfoBanner
+        intervalMs={60000}
+        slides={testSlides}
+        useIsSmallScreenHook={() => true}
+      />
+    )
+    expect(screen.getByText('First slide'))
+
+    const dots = container.querySelectorAll<HTMLButtonElement>(
+      'button[aria-label^="Go to slide"]'
+    )
+    act(() => {
+      fireEvent.mouseEnter(dots[1])
+    })
+
+    expect(screen.getByText('First slide'))
   })
 })

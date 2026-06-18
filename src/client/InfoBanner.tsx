@@ -13,6 +13,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Paragraphs from './Paragraphs'
 import { colors, fontSizes, fonts, mix } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 
 const slideColorKeys: (keyof typeof colors)[] = [
   'palette0',
@@ -73,6 +74,7 @@ interface Slide {
 interface InfoBannerProps {
   intervalMs?: number
   slides?: Slide[]
+  useIsSmallScreenHook?: () => boolean
 }
 
 export const FADE_DURATION_MS = 300
@@ -80,22 +82,47 @@ export const FADE_DURATION_MS = 300
 export default function InfoBanner({
   intervalMs = 4000,
   slides = defaultSlides,
+  useIsSmallScreenHook = useIsSmallScreen,
 }: InfoBannerProps) {
   const [active, setActive] = useState(0)
   const [visible, setVisible] = useState(true)
   const [paused, setPaused] = useState(false)
+  const [skipTransition, setSkipTransition] = useState(false)
   const advancingRef = useRef(false)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isSmallScreen = useIsSmallScreenHook()
+
+  const cancelPendingFade = useCallback(() => {
+    if (timeoutRef.current !== null) {
+      clearTimeout(timeoutRef.current)
+      timeoutRef.current = null
+    }
+    advancingRef.current = false
+  }, [])
 
   const advance = useCallback(() => {
     if (advancingRef.current) return
     advancingRef.current = true
+    setSkipTransition(false)
     setVisible(false)
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setActive((i) => (i + 1) % slides.length)
       setVisible(true)
       advancingRef.current = false
+      timeoutRef.current = null
     }, FADE_DURATION_MS)
   }, [slides.length])
+
+  const goTo = useCallback(
+    (i: number) => {
+      if (i === active) return
+      cancelPendingFade()
+      setSkipTransition(true)
+      setActive(i)
+      setVisible(true)
+    },
+    [active, cancelPendingFade]
+  )
 
   useEffect(() => {
     if (paused) return
@@ -114,7 +141,9 @@ export default function InfoBanner({
         style={{
           ...bannerStyles.slide,
           opacity: visible ? 1 : 0,
-          transition: `opacity ${FADE_DURATION_MS}ms ease-in-out`,
+          transition: skipTransition
+            ? 'none'
+            : `opacity ${FADE_DURATION_MS}ms ease-in-out`,
         }}
       >
         {(() => {
@@ -139,9 +168,13 @@ export default function InfoBanner({
         </div>
         <div style={bannerStyles.dots}>
           {slides.map((_, i) => (
-            <span
+            <button
               // biome-ignore lint/suspicious/noArrayIndexKey: dots are visual indicators for a static list
               key={i}
+              type="button"
+              aria-label={`Go to slide ${i + 1}`}
+              onMouseEnter={isSmallScreen ? undefined : () => goTo(i)}
+              onClick={() => goTo(i)}
               style={
                 i === active
                   ? {
@@ -198,6 +231,10 @@ const bannerStyles = {
     borderRadius: '50%',
     background: mix('--color-textSecondary', 0.25),
     display: 'inline-block',
+    cursor: 'pointer',
+    border: 'none',
+    padding: 0,
+    outline: 'none',
   },
   pauseIcon: {
     position: 'absolute' as const,
