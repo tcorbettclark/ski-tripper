@@ -1449,6 +1449,10 @@ async function uploadResorts() {
     process.exit(1)
   }
 
+  if (PB_URL.includes('localhost')) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+  }
+
   const pb = new PocketBase(PB_URL)
   await pb
     .collection('_superusers')
