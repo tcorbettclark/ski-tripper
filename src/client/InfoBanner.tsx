@@ -1,4 +1,5 @@
 import {
+  Binoculars,
   CircleDot,
   Compass,
   FileText,
@@ -29,7 +30,7 @@ const slideColorKeys: (keyof typeof colors)[] = [
 const defaultSlides = [
   {
     icon: Snowflake,
-    text: 'A collaborative ski trip planning application.\nCut down on the chaos!',
+    text: 'A collaborative ski trip planning application. Cut down on the chaos!',
   },
   {
     icon: UserPlus,
@@ -44,7 +45,7 @@ const defaultSlides = [
     text: 'Browse thousands of resorts from an AI-enriched catalogue.',
   },
   {
-    icon: Sparkles,
+    icon: Binoculars,
     text: "Use built-in AI to find resorts matching people's likes and dislikes.",
   },
   {
