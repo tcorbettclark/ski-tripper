@@ -31,7 +31,7 @@ import {
   consistencySchema,
   filterValidInconsistencies,
 } from './lib/consistency'
-import { readJsonl, simpleHash, writeJsonl } from './lib/jsonl'
+import { simpleHash, writeJsonl } from './lib/jsonl'
 import {
   buildJsonSchema,
   ENRICH_SOURCE_WEBSITES,
@@ -54,6 +54,15 @@ import {
   log,
 } from './lib/log'
 import { loadOpenSkiMapData } from './lib/openski-map'
+import {
+  ENCODED_PATH,
+  ENRICHED_PATH,
+  mergeEnrichedIntoSeeded,
+  readEncoded,
+  readEnriched,
+  readSeeded,
+  SEEDED_PATH,
+} from './lib/read-resorts'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
 const RESORTS_DIR = path.resolve(import.meta.dir, '../../data/resorts')
@@ -577,15 +586,13 @@ async function fixInconsistencies(options: {
   retries?: number
 }) {
   const model = options.model ?? server_get_ollama_model_audit()
-  const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
-  const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
 
-  log('info', 'fix-inconsistencies', `Seeded file: ${seededPath}`)
-  log('info', 'fix-inconsistencies', `Enriched file: ${enrichedPath}`)
+  log('info', 'fix-inconsistencies', `Seeded file: ${SEEDED_PATH}`)
+  log('info', 'fix-inconsistencies', `Enriched file: ${ENRICHED_PATH}`)
   log('info', 'fix-inconsistencies', `Model: ${model}`)
 
-  const seeded = readJsonl<SeededResort>(seededPath)
-  const enriched = readJsonl<EnrichedResort>(enrichedPath)
+  const seeded = readSeeded()
+  const enriched = readEnriched()
   const enrichedById = new Map(enriched.map((r) => [r.id, r]))
 
   const bothEnriched = seeded.filter((s) => enrichedById.has(s.id))
@@ -643,6 +650,7 @@ async function fixInconsistencies(options: {
   for (let i = 0; i < toCheck.length; i++) {
     const s = toCheck[i]
     const e = enrichedById.get(s.id)!
+    const m = mergeEnrichedIntoSeeded(s, e)
 
     const description = buildDescription(e)
     if (!description || description.trim().length < 50) {
@@ -664,9 +672,7 @@ async function fixInconsistencies(options: {
 
     const fields: Record<string, number | null> = {}
     for (const field of CONSISTENCY_FIELDS) {
-      fields[field] =
-        (e[field as keyof EnrichedResort] as number | null) ??
-        (s[field as keyof SeededResort] as number)
+      fields[field] = m[field as keyof SeededResort] as number
     }
 
     const userPrompt = CONSISTENCY_USER_PROMPT(
@@ -813,7 +819,7 @@ async function fixInconsistencies(options: {
 
     enrichedById.set(s.id, e)
     writeJsonl(
-      enrichedPath,
+      ENRICHED_PATH,
       [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
     )
 
@@ -833,15 +839,8 @@ async function fixInconsistencies(options: {
 }
 
 function audit(options: { detail?: boolean }) {
-  const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
-  const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
-
-  const seeded = fs.existsSync(seededPath)
-    ? readJsonl<SeededResort>(seededPath)
-    : []
-  const enriched = fs.existsSync(enrichedPath)
-    ? readJsonl<EnrichedResort>(enrichedPath)
-    : []
+  const seeded = readSeeded()
+  const enriched = readEnriched()
 
   const result = auditEnrichedData(seeded, enriched)
 
@@ -928,10 +927,10 @@ async function enrich(options: {
   all?: boolean
   resort?: string
   region?: string
+  auditModel?: string
+  auditRetries?: number
 }) {
   const model = options.model ?? server_get_ollama_model_enrich()
-  const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
-  const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
   let mode: EnrichMode = 'new'
   if (options.all && options.fill) {
     log('error', 'enrich', 'Cannot use --fill and --all together. Pick one.')
@@ -940,25 +939,25 @@ async function enrich(options: {
   if (options.all) mode = 'all'
   else if (options.fill) mode = 'fill'
 
-  log('info', 'enrich', `Seeded file: ${seededPath}`)
-  log('info', 'enrich', `Enriched file: ${enrichedPath}`)
+  log('info', 'enrich', `Seeded file: ${SEEDED_PATH}`)
+  log('info', 'enrich', `Enriched file: ${ENRICHED_PATH}`)
 
-  const seeded = readJsonl<SeededResort>(seededPath)
+  const seeded = readSeeded()
   if (seeded.length === 0) {
     log(
       'error',
       'enrich',
-      `No seeded resorts found in ${seededPath}. Run seed first.`
+      `No seeded resorts found in ${SEEDED_PATH}. Run seed first.`
     )
     process.exit(1)
   }
 
-  if (!fs.existsSync(enrichedPath)) {
-    log('info', 'enrich', `Enriched file not found, creating: ${enrichedPath}`)
-    writeJsonl(enrichedPath, [])
+  if (!fs.existsSync(ENRICHED_PATH)) {
+    log('info', 'enrich', `Enriched file not found, creating: ${ENRICHED_PATH}`)
+    writeJsonl(ENRICHED_PATH, [])
   }
 
-  const existingEnriched = readJsonl<EnrichedResort>(enrichedPath)
+  const existingEnriched = readEnriched()
   const enrichedById = new Map(existingEnriched.map((r) => [r.id, r]))
 
   const seededIds = new Set(seeded.map((r) => r.id))
@@ -973,7 +972,7 @@ async function enrich(options: {
       enrichedById.delete(r.id)
     }
     writeJsonl(
-      enrichedPath,
+      ENRICHED_PATH,
       [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
     )
   }
@@ -1143,7 +1142,7 @@ async function enrich(options: {
     enrichedById.set(seededResort.id, enrichedEntry)
     enrichedCount++
     writeJsonl(
-      enrichedPath,
+      ENRICHED_PATH,
       [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
     )
     log(
@@ -1159,6 +1158,16 @@ async function enrich(options: {
     'enrich',
     `Done. Enriched: ${enrichedCount}, Skipped: ${skipped}, Total: ${toEnrich.length}`
   )
+
+  console.log()
+  log('info', 'enrich', 'Running consistency check...')
+  await fixInconsistencies({
+    model: options.auditModel,
+    resort: options.resort,
+    region: options.region,
+    maxResorts: options.maxResorts,
+    retries: options.auditRetries,
+  })
 }
 
 function computeSearchText(
@@ -1191,30 +1200,24 @@ function computeSearchText(
 }
 
 async function encode() {
-  const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
-  const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
-  const encodedPath = path.resolve(RESORTS_DIR, 'encoded.jsonl')
+  log('info', 'encode', `Seeded file: ${SEEDED_PATH}`)
+  log('info', 'encode', `Enriched file: ${ENRICHED_PATH}`)
+  log('info', 'encode', `Encoded file: ${ENCODED_PATH}`)
 
-  log('info', 'encode', `Seeded file: ${seededPath}`)
-  log('info', 'encode', `Enriched file: ${enrichedPath}`)
-  log('info', 'encode', `Encoded file: ${encodedPath}`)
-
-  const seeded = readJsonl<SeededResort>(seededPath)
+  const seeded = readSeeded()
   if (seeded.length === 0) {
     log(
       'error',
       'encode',
-      `No seeded resorts found in ${seededPath}. Run seed first.`
+      `No seeded resorts found in ${SEEDED_PATH}. Run seed first.`
     )
     process.exit(1)
   }
 
-  const enriched = readJsonl<EnrichedResort>(enrichedPath)
+  const enriched = readEnriched()
   const enrichedById = new Map(enriched.map((r) => [r.id, r]))
 
-  const existingEncoded = fs.existsSync(encodedPath)
-    ? readJsonl<EncodedResort>(encodedPath)
-    : []
+  const existingEncoded = readEncoded()
   const encodedById = new Map(existingEncoded.map((r) => [r.id, r]))
 
   log(
@@ -1317,14 +1320,14 @@ async function encode() {
   const allEncoded = [...encodedById.values()].sort((a, b) =>
     a.id.localeCompare(b.id)
   )
-  writeJsonl(encodedPath, allEncoded)
+  writeJsonl(ENCODED_PATH, allEncoded)
 
   log(
     'success',
     'encode',
     `Encoded ${encoded} resort(s). Total: ${allEncoded.length}`
   )
-  log('success', 'encode', `Written to ${encodedPath}`)
+  log('success', 'encode', `Written to ${ENCODED_PATH}`)
 }
 
 function cleanParagraph(text: string): string {
@@ -1352,20 +1355,17 @@ function buildDescription(e: EnrichedResort): string {
 }
 
 function build() {
-  const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
-  const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
-  const encodedPath = path.resolve(RESORTS_DIR, 'encoded.jsonl')
   const outputPath = path.resolve(RESORTS_DIR, 'all.jsonl')
 
   log('info', 'build', 'Building resort data file...')
-  log('info', 'build', `Seeded file: ${seededPath}`)
-  log('info', 'build', `Enriched file: ${enrichedPath}`)
-  log('info', 'build', `Encoded file: ${encodedPath}`)
+  log('info', 'build', `Seeded file: ${SEEDED_PATH}`)
+  log('info', 'build', `Enriched file: ${ENRICHED_PATH}`)
+  log('info', 'build', `Encoded file: ${ENCODED_PATH}`)
   log('info', 'build', `Output file: ${outputPath}`)
 
-  const seeded = readJsonl<SeededResort>(seededPath)
-  const enriched = readJsonl<EnrichedResort>(enrichedPath)
-  const encoded = readJsonl<EncodedResort>(encodedPath)
+  const seeded = readSeeded()
+  const enriched = readEnriched()
+  const encoded = readEncoded()
 
   const seededIds = new Set(seeded.map((r) => r.id))
   const enrichedIds = new Set(enriched.map((r) => r.id))
@@ -1403,27 +1403,28 @@ function build() {
     .map((s) => {
       const e = enrichedById.get(s.id)!
       const enc = encodedById.get(s.id)!
+      const m = mergeEnrichedIntoSeeded(s, e)
 
       return {
-        id: s.id,
-        resortName: s.resortName,
-        country: s.country,
-        region: s.region,
+        id: m.id,
+        resortName: m.resortName,
+        country: m.country,
+        region: m.region,
         description: buildDescription(e),
-        latitude: s.latitude,
-        longitude: s.longitude,
-        summitAltitude: e.summitAltitude ?? s.summitAltitude,
-        baseAltitude: e.baseAltitude ?? s.baseAltitude,
+        latitude: m.latitude,
+        longitude: m.longitude,
+        summitAltitude: m.summitAltitude,
+        baseAltitude: m.baseAltitude,
         nearestAirport: e.nearestAirport,
         transferTime: e.transferTime,
-        pisteKm: e.pisteKm ?? s.pisteKm,
-        beginnerPct: e.beginnerPct ?? s.beginnerPct,
-        intermediatePct: e.intermediatePct ?? s.intermediatePct,
-        advancedPct: e.advancedPct ?? s.advancedPct,
-        liftCount: e.liftCount ?? s.liftCount,
+        pisteKm: m.pisteKm,
+        liftCount: m.liftCount,
+        beginnerPct: m.beginnerPct,
+        intermediatePct: m.intermediatePct,
+        advancedPct: m.advancedPct,
         snowReliability: e.snowReliability,
         skiSeasonMonths: e.skiSeasonMonths,
-        websites: cleanUrls([...s.websites, ...e.websites]),
+        websites: cleanUrls([...m.websites, ...e.websites]),
         linkedResortsDescription: e.linkedResortsDescription,
         embedding: enc.embedding,
       }
@@ -1474,7 +1475,6 @@ async function uploadResorts() {
 
 async function seed(options: { dryRun?: boolean; minPisteLength?: number }) {
   const dataDir = path.resolve(RESORTS_DIR)
-  const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
   const dryRun = options.dryRun ?? false
   const minPisteKm = options.minPisteLength ?? 5
 
@@ -1537,16 +1537,16 @@ async function seed(options: { dryRun?: boolean; minPisteLength?: number }) {
     log(
       'success',
       'seed',
-      `Dry run complete. Would write ${seededResorts.length} resort(s) to ${seededPath}`
+      `Dry run complete. Would write ${seededResorts.length} resort(s) to ${SEEDED_PATH}`
     )
     return
   }
 
-  writeJsonl(seededPath, seededResorts)
+  writeJsonl(SEEDED_PATH, seededResorts)
   log(
     'success',
     'seed',
-    `Wrote ${seededResorts.length} resort(s) to ${seededPath}`
+    `Wrote ${seededResorts.length} resort(s) to ${SEEDED_PATH}`
   )
 }
 
@@ -1603,57 +1603,24 @@ program
     '--all',
     'Re-enrich every resort from scratch, replacing all existing data'
   )
+  .option(
+    '--audit-model <model>',
+    'LLM model to use for consistency check (default: kimi-k2.6 or OLLAMA_MODEL_AUDIT env var)'
+  )
+  .option(
+    '--audit-retries <n>',
+    'Maximum number of LLM retries for consistency check (default: 1)',
+    parseInt
+  )
   .action(enrich)
 
 program
   .command('audit')
   .description('Summarise enriched data and list problems')
   .option('--detail', 'Show per-resort quality issue details')
-  .option(
-    '--fix-inconsistencies',
-    'Use LLM to detect and fix inconsistencies between description text and numeric fields'
-  )
-  .option(
-    '--model <model>',
-    'LLM model to use for --fix-inconsistencies (default: kimi-k2.6 or OLLAMA_MODEL_AUDIT env var)'
-  )
-  .option('--max-resorts <n>', 'Maximum number of resorts to check', parseInt)
-  .option(
-    '--resort <id>',
-    'Check a specific resort by id (e.g. "chamonix-alps-france")'
-  )
-  .option(
-    '--region <region>',
-    'Check only resorts in the specified region (e.g. "Alps")'
-  )
-  .option(
-    '--retries <n>',
-    'Maximum number of LLM retries for --fix-inconsistencies (default: 1)',
-    parseInt
-  )
-  .action(
-    async (options: {
-      detail?: boolean
-      fixInconsistencies?: boolean
-      model?: string
-      maxResorts?: number
-      resort?: string
-      region?: string
-      retries?: number
-    }) => {
-      if (options.fixInconsistencies) {
-        await fixInconsistencies({
-          model: options.model,
-          resort: options.resort,
-          region: options.region,
-          maxResorts: options.maxResorts,
-          retries: options.retries,
-        })
-      } else {
-        audit({ detail: options.detail })
-      }
-    }
-  )
+  .action((options: { detail?: boolean }) => {
+    audit({ detail: options.detail })
+  })
 
 program
   .command('encode')

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { auditEnrichedData } from './audit'
+import { mergeEnrichedIntoSeeded } from './read-resorts'
 import type { EnrichedResort, SeededResort } from './types'
 
 const seededResort: SeededResort = {
@@ -168,5 +169,39 @@ describe('auditEnrichedData', () => {
         issues: [{ type: 'low-quality', fields: ['nearestAirport'] }],
       },
     ])
+  })
+})
+
+describe('mergeEnrichedIntoSeeded', () => {
+  it('overrides seeded numeric fields with enriched corrections', () => {
+    const enriched: EnrichedResort = {
+      ...goodEnriched,
+      summitAltitude: 3900,
+      pisteKm: 160,
+    }
+    const merged = mergeEnrichedIntoSeeded(seededResort, enriched)
+    expect(merged.summitAltitude).toBe(3900)
+    expect(merged.pisteKm).toBe(160)
+    expect(merged.baseAltitude).toBe(1035)
+  })
+
+  it('does not override when enriched field is null', () => {
+    const enriched: EnrichedResort = {
+      ...goodEnriched,
+      summitAltitude: null,
+    }
+    const merged = mergeEnrichedIntoSeeded(seededResort, enriched)
+    expect(merged.summitAltitude).toBe(3842)
+  })
+
+  it('does not override when enriched field is undefined', () => {
+    const { summitAltitude: _, ...enrichedNoAlt } = {
+      ...goodEnriched,
+    }
+    const merged = mergeEnrichedIntoSeeded(
+      seededResort,
+      enrichedNoAlt as EnrichedResort
+    )
+    expect(merged.summitAltitude).toBe(3842)
   })
 })
