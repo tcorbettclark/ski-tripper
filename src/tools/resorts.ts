@@ -8,7 +8,8 @@ import { Command } from 'commander'
 import PocketBase from 'pocketbase'
 import * as z from 'zod'
 import {
-  server_get_ollama_model,
+  server_get_ollama_model_audit,
+  server_get_ollama_model_enrich,
   server_get_pocketbase_admin_email,
   server_get_pocketbase_admin_password,
   server_get_public_pocketbase_url,
@@ -575,7 +576,7 @@ async function fixInconsistencies(options: {
   maxResorts?: number
   retries?: number
 }) {
-  const model = options.model ?? server_get_ollama_model()
+  const model = options.model ?? server_get_ollama_model_audit()
   const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
   const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
 
@@ -928,7 +929,7 @@ async function enrich(options: {
   resort?: string
   region?: string
 }) {
-  const model = options.model ?? server_get_ollama_model()
+  const model = options.model ?? server_get_ollama_model_enrich()
   const seededPath = path.resolve(RESORTS_DIR, 'seeded.jsonl')
   const enrichedPath = path.resolve(RESORTS_DIR, 'enriched.jsonl')
   let mode: EnrichMode = 'new'
@@ -1574,7 +1575,7 @@ program
   )
   .option(
     '--model <model>',
-    'LLM model to use (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
+    'LLM model to use (default: deepseek-v4-flash or OLLAMA_MODEL_ENRICH env var)'
   )
   .option('--max-resorts <n>', 'Maximum number of resorts to enrich', parseInt)
   .option(
@@ -1610,7 +1611,7 @@ program
   )
   .option(
     '--model <model>',
-    'LLM model to use for --fix-inconsistencies (default: kimi-k2.6:cloud or OLLAMA_MODEL env var)'
+    'LLM model to use for --fix-inconsistencies (default: kimi-k2.6 or OLLAMA_MODEL_AUDIT env var)'
   )
   .option('--max-resorts <n>', 'Maximum number of resorts to check', parseInt)
   .option(

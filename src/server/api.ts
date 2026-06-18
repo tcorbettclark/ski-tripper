@@ -2,7 +2,8 @@ import { Ollama } from 'ollama'
 import type PocketBase from 'pocketbase'
 import {
   server_get_ollama_api_key,
-  server_get_ollama_model,
+  server_get_ollama_model_analysis,
+  server_get_ollama_model_preference_search,
 } from '../shared/env'
 import {
   type Accommodation,
@@ -250,6 +251,7 @@ interface StreamLlmParams {
   cacheFilter: string
   systemPrompt: string
   userPrompt: string
+  model: string
 }
 
 async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
@@ -263,6 +265,7 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
     cacheFilter,
     systemPrompt,
     userPrompt,
+    model,
   } = params
 
   let cacheRows: LlmCacheRow[]
@@ -316,7 +319,7 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
 
       try {
         const llmStream = await ollama.chat({
-          model: server_get_ollama_model(),
+          model,
           stream: true,
           think: true,
           options: { num_predict: 8192 },
@@ -357,7 +360,7 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: trimmedContent || null,
-            model: server_get_ollama_model(),
+            model,
           })
           cacheId = created.id
           console.log(`[${label}] Cached result (id: ${cacheId})`)
@@ -374,7 +377,7 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
             status: 'complete',
             thinking: accumulatedThinking || null,
             content: trimmedContent || null,
-            model: server_get_ollama_model(),
+            model,
           })
         )
       } catch (err) {
@@ -507,6 +510,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     }),
     systemPrompt,
     userPrompt,
+    model: server_get_ollama_model_analysis(),
   })
 }
 
@@ -629,5 +633,6 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
     }),
     systemPrompt,
     userPrompt,
+    model: server_get_ollama_model_preference_search(),
   })
 }

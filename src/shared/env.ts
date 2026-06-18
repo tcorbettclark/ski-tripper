@@ -50,9 +50,27 @@ export function server_get_server_port(): number {
   return port
 }
 
-export function server_get_ollama_model(): string {
-  return serverRequire('OLLAMA_MODEL')
+const OLLAMA_MODEL_DEFAULTS = {
+  OLLAMA_MODEL_ENRICH: 'deepseek-v4-flash',
+  OLLAMA_MODEL_AUDIT: 'kimi-k2.6',
+  OLLAMA_MODEL_ANALYSIS: 'kimi-k2.6',
+  OLLAMA_MODEL_PREFERENCE_SEARCH: 'minimax-m3',
+} as const
+
+function serverGetOllamaModel(
+  envKey: keyof typeof OLLAMA_MODEL_DEFAULTS
+): string {
+  return process.env[envKey] || OLLAMA_MODEL_DEFAULTS[envKey]
 }
+
+export const server_get_ollama_model_enrich = () =>
+  serverGetOllamaModel('OLLAMA_MODEL_ENRICH')
+export const server_get_ollama_model_audit = () =>
+  serverGetOllamaModel('OLLAMA_MODEL_AUDIT')
+export const server_get_ollama_model_analysis = () =>
+  serverGetOllamaModel('OLLAMA_MODEL_ANALYSIS')
+export const server_get_ollama_model_preference_search = () =>
+  serverGetOllamaModel('OLLAMA_MODEL_PREFERENCE_SEARCH')
 
 export function server_get_ollama_api_key(): string {
   return serverRequire('OLLAMA_API_KEY')
