@@ -30,6 +30,13 @@ export interface EnrichedResort {
   skiSeasonMonths: string
   websites: string[]
   linkedResortsDescription: string
+  summitAltitude?: number | null
+  baseAltitude?: number | null
+  pisteKm?: number | null
+  liftCount?: number | null
+  beginnerPct?: number | null
+  intermediatePct?: number | null
+  advancedPct?: number | null
 }
 
 export interface EncodedResort {
