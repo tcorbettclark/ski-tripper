@@ -5,13 +5,21 @@ function serverRequire(name: string): string {
 }
 
 export function browser_get_pocketbase_url(): string {
-  const value: string | undefined = process.env.PUBLIC_POCKETBASE_URL
-  if (!value) throw new Error('Missing required env var PUBLIC_POCKETBASE_URL')
-  return value
+  const value: string | undefined = process.env.PUBLIC_POCKETBASE_DOMAIN
+  if (!value)
+    throw new Error('Missing required env var PUBLIC_POCKETBASE_DOMAIN')
+  return `https://${value}`
 }
 
-export function server_get_pocketbase_url(): string {
-  return serverRequire('POCKETBASE_URL')
+export function server_get_pocketbase_hostname(): string {
+  return serverRequire('POCKETBASE_HOSTNAME')
+}
+
+export function server_get_pocketbase_port(): number {
+  const port = parseInt(serverRequire('POCKETBASE_PORT'), 10)
+  if (Number.isNaN(port))
+    throw new Error('POCKETBASE_PORT must be a valid number')
+  return port
 }
 
 export function server_get_pocketbase_admin_email(): string {
@@ -23,7 +31,7 @@ export function server_get_pocketbase_admin_password(): string {
 }
 
 export function server_get_public_pocketbase_url(): string {
-  return serverRequire('PUBLIC_POCKETBASE_URL')
+  return `https://${serverRequire('PUBLIC_POCKETBASE_DOMAIN')}`
 }
 
 export function server_get_server_hostname(): string {

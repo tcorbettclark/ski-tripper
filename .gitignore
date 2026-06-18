@@ -1,10 +1,10 @@
 .DS_Store
+.*.bun-build
 .env
 .env.*.local
 .env.local
 node_modules/
 output/
-pb_data/
 data/resorts/ski_areas.csv
 data/resorts/lifts.csv
 data/resorts/runs.csv

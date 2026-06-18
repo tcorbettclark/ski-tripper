@@ -2,7 +2,8 @@ import PocketBase from 'pocketbase'
 import {
   server_get_pocketbase_admin_email,
   server_get_pocketbase_admin_password,
-  server_get_pocketbase_url,
+  server_get_pocketbase_hostname,
+  server_get_pocketbase_port,
 } from '../shared/env'
 
 let adminClient: PocketBase | null = null
@@ -12,7 +13,9 @@ export async function getAdminClient(): Promise<PocketBase> {
     return adminClient
   }
 
-  const url = server_get_pocketbase_url()
+  const hostname = server_get_pocketbase_hostname()
+  const port = server_get_pocketbase_port()
+  const url = `http://${hostname}:${port}`
   const email = server_get_pocketbase_admin_email()
   const password = server_get_pocketbase_admin_password()
 

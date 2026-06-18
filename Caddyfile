@@ -1,22 +1,22 @@
-{$CADDY_DOMAIN} {
+{$DOMAIN} {
 	handle /api/* {
-		reverse_proxy localhost:{$CADDY_SERVER_PORT}
+		reverse_proxy {$SERVER_HOSTNAME}:{$SERVER_PORT}
 	}
 
 	handle /playground/* {
 		uri strip_prefix /playground
-		root * output/static/playground
+		root * static/playground
 		file_server
 		try_files {path} /index.html
 	}
 
 	handle {
-		root * output/static
+		root * static
 		file_server
 		try_files {path} /index.html
 	}
 }
 
-{$CADDY_PB_DOMAIN} {
-	reverse_proxy localhost:{$CADDY_PB_PORT}
+{$PUBLIC_POCKETBASE_DOMAIN} {
+	reverse_proxy {$POCKETBASE_HOSTNAME}:{$POCKETBASE_PORT}
 }

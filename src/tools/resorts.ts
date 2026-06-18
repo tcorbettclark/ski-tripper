@@ -11,7 +11,7 @@ import {
   server_get_ollama_model,
   server_get_pocketbase_admin_email,
   server_get_pocketbase_admin_password,
-  server_get_pocketbase_url,
+  server_get_public_pocketbase_url,
 } from '../shared/env'
 import {
   type AuditIssue,
@@ -1166,7 +1166,7 @@ function build() {
 }
 
 async function uploadResorts() {
-  const PB_URL = server_get_pocketbase_url()
+  const PB_URL = server_get_public_pocketbase_url()
   const PB_ADMIN_EMAIL = server_get_pocketbase_admin_email()
   const PB_ADMIN_PASSWORD = server_get_pocketbase_admin_password()
   const resolved = path.resolve(RESORTS_DIR, 'all.jsonl')
