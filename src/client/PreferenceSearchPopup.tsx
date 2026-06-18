@@ -10,13 +10,17 @@ interface PreferenceSearchPopupProps {
   tripId: string
   onClose: () => void
   onSearch: (query: string) => void
-  streamResult?: UseSSEStreamResult & { refetch: () => void }
+  onTrigger?: () => void
+  onRetry?: () => void
+  streamResult?: UseSSEStreamResult
 }
 
 export default function PreferenceSearchPopup({
   tripId,
   onClose,
   onSearch,
+  onTrigger,
+  onRetry,
   streamResult,
 }: PreferenceSearchPopupProps) {
   const [triggered, setTriggered] = useState(false)
@@ -25,8 +29,8 @@ export default function PreferenceSearchPopup({
     tripId,
     enabled: !streamResult && triggered,
   })
-  const { status, thinking, content, model, error, refetch } =
-    streamResult ?? hookResult
+  const { status, thinking, content, model, error } = streamResult ?? hookResult
+  const hookRefetch = hookResult.refetch
 
   const isGenerating = status === 'generating'
   const hasContent = !!content?.trim()
@@ -35,6 +39,19 @@ export default function PreferenceSearchPopup({
     if (content) {
       onSearch(content)
       onClose()
+    }
+  }
+
+  function handleTrigger() {
+    setTriggered(true)
+    onTrigger?.()
+  }
+
+  function handleRetry() {
+    if (streamResult) {
+      onRetry?.()
+    } else {
+      hookRefetch()
     }
   }
 
@@ -99,9 +116,7 @@ export default function PreferenceSearchPopup({
           <div style={popupStyles.emptyState}>
             <button
               type="button"
-              onClick={() => {
-                setTriggered(true)
-              }}
+              onClick={handleTrigger}
               style={popupStyles.triggerButton}
             >
               <Sparkles size={14} />
@@ -115,7 +130,7 @@ export default function PreferenceSearchPopup({
             {error && <p style={formStyles.error}>{error}</p>}
             <button
               type="button"
-              onClick={refetch}
+              onClick={handleRetry}
               style={popupStyles.retryButton}
             >
               <RotateCw size={14} />

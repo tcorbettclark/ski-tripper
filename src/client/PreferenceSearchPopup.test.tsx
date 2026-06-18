@@ -4,27 +4,25 @@ import userEvent from '@testing-library/user-event'
 import PreferenceSearchPopup from './PreferenceSearchPopup'
 import type { UseSSEStreamResult } from './useSSEStream'
 
-const refetchMock = mock(() => {})
-
 const onCloseMock = mock(() => {})
 const onSearchMock = mock((_query: string) => {})
+const onTriggerMock = mock(() => {})
+const onRetryMock = mock(() => {})
 
-let mockStreamResult: UseSSEStreamResult & { refetch: () => void } = {
+let mockStreamResult: UseSSEStreamResult = {
   status: null,
   thinking: '',
   content: '',
   model: '',
   error: null,
-  refetch: refetchMock,
 }
 
-const defaultStreamResult: UseSSEStreamResult & { refetch: () => void } = {
+const defaultStreamResult: UseSSEStreamResult = {
   status: null,
   thinking: '',
   content: '',
   model: '',
   error: null,
-  refetch: refetchMock,
 }
 
 describe('PreferenceSearchPopup', () => {
@@ -32,9 +30,10 @@ describe('PreferenceSearchPopup', () => {
     mockStreamResult = {
       ...defaultStreamResult,
     }
-    refetchMock.mockClear()
     onCloseMock.mockClear()
     onSearchMock.mockClear()
+    onTriggerMock.mockClear()
+    onRetryMock.mockClear()
   })
 
   it('renders generate button in initial state', async () => {
@@ -236,7 +235,7 @@ describe('PreferenceSearchPopup', () => {
     expect(screen.getByText('Retry')).toBeTruthy()
   })
 
-  it('shows generate button that triggers search on click', async () => {
+  it('calls onTrigger when Generate search button clicked', async () => {
     const user = userEvent.setup()
 
     await act(async () => {
@@ -245,18 +244,17 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
+          onTrigger={onTriggerMock}
+          streamResult={mockStreamResult}
         />
       )
     })
 
-    const generateButton = screen.getByRole('button', {
-      name: /generate search/i,
-    })
-    expect(generateButton).toBeTruthy()
-    await user.click(generateButton)
+    await user.click(screen.getByRole('button', { name: /generate search/i }))
+    expect(onTriggerMock).toHaveBeenCalled()
   })
 
-  it('calls refetch when Retry button clicked', async () => {
+  it('calls onRetry when Retry button clicked with streamResult', async () => {
     mockStreamResult = {
       ...mockStreamResult,
       status: 'error',
@@ -270,13 +268,14 @@ describe('PreferenceSearchPopup', () => {
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
+          onRetry={onRetryMock}
           streamResult={mockStreamResult}
         />
       )
     })
 
     await user.click(screen.getByText('Retry'))
-    expect(refetchMock).toHaveBeenCalled()
+    expect(onRetryMock).toHaveBeenCalled()
   })
 
   it('calls onClose when close button clicked', async () => {
