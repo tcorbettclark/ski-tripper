@@ -129,13 +129,13 @@ Rules:
 - Be specific and concrete, not generic
 - Format your response exactly as shown below, with no additional text before or after
 
-### Summary
+## Summary
 1-2 sentence overall assessment.
 
-### Who'd love this
+## Who should love this
 - **Name**: reason
 
-### Who might struggle
+## Who might struggle
 - **Name**: reason`
 }
 
