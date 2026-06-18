@@ -77,11 +77,23 @@ describe('Paragraphs', () => {
     expect(p?.style.color).toBe('red')
   })
 
-  it('adds vertical spacing between paragraphs', () => {
+  it('adds a light divider between paragraphs', () => {
     const text = 'First\n\nSecond'
     render(<Paragraphs text={text} />)
-    const paragraphs = screen.getAllByRole('paragraph')
-    expect(paragraphs[0].style.marginBottom).toBe('16px')
-    expect(paragraphs[1].style.marginBottom).toBe('0px')
+    const dividers = screen.getAllByRole('separator')
+    expect(dividers.length).toBe(1)
+    expect(dividers[0].style.borderTop).toBe('1px solid #ddd')
+  })
+
+  it('does not add a divider after the last paragraph', () => {
+    const text = 'First\n\nSecond'
+    render(<Paragraphs text={text} />)
+    const dividers = screen.getAllByRole('separator')
+    expect(dividers.length).toBe(1)
+  })
+
+  it('does not add a divider for a single paragraph', () => {
+    render(<Paragraphs text="Hello" />)
+    expect(screen.queryByRole('separator')).toBeNull()
   })
 })

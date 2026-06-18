@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { type CSSProperties, Fragment } from 'react'
 
 interface ParagraphsProps {
   text: string
@@ -7,7 +7,13 @@ interface ParagraphsProps {
 
 const paragraphsStyles = {
   paragraph: {
-    margin: '0 0 16px 0',
+    margin: '0 0 0 0',
+  } as CSSProperties,
+  divider: {
+    border: 'none',
+    borderTop: '1px solid #ddd',
+    width: '35%',
+    margin: '8px auto',
   } as CSSProperties,
 }
 
@@ -22,16 +28,12 @@ export default function Paragraphs({ text, style }: ParagraphsProps) {
   return (
     <>
       {paragraphs.map((paragraph, index) => (
-        <p
-          key={paragraph.slice(0, 40)}
-          style={{
-            ...paragraphsStyles.paragraph,
-            ...(index === paragraphs.length - 1 ? { marginBottom: 0 } : {}),
-            ...style,
-          }}
-        >
-          {paragraph}
-        </p>
+        <Fragment key={paragraph.slice(0, 40)}>
+          <p style={{ ...paragraphsStyles.paragraph, ...style }}>{paragraph}</p>
+          {index < paragraphs.length - 1 && (
+            <hr style={paragraphsStyles.divider} />
+          )}
+        </Fragment>
       ))}
     </>
   )
