@@ -73,6 +73,7 @@ const EXA_TRAVEL_NUM_RESULTS = 3
 const EXA_LINKED_NUM_RESULTS = 3
 const EXA_MAX_CHARS = 12000 as const
 const MAX_SOURCE_TEXT_CHARS = 120000 as const
+const DEFAULT_FRESHNESS_YEAR = 2020 as const
 const EXA_GENERAL_QUERY = (resortName: string, country: string) =>
   `Ski resort review and guide for ${resortName} in ${country}, including terrain difficulty, off-piste, apres-ski, nightlife, family suitability, value, lift quality, resort atmosphere`
 const EXA_TRAVEL_QUERY = (resortName: string, country: string) =>
@@ -222,13 +223,19 @@ async function enrichResort(
   country: string,
   model: string,
   seeded: SeededResort,
-  maxRetries: number
+  maxRetries: number,
+  freshnessYear: number = DEFAULT_FRESHNESS_YEAR
 ): Promise<ResolvedEnrichData | null> {
   const responseCodec = jsonCodec(enrichSchema)
 
-  log('info', 'enrich', `Enriching "${resortName}" via Exa+LLM`)
+  log(
+    'info',
+    'enrich',
+    `Enriching "${resortName}" via Exa+LLM (freshness: >=${freshnessYear})`
+  )
 
   log('info', 'enrich', 'Fetching source text from Exa...', 1)
+  const publishedAfter = `${freshnessYear}-01-01T00:00:00.000Z`
   const [sourcedResults, broadResults, travelResults, linkedResults] =
     await Promise.all([
       getExa().search(EXA_GENERAL_QUERY(resortName, country), {
@@ -236,6 +243,7 @@ async function enrichResort(
         numResults: EXA_SOURCED_NUM_RESULTS,
         useAutoprompt: true,
         includeDomains: [...ENRICH_SOURCE_WEBSITES],
+        startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
           highlights: true,
@@ -245,6 +253,7 @@ async function enrichResort(
         type: 'auto',
         numResults: EXA_BROAD_NUM_RESULTS,
         useAutoprompt: true,
+        startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
           highlights: true,
@@ -254,6 +263,7 @@ async function enrichResort(
         type: 'auto',
         numResults: EXA_TRAVEL_NUM_RESULTS,
         useAutoprompt: true,
+        startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
           highlights: true,
@@ -263,6 +273,7 @@ async function enrichResort(
         type: 'auto',
         numResults: EXA_LINKED_NUM_RESULTS,
         useAutoprompt: true,
+        startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
           highlights: true,
@@ -293,6 +304,24 @@ async function enrichResort(
     linkedResults.results.map((r) => new URL(r.url).hostname)
   )
 
+  const authorityRank = (r: (typeof dedupedResults)[number]): number => {
+    const host = new URL(r.url).hostname
+    if (sourcedHosts.has(host)) return 0
+    if (travelHosts.has(host)) return 1
+    if (linkedHosts.has(host)) return 2
+    return 3
+  }
+
+  const parseDate = (d: string | undefined): number =>
+    d ? new Date(d).getTime() : 0
+
+  dedupedResults.sort((a, b) => {
+    const aAuth = authorityRank(a)
+    const bAuth = authorityRank(b)
+    if (aAuth !== bAuth) return aAuth - bAuth
+    return parseDate(b.publishedDate) - parseDate(a.publishedDate)
+  })
+
   log(
     'info',
     'enrich',
@@ -306,7 +335,8 @@ async function enrichResort(
     if (travelHosts.has(host)) tags.push('travel')
     if (linkedHosts.has(host)) tags.push('linked')
     if (tags.length === 0) tags.push('general')
-    log('info', 'enrich', `  [${tags.join('+')}] ${r.url}`, 2)
+    const dateStr = r.publishedDate ? `, dated ${r.publishedDate}` : ''
+    log('info', 'enrich', `  [${tags.join('+')}${dateStr}] ${r.url}`, 2)
   }
 
   const sourceBlocks = dedupedResults
@@ -318,8 +348,11 @@ async function enrichResort(
       if (travelHosts.has(host)) tags.push('Travel source')
       if (linkedHosts.has(host)) tags.push('Linked-areas source')
       if (tags.length === 0) tags.push('General source')
+      const dateTag = r.publishedDate
+        ? `, published ${r.publishedDate}`
+        : ', undated'
       const parts = [
-        `## ${r.title ?? 'Untitled'} (${tags.join(', ')})\nURL: ${r.url}`,
+        `## ${r.title ?? 'Untitled'} (${tags.join(', ')}${dateTag})\nURL: ${r.url}`,
       ]
       if (r.highlights?.length) {
         parts.push(`### Key facts\n${r.highlights.join('\n')}`)
@@ -929,6 +962,7 @@ async function enrich(options: {
   region?: string
   auditModel?: string
   auditRetries?: number
+  freshness?: number
 }) {
   const model = options.model ?? server_get_ollama_model_enrich()
   let mode: EnrichMode = 'new'
@@ -1084,6 +1118,9 @@ async function enrich(options: {
   const maxRetries = options.retries ?? 2
   log('info', 'enrich', `Retries: ${maxRetries}`)
 
+  const freshnessYear = options.freshness ?? DEFAULT_FRESHNESS_YEAR
+  log('info', 'enrich', `Freshness: sources published >= ${freshnessYear}`)
+
   let enrichedCount = 0
   let skipped = 0
 
@@ -1117,7 +1154,8 @@ async function enrich(options: {
       seededResort.country,
       model,
       seededResort,
-      maxRetries
+      maxRetries,
+      freshnessYear
     )
     if (!result) {
       log(
@@ -1610,6 +1648,11 @@ program
   .option(
     '--audit-retries <n>',
     'Maximum number of LLM retries for consistency check (default: 1)',
+    parseInt
+  )
+  .option(
+    '--freshness <year>',
+    `Only use Exa sources published in or after this year (default: ${DEFAULT_FRESHNESS_YEAR})`,
     parseInt
   )
   .action(enrich)

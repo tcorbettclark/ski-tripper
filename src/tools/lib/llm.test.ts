@@ -99,6 +99,11 @@ describe('LLM prompts', () => {
     expect(LLM_SYSTEM_PROMPT).toContain('{SCHEMA}')
   })
 
+  it('LLM_SYSTEM_PROMPT contains recency rule', () => {
+    expect(LLM_SYSTEM_PROMPT).toContain('more recent sources')
+    expect(LLM_SYSTEM_PROMPT).toContain('publication date')
+  })
+
   it('LLM_USER_PROMPT includes resort name and country', () => {
     const prompt = LLM_USER_PROMPT('Chamonix', 'France', 'some source text')
     expect(prompt).toContain('Chamonix')
