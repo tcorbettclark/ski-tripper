@@ -1484,7 +1484,7 @@ async function uploadResorts() {
   try {
     await fs.promises.stat(resolved)
   } catch {
-    console.error(`Error: File '${resolved}' does not exist.`)
+    log('error', 'upload', `File '${resolved}' does not exist.`)
     process.exit(1)
   }
 
@@ -1496,19 +1496,19 @@ async function uploadResorts() {
   await pb
     .collection('_superusers')
     .authWithPassword(PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD)
-  console.log('Authenticated as superuser')
+  log('info', 'upload', 'Authenticated as superuser')
 
   const existing = await pb.collection('resorts').getFullList()
   for (const record of existing) {
     await pb.collection('resorts').delete(record.id)
-    console.log(`Deleted existing record: ${record.id}`)
+    log('info', 'upload', `Deleted existing record: ${record.id}`, 1)
   }
 
-  console.log(`Uploading resort data from '${resolved}'...`)
+  log('info', 'upload', `Uploading resort data from '${resolved}'...`)
   const fileBuffer = await fs.promises.readFile(resolved)
   const file = new File([fileBuffer], 'resort-data.jsonl')
   await pb.collection('resorts').create({ file })
-  console.log('Upload complete!')
+  log('success', 'upload', 'Upload complete!')
 }
 
 async function seed(options: { dryRun?: boolean; minPisteLength?: number }) {
@@ -1681,5 +1681,14 @@ program
   .command('upload')
   .description('Upload resort data to PocketBase (overwrites existing record)')
   .action(uploadResorts)
+
+program
+  .command('deploy')
+  .description('Encode, build, and upload resort data in one step')
+  .action(async () => {
+    await encode()
+    build()
+    await uploadResorts()
+  })
 
 program.parse()
