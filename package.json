@@ -39,8 +39,7 @@
     "test": "bun test --max-concurrency 1",
     "check-and-fix": "bun tsc --noEmit && biome check --write",
     "check": "bun tsc --noEmit && biome ci",
-    "resorts": "bun run src/tools/resorts.ts",
-    "resorts-ebu": "bun run resorts encode && bun run resorts build && bun run resorts upload"
+    "resorts": "bun run src/tools/resorts.ts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
