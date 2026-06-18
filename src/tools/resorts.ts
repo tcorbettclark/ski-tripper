@@ -467,6 +467,7 @@ async function enrichResort(
     )
     const stream = await getOllama().chat({
       stream: true,
+      think: true,
       model,
       messages,
       options: { num_ctx: 32768, num_predict: 8192 },
@@ -770,6 +771,7 @@ async function fixInconsistencies(options: {
 
       const stream = await getOllama().chat({
         stream: true,
+        think: true,
         model,
         messages,
         options: { num_ctx: 16384, num_predict: 4096 },
