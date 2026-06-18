@@ -1,3 +1,5 @@
+import * as fs from 'node:fs'
+
 import { aiJsonSafeParse } from 'ai-json-safe-parse'
 import Exa from 'exa-js'
 import { Ollama } from 'ollama'
@@ -102,6 +104,13 @@ export interface StreamResult {
   thinking: string
   doneReason: string | null
   chunkCount: number
+  thinkingFilePath: string
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
 export function streamThinking(
@@ -110,13 +119,15 @@ export function streamThinking(
     done?: boolean
     done_reason?: string
   }>,
-  onContent: (content: string) => void
+  onContent: (content: string) => void,
+  thinkingFile: string
 ): Promise<StreamResult> {
   return new Promise((resolve, reject) => {
     let thinking = ''
-    let isThinking = true
     let doneReason: string | null = null
     let chunkCount = 0
+    let thinkingBytes = 0
+    let contentStarted = false
     ;(async () => {
       try {
         for await (const chunk of stream) {
@@ -126,12 +137,18 @@ export function streamThinking(
           ).thinking
           if (typeof thinkPart === 'string' && thinkPart) {
             thinking += thinkPart
-            process.stdout.write(`\x1b[2m${thinkPart as string}\x1b[0m`)
+            thinkingBytes += Buffer.byteLength(thinkPart)
+            fs.appendFileSync(thinkingFile, thinkPart)
+            if (!contentStarted) {
+              process.stdout.write(
+                `\x1b[2K\r⏳ Thinking... ${formatBytes(thinkingBytes)}`
+              )
+            }
           }
           if (chunk.message.content) {
-            if (isThinking) {
-              isThinking = false
-              console.log()
+            if (!contentStarted) {
+              contentStarted = true
+              process.stdout.write('\x1b[2K\r')
             }
             onContent(chunk.message.content)
           }
@@ -139,8 +156,19 @@ export function streamThinking(
             doneReason = chunk.done_reason ?? null
           }
         }
-        resolve({ thinking, doneReason, chunkCount })
+        if (!contentStarted) {
+          process.stdout.write('\x1b[2K\r')
+        }
+        resolve({
+          thinking,
+          doneReason,
+          chunkCount,
+          thinkingFilePath: thinkingFile,
+        })
       } catch (err) {
+        if (!contentStarted) {
+          process.stdout.write('\x1b[2K\r')
+        }
         reject(err instanceof Error ? err : new Error(String(err)))
       }
     })()

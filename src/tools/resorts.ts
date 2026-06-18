@@ -66,6 +66,10 @@ import {
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
 const RESORTS_DIR = path.resolve(import.meta.dir, '../../data/resorts')
+const THINKING_DIR = path.resolve(
+  import.meta.dir,
+  '../../data/resorts/thinking'
+)
 
 const EXA_SOURCED_NUM_RESULTS = 5
 const EXA_BROAD_NUM_RESULTS = 5
@@ -430,10 +434,21 @@ async function enrichResort(
     1
   )
 
+  const thinkingFile = path.join(THINKING_DIR, 'enrichment', `${seeded.id}.txt`)
+  fs.mkdirSync(path.dirname(thinkingFile), { recursive: true })
+  fs.writeFileSync(thinkingFile, '')
+  log('info', 'enrich', `Thinking output: ${thinkingFile}`, 1)
+
   let lastContent = ''
   let lastThinking = ''
   let numPredict = 8192
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      fs.appendFileSync(
+        thinkingFile,
+        `\n--- Retry attempt ${attempt + 1} ---\n`
+      )
+    }
     log(
       'info',
       'enrich',
@@ -461,9 +476,13 @@ async function enrichResort(
     let doneReason: string | null = null
     let chunkCount = 0
     try {
-      const streamResult = await streamThinking(stream, (chunk) => {
-        content += chunk
-      })
+      const streamResult = await streamThinking(
+        stream,
+        (chunk) => {
+          content += chunk
+        },
+        thinkingFile
+      )
       thinking = streamResult.thinking
       doneReason = streamResult.doneReason
       chunkCount = streamResult.chunkCount
@@ -703,6 +722,11 @@ async function fixInconsistencies(options: {
       `[${i + 1}/${toCheck.length}] Checking ${s.resortName} (${s.country})...`
     )
 
+    const thinkingFile = path.join(THINKING_DIR, 'audit', `${s.id}.txt`)
+    fs.mkdirSync(path.dirname(thinkingFile), { recursive: true })
+    fs.writeFileSync(thinkingFile, '')
+    log('info', 'fix-inconsistencies', `Thinking output: ${thinkingFile}`, 1)
+
     const fields: Record<string, number | null> = {}
     for (const field of CONSISTENCY_FIELDS) {
       fields[field] = m[field as keyof SeededResort] as number
@@ -729,6 +753,10 @@ async function fixInconsistencies(options: {
 
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       if (attempt > 0) {
+        fs.appendFileSync(
+          thinkingFile,
+          `\n--- Retry attempt ${attempt + 1} ---\n`
+        )
         log(
           'info',
           'fix-inconsistencies',
@@ -747,9 +775,13 @@ async function fixInconsistencies(options: {
       let content = ''
       let thinking = ''
       try {
-        const streamResult = await streamThinking(stream, (chunk) => {
-          content += chunk
-        })
+        const streamResult = await streamThinking(
+          stream,
+          (chunk) => {
+            content += chunk
+          },
+          thinkingFile
+        )
         thinking = streamResult.thinking
       } catch (err) {
         log(
