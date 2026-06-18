@@ -24,7 +24,6 @@
     "booking"
   ],
   "scripts": {
-    "resorts-ebu": "bun run resorts encode && bun run resorts build && bun run resorts upload",
     "dev": "bun run build:copy && concurrently -n client,playground,server,pb,caddy -c blue,magenta,green,yellow,cyan 'bun run dev:client' 'bun run dev:playground' 'bun run dev:server' 'bun run dev:pocketbase' 'bun run dev:caddy'",
     "dev:client": "bun build src/client/main.tsx --outdir output/static --target browser --env 'PUBLIC_*' --watch --no-clear-screen",
     "dev:playground": "bun build src/playground/action-guide-test.tsx --outdir output/static/playground --target browser --watch --no-clear-screen",
@@ -38,12 +37,10 @@
     "build:server": "bun build src/server/serve.ts --outdir output/server --target bun",
     "build:copy": "cp src/static/index.html output/static/ && cp -r src/static/flags output/static/flags && cp src/playground/index.html output/static/playground/ && mkdir -p output/pb_migrations && cp src/pb_migrations/*.js output/pb_migrations/ && cp Caddyfile output/",
     "test": "bun test --max-concurrency 1",
-    "typecheck": "bun tsc --noEmit",
-    "lint": "biome lint --write",
-    "format": "biome format --write",
-    "check": "biome check --write",
-    "ci": "biome ci",
-    "resorts": "bun run src/tools/resorts.ts"
+    "check-and-fix": "bun tsc --noEmit && biome check --write",
+    "check": "bun tsc --noEmit && biome ci",
+    "resorts": "bun run src/tools/resorts.ts",
+    "resorts-ebu": "bun run resorts encode && bun run resorts build && bun run resorts upload"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",

@@ -20,15 +20,11 @@ Keep changes small and focussed:
 
 ## Feedback Loops
 
-| Task                   | Command                               |
-| ---------------------- | ------------------------------------- |
-| Linting and formatting | `bun run check <path.to/file.ts>`     |
-| Type checking          | `bun run typecheck <path.to/file.ts>` |
-| Testing                | `bun run test <path.to/file.test.ts>` |
+Check for and try to fix type issues, linting, formatting, and import sorting: `bun run check-and-fix <path.to/file.ts>`
+
+Testing: `bun run test <path.to/file.test.ts>`
 
 Without a file path, these commands run on the entire project.
-
-If any fail, fix issues first before committing.
 
 ## Code Style
 
