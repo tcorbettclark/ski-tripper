@@ -44,17 +44,18 @@
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
     "@huggingface/transformers": "^4.2.0",
+    "canonical-json": "^0.4.0",
     "dayjs": "^1.11.21",
+    "json-colorizer": "^3.0.1",
     "leven": "^4.1.0",
     "lucide-react": "^1.17.0",
+    "ollama": "^0.6.3",
     "pocketbase": "^0.27.0",
     "react": "^19.2.6",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
-    "react-virtuoso": "^4.18.7",
-    "canonical-json": "^0.4.0",
-    "ollama": "^0.6.3"
+    "react-virtuoso": "^4.18.7"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.16",

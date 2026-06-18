@@ -5,6 +5,7 @@ import * as path from 'node:path'
 
 import { pipeline } from '@huggingface/transformers'
 import { Command } from 'commander'
+import { colorize as colorizeJson } from 'json-colorizer'
 import PocketBase from 'pocketbase'
 import * as z from 'zod'
 import {
@@ -532,8 +533,10 @@ async function enrichResort(
     }
 
     try {
-      console.log(JSON.stringify(JSON.parse(content), null, 2))
+      log('info', 'enrich', 'LLM response:', 1)
+      console.log(colorizeJson(content))
     } catch {
+      log('info', 'enrich', 'LLM response (raw):', 1)
       console.log(content)
     }
     log('info', 'enrich', `LLM response received (${content.length} chars)`, 1)
