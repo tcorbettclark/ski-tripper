@@ -1,5 +1,5 @@
 import PocketBase from 'pocketbase'
-import { browser_get_api_url, browser_get_pocketbase_url } from '../shared/env'
+import { browser_get_pocketbase_url } from '../shared/env'
 import type {
   Accommodation,
   Discussion,
@@ -1104,25 +1104,4 @@ export async function listLlmCacheByTripAndType(
     }),
   })
   return rows.map((r) => mapLlmCache(r as unknown as Record<string, unknown>))
-}
-
-export async function triggerAnalysis(
-  proposalId: string,
-  tripId: string
-): Promise<void> {
-  const apiUrl = browser_get_api_url('/api/analyse-proposal')
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${getPb().authStore.token}`,
-    },
-    body: JSON.stringify({ proposalId, tripId }),
-  })
-
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`Failed to trigger analysis: ${response.status} ${text}`)
-  }
 }

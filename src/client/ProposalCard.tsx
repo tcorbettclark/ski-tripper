@@ -613,11 +613,7 @@ export default function ProposalCard({
           )}
 
           {!previewMode && activeTab === 'analysis' && (
-            <AnalysisTab
-              proposalId={proposal.id}
-              tripId={proposal.trip}
-              onAuthError={onAuthError}
-            />
+            <AnalysisTab proposalId={proposal.id} tripId={proposal.trip} />
           )}
         </div>
 

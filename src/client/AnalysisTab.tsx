@@ -1,12 +1,6 @@
-import { RotateCw } from 'lucide-react'
+import { RotateCw, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import Markdown from 'react-markdown'
-import type { Participant, Preferences } from '../shared/types.d'
-import {
-  getPreferences as _getPreferences,
-  listTripParticipants as _listTripParticipants,
-  triggerAnalysis as _triggerAnalysis,
-} from './backend'
 import ThinkingContent from './ThinkingContent'
 import { colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { UseSSEStreamResult } from './useSSEStream'
@@ -15,112 +9,48 @@ import useSSEStream from './useSSEStream'
 interface AnalysisTabProps {
   proposalId: string
   tripId: string
-  onAuthError?: (err: unknown) => void
-  triggerAnalysis?: (proposalId: string, tripId: string) => Promise<void>
-  listTripParticipants?: (
-    tripId: string
-  ) => Promise<{ participants: Participant[] }>
-  getPreferences?: (userId: string) => Promise<Preferences | null>
   streamResult?: UseSSEStreamResult
 }
-
-const noopAuthError = () => {}
 
 export default function AnalysisTab({
   proposalId,
   tripId,
-  onAuthError = noopAuthError,
-  triggerAnalysis = _triggerAnalysis,
-  listTripParticipants = _listTripParticipants,
-  getPreferences = _getPreferences,
   streamResult,
 }: AnalysisTabProps) {
+  const [triggered, setTriggered] = useState(false)
   const hookResult = useSSEStream({
     type: 'analysis',
     proposalId,
     tripId,
-    enabled: !streamResult,
+    enabled: !streamResult && triggered,
   })
   const { status, thinking, content, model, error } = streamResult ?? hookResult
-  const [participants, setParticipants] = useState<Participant[]>([])
-  const [preferencesMap, setPreferencesMap] = useState<
-    Record<string, Preferences | null>
-  >({})
-  const [participantsLoaded, setParticipantsLoaded] = useState(false)
-  const [triggering, setTriggering] = useState(false)
-  const [triggerError, setTriggerError] = useState<string | null>(null)
+  const hookRefetch = hookResult.refetch
 
-  if (!participantsLoaded) {
-    setParticipantsLoaded(true)
-    listTripParticipants(tripId)
-      .then(({ participants: p }) => {
-        setParticipants(p)
-        return Promise.all(
-          p.map((participant) =>
-            getPreferences(participant.user)
-              .then((prefs) => [participant.user, prefs] as const)
-              .catch(() => [participant.user, null] as const)
-          )
-        ).then((entries) => {
-          const map: Record<string, Preferences | null> = {}
-          for (const [userId, prefs] of entries) {
-            map[userId] = prefs
-          }
-          setPreferencesMap(map)
-        })
-      })
-      .catch(onAuthError)
-  }
-
-  const included = participants.filter((p) => preferencesMap[p.user] != null)
-  const excluded = participants.filter(
-    (p) => p.user in preferencesMap && preferencesMap[p.user] == null
-  )
-
-  async function handleTrigger() {
-    setTriggering(true)
-    setTriggerError(null)
-    try {
-      await triggerAnalysis(proposalId, tripId)
-    } catch (err) {
-      setTriggerError(
-        err instanceof Error ? err.message : 'Failed to trigger analysis'
-      )
-    } finally {
-      setTriggering(false)
-    }
-  }
-
-  const showRetry = (status === 'error' && error) || triggerError
   const isGenerating = status === 'generating'
   const hasContent = !!content?.trim()
 
+  function handleTrigger() {
+    setTriggered(true)
+  }
+
+  function handleRetry() {
+    if (streamResult) {
+      return
+    }
+    hookRefetch()
+  }
+
+  const showRetry = status === 'error' && error
+
   return (
     <div style={analysisStyles.container}>
-      <div style={analysisStyles.participantsSection}>
-        {included.length > 0 && (
-          <div style={analysisStyles.participantGroup}>
-            <span style={analysisStyles.participantLabel}>Included: </span>
-            {included.map((p) => (
-              <span key={p.id} style={analysisStyles.participantName}>
-                {p.userName}
-              </span>
-            ))}
-          </div>
-        )}
-        {excluded.length > 0 && (
-          <div style={analysisStyles.participantGroup}>
-            <span style={analysisStyles.participantLabelExcluded}>
-              No preferences:{' '}
-            </span>
-            {excluded.map((p) => (
-              <span key={p.id} style={analysisStyles.participantNameExcluded}>
-                {p.userName}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
+      {!triggered && !content && !thinking && status === null && (
+        <p style={analysisStyles.description}>
+          Generate an AI analysis of this proposal against everyone's ski
+          holiday preferences
+        </p>
+      )}
 
       <ThinkingContent
         thinking={thinking}
@@ -134,16 +64,15 @@ export default function AnalysisTab({
         </div>
       )}
 
-      {status === null && !content && !thinking && (
+      {status === null && !content && !thinking && !triggered && (
         <div style={analysisStyles.emptyState}>
-          <p style={analysisStyles.emptyText}>No analysis available yet.</p>
           <button
             type="button"
             onClick={handleTrigger}
-            disabled={triggering}
             style={analysisStyles.triggerButton}
           >
-            {triggering ? 'Starting…' : 'Generate Analysis'}
+            <Sparkles size={14} />
+            Generate Analysis
           </button>
         </div>
       )}
@@ -151,15 +80,13 @@ export default function AnalysisTab({
       {showRetry && (
         <div style={analysisStyles.errorSection}>
           {error && <p style={formStyles.error}>{error}</p>}
-          {triggerError && <p style={formStyles.error}>{triggerError}</p>}
           <button
             type="button"
-            onClick={handleTrigger}
-            disabled={triggering}
+            onClick={handleRetry}
             style={analysisStyles.retryButton}
           >
             <RotateCw size={14} />
-            {triggering ? 'Retrying…' : 'Retry'}
+            Retry
           </button>
         </div>
       )}
@@ -176,49 +103,12 @@ const analysisStyles = {
     paddingTop: '10px',
     paddingBottom: '10px',
   },
-  participantsSection: {
-    marginBottom: '16px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '6px',
-  },
-  participantGroup: {
-    display: 'flex',
-    flexWrap: 'wrap' as const,
-    alignItems: 'center',
-    gap: '4px',
-  },
-  participantLabel: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    fontWeight: '500' as const,
-    color: colors.textSecondary,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-  },
-  participantLabelExcluded: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    fontWeight: '500' as const,
-    color: colors.error,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-  },
-  participantName: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textPrimary,
-    background: mix('--color-accent', 0.08),
-    padding: '2px 8px',
-    borderRadius: '4px',
-  },
-  participantNameExcluded: {
+  description: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     color: colors.textSecondary,
-    background: mix('--color-textSecondary', 0.08),
-    padding: '2px 8px',
-    borderRadius: '4px',
+    margin: '0 0 16px',
+    lineHeight: '1.5',
   },
   contentSection: {
     fontFamily: fonts.body,
@@ -233,13 +123,10 @@ const analysisStyles = {
     gap: '12px',
     padding: '24px 0',
   },
-  emptyText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colors.textSecondary,
-    margin: 0,
-  },
   triggerButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
     padding: '8px 20px',
     borderRadius: '6px',
     border: 'none',
