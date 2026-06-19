@@ -521,8 +521,19 @@ async function deploy() {
   await root`systemctl restart caddy`.nothrow()
   success('Services restarted')
 
+  await status()
+}
+
+async function status() {
+  const ip = await getDropletIp()
   step('Checking service status')
-  await root`sleep 3`
+  await $`ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${ip} sleep 3`.nothrow()
+
+  const root = $.ssh({
+    host: ip,
+    username: 'root',
+    privateKey: SSH_KEY,
+  }).timeout(300000)
 
   const pbStatus = (
     await root`systemctl is-active ski-tripper-pb`.text()
@@ -532,25 +543,25 @@ async function deploy() {
   ).trim()
   const caddyStatus = (await root`systemctl is-active caddy`.text()).trim()
 
-  if (pbStatus === 'active') success(`PocketBase: ${pbStatus}`)
+  if (pbStatus === 'active') success(`PocketBase  ${pbStatus}`)
   else {
-    warn(`PocketBase: ${pbStatus}`)
+    warn(`PocketBase  ${pbStatus}`)
     const logs = await root`journalctl -u ski-tripper-pb -n 20 --no-pager`
       .nothrow()
       .text()
     console.log(logs)
   }
-  if (apiStatus === 'active') success(`API Server:  ${apiStatus}`)
+  if (apiStatus === 'active') success(`API Server  ${apiStatus}`)
   else {
-    warn(`API Server:  ${apiStatus}`)
+    warn(`API Server  ${apiStatus}`)
     const logs = await root`journalctl -u ski-tripper-api -n 20 --no-pager`
       .nothrow()
       .text()
     console.log(logs)
   }
-  if (caddyStatus === 'active') success(`Caddy:       ${caddyStatus}`)
+  if (caddyStatus === 'active') success(`Caddy       ${caddyStatus}`)
   else {
-    warn(`Caddy:       ${caddyStatus}`)
+    warn(`Caddy       ${caddyStatus}`)
     const logs = await root`journalctl -u caddy -n 20 --no-pager`
       .nothrow()
       .text()
@@ -620,6 +631,7 @@ Commands:
   create      Create a droplet and reserved IP (idempotent)
   configure   Install dependencies and set up systemd services on an existing droplet
   deploy      Pull latest code, build, and restart services [default branch: main]
+  status      Show service status, IP, and layout info
   setup       Create, configure, and deploy (full setup)
   destroy     Unassign IP and delete the droplet (preserves the reserved IP)
 
@@ -660,6 +672,9 @@ async function provision() {
       break
     case 'deploy':
       await deploy()
+      break
+    case 'status':
+      await status()
       break
     case 'setup':
       await requireDoctl()
