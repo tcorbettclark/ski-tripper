@@ -20,6 +20,7 @@ import {
   updateTrip as _updateTrip,
   getPb,
 } from './backend'
+import ConfirmEmailChangeScreen from './ConfirmEmailChangeScreen'
 import EmailVerifyScreen from './EmailVerifyScreen'
 import ErrorBoundary from './ErrorBoundary'
 import Footer from './Footer'
@@ -148,6 +149,7 @@ export default function App({
   const [resetPasswordToken, setResetPasswordToken] = useState<string | null>(
     null
   )
+  const [emailChangeToken, setEmailChangeToken] = useState<string | null>(null)
   const [passwordResetSuccess, setPasswordResetSuccess] = useState(false)
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
@@ -204,10 +206,17 @@ export default function App({
     if (window.location.pathname === '/verify') {
       confirmVerification(token)
         .then(() => {
-          window.history.replaceState({}, '', window.location.pathname)
+          window.history.replaceState({}, '', '/')
           refreshUser()
         })
-        .catch(() => {})
+        .catch(() => {
+          window.history.replaceState({}, '', '/')
+        })
+      return
+    }
+    if (window.location.pathname === '/confirm-email') {
+      setEmailChangeToken(token)
+      window.history.replaceState({}, '', window.location.pathname)
     }
   }, [confirmVerification, refreshUser])
 
@@ -335,6 +344,24 @@ export default function App({
               setPage('login')
             }}
             confirmPasswordReset={confirmPasswordReset}
+          />
+          <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+        </>
+      )
+    }
+    if (emailChangeToken) {
+      return (
+        <>
+          <ConfirmEmailChangeScreen
+            token={emailChangeToken}
+            onSuccess={() => {
+              setEmailChangeToken(null)
+              setPage('login')
+            }}
+            onBackToLogin={() => {
+              setEmailChangeToken(null)
+              setPage('login')
+            }}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         </>
