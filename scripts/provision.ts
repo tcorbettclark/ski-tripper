@@ -196,126 +196,142 @@ async function configureDroplet() {
 
   await scanHostKey(ip)
   await waitForSsh(ip)
-  const server = $.ssh({
+  const root = $.ssh({
     host: ip,
     username: 'root',
     privateKey: SSH_KEY,
   }).timeout(300000)
 
   step('Upgrading packages')
-  await server`apt-get update`
-  await server`apt-get upgrade -y`
-  await server`apt-get install -y unattended-upgrades`
-  await server`dpkg-reconfigure -plow unattended-upgrades`
+  await root`apt-get update`
+  await root`apt-get upgrade -y`
+  await root`apt-get install -y unattended-upgrades`
+  await root`dpkg-reconfigure -plow unattended-upgrades`
   success('Packages upgraded')
 
-  const swapCheck = await server`swapon --show --noheadings`.nothrow().text()
+  const swapCheck = await root`swapon --show --noheadings`.nothrow().text()
   if (!swapCheck.includes('/swapfile')) {
     step('Setting up swap')
-    await server`fallocate -l ${SWAP_SIZE_MB}M /swapfile`
-    await server`chmod 600 /swapfile`
-    await server`mkswap /swapfile`
-    await server`swapon /swapfile`
-    await server`bash -c "echo '/swapfile none swap sw 0 0' >> /etc/fstab"`
-    await server`bash -c "echo 'vm.swappiness=10' >> /etc/sysctl.conf"`
-    await server`sysctl vm.swappiness=10`
+    await root`fallocate -l ${SWAP_SIZE_MB}M /swapfile`
+    await root`chmod 600 /swapfile`
+    await root`mkswap /swapfile`
+    await root`swapon /swapfile`
+    await root`bash -c "echo '/swapfile none swap sw 0 0' >> /etc/fstab"`
+    await root`bash -c "echo 'vm.swappiness=10' >> /etc/sysctl.conf"`
+    await root`sysctl vm.swappiness=10`
     success('Swap configured')
   } else {
     success('Swap already configured')
   }
 
-  const ufwCheck = await server`ufw status`.nothrow().text()
+  const ufwCheck = await root`ufw status`.nothrow().text()
   if (!ufwCheck.includes('Status: active')) {
     step('Configuring firewall')
-    await server`ufw --force reset`
-    await server`ufw allow 22/tcp`
-    await server`ufw allow 80/tcp`
-    await server`ufw allow 443/tcp`
-    await server`ufw --force enable`
+    await root`ufw --force reset`
+    await root`ufw allow 22/tcp`
+    await root`ufw allow 80/tcp`
+    await root`ufw allow 443/tcp`
+    await root`ufw --force enable`
     success('Firewall configured')
   } else {
     success('Firewall already configured')
   }
 
-  const userCheck = await server`id ski-tripper`.nothrow().text()
+  const userCheck = await root`id ski-tripper`.nothrow().text()
   if (!userCheck.includes('uid')) {
     step('Creating ski-tripper user')
-    await server`useradd --system --home-dir ${APP_DIR} --shell /usr/sbin/nologin ski-tripper`
+    await root`useradd --system --home-dir ${APP_DIR} --shell /bin/bash ski-tripper`
     success('User ski-tripper created')
   } else {
     success('User ski-tripper already exists')
   }
 
-  const repoCheck = await server`test -d ${APP_DIR}/.git`.nothrow()
+  step('Setting up ski-tripper SSH access')
+  await root`mkdir -p ${APP_DIR}/.ssh`
+  const hasAuthorizedKeys =
+    await root`test -f ${APP_DIR}/.ssh/authorized_keys`.nothrow()
+  if (hasAuthorizedKeys.exitCode !== 0) {
+    await root`cp /root/.ssh/authorized_keys ${APP_DIR}/.ssh/authorized_keys`
+  }
+  await root`chown -R ski-tripper:ski-tripper ${APP_DIR}/.ssh`
+  await root`chmod 700 ${APP_DIR}/.ssh`
+  await root`chmod 600 ${APP_DIR}/.ssh/authorized_keys`
+  success('ski-tripper SSH access configured')
+
+  const app = $.ssh({
+    host: ip,
+    username: 'ski-tripper',
+    privateKey: SSH_KEY,
+  }).timeout(300000)
+
+  const repoCheck = await app`test -d ${APP_DIR}/.git`.nothrow()
   if (repoCheck.exitCode !== 0) {
     step('Cloning repository')
-    await server`git clone ${REPO_URL} ${APP_DIR}`
-    await server`chown -R ski-tripper:ski-tripper ${APP_DIR}`
+    await app`git clone ${REPO_URL} ${APP_DIR}`
     success('Repository cloned')
   } else {
     success('Repository already cloned')
   }
 
-  const caddyUserCheck = await server`id caddy`.nothrow().text()
+  const caddyUserCheck = await root`id caddy`.nothrow().text()
   if (!caddyUserCheck.includes('uid')) {
     step('Creating caddy user')
-    await server`useradd --system --home-dir /var/lib/caddy --shell /usr/sbin/nologin caddy`
+    await root`useradd --system --home-dir /var/lib/caddy --shell /usr/sbin/nologin caddy`
     success('User caddy created')
   } else {
     success('User caddy already exists')
   }
 
-  const bunCheck = await server`bun --version`.nothrow().text()
+  const bunCheck = await root`bun --version`.nothrow().text()
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
-    await server`apt-get install -y unzip`
+    await root`apt-get install -y unzip`
     const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip`
-    await server`curl -fsSL ${bunUrl} -o /tmp/bun.zip`
-    await server`unzip -o /tmp/bun.zip -d /tmp/bun`
-    await server`mv /tmp/bun/bun-linux-x64/bun /usr/local/bin/bun`
-    await server`chmod +x /usr/local/bin/bun`
-    await server`rm -rf /tmp/bun /tmp/bun.zip`
+    await root`curl -fsSL ${bunUrl} -o /tmp/bun.zip`
+    await root`unzip -o /tmp/bun.zip -d /tmp/bun`
+    await root`mv /tmp/bun/bun-linux-x64/bun /usr/local/bin/bun`
+    await root`chmod +x /usr/local/bin/bun`
+    await root`rm -rf /tmp/bun /tmp/bun.zip`
     success(`Bun ${BUN_VERSION} installed`)
   } else {
     success(`Bun already installed: ${bunCheck.trim()}`)
   }
 
-  const pbCheck =
-    await server`test -f /opt/ski-tripper/pocketbase/pocketbase`.nothrow()
+  const pbCheck = await app`test -d ${APP_DIR}/pocketbase`.nothrow()
   if (pbCheck.exitCode !== 0) {
     step(`Installing PocketBase ${POCKETBASE_VERSION}`)
-    await server`mkdir -p ${APP_DIR}/pocketbase`
-    const arch = await server`dpkg --print-architecture`.text()
+    await app`mkdir -p ${APP_DIR}/pocketbase`
+    const arch = await root`dpkg --print-architecture`.text()
     const pbArch = arch.trim() === 'amd64' ? 'amd64' : 'arm64'
     const pbUrl = `https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_${pbArch}.zip`
-    await server`curl -L ${pbUrl} -o /tmp/pocketbase.zip`
-    await server`unzip -o /tmp/pocketbase.zip -d ${APP_DIR}/pocketbase`
-    await server`chmod +x ${APP_DIR}/pocketbase/pocketbase`
-    await server`rm -f /tmp/pocketbase.zip`
+    await app`curl -L ${pbUrl} -o /tmp/pocketbase.zip`
+    await app`unzip -o /tmp/pocketbase.zip -d ${APP_DIR}/pocketbase`
+    await app`chmod +x ${APP_DIR}/pocketbase/pocketbase`
+    await app`rm -f /tmp/pocketbase.zip`
     success(`PocketBase ${POCKETBASE_VERSION} installed`)
   } else {
     success('PocketBase already installed')
   }
 
-  const caddyCheck = await server`caddy version`.nothrow().text()
+  const caddyCheck = await root`caddy version`.nothrow().text()
   if (!caddyCheck.includes(CADDY_VERSION)) {
     step(`Installing Caddy ${CADDY_VERSION}`)
-    const caddyUrl = `https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz`
-    await server`curl -L ${caddyUrl} -o /tmp/caddy.tar.gz`
-    await server`tar -xzf /tmp/caddy.tar.gz -C /usr/bin caddy`
-    await server`chmod +x /usr/bin/caddy`
-    await server`rm -f /tmp/caddy.tar.gz`
-    await server`mkdir -p /var/lib/caddy/.local/share/caddy`
-    await server`chown -R caddy:caddy /var/lib/caddy`
+    const caddyUrl = `https://github.com/caddyroot/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz`
+    await root`curl -L ${caddyUrl} -o /tmp/caddy.tar.gz`
+    await root`tar -xzf /tmp/caddy.tar.gz -C /usr/bin caddy`
+    await root`chmod +x /usr/bin/caddy`
+    await root`rm -f /tmp/caddy.tar.gz`
+    await root`mkdir -p /var/lib/caddy/.local/share/caddy`
+    await root`chown -R caddy:caddy /var/lib/caddy`
     success(`Caddy ${CADDY_VERSION} installed`)
   } else {
     success(`Caddy already installed: ${caddyCheck.trim()}`)
   }
 
   step('Installing systemd units')
-  await server`mkdir -p /etc/systemd/system`
+  await root`mkdir -p /etc/systemd/system`
 
-  await server`bash -c "cat > /etc/systemd/system/caddy.service << 'EOF'
+  await root`bash -c "cat > /etc/systemd/system/caddy.service << 'EOF'
 [Unit]
 Description=Caddy web server
 Documentation=https://caddyserver.com/docs/
@@ -343,7 +359,7 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF"`
 
-  await server`bash -c "cat > /etc/systemd/system/ski-tripper-setup.service << 'EOF'
+  await root`bash -c "cat > /etc/systemd/system/ski-tripper-setup.service << 'EOF'
 [Unit]
 Description=Ski Tripper - Create data directories
 DefaultDependencies=no
@@ -361,7 +377,7 @@ RemainAfterExit=yes
 WantedBy=multi-user.target
 EOF"`
 
-  await server`bash -c "cat > /etc/systemd/system/ski-tripper-pb.service << 'EOF'
+  await root`bash -c "cat > /etc/systemd/system/ski-tripper-pb.service << 'EOF'
 [Unit]
 Description=Ski Tripper - PocketBase
 After=network.target network-online.target ski-tripper-setup.service
@@ -382,7 +398,7 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF"`
 
-  await server`bash -c "cat > /etc/systemd/system/ski-tripper-api.service << 'EOF'
+  await root`bash -c "cat > /etc/systemd/system/ski-tripper-api.service << 'EOF'
 [Unit]
 Description=Ski Tripper - API server
 After=network.target network-online.target ski-tripper-pb.service
@@ -403,10 +419,10 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF"`
 
-  await server`systemctl daemon-reload`
+  await root`systemctl daemon-reload`
   success('Systemd units installed')
 
-  await server`mkdir -p /etc/caddy`
+  await root`mkdir -p /etc/caddy`
 
   success('Configuration complete')
 }
@@ -419,52 +435,55 @@ async function deploy() {
 
   await scanHostKey(ip)
   await waitForSsh(ip)
-  const server = $.ssh({
+  const root = $.ssh({
     host: ip,
     username: 'root',
     privateKey: SSH_KEY,
   }).timeout(300000)
+  const app = $.ssh({
+    host: ip,
+    username: 'ski-tripper',
+    privateKey: SSH_KEY,
+  }).timeout(300000)
 
   step('Uploading .env.production')
-  await $`scp ${ENV_PRODUCTION_PATH} root@${ip}:${APP_DIR}/.env`
+  await app.uploadFile(ENV_PRODUCTION_PATH, `${APP_DIR}/.env`)
   success('.env.production uploaded')
 
   step('Fetching and checking out latest code')
-  await server`cd ${APP_DIR} && git fetch --all && git checkout ${branchOrTag}`
+  await app`cd ${APP_DIR} && git fetch --all && git checkout ${branchOrTag}`
   success(`Checked out ${branchOrTag}`)
 
   step('Installing dependencies')
-  await server`cd ${APP_DIR} && bun install --frozen-lockfile`
+  await app`cd ${APP_DIR} && bun install --frozen-lockfile`
   success('Dependencies installed')
 
   step('Building application')
-  await server`cd ${APP_DIR} && bun run build`
+  await app`cd ${APP_DIR} && bun run build`
   success('Build complete')
 
-  step('Setting ownership and permissions')
-  await server`chown -R ski-tripper:ski-tripper ${APP_DIR}/output`
-  await server`chown -R ski-tripper:ski-tripper ${APP_DIR}/data`
-  await server`chmod -R o+rX ${APP_DIR}/output/static`
-  success('Ownership set')
+  step('Creating data directory')
+  await app`mkdir -p ${APP_DIR}/data/pb_data`
+  success('Data directory ready')
 
   step('Copying Caddyfile')
-  await server`cp ${APP_DIR}/output/Caddyfile /etc/caddy/Caddyfile`
-  await server`chown caddy:caddy /etc/caddy/Caddyfile`
+  await root`cp ${APP_DIR}/output/Caddyfile /etc/caddy/Caddyfile`
+  await root`chown caddy:caddy /etc/caddy/Caddyfile`
   success('Caddyfile copied')
 
   step('Creating PocketBase superuser')
   const adminEmail =
-    await server`grep ^POCKETBASE_ADMIN_EMAIL= ${APP_DIR}/.env | cut -d= -f2`.text()
+    await app`grep ^POCKETBASE_ADMIN_EMAIL= ${APP_DIR}/.env | cut -d= -f2`.text()
   const adminPassword =
-    await server`grep ^POCKETBASE_ADMIN_PASSWORD= ${APP_DIR}/.env | cut -d= -f2`.text()
+    await app`grep ^POCKETBASE_ADMIN_PASSWORD= ${APP_DIR}/.env | cut -d= -f2`.text()
   if (adminEmail.trim() && adminPassword.trim()) {
-    await server`systemctl start ski-tripper-pb`
-    await server`sleep 2`
+    await root`systemctl start ski-tripper-pb`
+    await root`sleep 2`
     const createResult =
-      await server`${APP_DIR}/pocketbase/pocketbase superuser create ${adminEmail.trim()} ${adminPassword.trim()} --dir ${APP_DIR}/data/pb_data`
+      await app`${APP_DIR}/pocketbase/pocketbase superuser create ${adminEmail.trim()} ${adminPassword.trim()} --dir ${APP_DIR}/data/pb_data`
         .nothrow()
         .text()
-    await server`systemctl stop ski-tripper-pb`
+    await root`systemctl stop ski-tripper-pb`
     if (
       createResult.includes('created') ||
       createResult.includes('already exists')
@@ -481,22 +500,22 @@ async function deploy() {
   }
 
   step('Restarting services')
-  await server`systemctl restart ski-tripper-setup`
-  await server`systemctl restart ski-tripper-pb`
-  await server`systemctl restart ski-tripper-api`
-  await server`systemctl reload caddy`
+  await root`systemctl restart ski-tripper-setup`
+  await root`systemctl restart ski-tripper-pb`
+  await root`systemctl restart ski-tripper-api`
+  await root`systemctl reload caddy`
   success('Services restarted')
 
   step('Checking service status')
-  await server`sleep 3`
+  await root`sleep 3`
 
   const pbStatus = (
-    await server`systemctl is-active ski-tripper-pb`.text()
+    await root`systemctl is-active ski-tripper-pb`.text()
   ).trim()
   const apiStatus = (
-    await server`systemctl is-active ski-tripper-api`.text()
+    await root`systemctl is-active ski-tripper-api`.text()
   ).trim()
-  const caddyStatus = (await server`systemctl is-active caddy`.text()).trim()
+  const caddyStatus = (await root`systemctl is-active caddy`.text()).trim()
 
   if (pbStatus === 'active') success(`PocketBase: ${pbStatus}`)
   else warn(`PocketBase: ${pbStatus}`)
