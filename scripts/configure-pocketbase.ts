@@ -22,7 +22,7 @@ const OVERRIDES: Record<
   'smtp.username': { env: 'SMTP_USERNAME', type: 'string' },
   'smtp.password': { env: 'SMTP_PASSWORD', type: 'string' },
   'smtp.localName': { env: 'SMTP_LOCAL_NAME', type: 'string' },
-  'smtp.tls': { env: 'SMTP_TLS', type: 'number' },
+  'smtp.tls': { env: 'SMTP_TLS', type: 'boolean' },
   'meta.appURL': { env: 'APP_URL', type: 'string' },
   'meta.senderAddress': { env: 'SENDER_ADDRESS', type: 'string' },
   'meta.hideControls': { env: 'HIDE_CONTROLS', type: 'boolean' },
