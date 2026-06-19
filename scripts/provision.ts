@@ -237,22 +237,23 @@ async function configureDroplet() {
   const userCheck = await root`id ski-tripper`.nothrow().text()
   if (!userCheck.includes('uid')) {
     step('Creating ski-tripper user')
-    await root`useradd --system --home-dir ${APP_DIR} --shell /bin/bash ski-tripper`
+    await root`useradd --system --home-dir /home/ski-tripper --create-home --shell /bin/bash ski-tripper`
     success('User ski-tripper created')
   } else {
     success('User ski-tripper already exists')
   }
 
   step('Setting up ski-tripper SSH access')
-  await root`mkdir -p ${APP_DIR}/.ssh`
+  const skiTripperHome = '/home/ski-tripper'
+  await root`mkdir -p ${skiTripperHome}/.ssh`
   const hasAuthorizedKeys =
-    await root`test -f ${APP_DIR}/.ssh/authorized_keys`.nothrow()
+    await root`test -f ${skiTripperHome}/.ssh/authorized_keys`.nothrow()
   if (hasAuthorizedKeys.exitCode !== 0) {
-    await root`cp /root/.ssh/authorized_keys ${APP_DIR}/.ssh/authorized_keys`
+    await root`cp /root/.ssh/authorized_keys ${skiTripperHome}/.ssh/authorized_keys`
   }
-  await root`chown -R ski-tripper:ski-tripper ${APP_DIR}/.ssh`
-  await root`chmod 700 ${APP_DIR}/.ssh`
-  await root`chmod 600 ${APP_DIR}/.ssh/authorized_keys`
+  await root`chown -R ski-tripper:ski-tripper ${skiTripperHome}/.ssh`
+  await root`chmod 700 ${skiTripperHome}/.ssh`
+  await root`chmod 600 ${skiTripperHome}/.ssh/authorized_keys`
   success('ski-tripper SSH access configured')
 
   const app = $.ssh({
