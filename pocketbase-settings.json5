@@ -6,7 +6,8 @@
   // (dev) and .env.production (prod). See .env.example for descriptions.
   //
   // Dev:  Mailpit on localhost:1025 (no auth, no TLS)
-  // Prod: Resend on smtp.resend.com:465 (implicit TLS)
+  // Prod: Resend on smtp.resend.com (port 2465, implicit TLS)
+  //       Use port 465 if not blocked by host (e.g. DigitalOcean blocks 465/587)
 
   smtp: {
     enabled: true,
