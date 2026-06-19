@@ -202,12 +202,9 @@ async function configureDroplet() {
     privateKey: SSH_KEY,
   }).timeout(300000)
 
-  step('Upgrading packages')
-  await root`apt-get update`
-  await root`apt-get upgrade -y`
-  await root`apt-get install -y unattended-upgrades`
+  step('Configuring unattended upgrades')
   await root`dpkg-reconfigure -plow unattended-upgrades`
-  success('Packages upgraded')
+  success('Unattended upgrades configured')
 
   const swapCheck = await root`swapon --show --noheadings`.nothrow().text()
   if (!swapCheck.includes('/swapfile')) {
