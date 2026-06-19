@@ -6,7 +6,7 @@
   // (dev) and .env.production (prod). See .env.example for descriptions.
   //
   // Dev:  Mailpit on localhost:1025 (no auth, no TLS)
-  // Prod: AWS SES on email-smtp.eu-west-2.amazonaws.com:587 (STARTTLS)
+  // Prod: Resend on smtp.resend.com:465 (implicit TLS)
 
   smtp: {
     enabled: true,
@@ -15,7 +15,7 @@
     username: "${SMTP_USERNAME}",
     password: "${SMTP_PASSWORD}",
     authMethod: "PLAIN",
-    tls: false,
+    tls: "${SMTP_TLS}",
     localName: "${SMTP_LOCAL_NAME}",
   },
 
