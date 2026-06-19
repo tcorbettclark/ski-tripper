@@ -501,7 +501,8 @@ async function deploy() {
     await root`systemctl stop ski-tripper-pb`
     if (
       createResult.includes('created') ||
-      createResult.includes('already exists')
+      createResult.includes('already exists') ||
+      createResult.includes('must be unique')
     ) {
       success('PocketBase superuser ready')
     } else {
@@ -518,7 +519,7 @@ async function deploy() {
   await root`systemctl restart ski-tripper-setup`
   await root`systemctl restart ski-tripper-pb`
   await root`systemctl restart ski-tripper-api`
-  await root`systemctl reload caddy`
+  await root`systemctl restart caddy`
   success('Services restarted')
 
   step('Checking service status')
