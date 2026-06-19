@@ -24,7 +24,7 @@
     "booking"
   ],
   "scripts": {
-    "dev": "bun run build:copy && concurrently --kill-others-on-fail --names client,playground,server,pb,caddy --prefix-colors blue,magenta,green,yellow,cyan 'bun run dev:client' 'bun run dev:playground' 'bun run dev:server' 'bun run dev:pocketbase' 'bun run dev:caddy'",
+    "dev": "bun run build:copy && concurrently --kill-others-on-fail --names client,playground,server,pb,caddy,mailpit,pbconfig --prefix-colors blue,magenta,green,yellow,cyan,red,white 'bun run dev:client' 'bun run dev:playground' 'bun run dev:server' 'bun run dev:pocketbase' 'bun run dev:caddy' 'bun run dev:mailpit' 'bun run pocketbase:config'",
     "dev:client": "bun build src/client/main.tsx --outdir output/static --target browser --env 'PUBLIC_*' --watch --no-clear-screen",
     "dev:playground": "bun build src/playground/action-guide-test.tsx --outdir output/static/playground --target browser --watch --no-clear-screen",
     "dev:server": "bun --watch --no-clear-screen src/server/serve.ts",
@@ -32,6 +32,7 @@
     "dev:caddy": "bun run scripts/caddy-log-wrapper.ts",
     "dev:caddy:debug": "bun run scripts/caddy-log-wrapper.ts --debug",
     "dev:caddy-setup-certs": "caddy trust",
+    "dev:mailpit": "mailpit",
     "build": "bun run build:client && bun run build:playground && bun run build:server && bun run build:copy",
     "build:client": "bun build src/client/main.tsx --outdir output/static --target browser --env 'PUBLIC_*' --minify",
     "build:playground": "bun build src/playground/action-guide-test.tsx --outdir output/static/playground --target browser --minify",
@@ -41,6 +42,7 @@
     "check-and-fix": "bun tsc --noEmit && biome check --write",
     "check": "bun tsc --noEmit && biome ci",
     "resorts": "bun run src/tools/resorts.ts",
+    "pocketbase:config": "bun run scripts/configure-pocketbase.ts",
     "provision": "bun run scripts/provision.ts",
     "ssh": "doctl compute ssh ski-tripper --ssh-key-path ~/.ssh/id_ed25519"
   },
@@ -75,6 +77,7 @@
     "concurrently": "^10.0.3",
     "csv-parse": "^6.2.1",
     "exa-js": "^2.13.0",
+    "json5": "^2.2.3",
     "lefthook": "^2.1.8",
     "typescript": "^6.0.3",
     "zod": "^4.4.3"

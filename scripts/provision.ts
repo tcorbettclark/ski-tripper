@@ -521,6 +521,10 @@ async function deploy() {
   await root`systemctl restart caddy`.nothrow()
   success('Services restarted')
 
+  step('Configuring PocketBase settings')
+  await app`cd ${APP_DIR} && /usr/local/bin/bun run pocketbase:config`
+  success('PocketBase settings configured')
+
   await status()
 }
 
