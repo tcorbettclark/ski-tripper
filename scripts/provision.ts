@@ -1,12 +1,33 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { homedir } from 'node:os'
 import { resolve } from 'node:path'
-import { $ } from '@xec-sh/core'
+import { $, configure } from '@xec-sh/core'
+
+function getDefaultPrivateKey(): string | undefined {
+  const keyPath = resolve(homedir(), '.ssh', 'id_rsa')
+  const edKeyPath = resolve(homedir(), '.ssh', 'id_ed25519')
+  for (const path of [edKeyPath, keyPath]) {
+    if (existsSync(path)) return readFileSync(path, 'utf-8')
+  }
+  return undefined
+}
+
+const SSH_KEY = getDefaultPrivateKey()
+
+configure({ timeout: 600000 })
+
+async function scanHostKey(ip: string) {
+  step('Adding droplet host key to known_hosts')
+  await $`ssh-keyscan -H ${ip} >> ~/.ssh/known_hosts`.nothrow()
+  success('Host key added')
+}
 
 const DROPLET_NAME = 'ski-tripper'
-const DROPLET_SIZE = 's-1vcpu-512mb-1gb-intel'
+const DROPLET_SIZE = 's-1vcpu-1gb'
 const DROPLET_REGION = 'lon1'
 const DROPLET_IMAGE = 'ubuntu-24-04-x64'
 const SWAP_SIZE_MB = 1024
+const RESERVED_IP_REGION = DROPLET_REGION
 
 const BUN_VERSION = '1.3.14'
 const POCKETBASE_VERSION = '0.39.4'
@@ -50,7 +71,31 @@ function requireEnvProduction() {
   }
 }
 
+async function getDropletId(): Promise<string> {
+  const result =
+    await $`doctl compute droplet get ${DROPLET_NAME} --format ID --no-header`.text()
+  const id = result.trim()
+  if (!id) {
+    fail('Could not determine droplet ID. Is the droplet running?')
+  }
+  return id
+}
+
+async function getReservedIp(): Promise<string | undefined> {
+  const result =
+    await $`doctl compute reserved-ip list --format IP,Region --no-header`
+      .nothrow()
+      .text()
+  const line = result.split('\n').find((l) => l.includes(RESERVED_IP_REGION))
+  return line?.split(/\s+/)[0] || undefined
+}
+
 async function getDropletIp(): Promise<string> {
+  const reservedIp = await getReservedIp()
+  if (reservedIp) {
+    success(`Using reserved IP: ${reservedIp}`)
+    return reservedIp
+  }
   const result =
     await $`doctl compute droplet get ${DROPLET_NAME} --format PublicIPv4 --no-header`.text()
   const ip = result.trim()
@@ -78,58 +123,64 @@ async function createDroplet() {
 
   const sshKeyIds =
     await $`doctl compute ssh-key list --format ID --no-header`.text()
-  const sshKeys = sshKeyIds
+  const keyList = sshKeyIds
     .split('\n')
     .map((id) => id.trim())
     .filter(Boolean)
-    .map((id) => `--ssh-keys ${id}`)
-    .join(' ')
 
-  const userData = `#!/bin/bash
-echo "Setting up swap..."
-fallocate -l ${SWAP_SIZE_MB}M /swapfile
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
-echo '/swapfile none swap sw 0 0' >> /etc/fstab
-echo 'vm.swappiness=10' >> /etc/sysctl.conf
-sysctl vm.swappiness=10
+  if (keyList.length === 0) {
+    fail(
+      'No SSH keys registered with DigitalOcean. Register one with: doctl compute ssh-key import id_ed25519 --public-key-file ~/.ssh/id_ed25519.pub'
+    )
+  }
 
-echo "Configuring firewall..."
-ufw --force reset
-ufw allow 22/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw --force enable
-
-echo "Enabling unattended upgrades..."
-apt-get update
-apt-get install -y unattended-upgrades
-dpkg-reconfigure -plow unattended-upgrades
-
-echo "Setup complete!"
-`
+  const sshKeys = keyList.join(',')
 
   await $`doctl compute droplet create ${DROPLET_NAME} \
     --size ${DROPLET_SIZE} \
     --region ${DROPLET_REGION} \
     --image ${DROPLET_IMAGE} \
-    --user-data ${userData} \
-    ${sshKeys} \
-    --wait`
+    --ssh-keys ${sshKeys} \
+    --wait`.timeout(300000)
 
   const ip = await getDropletIp()
   success(`Droplet created at ${ip}`)
-  step('Waiting 60s for cloud-init to complete')
-  await new Promise((resolve) => setTimeout(resolve, 60000))
-  success('Cloud-init complete')
+}
+
+async function waitForSsh(ip: string) {
+  step('Waiting for SSH to become available')
+  for (let i = 0; i < 30; i++) {
+    try {
+      const result =
+        await $`ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${ip} echo ok`
+          .nothrow()
+          .text()
+      if (result.trim() === 'ok') {
+        success('SSH available')
+        return
+      }
+    } catch {
+      // ignore
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+  }
+  fail('Timed out waiting for SSH')
 }
 
 async function configureDroplet() {
   const ip = await getDropletIp()
   step(`Configuring droplet at ${ip}`)
 
-  const server = $.ssh({ host: ip, username: 'root' })
+  await scanHostKey(ip)
+  await waitForSsh(ip)
+  const server = $.ssh({ host: ip, username: 'root', privateKey: SSH_KEY })
+
+  step('Upgrading packages')
+  await server`apt-get update`
+  await server`apt-get upgrade -y`
+  await server`apt-get install -y unattended-upgrades`
+  await server`dpkg-reconfigure -plow unattended-upgrades`
+  success('Packages upgraded')
 
   const swapCheck = await server`swapon --show --noheadings`.nothrow().text()
   if (!swapCheck.includes('/swapfile')) {
@@ -180,6 +231,7 @@ async function configureDroplet() {
   const bunCheck = await server`bun --version`.nothrow().text()
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
+    await server`apt-get install -y unzip`
     await server`curl -fsSL https://bun.sh/install | bash -s "bun@${BUN_VERSION}"`
     await server`ln -sf /root/.bun/bin/bun /usr/local/bin/bun`
     success(`Bun ${BUN_VERSION} installed`)
@@ -334,7 +386,9 @@ async function deploy() {
   const ip = await getDropletIp()
   step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
 
-  const server = $.ssh({ host: ip, username: 'root' })
+  await scanHostKey(ip)
+  await waitForSsh(ip)
+  const server = $.ssh({ host: ip, username: 'root', privateKey: SSH_KEY })
 
   step('Uploading .env.production')
   await $`scp ${ENV_PRODUCTION_PATH} root@${ip}:${APP_DIR}/.env`
@@ -419,12 +473,55 @@ async function deploy() {
   console.log(`\n  App:        https://ski-tripper.com`)
   console.log(`  PocketBase: https://pb.ski-tripper.com`)
   console.log(`  IP:         ${ip}`)
+  console.log(`\n  Useful logs (SSH with: doctl compute ssh ski-tripper):`)
+  console.log(`    Caddy:       journalctl -u caddy`)
+  console.log(`    PocketBase:  journalctl -u ski-tripper-pb`)
+  console.log(`    API server:  journalctl -u ski-tripper-api`)
+}
+
+async function createReservedIp() {
+  step('Creating reserved IP')
+  const existing = await getReservedIp()
+  if (existing) {
+    warn(`Reserved IP already exists: ${existing}`)
+    return
+  }
+  const result =
+    await $`doctl compute reserved-ip create --region ${RESERVED_IP_REGION} --format IP --no-header`.text()
+  const ip = result.trim()
+  if (!ip) {
+    fail('Failed to create reserved IP')
+  }
+  success(`Reserved IP created: ${ip}`)
+  console.log(
+    `  Point your DNS records to this IP. It will persist across droplet recreations.`
+  )
+}
+
+async function assignReservedIp() {
+  step('Assigning reserved IP to droplet')
+  const reservedIp = await getReservedIp()
+  if (!reservedIp) {
+    fail(
+      'No reserved IP found. Create one first with: bun run provision create-ip'
+    )
+  }
+  const dropletId = await getDropletId()
+  await $`doctl compute reserved-ip-action assign ${reservedIp} ${dropletId}`
+  success(`Reserved IP ${reservedIp} assigned to droplet ${DROPLET_NAME}`)
 }
 
 async function destroyDroplet() {
   await getDropletIp().catch(() => {
     fail('Droplet not found.')
   })
+
+  const reservedIp = await getReservedIp()
+  if (reservedIp) {
+    step('Unassigning reserved IP')
+    await $`doctl compute reserved-ip-action unassign ${reservedIp}`.nothrow()
+    success(`Reserved IP ${reservedIp} unassigned`)
+  }
 
   step(`Destroying droplet ${DROPLET_NAME}`)
   await $`doctl compute droplet delete ${DROPLET_NAME} --force`
@@ -435,11 +532,13 @@ function printHelp() {
   console.log(`Usage: bun run provision <command> [options]
 
 Commands:
-  create     Create a DigitalOcean droplet
-  configure  Install dependencies and set up systemd services on an existing droplet
-  deploy     Pull latest code, build, and restart services [default branch: main]
-  setup      Create droplet, configure, and deploy (full setup)
-  destroy    Delete the DigitalOcean droplet
+  create      Create a DigitalOcean droplet
+  create-ip   Create a reserved IP (persists across droplet recreations)
+  assign-ip   Assign the reserved IP to the current droplet
+  configure   Install dependencies and set up systemd services on an existing droplet
+  deploy      Pull latest code, build, and restart services [default branch: main]
+  setup       Create droplet, assign IP, configure, and deploy (full setup)
+  destroy     Unassign IP and delete the DigitalOcean droplet
 
 Options:
   --help     Show this help message
@@ -448,15 +547,16 @@ Requirements:
   doctl           Required for create/destroy. Install: https://docs.digitalocean.com/reference/doctl/
                   Authenticate with: doctl auth init (stores DO API token)
   SSH access      Required for configure/deploy. The droplet is created with your DO SSH keys.
-                  The deploy command connects as root to ski-tripper.com.
   .env.production Required for deploy. Copy .env.example to .env.production and fill in secrets.
   bun             Required to run this script.
 
 Examples:
   bun run provision setup              Full setup from scratch
+  bun run provision create-ip          Create a reserved IP (one-time)
+  bun run provision assign-ip          Reassign IP after recreating a droplet
   bun run provision deploy             Deploy current main branch
   bun run provision deploy v1.2.3      Deploy a specific tag
-  bun run provision destroy            Tear everything down`)
+  bun run provision destroy            Unassign IP and tear down droplet`)
 }
 
 async function provision() {
@@ -472,6 +572,14 @@ async function provision() {
       await requireDoctl()
       await createDroplet()
       break
+    case 'create-ip':
+      await requireDoctl()
+      await createReservedIp()
+      break
+    case 'assign-ip':
+      await requireDoctl()
+      await assignReservedIp()
+      break
     case 'configure':
       await configureDroplet()
       break
@@ -481,6 +589,7 @@ async function provision() {
     case 'setup':
       await requireDoctl()
       await createDroplet()
+      await assignReservedIp()
       await configureDroplet()
       await deploy()
       break
