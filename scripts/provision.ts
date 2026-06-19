@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
-import { $, configure } from '@xec-sh/core'
+import { $, configure, dispose } from '@xec-sh/core'
 
 function getDefaultPrivateKey(): string | undefined {
   const keyPath = resolve(homedir(), '.ssh', 'id_rsa')
@@ -196,7 +196,11 @@ async function configureDroplet() {
 
   await scanHostKey(ip)
   await waitForSsh(ip)
-  const server = $.ssh({ host: ip, username: 'root', privateKey: SSH_KEY })
+  const server = $.ssh({
+    host: ip,
+    username: 'root',
+    privateKey: SSH_KEY,
+  }).timeout(300000)
 
   step('Upgrading packages')
   await server`apt-get update`
@@ -415,7 +419,11 @@ async function deploy() {
 
   await scanHostKey(ip)
   await waitForSsh(ip)
-  const server = $.ssh({ host: ip, username: 'root', privateKey: SSH_KEY })
+  const server = $.ssh({
+    host: ip,
+    username: 'root',
+    privateKey: SSH_KEY,
+  }).timeout(300000)
 
   step('Uploading .env.production')
   await $`scp ${ENV_PRODUCTION_PATH} root@${ip}:${APP_DIR}/.env`
@@ -611,7 +619,9 @@ async function provision() {
   }
 }
 
-provision().catch((err) => {
-  console.error('\n✗ Provision failed:', err)
-  process.exit(1)
-})
+provision()
+  .catch((err) => {
+    console.error('\n✗ Provision failed:', err)
+    process.exitCode = 1
+  })
+  .finally(() => dispose())
