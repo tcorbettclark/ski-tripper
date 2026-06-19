@@ -1,4 +1,6 @@
 {$PUBLIC_DOMAIN} {
+	log
+
 	handle /api/* {
 		reverse_proxy {$SERVER_HOSTNAME}:{$SERVER_PORT}
 	}
@@ -18,5 +20,7 @@
 }
 
 {$PUBLIC_POCKETBASE_DOMAIN} {
+	log
+
 	reverse_proxy {$POCKETBASE_HOSTNAME}:{$POCKETBASE_PORT}
 }
