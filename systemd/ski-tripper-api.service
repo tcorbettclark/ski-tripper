@@ -1,0 +1,18 @@
+[Unit]
+Description=Ski Tripper - API server
+After=network.target network-online.target ski-tripper-pb.service
+Requires=network-online.target
+Wants=ski-tripper-pb.service
+
+[Service]
+Type=simple
+User=ski-tripper
+Group=ski-tripper
+ExecStart=/opt/ski-tripper/output/server/serve
+WorkingDirectory=/opt/ski-tripper
+EnvironmentFile=/opt/ski-tripper/.env
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

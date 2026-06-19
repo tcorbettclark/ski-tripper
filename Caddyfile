@@ -5,13 +5,13 @@
 
 	handle /playground/* {
 		uri strip_prefix /playground
-		root * static/playground
+		root * {$STATIC_ROOT}/playground
 		file_server
 		try_files {path} /index.html
 	}
 
 	handle {
-		root * static
+		root * {$STATIC_ROOT}
 		file_server
 		try_files {path} /index.html
 	}

@@ -1,0 +1,15 @@
+[Unit]
+Description=Ski Tripper - Create data directories
+DefaultDependencies=no
+After=local-fs.target
+Before=ski-tripper-pb.service
+
+[Service]
+Type=oneshot
+User=ski-tripper
+Group=ski-tripper
+ExecStart=/usr/bin/mkdir -p /opt/ski-tripper/data/pb_data
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

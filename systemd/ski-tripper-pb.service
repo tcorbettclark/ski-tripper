@@ -1,0 +1,18 @@
+[Unit]
+Description=Ski Tripper - PocketBase
+After=network.target network-online.target ski-tripper-setup.service
+Requires=network-online.target
+Wants=ski-tripper-setup.service
+
+[Service]
+Type=simple
+User=ski-tripper
+Group=ski-tripper
+ExecStart=/opt/ski-tripper/pocketbase/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/output/pb_migrations --dir /opt/ski-tripper/data/pb_data
+WorkingDirectory=/opt/ski-tripper
+EnvironmentFile=/opt/ski-tripper/.env
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

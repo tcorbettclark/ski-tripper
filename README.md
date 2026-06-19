@@ -47,5 +47,27 @@ Testing is done with unit testing and [Playwright](https://playwright.dev/) + [M
 
 - [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
 - [PocketBase](https://pocketbase.io/) for the backend database and authentication.
-- [Mailgun](https://www.mailgun.com/) for email delivery (PENDING).
-- A bun/typescript server to deliver the frontend files and assets, and run the backend server (LLM functions).
+- [SES](https://aws.amazon.com/ses/) for email delivery (PENDING).
+- A small server (bun typescript) to run the backend server LLM functions.
+
+# Hosting
+
+The app runs on a single DigitalOcean droplet (Ubuntu 24.04) with three systemd services:
+
+| Service | User | Description |
+|---------|------|-------------|
+| `caddy` | `caddy` | Reverse proxy and TLS termination (ports 80/443) |
+| `ski-tripper-pb` | `ski-tripper` | PocketBase (localhost:8090) |
+| `ski-tripper-api` | `ski-tripper` | Custom Bun API server (localhost:5173) |
+
+Caddy is a shared reverse proxy that can host additional applications. The `ski-tripper` user owns the application code and data at `/opt/ski-tripper/`.
+
+Deployment uses [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services. No Docker involved — everything runs natively on the host.
+
+| Command | Description |
+|---------|-------------|
+| `bun run provision create` | Create a DigitalOcean droplet |
+| `bun run provision configure` | Install deps and set up systemd services on an existing droplet |
+| `bun run provision deploy` | Pull latest code, build, restart services |
+| `bun run provision setup` | Create droplet, configure, and deploy (full setup) |
+| `bun run provision destroy` | Delete the droplet |
