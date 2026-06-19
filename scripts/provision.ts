@@ -232,8 +232,12 @@ async function configureDroplet() {
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
     await server`apt-get install -y unzip`
-    await server`curl -fsSL https://bun.sh/install | bash -s "bun@${BUN_VERSION}"`
-    await server`ln -sf /root/.bun/bin/bun /usr/local/bin/bun`
+    const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip`
+    await server`curl -fsSL ${bunUrl} -o /tmp/bun.zip`
+    await server`unzip -o /tmp/bun.zip -d /tmp/bun`
+    await server`mv /tmp/bun/bun-linux-x64/bun /usr/local/bin/bun`
+    await server`chmod +x /usr/local/bin/bun`
+    await server`rm -rf /tmp/bun /tmp/bun.zip`
     success(`Bun ${BUN_VERSION} installed`)
   } else {
     success(`Bun already installed: ${bunCheck.trim()}`)
@@ -247,7 +251,8 @@ async function configureDroplet() {
     await server`mkdir -p ${APP_DIR}/pocketbase`
     const arch = await server`dpkg --print-architecture`.text()
     const pbArch = arch.trim() === 'amd64' ? 'amd64' : 'arm64'
-    await server`curl -L "https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_${pbArch}.zip" -o /tmp/pocketbase.zip`
+    const pbUrl = `https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_${pbArch}.zip`
+    await server`curl -L ${pbUrl} -o /tmp/pocketbase.zip`
     await server`unzip -o /tmp/pocketbase.zip -d ${APP_DIR}/pocketbase`
     await server`chmod +x ${APP_DIR}/pocketbase/pocketbase`
     await server`rm -f /tmp/pocketbase.zip`
@@ -259,7 +264,8 @@ async function configureDroplet() {
   const caddyCheck = await server`caddy version`.nothrow().text()
   if (!caddyCheck.includes(CADDY_VERSION)) {
     step(`Installing Caddy ${CADDY_VERSION}`)
-    await server`curl -L "https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz" -o /tmp/caddy.tar.gz`
+    const caddyUrl = `https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz`
+    await server`curl -L ${caddyUrl} -o /tmp/caddy.tar.gz`
     await server`tar -xzf /tmp/caddy.tar.gz -C /usr/bin caddy`
     await server`chmod +x /usr/bin/caddy`
     await server`rm -f /tmp/caddy.tar.gz`
@@ -419,9 +425,9 @@ async function deploy() {
 
   step('Creating PocketBase superuser')
   const adminEmail =
-    await server`bash -c "grep '^POCKETBASE_ADMIN_EMAIL=' ${APP_DIR}/.env | cut -d= -f2"`.text()
+    await server`grep ^POCKETBASE_ADMIN_EMAIL= ${APP_DIR}/.env | cut -d= -f2`.text()
   const adminPassword =
-    await server`bash -c "grep '^POCKETBASE_ADMIN_PASSWORD=' ${APP_DIR}/.env | cut -d= -f2"`.text()
+    await server`grep ^POCKETBASE_ADMIN_PASSWORD= ${APP_DIR}/.env | cut -d= -f2`.text()
   if (adminEmail.trim() && adminPassword.trim()) {
     await server`systemctl start ski-tripper-pb`
     await server`sleep 2`
