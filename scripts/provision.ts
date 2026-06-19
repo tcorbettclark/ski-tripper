@@ -296,7 +296,7 @@ async function configureDroplet() {
     success('User caddy already exists')
   }
 
-  const bunCheck = await root`bun --version`.nothrow().text()
+  const bunCheck = await root`/usr/local/bin/bun --version`.nothrow().text()
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
     await waitForAptLock()
@@ -312,7 +312,9 @@ async function configureDroplet() {
     success(`Bun already installed: ${bunCheck.trim()}`)
   }
 
-  const pbCheck = await root`pocketbase --version`.nothrow().text()
+  const pbCheck = await root`/usr/local/bin/pocketbase --version`
+    .nothrow()
+    .text()
   if (!pbCheck.includes(POCKETBASE_VERSION)) {
     step(`Installing PocketBase ${POCKETBASE_VERSION}`)
     const arch = await root`dpkg --print-architecture`.text()
@@ -328,7 +330,7 @@ async function configureDroplet() {
     success(`PocketBase already installed: ${pbCheck.trim()}`)
   }
 
-  const caddyCheck = await root`caddy version`.nothrow().text()
+  const caddyCheck = await root`/usr/local/bin/caddy version`.nothrow().text()
   if (!caddyCheck.includes(CADDY_VERSION)) {
     step(`Installing Caddy ${CADDY_VERSION}`)
     const caddyUrl = `https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz`
@@ -385,7 +387,7 @@ Before=ski-tripper-pb.service
 Type=oneshot
 User=ski-tripper
 Group=ski-tripper
-ExecStart=/usr/bin/mkdir -p /opt/ski-tripper/data/pb_data
+ExecStart=/usr/bin/mkdir -p /var/lib/ski-tripper/pb_data
 RemainAfterExit=yes
 
 [Install]
@@ -403,7 +405,7 @@ Wants=ski-tripper-setup.service
 Type=simple
 User=ski-tripper
 Group=ski-tripper
-ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/output/pb_migrations --dir /opt/ski-tripper/data/pb_data
+ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/output/pb_migrations --dir /var/lib/ski-tripper/pb_data
 WorkingDirectory=/opt/ski-tripper
 EnvironmentFile=/opt/ski-tripper/.env
 Restart=on-failure
@@ -470,15 +472,16 @@ async function deploy() {
   success(`Checked out ${branchOrTag}`)
 
   step('Installing dependencies')
-  await app`cd ${APP_DIR} && bun install --frozen-lockfile`
+  await app`cd ${APP_DIR} && /usr/local/bin/bun install --frozen-lockfile`
   success('Dependencies installed')
 
   step('Building application')
-  await app`cd ${APP_DIR} && bun run build`
+  await app`cd ${APP_DIR} && /usr/local/bin/bun run build`
   success('Build complete')
 
   step('Creating data directory')
-  await app`mkdir -p ${APP_DIR}/data/pb_data`
+  await root`mkdir -p /var/lib/ski-tripper/pb_data`
+  await root`chown -R ski-tripper:ski-tripper /var/lib/ski-tripper`
   success('Data directory ready')
 
   step('Copying Caddyfile')
@@ -492,21 +495,17 @@ async function deploy() {
   const adminPassword =
     await app`grep ^POCKETBASE_ADMIN_PASSWORD= ${APP_DIR}/.env | cut -d= -f2`.text()
   if (adminEmail.trim() && adminPassword.trim()) {
-    await root`systemctl start ski-tripper-pb`
-    await root`sleep 2`
     const createResult =
-      await app`pocketbase superuser create ${adminEmail.trim()} ${adminPassword.trim()} --dir ${APP_DIR}/data/pb_data`
-        .nothrow()
-        .text()
-    await root`systemctl stop ski-tripper-pb`
+      await app`/usr/local/bin/pocketbase --dir /var/lib/ski-tripper/pb_data superuser create ${adminEmail.trim()} ${adminPassword.trim()}`.nothrow()
+    const output = [createResult.stdout, createResult.stderr].join('\n')
     if (
-      createResult.includes('created') ||
-      createResult.includes('already exists') ||
-      createResult.includes('must be unique')
+      output.includes('created') ||
+      output.includes('already exists') ||
+      output.includes('must be unique')
     ) {
       success('PocketBase superuser ready')
     } else {
-      warn(`PocketBase superuser creation returned: ${createResult.trim()}`)
+      warn(`PocketBase superuser creation returned: ${output.trim()}`)
     }
   } else {
     warn(
@@ -519,7 +518,7 @@ async function deploy() {
   await root`systemctl restart ski-tripper-setup`
   await root`systemctl restart ski-tripper-pb`
   await root`systemctl restart ski-tripper-api`
-  await root`systemctl restart caddy`
+  await root`systemctl restart caddy`.nothrow()
   success('Services restarted')
 
   step('Checking service status')
@@ -534,15 +533,40 @@ async function deploy() {
   const caddyStatus = (await root`systemctl is-active caddy`.text()).trim()
 
   if (pbStatus === 'active') success(`PocketBase: ${pbStatus}`)
-  else warn(`PocketBase: ${pbStatus}`)
+  else {
+    warn(`PocketBase: ${pbStatus}`)
+    const logs = await root`journalctl -u ski-tripper-pb -n 20 --no-pager`
+      .nothrow()
+      .text()
+    console.log(logs)
+  }
   if (apiStatus === 'active') success(`API Server:  ${apiStatus}`)
-  else warn(`API Server:  ${apiStatus}`)
+  else {
+    warn(`API Server:  ${apiStatus}`)
+    const logs = await root`journalctl -u ski-tripper-api -n 20 --no-pager`
+      .nothrow()
+      .text()
+    console.log(logs)
+  }
   if (caddyStatus === 'active') success(`Caddy:       ${caddyStatus}`)
-  else warn(`Caddy:       ${caddyStatus}`)
+  else {
+    warn(`Caddy:       ${caddyStatus}`)
+    const logs = await root`journalctl -u caddy -n 20 --no-pager`
+      .nothrow()
+      .text()
+    console.log(logs)
+  }
 
   console.log(`\n  App:        https://ski-tripper.com`)
   console.log(`  PocketBase: https://pb.ski-tripper.com`)
   console.log(`  IP:         ${ip}`)
+  console.log(`\n  Layout:`)
+  console.log(`    App code:     /opt/ski-tripper/`)
+  console.log(`    App data:     /var/lib/ski-tripper/pb_data/`)
+  console.log(`    Env file:     /opt/ski-tripper/.env`)
+  console.log(`    Caddyfile:    /etc/caddy/Caddyfile`)
+  console.log(`    Binaries:     /usr/local/bin/{bun,caddy,pocketbase}`)
+  console.log(`    Systemd:      /etc/systemd/system/ski-tripper-*.service`)
   console.log(`\n  Useful logs (SSH with: doctl compute ssh ski-tripper):`)
   console.log(`    Caddy:       journalctl -u caddy`)
   console.log(`    PocketBase:  journalctl -u ski-tripper-pb`)
