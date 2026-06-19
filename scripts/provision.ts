@@ -118,33 +118,56 @@ async function createDroplet() {
 
   if (alreadyExists) {
     warn(`Droplet '${DROPLET_NAME}' already exists, skipping creation.`)
-    return
+  } else {
+    const sshKeyIds =
+      await $`doctl compute ssh-key list --format ID --no-header`.text()
+    const keyList = sshKeyIds
+      .split('\n')
+      .map((id) => id.trim())
+      .filter(Boolean)
+
+    if (keyList.length === 0) {
+      fail(
+        'No SSH keys registered with DigitalOcean. Register one with: doctl compute ssh-key import id_ed25519 --public-key-file ~/.ssh/id_ed25519.pub'
+      )
+    }
+
+    const sshKeys = keyList.join(',')
+
+    await $`doctl compute droplet create ${DROPLET_NAME} \
+      --size ${DROPLET_SIZE} \
+      --region ${DROPLET_REGION} \
+      --image ${DROPLET_IMAGE} \
+      --ssh-keys ${sshKeys} \
+      --wait`.timeout(300000)
+
+    const ip = await getDropletIp()
+    success(`Droplet created at ${ip}`)
   }
 
-  const sshKeyIds =
-    await $`doctl compute ssh-key list --format ID --no-header`.text()
-  const keyList = sshKeyIds
-    .split('\n')
-    .map((id) => id.trim())
-    .filter(Boolean)
-
-  if (keyList.length === 0) {
-    fail(
-      'No SSH keys registered with DigitalOcean. Register one with: doctl compute ssh-key import id_ed25519 --public-key-file ~/.ssh/id_ed25519.pub'
+  const reservedIp = await getReservedIp()
+  if (reservedIp) {
+    step('Assigning reserved IP to droplet')
+    const dropletId = await getDropletId()
+    await $`doctl compute reserved-ip-action assign ${reservedIp} ${dropletId}`
+    success(`Reserved IP ${reservedIp} assigned`)
+  } else {
+    step('Creating reserved IP')
+    const result =
+      await $`doctl compute reserved-ip create --region ${RESERVED_IP_REGION} --format IP --no-header`.text()
+    const ip = result.trim()
+    if (!ip) {
+      fail('Failed to create reserved IP')
+    }
+    success(`Reserved IP created: ${ip}`)
+    console.log(
+      '  Point your DNS records to this IP. It will persist across droplet recreations.'
     )
+    const dropletId = await getDropletId()
+    step('Assigning reserved IP to droplet')
+    await $`doctl compute reserved-ip-action assign ${ip} ${dropletId}`
+    success(`Reserved IP ${ip} assigned`)
   }
-
-  const sshKeys = keyList.join(',')
-
-  await $`doctl compute droplet create ${DROPLET_NAME} \
-    --size ${DROPLET_SIZE} \
-    --region ${DROPLET_REGION} \
-    --image ${DROPLET_IMAGE} \
-    --ssh-keys ${sshKeys} \
-    --wait`.timeout(300000)
-
-  const ip = await getDropletIp()
-  success(`Droplet created at ${ip}`)
 }
 
 async function waitForSsh(ip: string) {
@@ -219,6 +242,16 @@ async function configureDroplet() {
     success('User ski-tripper already exists')
   }
 
+  const repoCheck = await server`test -d ${APP_DIR}/.git`.nothrow()
+  if (repoCheck.exitCode !== 0) {
+    step('Cloning repository')
+    await server`git clone ${REPO_URL} ${APP_DIR}`
+    await server`chown -R ski-tripper:ski-tripper ${APP_DIR}`
+    success('Repository cloned')
+  } else {
+    success('Repository already cloned')
+  }
+
   const caddyUserCheck = await server`id caddy`.nothrow().text()
   if (!caddyUserCheck.includes('uid')) {
     step('Creating caddy user')
@@ -243,10 +276,9 @@ async function configureDroplet() {
     success(`Bun already installed: ${bunCheck.trim()}`)
   }
 
-  const pbCheck = await server`test -f /opt/ski-tripper/pocketbase/pocketbase`
-    .nothrow()
-    .text()
-  if (pbCheck.trim() === '') {
+  const pbCheck =
+    await server`test -f /opt/ski-tripper/pocketbase/pocketbase`.nothrow()
+  if (pbCheck.exitCode !== 0) {
     step(`Installing PocketBase ${POCKETBASE_VERSION}`)
     await server`mkdir -p ${APP_DIR}/pocketbase`
     const arch = await server`dpkg --print-architecture`.text()
@@ -370,17 +402,6 @@ EOF"`
   await server`systemctl daemon-reload`
   success('Systemd units installed')
 
-  const repoCheck = await server`test -d ${APP_DIR}/.git`.nothrow().text()
-  if (repoCheck.trim() === '') {
-    step('Cloning repository')
-    await server`git clone ${REPO_URL} ${APP_DIR}`
-    success('Repository cloned')
-  } else {
-    success('Repository already cloned')
-  }
-
-  await server`chown -R ski-tripper:ski-tripper ${APP_DIR}`
-
   await server`mkdir -p /etc/caddy`
 
   success('Configuration complete')
@@ -485,69 +506,59 @@ async function deploy() {
   console.log(`    API server:  journalctl -u ski-tripper-api`)
 }
 
-async function createReservedIp() {
-  step('Creating reserved IP')
-  const existing = await getReservedIp()
-  if (existing) {
-    warn(`Reserved IP already exists: ${existing}`)
-    return
-  }
-  const result =
-    await $`doctl compute reserved-ip create --region ${RESERVED_IP_REGION} --format IP --no-header`.text()
-  const ip = result.trim()
-  if (!ip) {
-    fail('Failed to create reserved IP')
-  }
-  success(`Reserved IP created: ${ip}`)
-  console.log(
-    `  Point your DNS records to this IP. It will persist across droplet recreations.`
-  )
-}
-
-async function assignReservedIp() {
-  step('Assigning reserved IP to droplet')
-  const reservedIp = await getReservedIp()
-  if (!reservedIp) {
-    fail(
-      'No reserved IP found. Create one first with: bun run provision create-ip'
-    )
-  }
-  const dropletId = await getDropletId()
-  await $`doctl compute reserved-ip-action assign ${reservedIp} ${dropletId}`
-  success(`Reserved IP ${reservedIp} assigned to droplet ${DROPLET_NAME}`)
-}
-
-async function destroyDroplet() {
+async function destroyDroplet(forgetReservedIp: boolean) {
   await getDropletIp().catch(() => {
     fail('Droplet not found.')
   })
 
   const reservedIp = await getReservedIp()
   if (reservedIp) {
-    step('Unassigning reserved IP')
-    await $`doctl compute reserved-ip-action unassign ${reservedIp}`.nothrow()
-    success(`Reserved IP ${reservedIp} unassigned`)
+    if (forgetReservedIp) {
+      step('Deleting reserved IP')
+      await $`doctl compute reserved-ip delete ${reservedIp} --force`
+      success(`Reserved IP ${reservedIp} deleted`)
+    } else {
+      step('Unassigning reserved IP (preserving for future use)')
+      await $`doctl compute reserved-ip-action unassign ${reservedIp}`.nothrow()
+      success(`Reserved IP ${reservedIp} unassigned and preserved`)
+    }
   }
 
   step(`Destroying droplet ${DROPLET_NAME}`)
   await $`doctl compute droplet delete ${DROPLET_NAME} --force`
-  success('Droplet destroyed')
+
+  step('Waiting for droplet to be destroyed')
+  for (let i = 0; i < 60; i++) {
+    const result = await $`doctl compute droplet list --format Name --no-header`
+      .nothrow()
+      .text()
+    if (!result.split('\n').some((line) => line.trim() === DROPLET_NAME)) {
+      success(`Droplet ${DROPLET_NAME} destroyed`)
+      if (reservedIp && !forgetReservedIp) {
+        console.log(
+          `\n  Reserved IP ${reservedIp} is preserved and ready for next deployment.`
+        )
+      }
+      return
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+  }
+  fail('Timed out waiting for droplet to be destroyed')
 }
 
 function printHelp() {
   console.log(`Usage: bun run provision <command> [options]
 
 Commands:
-  create      Create a DigitalOcean droplet
-  create-ip   Create a reserved IP (persists across droplet recreations)
-  assign-ip   Assign the reserved IP to the current droplet
+  create      Create a droplet and reserved IP (idempotent)
   configure   Install dependencies and set up systemd services on an existing droplet
   deploy      Pull latest code, build, and restart services [default branch: main]
-  setup       Create droplet, assign IP, configure, and deploy (full setup)
-  destroy     Unassign IP and delete the DigitalOcean droplet
+  setup       Create, configure, and deploy (full setup)
+  destroy     Unassign IP and delete the droplet (preserves the reserved IP)
 
 Options:
-  --help     Show this help message
+  --help                  Show this help message
+  --forget-reserved-ip   Also delete the reserved IP (use with destroy)
 
 Requirements:
   doctl           Required for create/destroy. Install: https://docs.digitalocean.com/reference/doctl/
@@ -558,11 +569,10 @@ Requirements:
 
 Examples:
   bun run provision setup              Full setup from scratch
-  bun run provision create-ip          Create a reserved IP (one-time)
-  bun run provision assign-ip          Reassign IP after recreating a droplet
   bun run provision deploy             Deploy current main branch
   bun run provision deploy v1.2.3      Deploy a specific tag
-  bun run provision destroy            Unassign IP and tear down droplet`)
+  bun run provision destroy            Tear down droplet (preserves reserved IP)
+  bun run provision destroy --forget-reserved-ip   Also delete the reserved IP`)
 }
 
 async function provision() {
@@ -578,14 +588,6 @@ async function provision() {
       await requireDoctl()
       await createDroplet()
       break
-    case 'create-ip':
-      await requireDoctl()
-      await createReservedIp()
-      break
-    case 'assign-ip':
-      await requireDoctl()
-      await assignReservedIp()
-      break
     case 'configure':
       await configureDroplet()
       break
@@ -595,13 +597,12 @@ async function provision() {
     case 'setup':
       await requireDoctl()
       await createDroplet()
-      await assignReservedIp()
       await configureDroplet()
       await deploy()
       break
     case 'destroy':
       await requireDoctl()
-      await destroyDroplet()
+      await destroyDroplet(process.argv.includes('--forget-reserved-ip'))
       break
     default:
       console.log(`Unknown command: ${command}`)
