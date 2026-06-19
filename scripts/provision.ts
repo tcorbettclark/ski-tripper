@@ -468,8 +468,15 @@ async function deploy() {
   success('.env.production uploaded')
 
   step('Fetching and checking out latest code')
-  await app`cd ${APP_DIR} && git fetch --all && git checkout ${branchOrTag}`
-  success(`Checked out ${branchOrTag}`)
+  await app`cd ${APP_DIR} && git fetch --all`
+  const isTag = await app`cd ${APP_DIR} && git tag -l ${branchOrTag}`.text()
+  if (isTag.trim()) {
+    await app`cd ${APP_DIR} && git checkout ${branchOrTag}`
+    success(`Checked out tag ${branchOrTag}`)
+  } else {
+    await app`cd ${APP_DIR} && git reset --hard origin/${branchOrTag}`
+    success(`Checked out branch ${branchOrTag}`)
+  }
 
   step('Installing dependencies')
   await app`cd ${APP_DIR} && /usr/local/bin/bun install --frozen-lockfile`
