@@ -312,20 +312,20 @@ async function configureDroplet() {
     success(`Bun already installed: ${bunCheck.trim()}`)
   }
 
-  const pbCheck = await app`test -d ${APP_DIR}/pocketbase`.nothrow()
-  if (pbCheck.exitCode !== 0) {
+  const pbCheck = await root`pocketbase --version`.nothrow().text()
+  if (!pbCheck.includes(POCKETBASE_VERSION)) {
     step(`Installing PocketBase ${POCKETBASE_VERSION}`)
-    await app`mkdir -p ${APP_DIR}/pocketbase`
     const arch = await root`dpkg --print-architecture`.text()
     const pbArch = arch.trim() === 'amd64' ? 'amd64' : 'arm64'
     const pbUrl = `https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_${pbArch}.zip`
-    await app`curl -L ${pbUrl} -o /tmp/pocketbase.zip`
-    await app`unzip -o /tmp/pocketbase.zip -d ${APP_DIR}/pocketbase`
-    await app`chmod +x ${APP_DIR}/pocketbase/pocketbase`
-    await app`rm -f /tmp/pocketbase.zip`
+    await root`curl -L ${pbUrl} -o /tmp/pocketbase.zip`
+    await root`unzip -o /tmp/pocketbase.zip -d /tmp/pocketbase`
+    await root`mv /tmp/pocketbase/pocketbase /usr/local/bin/pocketbase`
+    await root`chmod +x /usr/local/bin/pocketbase`
+    await root`rm -rf /tmp/pocketbase /tmp/pocketbase.zip`
     success(`PocketBase ${POCKETBASE_VERSION} installed`)
   } else {
-    success('PocketBase already installed')
+    success(`PocketBase already installed: ${pbCheck.trim()}`)
   }
 
   const caddyCheck = await root`caddy version`.nothrow().text()
@@ -333,8 +333,8 @@ async function configureDroplet() {
     step(`Installing Caddy ${CADDY_VERSION}`)
     const caddyUrl = `https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz`
     await root`curl -L ${caddyUrl} -o /tmp/caddy.tar.gz`
-    await root`tar -xzf /tmp/caddy.tar.gz -C /usr/bin caddy`
-    await root`chmod +x /usr/bin/caddy`
+    await root`tar -xzf /tmp/caddy.tar.gz -C /usr/local/bin caddy`
+    await root`chmod +x /usr/local/bin/caddy`
     await root`rm -f /tmp/caddy.tar.gz`
     await root`mkdir -p /var/lib/caddy/.local/share/caddy`
     await root`chown -R caddy:caddy /var/lib/caddy`
@@ -357,8 +357,8 @@ Requires=network-online.target
 Type=notify
 User=caddy
 Group=caddy
-ExecStart=/usr/bin/caddy run --config /etc/caddy/Caddyfile
-ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile --force
+ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile
+ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
 EnvironmentFile=/opt/ski-tripper/.env
 TimeoutStopSec=5s
 LimitNOFILE=1048576
@@ -403,7 +403,7 @@ Wants=ski-tripper-setup.service
 Type=simple
 User=ski-tripper
 Group=ski-tripper
-ExecStart=/opt/ski-tripper/pocketbase/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/output/pb_migrations --dir /opt/ski-tripper/data/pb_data
+ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/output/pb_migrations --dir /opt/ski-tripper/data/pb_data
 WorkingDirectory=/opt/ski-tripper
 EnvironmentFile=/opt/ski-tripper/.env
 Restart=on-failure
@@ -495,7 +495,7 @@ async function deploy() {
     await root`systemctl start ski-tripper-pb`
     await root`sleep 2`
     const createResult =
-      await app`${APP_DIR}/pocketbase/pocketbase superuser create ${adminEmail.trim()} ${adminPassword.trim()} --dir ${APP_DIR}/data/pb_data`
+      await app`pocketbase superuser create ${adminEmail.trim()} ${adminPassword.trim()} --dir ${APP_DIR}/data/pb_data`
         .nothrow()
         .text()
     await root`systemctl stop ski-tripper-pb`
