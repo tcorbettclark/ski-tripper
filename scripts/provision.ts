@@ -203,6 +203,20 @@ async function configureDroplet() {
   }).timeout(300000)
 
   step('Configuring unattended upgrades')
+  async function waitForAptLock() {
+    step('Waiting for apt lock')
+    for (let i = 0; i < 60; i++) {
+      const result =
+        await root`fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock`
+          .nothrow()
+          .text()
+      if (result.trim() === '') break
+      await new Promise((resolve) => setTimeout(resolve, 5000))
+    }
+    success('Apt lock available')
+  }
+
+  await waitForAptLock()
   await root`dpkg-reconfigure -plow unattended-upgrades`
   success('Unattended upgrades configured')
 
@@ -265,6 +279,8 @@ async function configureDroplet() {
   const repoCheck = await app`test -d ${APP_DIR}/.git`.nothrow()
   if (repoCheck.exitCode !== 0) {
     step('Cloning repository')
+    await root`mkdir -p ${APP_DIR}`
+    await root`chown ski-tripper:ski-tripper ${APP_DIR}`
     await app`git clone ${REPO_URL} ${APP_DIR}`
     success('Repository cloned')
   } else {
@@ -283,6 +299,7 @@ async function configureDroplet() {
   const bunCheck = await root`bun --version`.nothrow().text()
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
+    await waitForAptLock()
     await root`apt-get install -y unzip`
     const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip`
     await root`curl -fsSL ${bunUrl} -o /tmp/bun.zip`
@@ -314,7 +331,7 @@ async function configureDroplet() {
   const caddyCheck = await root`caddy version`.nothrow().text()
   if (!caddyCheck.includes(CADDY_VERSION)) {
     step(`Installing Caddy ${CADDY_VERSION}`)
-    const caddyUrl = `https://github.com/caddyroot/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz`
+    const caddyUrl = `https://github.com/caddyserver/caddy/releases/download/v${CADDY_VERSION}/caddy_${CADDY_VERSION}_linux_amd64.tar.gz`
     await root`curl -L ${caddyUrl} -o /tmp/caddy.tar.gz`
     await root`tar -xzf /tmp/caddy.tar.gz -C /usr/bin caddy`
     await root`chmod +x /usr/bin/caddy`
