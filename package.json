@@ -31,7 +31,7 @@
     "dev:pocketbase": "scripts/env-run.sh 'pocketbase serve --http ${POCKETBASE_HOSTNAME}:${POCKETBASE_PORT} --migrationsDir src/pb_migrations --dir output/pb_data'",
     "dev:caddy": "bun run scripts/caddy-log-wrapper.ts",
     "dev:caddy:debug": "bun run scripts/caddy-log-wrapper.ts --debug",
-    "dev:setup-caddy-certs": "caddy trust",
+    "dev:caddy-setup-certs": "caddy trust",
     "build": "bun run build:client && bun run build:playground && bun run build:server && bun run build:copy",
     "build:client": "bun build src/client/main.tsx --outdir output/static --target browser --env 'PUBLIC_*' --minify",
     "build:playground": "bun build src/playground/action-guide-test.tsx --outdir output/static/playground --target browser --minify",
