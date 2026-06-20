@@ -47,7 +47,7 @@ Testing is done with unit testing and [Playwright](https://playwright.dev/) + [M
 
 - [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
 - [PocketBase](https://pocketbase.io/) for the backend database and authentication.
-- [SES](https://aws.amazon.com/ses/) for email delivery (PENDING).
+- [Resend](https://resend.com/) for email delivery (PENDING).
 - A small server (bun typescript) to run the backend server LLM functions.
 
 # Hosting
