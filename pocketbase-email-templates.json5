@@ -1,0 +1,22 @@
+{
+  // Email templates for PocketBase auth collections.
+  //
+  // Applied by `bun run pocketbase:config` after settings are synced.
+  // {APP_URL} and {APP_NAME} are PocketBase built-in placeholders resolved
+  // at send-time, so they don't need environment interpolation here.
+
+  users: {
+    verificationTemplate: {
+      subject: 'Verify your {APP_NAME} email',
+      body: '<p>Hello,</p>\n<p>Thank you for joining us at {APP_NAME}.</p>\n<p>Click on the button below to verify your email address.</p>\n<p>\n  <a class="btn" href="{APP_URL}/verify?token={TOKEN}" target="_blank" rel="noopener">Verify</a>\n</p>\n<p><i>If you didn\'t recently register, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>',
+    },
+    resetPasswordTemplate: {
+      subject: 'Reset your {APP_NAME} password',
+      body: '<p>Hello,</p>\n<p>Click on the button below to reset your password.</p>\n<p>\n  <a class="btn" href="{APP_URL}/reset-password?token={TOKEN}" target="_blank" rel="noopener">Reset password</a>\n</p>\n<p><i>If you didn\'t ask to reset your password, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>',
+    },
+    confirmEmailChangeTemplate: {
+      subject: 'Confirm your {APP_NAME} new email address',
+      body: '<p>Hello,</p>\n<p>Click on the button below to confirm your new email address.</p>\n<p>\n  <a class="btn" href="{APP_URL}/confirm-email?token={TOKEN}" target="_blank" rel="noopener">Confirm new email</a>\n</p>\n<p><i>If you didn\'t ask to change your email address, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>',
+    },
+  },
+}

@@ -5,6 +5,10 @@ import PocketBase from 'pocketbase'
 
 const PROJECT_ROOT = resolve(import.meta.dir, '..')
 const SETTINGS_FILE = resolve(PROJECT_ROOT, 'pocketbase-settings.json5')
+const EMAIL_TEMPLATES_FILE = resolve(
+  PROJECT_ROOT,
+  'pocketbase-email-templates.json5'
+)
 const ENV_FILE = resolve(PROJECT_ROOT, '.env')
 
 const BOLD = '\x1b[1m'
@@ -271,6 +275,89 @@ async function main() {
   console.log(
     `\n${GREEN}${BOLD}Done${RESET} — ${changeCount} setting(s) updated successfully`
   )
+
+  // Apply email templates
+  if (existsSync(EMAIL_TEMPLATES_FILE)) {
+    await applyEmailTemplates(pb)
+  } else {
+    console.log(
+      `\n${YELLOW}Skipping email templates${RESET} — ${EMAIL_TEMPLATES_FILE} not found`
+    )
+  }
+}
+
+async function applyEmailTemplates(pb: PocketBase): Promise<void> {
+  const templates = JSON5.parse(
+    readFileSync(EMAIL_TEMPLATES_FILE, 'utf-8')
+  ) as Record<string, Record<string, { subject: string; body: string }>>
+
+  const collectionNames = Object.keys(templates)
+  if (collectionNames.length === 0) return
+
+  let totalChanges = 0
+
+  for (const collectionName of collectionNames) {
+    const desired = templates[collectionName]
+    const templateKeys = Object.keys(desired)
+    if (templateKeys.length === 0) continue
+
+    const current = (await pb.send(
+      `/api/collections/${encodeURIComponent(collectionName)}`,
+      { method: 'GET' }
+    )) as Record<string, unknown>
+
+    const patch: Record<string, unknown> = {}
+
+    for (const key of templateKeys) {
+      const desiredTemplate = desired[key]
+      const currentTemplate = current[key] as
+        | { subject: string; body: string }
+        | undefined
+
+      if (
+        !currentTemplate ||
+        currentTemplate.subject !== desiredTemplate.subject ||
+        currentTemplate.body !== desiredTemplate.body
+      ) {
+        patch[key] = desiredTemplate
+      }
+    }
+
+    if (Object.keys(patch).length === 0) continue
+
+    console.log(
+      `\n${BOLD}Applying email templates for ${collectionName}:${RESET}`
+    )
+    for (const [key, template] of Object.entries(patch)) {
+      const t = template as { subject: string; body: string }
+      const old = current[key] as { subject: string; body: string } | undefined
+      const oldSubject = old?.subject ?? '(none)'
+      const oldBody = old?.body ?? '(none)'
+      console.log(
+        `  ${key}.subject: ${maskValue(`${collectionName}.${key}.subject`, oldSubject)} → ${maskValue(`${collectionName}.${key}.subject`, t.subject)}`
+      )
+      console.log(
+        `  ${key}.body: ${maskValue(`${collectionName}.${key}.body`, oldBody)} → ${maskValue(`${collectionName}.${key}.body`, t.body)}`
+      )
+    }
+
+    await pb.send(`/api/collections/${encodeURIComponent(collectionName)}`, {
+      method: 'PATCH',
+      body: patch,
+    })
+
+    totalChanges += Object.keys(patch).length
+  }
+
+  if (totalChanges === 0) {
+    console.log(
+      `${GREEN}No changes needed — email templates are already up to date${RESET}`
+    )
+  } else {
+    console.log(
+      `\n${GREEN}${BOLD}Done${RESET} — ${totalChanges} email template(s) updated successfully`
+    )
+  }
 }
 
 main().catch((err) => {
