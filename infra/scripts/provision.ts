@@ -278,7 +278,8 @@ async function configureDroplet() {
       .nothrow()
       .text()
   if (bashrcCheck.trim() === '0') {
-    await root`bash -c "echo 'source /opt/ski-tripper/.env' >> ${bashrcPath}"`
+    await root`bash -c "echo 'source /opt/ski-tripper/.env' | cat - ${bashrcPath} > /tmp/bashrc-tmp && mv /tmp/bashrc-tmp ${bashrcPath}"`
+    await root`chown ski-tripper:ski-tripper ${bashrcPath}`
     success('.bashrc configured')
   } else {
     success('.bashrc already configured')
@@ -481,7 +482,7 @@ async function deploy() {
   success('Dependencies installed')
 
   step('Building application')
-  await app`bash -c "source ${INSTALL_DIR}/.env && cd ${REPO_DIR} && /usr/local/bin/bun run build"`
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`
   success('Build complete')
 
   step('Stopping services')
@@ -508,9 +509,9 @@ async function deploy() {
 
   step('Creating PocketBase superuser')
   const adminEmail =
-    await app`grep ^POCKETBASE_ADMIN_EMAIL= ${INSTALL_DIR}/.env | cut -d= -f2`.text()
+    await app`grep ^POCKETBASE_ADMIN_EMAIL= ${INSTALL_DIR}/.env | cut -d= -f2-`.text()
   const adminPassword =
-    await app`grep ^POCKETBASE_ADMIN_PASSWORD= ${INSTALL_DIR}/.env | cut -d= -f2`.text()
+    await app`grep ^POCKETBASE_ADMIN_PASSWORD= ${INSTALL_DIR}/.env | cut -d= -f2-`.text()
   if (adminEmail.trim() && adminPassword.trim()) {
     const createResult =
       await app`/usr/local/bin/pocketbase --dir /var/lib/ski-tripper/pb_data superuser create ${adminEmail.trim()} ${adminPassword.trim()}`.nothrow()
