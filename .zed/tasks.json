@@ -4,8 +4,8 @@
     "command": "bun run dev"
   },
   {
-    "label": "Check-and-fix",
-    "command": "bun run check-and-fix"
+    "label": "Check:fix",
+    "command": "bun run check:fix"
   },
   {
     "label": "Tests",

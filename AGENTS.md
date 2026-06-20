@@ -20,7 +20,7 @@ Keep changes small and focussed:
 
 ## Feedback Loops
 
-Check for and try to fix type issues, linting, formatting, and import sorting: `bun run check-and-fix <path.to/file.ts>`
+Check for and try to fix type issues, linting, formatting, and import sorting: `bun run check:fix <path.to/file.ts>`
 
 Testing: `bun run test <path.to/file.test.ts>`
 

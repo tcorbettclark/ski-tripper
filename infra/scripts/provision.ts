@@ -523,7 +523,7 @@ async function deploy() {
   success('Services restarted')
 
   step('Configuring PocketBase settings')
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun run pocketbase:config`
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run pb:config`
   success('PocketBase settings configured')
 
   await status()
@@ -634,13 +634,13 @@ async function destroyDroplet(forgetReservedIp: boolean) {
 }
 
 function printHelp() {
-  console.log(`Usage: bun run provision <command> [options]
+  console.log(`Usage: bun run infra:provision <command> [options]
 
 Commands:
   create      Create a droplet and reserved IP (idempotent)
   configure   Install dependencies and set up systemd services on an existing droplet
   deploy      Pull latest code, build, and restart services [default branch: main]
-  status      Show service status, IP, and layout info
+  status     Show service status, IP, and layout info
   setup       Create, configure, and deploy (full setup)
   destroy     Unassign IP and delete the droplet (preserves the reserved IP)
 
@@ -656,11 +656,11 @@ Requirements:
   bun             Required to run this script.
 
 Examples:
-  bun run provision setup              Full setup from scratch
-  bun run provision deploy             Deploy current main branch
-  bun run provision deploy v1.2.3      Deploy a specific tag
-  bun run provision destroy            Tear down droplet (preserves reserved IP)
-  bun run provision destroy --forget-reserved-ip   Also delete the reserved IP`)
+  bun run infra:provision setup              Full setup from scratch
+  bun run infra:provision deploy             Deploy current main branch
+  bun run infra:provision deploy v1.2.3      Deploy a specific tag
+  bun run infra:provision destroy            Tear down droplet (preserves reserved IP)
+  bun run infra:provision destroy --forget-reserved-ip   Also delete the reserved IP`)
 }
 
 async function provision() {

@@ -66,8 +66,8 @@ Deployment uses [xec](https://xec.sh/) scripts to SSH into the server, pull the 
 
 | Command | Description |
 |---------|-------------|
-| `bun run provision create` | Create a DigitalOcean droplet |
-| `bun run provision configure` | Install deps and set up systemd services on an existing droplet |
-| `bun run provision deploy` | Pull latest code, build, restart services |
-| `bun run provision setup` | Create droplet, configure, and deploy (full setup) |
-| `bun run provision destroy` | Delete the droplet |
+| `bun run infra:provision create` | Create a DigitalOcean droplet |
+| `bun run infra:provision configure` | Install deps and set up systemd services on an existing droplet |
+| `bun run infra:provision deploy` | Pull latest code, build, restart services |
+| `bun run infra:provision setup` | Create droplet, configure, and deploy (full setup) |
+| `bun run infra:provision destroy` | Delete the droplet |
