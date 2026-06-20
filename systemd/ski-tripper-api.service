@@ -8,9 +8,10 @@ Wants=ski-tripper-pb.service
 Type=simple
 User=ski-tripper
 Group=ski-tripper
-ExecStart=/opt/ski-tripper/output/server/serve
+ExecStart=/opt/ski-tripper/server/serve
 WorkingDirectory=/opt/ski-tripper
 EnvironmentFile=/opt/ski-tripper/.env
+StateDirectory=ski-tripper
 Restart=on-failure
 RestartSec=5s
 

@@ -33,7 +33,8 @@ const BUN_VERSION = '1.3.14'
 const POCKETBASE_VERSION = '0.39.4'
 const CADDY_VERSION = '2.11.4'
 
-const APP_DIR = '/opt/ski-tripper'
+const REPO_DIR = '/home/ski-tripper/ski-tripper'
+const INSTALL_DIR = '/opt/ski-tripper'
 const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
 const ENV_PRODUCTION_PATH = resolve(import.meta.dir, '..', '.env.production')
 
@@ -276,16 +277,19 @@ async function configureDroplet() {
     privateKey: SSH_KEY,
   }).timeout(300000)
 
-  const repoCheck = await app`test -d ${APP_DIR}/.git`.nothrow()
+  const repoCheck = await app`test -d ${REPO_DIR}/.git`.nothrow()
   if (repoCheck.exitCode !== 0) {
     step('Cloning repository')
-    await root`mkdir -p ${APP_DIR}`
-    await root`chown ski-tripper:ski-tripper ${APP_DIR}`
-    await app`git clone ${REPO_URL} ${APP_DIR}`
+    await app`git clone ${REPO_URL} ${REPO_DIR}`
     success('Repository cloned')
   } else {
     success('Repository already cloned')
   }
+
+  step('Creating install directory')
+  await root`mkdir -p ${INSTALL_DIR}`
+  await root`chown ski-tripper:ski-tripper ${INSTALL_DIR}`
+  success('Install directory ready')
 
   const caddyUserCheck = await root`id caddy`.nothrow().text()
   if (!caddyUserCheck.includes('uid')) {
@@ -376,38 +380,20 @@ RestartSec=5s
 WantedBy=multi-user.target
 EOF"`
 
-  await root`bash -c "cat > /etc/systemd/system/ski-tripper-setup.service << 'EOF'
-[Unit]
-Description=Ski Tripper - Create data directories
-DefaultDependencies=no
-After=local-fs.target
-Before=ski-tripper-pb.service
-
-[Service]
-Type=oneshot
-User=ski-tripper
-Group=ski-tripper
-ExecStart=/usr/bin/mkdir -p /var/lib/ski-tripper/pb_data
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF"`
-
   await root`bash -c "cat > /etc/systemd/system/ski-tripper-pb.service << 'EOF'
 [Unit]
 Description=Ski Tripper - PocketBase
-After=network.target network-online.target ski-tripper-setup.service
+After=network.target network-online.target
 Requires=network-online.target
-Wants=ski-tripper-setup.service
 
 [Service]
 Type=simple
 User=ski-tripper
 Group=ski-tripper
-ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/output/pb_migrations --dir /var/lib/ski-tripper/pb_data
+ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/pb_migrations --dir /var/lib/ski-tripper/pb_data
 WorkingDirectory=/opt/ski-tripper
 EnvironmentFile=/opt/ski-tripper/.env
+StateDirectory=ski-tripper
 Restart=on-failure
 RestartSec=5s
 
@@ -426,9 +412,10 @@ Wants=ski-tripper-pb.service
 Type=simple
 User=ski-tripper
 Group=ski-tripper
-ExecStart=/opt/ski-tripper/output/server/serve
+ExecStart=/opt/ski-tripper/server/serve
 WorkingDirectory=/opt/ski-tripper
 EnvironmentFile=/opt/ski-tripper/.env
+StateDirectory=ski-tripper
 Restart=on-failure
 RestartSec=5s
 
@@ -464,27 +451,35 @@ async function deploy() {
   }).timeout(300000)
 
   step('Uploading .env.production')
-  await app.uploadFile(ENV_PRODUCTION_PATH, `${APP_DIR}/.env`)
+  await app.uploadFile(ENV_PRODUCTION_PATH, `${INSTALL_DIR}/.env`)
   success('.env.production uploaded')
 
   step('Fetching and checking out latest code')
-  await app`cd ${APP_DIR} && git fetch --all`
-  const isTag = await app`cd ${APP_DIR} && git tag -l ${branchOrTag}`.text()
+  await app`cd ${REPO_DIR} && git fetch --all`
+  const isTag = await app`cd ${REPO_DIR} && git tag -l ${branchOrTag}`.text()
   if (isTag.trim()) {
-    await app`cd ${APP_DIR} && git checkout ${branchOrTag}`
+    await app`cd ${REPO_DIR} && git checkout ${branchOrTag}`
     success(`Checked out tag ${branchOrTag}`)
   } else {
-    await app`cd ${APP_DIR} && git reset --hard origin/${branchOrTag}`
+    await app`cd ${REPO_DIR} && git reset --hard origin/${branchOrTag}`
     success(`Checked out branch ${branchOrTag}`)
   }
 
   step('Installing dependencies')
-  await app`cd ${APP_DIR} && /usr/local/bin/bun install --frozen-lockfile`
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun install --frozen-lockfile`
   success('Dependencies installed')
 
   step('Building application')
-  await app`cd ${APP_DIR} && /usr/local/bin/bun run build`
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`
   success('Build complete')
+
+  step('Installing artefacts')
+  await root`mkdir -p ${INSTALL_DIR}/static ${INSTALL_DIR}/pb_migrations ${INSTALL_DIR}/server`
+  await root`cp ${REPO_DIR}/output/server/serve ${INSTALL_DIR}/server/serve`
+  await root`cp -r ${REPO_DIR}/output/static/ ${INSTALL_DIR}/static/`
+  await root`cp -r ${REPO_DIR}/output/pb_migrations/ ${INSTALL_DIR}/pb_migrations/`
+  await root`chown -R ski-tripper:ski-tripper ${INSTALL_DIR}`
+  success('Artefacts installed')
 
   step('Creating data directory')
   await root`mkdir -p /var/lib/ski-tripper/pb_data`
@@ -492,15 +487,15 @@ async function deploy() {
   success('Data directory ready')
 
   step('Copying Caddyfile')
-  await root`cp ${APP_DIR}/output/Caddyfile /etc/caddy/Caddyfile`
+  await root`cp ${REPO_DIR}/Caddyfile /etc/caddy/Caddyfile`
   await root`chown caddy:caddy /etc/caddy/Caddyfile`
   success('Caddyfile copied')
 
   step('Creating PocketBase superuser')
   const adminEmail =
-    await app`grep ^POCKETBASE_ADMIN_EMAIL= ${APP_DIR}/.env | cut -d= -f2`.text()
+    await app`grep ^POCKETBASE_ADMIN_EMAIL= ${INSTALL_DIR}/.env | cut -d= -f2`.text()
   const adminPassword =
-    await app`grep ^POCKETBASE_ADMIN_PASSWORD= ${APP_DIR}/.env | cut -d= -f2`.text()
+    await app`grep ^POCKETBASE_ADMIN_PASSWORD= ${INSTALL_DIR}/.env | cut -d= -f2`.text()
   if (adminEmail.trim() && adminPassword.trim()) {
     const createResult =
       await app`/usr/local/bin/pocketbase --dir /var/lib/ski-tripper/pb_data superuser create ${adminEmail.trim()} ${adminPassword.trim()}`.nothrow()
@@ -522,14 +517,13 @@ async function deploy() {
   }
 
   step('Restarting services')
-  await root`systemctl restart ski-tripper-setup`
   await root`systemctl restart ski-tripper-pb`
   await root`systemctl restart ski-tripper-api`
   await root`systemctl restart caddy`.nothrow()
   success('Services restarted')
 
   step('Configuring PocketBase settings')
-  await app`cd ${APP_DIR} && /usr/local/bin/bun run pocketbase:config`
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run pocketbase:config`
   success('PocketBase settings configured')
 
   await status()
@@ -583,12 +577,16 @@ async function status() {
   console.log(`  PocketBase: https://pb.ski-tripper.com`)
   console.log(`  IP:         ${ip}`)
   console.log(`\n  Layout:`)
-  console.log(`    App code:     /opt/ski-tripper/`)
-  console.log(`    App data:     /var/lib/ski-tripper/pb_data/`)
-  console.log(`    Env file:     /opt/ski-tripper/.env`)
-  console.log(`    Caddyfile:    /etc/caddy/Caddyfile`)
-  console.log(`    Binaries:     /usr/local/bin/{bun,caddy,pocketbase}`)
-  console.log(`    Systemd:      /etc/systemd/system/ski-tripper-*.service`)
+  console.log(`    Repo:           /home/ski-tripper/ski-tripper/`)
+  console.log(
+    `    Installed app:  /opt/ski-tripper/  (static/, server/serve, pb_migrations/, .env)`
+  )
+  console.log(`    App data:       /var/lib/ski-tripper/pb_data/`)
+  console.log(`    Caddyfile:      /etc/caddy/Caddyfile`)
+  console.log(`    Binaries:       /usr/local/bin/{bun,caddy,pocketbase}`)
+  console.log(
+    `    Systemd:        /etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service`
+  )
   console.log(`\n  Useful logs (SSH with: doctl compute ssh ski-tripper):`)
   console.log(`    Caddy:       journalctl -u caddy`)
   console.log(`    PocketBase:  journalctl -u ski-tripper-pb`)
