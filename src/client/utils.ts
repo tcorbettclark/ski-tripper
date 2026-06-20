@@ -73,7 +73,62 @@ export function formatRelativeTime(iso: string) {
   return formatDate(iso)
 }
 
-export function getErrorMessage(err: unknown): string {
+const FRIENDLY_MESSAGES: Record<
+  string,
+  Record<string, Record<string, string>>
+> = {
+  _: {
+    validation_not_unique: {
+      email: 'An account with this email already exists.',
+      name: 'This name is already taken.',
+      _: 'This value is already taken.',
+    },
+    validation_required: {
+      _: 'This field is required.',
+    },
+    validation_invalid_old_password: {
+      _: 'The current password is incorrect.',
+    },
+    validation_email_domain_not_allowed: {
+      _: 'This email domain is not allowed.',
+    },
+    validation_min_text_constraint: {
+      _: 'Too short.',
+    },
+    validation_max_text_constraint: {
+      _: 'Too long.',
+    },
+    validation_invalid_format: {
+      _: 'Invalid format.',
+    },
+    validation_invalid_or_existing_id: {
+      _: 'This ID is invalid or already in use.',
+    },
+  },
+  auth: {
+    validation_not_unique: {
+      name: 'That display name is already taken. Try another?',
+    },
+  },
+}
+
+function friendlyFieldMessage(
+  field: string,
+  code: string,
+  msg: string,
+  context?: string
+): string {
+  const ctx = context ?? '_'
+  return (
+    FRIENDLY_MESSAGES[ctx]?.[code]?.[field] ??
+    FRIENDLY_MESSAGES._[code]?.[field] ??
+    FRIENDLY_MESSAGES[ctx]?.[code]?._ ??
+    FRIENDLY_MESSAGES._[code]?._ ??
+    msg
+  )
+}
+
+export function getErrorMessage(err: unknown, context?: string): string {
   if (!(err instanceof Error)) return String(err)
   const response = (err as unknown as Record<string, unknown>).response
   if (response && typeof response === 'object') {
@@ -83,12 +138,20 @@ export function getErrorMessage(err: unknown): string {
         .filter(([, v]) => v && typeof v === 'object')
         .map(([field, messages]) => {
           const msg = messages as Record<string, unknown>
+          const code = typeof msg.code === 'string' ? msg.code : ''
           if (msg.message && typeof msg.message === 'string') {
-            return `${field}: ${msg.message}`
+            const friendly = friendlyFieldMessage(
+              field,
+              code,
+              msg.message,
+              context
+            )
+            return `${field}: ${friendly}`
           }
           const vals = Object.values(msg)
           if (vals.length > 0 && typeof vals[0] === 'string') {
-            return `${field}: ${vals[0]}`
+            const friendly = friendlyFieldMessage(field, code, vals[0], context)
+            return `${field}: ${friendly}`
           }
           return null
         })

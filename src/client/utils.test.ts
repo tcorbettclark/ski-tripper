@@ -168,22 +168,243 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(err)).toBe('url: Must be a valid url')
   })
 
-  it('extracts multiple field errors', () => {
+  it('uses field-specific friendly message for validation_not_unique on email', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          email: {
+            code: 'validation_not_unique',
+            message: 'Value must be unique.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe(
+      'email: An account with this email already exists.'
+    )
+  })
+
+  it('uses field-specific friendly message for validation_not_unique on name', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          name: {
+            code: 'validation_not_unique',
+            message: 'Value must be unique.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('name: This name is already taken.')
+  })
+
+  it('uses generic friendly message for validation_not_unique on unknown fields', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          code: {
+            code: 'validation_not_unique',
+            message: 'Value must be unique.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('code: This value is already taken.')
+  })
+
+  it('uses friendly message for validation_required', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          password: {
+            code: 'validation_required',
+            message: 'Cannot be blank.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('password: This field is required.')
+  })
+
+  it('uses friendly message for validation_invalid_old_password', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          oldPassword: {
+            code: 'validation_invalid_old_password',
+            message: 'Missing or invalid old password.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe(
+      'oldPassword: The current password is incorrect.'
+    )
+  })
+
+  it('uses friendly message for validation_email_domain_not_allowed', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          email: {
+            code: 'validation_email_domain_not_allowed',
+            message: 'Email domain is not allowed',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe(
+      'email: This email domain is not allowed.'
+    )
+  })
+
+  it('uses friendly message for validation_min_text_constraint', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          password: {
+            code: 'validation_min_text_constraint',
+            message: 'Must be at least 8 character(s)',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('password: Too short.')
+  })
+
+  it('uses friendly message for validation_max_text_constraint', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          name: {
+            code: 'validation_max_text_constraint',
+            message: 'Must be no more than 100 character(s).',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('name: Too long.')
+  })
+
+  it('uses friendly message for validation_invalid_format', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          email: {
+            code: 'validation_invalid_format',
+            message: 'Invalid value format.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('email: Invalid format.')
+  })
+
+  it('falls back to raw message for unknown codes', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          url: {
+            code: 'validation_some_future_code',
+            message: 'Some future message.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('url: Some future message.')
+  })
+
+  it('falls back to raw message when code is absent', () => {
     const err = new Error('Failed request')
     Object.assign(err, {
       response: {
         data: {
           url: { message: 'Must be a valid url' },
-          name: { message: 'Cannot be empty' },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('url: Must be a valid url')
+  })
+
+  it('falls back to raw message for array-style errors without code', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          email: ['Value must be unique.'],
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('email: Value must be unique.')
+  })
+
+  it('uses context override when provided', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          name: {
+            code: 'validation_not_unique',
+            message: 'Value must be unique.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err)).toBe('name: This name is already taken.')
+    expect(getErrorMessage(err, 'auth')).toBe(
+      'name: That display name is already taken. Try another?'
+    )
+  })
+
+  it('falls back to default when context has no override for a field', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          email: {
+            code: 'validation_not_unique',
+            message: 'Value must be unique.',
+          },
+        },
+      },
+    })
+    expect(getErrorMessage(err, 'auth')).toBe(
+      'email: An account with this email already exists.'
+    )
+  })
+
+  it('extracts multiple field errors with friendly messages', () => {
+    const err = new Error('Failed request')
+    Object.assign(err, {
+      response: {
+        data: {
+          email: {
+            code: 'validation_not_unique',
+            message: 'Value must be unique.',
+          },
+          password: {
+            code: 'validation_required',
+            message: 'Cannot be blank.',
+          },
         },
       },
     })
     expect(getErrorMessage(err)).toBe(
-      'url: Must be a valid url; name: Cannot be empty'
+      'email: An account with this email already exists.; password: This field is required.'
     )
   })
 
-  it('extracts array-style field errors', () => {
+  it('extracts array-style field errors without codes', () => {
     const err = new Error('Failed request')
     Object.assign(err, {
       response: {
