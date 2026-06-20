@@ -482,7 +482,7 @@ async function deploy() {
   success('Dependencies installed')
 
   step('Building application')
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`
+  await app`bash -c "set -a && source ${INSTALL_DIR}/.env && set +a && cd ${REPO_DIR} && /usr/local/bin/bun run build"`
   success('Build complete')
 
   step('Stopping services')
