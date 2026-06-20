@@ -645,7 +645,7 @@ Commands:
   destroy     Unassign IP and delete the droplet (preserves the reserved IP)
 
 Options:
-  --help                  Show this help message
+  --help                 Show this help message
   --forget-reserved-ip   Also delete the reserved IP (use with destroy)
 
 Requirements:
@@ -656,10 +656,10 @@ Requirements:
   bun             Required to run this script.
 
 Examples:
-  bun run infra:provision setup              Full setup from scratch
-  bun run infra:provision deploy             Deploy current main branch
-  bun run infra:provision deploy v1.2.3      Deploy a specific tag
-  bun run infra:provision destroy            Tear down droplet (preserves reserved IP)
+  bun run infra:provision setup                          Full setup from scratch
+  bun run infra:provision deploy                         Deploy current main branch
+  bun run infra:provision deploy v1.2.3                  Deploy a specific tag
+  bun run infra:provision destroy                        Tear down droplet (preserves reserved IP)
   bun run infra:provision destroy --forget-reserved-ip   Also delete the reserved IP`)
 }
 
