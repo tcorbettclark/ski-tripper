@@ -272,14 +272,13 @@ async function configureDroplet() {
   success('ski-tripper SSH access configured')
 
   step('Setting up ski-tripper .bashrc')
-  const bashrcContent = 'source /opt/ski-tripper/.env\n'
   const bashrcPath = `${skiTripperHome}/.bashrc`
   const bashrcCheck =
     await root`grep -c 'source /opt/ski-tripper/.env' ${bashrcPath}`
       .nothrow()
       .text()
   if (bashrcCheck.trim() === '0') {
-    await root`bash -c "echo '${bashrcContent}' >> ${bashrcPath}"`
+    await root`bash -c "echo 'source /opt/ski-tripper/.env' >> ${bashrcPath}"`
     success('.bashrc configured')
   } else {
     success('.bashrc already configured')
