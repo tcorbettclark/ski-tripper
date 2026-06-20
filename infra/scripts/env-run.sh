@@ -17,4 +17,4 @@ set -a
 source "$1"
 set +a
 shift
-eval exec "$@"
+eval "$@"
