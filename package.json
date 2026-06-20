@@ -27,7 +27,7 @@
     "dev": "bun run build:static && bun run build:caddy && concurrently --kill-others-on-fail --names client,server,pb,caddy,mailpit,pbconfig --prefix-colors blue,green,yellow,cyan,red,white 'bun run dev:client' 'bun run dev:server' 'bun run dev:pb' 'bun run dev:caddy' 'bun run dev:mailpit' 'bun run pb:config'",
     "dev:client": "bun build src/client/main.tsx --outdir dist/static --target browser --env 'PUBLIC_*' --watch --no-clear-screen",
     "dev:server": "bun --watch --no-clear-screen src/server/serve.ts",
-    "dev:pb": "infra/scripts/env-run.sh .env 'pocketbase serve --http ${POCKETBASE_HOSTNAME}:${POCKETBASE_PORT} --migrationsDir src/pb_migrations --dir dev/pb_data'",
+    "dev:pb": "infra/scripts/env-run.sh .env 'pocketbase serve --http ${POCKETBASE_HOSTNAME}:${POCKETBASE_PORT} --migrationsDir src/pb_migrations --dir dev/pb_data --automigrate=0'",
     "dev:caddy": "bun run infra/scripts/caddy-log-wrapper.ts",
     "dev:caddy:debug": "bun run infra/scripts/caddy-log-wrapper.ts --debug",
     "dev:caddy:setup-certs": "caddy trust",
