@@ -271,6 +271,20 @@ async function configureDroplet() {
   await root`chmod 600 ${skiTripperHome}/.ssh/authorized_keys`
   success('ski-tripper SSH access configured')
 
+  step('Setting up ski-tripper .bashrc')
+  const bashrcContent = 'source /opt/ski-tripper/.env\n'
+  const bashrcPath = `${skiTripperHome}/.bashrc`
+  const bashrcCheck =
+    await root`grep -c 'source /opt/ski-tripper/.env' ${bashrcPath}`
+      .nothrow()
+      .text()
+  if (bashrcCheck.trim() === '0') {
+    await root`bash -c "echo '${bashrcContent}' >> ${bashrcPath}"`
+    success('.bashrc configured')
+  } else {
+    success('.bashrc already configured')
+  }
+
   const app = $.ssh({
     host: ip,
     username: 'ski-tripper',
@@ -365,7 +379,6 @@ User=caddy
 Group=caddy
 ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile
 ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
-EnvironmentFile=/opt/ski-tripper/.env
 TimeoutStopSec=5s
 LimitNOFILE=1048576
 LimitNPROC=512
@@ -392,7 +405,6 @@ User=ski-tripper
 Group=ski-tripper
 ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/pb_migrations --dir /var/lib/ski-tripper/pb_data
 WorkingDirectory=/opt/ski-tripper
-EnvironmentFile=/opt/ski-tripper/.env
 StateDirectory=ski-tripper
 Restart=on-failure
 RestartSec=5s
@@ -470,7 +482,7 @@ async function deploy() {
   success('Dependencies installed')
 
   step('Building application')
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`
+  await app`cd ${REPO_DIR} && source ${INSTALL_DIR}/.env && /usr/local/bin/bun run build`
   success('Build complete')
 
   step('Stopping services')
@@ -491,7 +503,7 @@ async function deploy() {
   success('Data directory ready')
 
   step('Copying Caddyfile')
-  await root`cp ${REPO_DIR}/infra/caddy/Caddyfile /etc/caddy/Caddyfile`
+  await root`cp ${REPO_DIR}/dist/Caddyfile /etc/caddy/Caddyfile`
   await root`chown caddy:caddy /etc/caddy/Caddyfile`
   success('Caddyfile copied')
 

@@ -9,7 +9,6 @@ User=ski-tripper
 Group=ski-tripper
 ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/pb_migrations --dir /var/lib/ski-tripper/pb_data
 WorkingDirectory=/opt/ski-tripper
-EnvironmentFile=/opt/ski-tripper/.env
 StateDirectory=ski-tripper
 Restart=on-failure
 RestartSec=5s

@@ -1,10 +1,8 @@
 import { spawn } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const isDebug = process.argv.includes('--debug')
 
-const ENV_FILE = resolve(import.meta.dir, '../..', '.env')
 const CADDY_CMD = 'caddy'
 const CADDY_ARGS = ['run']
 
@@ -22,22 +20,6 @@ const levelStyle: Record<string, string> = {
   info: CYAN,
   warn: YELLOW,
   error: RED,
-}
-
-function loadEnv(): Record<string, string> {
-  if (!existsSync(ENV_FILE)) return {}
-  const content = readFileSync(ENV_FILE, 'utf-8')
-  const env: Record<string, string> = {}
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const eq = trimmed.indexOf('=')
-    if (eq === -1) continue
-    const key = trimmed.slice(0, eq).trim()
-    const val = trimmed.slice(eq + 1).trim()
-    env[key] = val
-  }
-  return env
 }
 
 function formatAccessLog(entry: Record<string, unknown>) {
@@ -115,12 +97,8 @@ function handleLine(line: string) {
   }
 }
 
-const fileEnv = loadEnv()
-const mergedEnv = { ...process.env, ...fileEnv }
-
 const child = spawn(CADDY_CMD, CADDY_ARGS, {
   cwd: resolve(import.meta.dir, '../..', 'dist'),
-  env: mergedEnv,
   stdio: ['pipe', 'pipe', 'pipe'],
 })
 

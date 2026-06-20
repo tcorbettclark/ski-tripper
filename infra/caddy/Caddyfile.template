@@ -1,0 +1,19 @@
+__PUBLIC_DOMAIN__ {
+	log
+
+	handle /api/* {
+		reverse_proxy __SERVER_HOSTNAME__:__SERVER_PORT__
+	}
+
+	handle {
+		root * __STATIC_ROOT__
+		file_server
+		try_files {path} /index.html
+	}
+}
+
+__PUBLIC_POCKETBASE_DOMAIN__ {
+	log
+
+	reverse_proxy __POCKETBASE_HOSTNAME__:__POCKETBASE_PORT__
+}
