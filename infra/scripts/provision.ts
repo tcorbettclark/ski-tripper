@@ -473,6 +473,10 @@ async function deploy() {
   await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`
   success('Build complete')
 
+  step('Stopping services')
+  await root`systemctl stop ski-tripper-api`.nothrow()
+  success('Services stopped')
+
   step('Installing artefacts')
   await root`mkdir -p ${INSTALL_DIR}/server`
   await root`cp ${REPO_DIR}/dist/server/serve ${INSTALL_DIR}/server/serve`
