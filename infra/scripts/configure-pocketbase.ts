@@ -15,7 +15,7 @@ function parseArgs(): string {
   const envFileIdx = args.indexOf('--env-file')
   if (envFileIdx === -1 || envFileIdx === args.length - 1) {
     console.error(
-      `${RED}${BOLD}Usage:${RESET} bun run pb:config --env-file <path>`
+      `${RED}${BOLD}Usage:${RESET} bun run pocketbase:config --env-file <path>`
     )
     console.error(
       `${RED}${BOLD}Error:${RESET} --env-file is required (e.g. --env-file .env or --env-file /opt/ski-tripper/.env)`

@@ -41,7 +41,7 @@
     "check:fix": "bun tsc --noEmit && biome check --write",
     "check": "bun tsc --noEmit && biome ci",
     "tools:resorts": "bun run tools/resorts.ts",
-    "pb:config": "bun run infra/scripts/configure-pocketbase.ts --env-file .env",
+    "pocketbase:config": "bun run infra/scripts/configure-pocketbase.ts --env-file .env",
     "infra:provision": "bun run infra/scripts/provision.ts",
     "infra:ssh": "doctl compute ssh ski-tripper --ssh-key-path ~/.ssh/id_ed25519"
   },
