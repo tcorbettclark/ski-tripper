@@ -1,7 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { parse as csvParse } from 'csv-parse/sync'
-import { REGIONS, type Region } from '../../shared/regions'
+import { REGIONS, type Region } from '../../src/shared/regions'
 import { ANSI_BOLD, ANSI_RESET, log } from './log'
 import { mapToRegion } from './region-map'
 

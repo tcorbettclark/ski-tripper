@@ -14,7 +14,7 @@ import {
   server_get_pocketbase_admin_email,
   server_get_pocketbase_admin_password,
   server_get_public_pocketbase_url,
-} from '../shared/env'
+} from '../src/shared/env'
 import {
   type AuditIssue,
   auditEnrichedData,
@@ -66,11 +66,8 @@ import {
 } from './lib/read-resorts'
 import type { EncodedResort, EnrichedResort, SeededResort } from './lib/types'
 
-const RESORTS_DIR = path.resolve(import.meta.dir, '../../data/resorts')
-const THINKING_DIR = path.resolve(
-  import.meta.dir,
-  '../../data/resorts/thinking'
-)
+const RESORTS_DIR = path.resolve(import.meta.dir, 'data/resorts')
+const THINKING_DIR = path.resolve(import.meta.dir, 'data/resorts/thinking')
 
 const EXA_SOURCED_NUM_RESULTS = 5
 const EXA_BROAD_NUM_RESULTS = 5

@@ -1,4 +1,4 @@
-import { REGIONS, type Region } from '../../shared/regions'
+import { REGIONS, type Region } from '../../src/shared/regions'
 
 type RegionMap = Record<string, Region>
 

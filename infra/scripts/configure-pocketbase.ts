@@ -3,11 +3,11 @@ import { resolve } from 'node:path'
 import JSON5 from 'json5'
 import PocketBase from 'pocketbase'
 
-const PROJECT_ROOT = resolve(import.meta.dir, '..')
-const SETTINGS_FILE = resolve(PROJECT_ROOT, 'pocketbase-settings.json5')
+const PROJECT_ROOT = resolve(import.meta.dir, '../..')
+const SETTINGS_FILE = resolve(PROJECT_ROOT, 'infra/pocketbase/settings.json5')
 const EMAIL_TEMPLATES_FILE = resolve(
   PROJECT_ROOT,
-  'pocketbase-email-templates.json5'
+  'infra/pocketbase/email-templates.json5'
 )
 const ENV_FILE = resolve(PROJECT_ROOT, '.env')
 

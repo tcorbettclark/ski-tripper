@@ -5,13 +5,6 @@
 		reverse_proxy {$SERVER_HOSTNAME}:{$SERVER_PORT}
 	}
 
-	handle /playground/* {
-		uri strip_prefix /playground
-		root * {$STATIC_ROOT}/playground
-		file_server
-		try_files {path} /index.html
-	}
-
 	handle {
 		root * {$STATIC_ROOT}
 		file_server

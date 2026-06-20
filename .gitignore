@@ -6,8 +6,8 @@
 .env.production
 node_modules/
 output/
-data/resorts/ski_areas.csv
-data/resorts/lifts.csv
-data/resorts/runs.csv
-data/resorts/thinking/
+tools/data/resorts/ski_areas.csv
+tools/data/resorts/lifts.csv
+tools/data/resorts/runs.csv
+tools/data/resorts/thinking/
 *.tar

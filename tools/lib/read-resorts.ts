@@ -4,7 +4,7 @@ import * as path from 'node:path'
 import { readJsonl } from './jsonl'
 import type { EncodedResort, EnrichedResort, SeededResort } from './types'
 
-const RESORTS_DIR = path.resolve(import.meta.dir, '../../../data/resorts')
+const RESORTS_DIR = path.resolve(import.meta.dir, '../../data/resorts')
 
 export const SEEDED_PATH = path.resolve(RESORTS_DIR, 'seeded.jsonl')
 export const ENRICHED_PATH = path.resolve(RESORTS_DIR, 'enriched.jsonl')

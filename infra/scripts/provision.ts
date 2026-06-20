@@ -36,7 +36,7 @@ const CADDY_VERSION = '2.11.4'
 const REPO_DIR = '/home/ski-tripper/ski-tripper'
 const INSTALL_DIR = '/opt/ski-tripper'
 const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
-const ENV_PRODUCTION_PATH = resolve(import.meta.dir, '..', '.env.production')
+const ENV_PRODUCTION_PATH = resolve(import.meta.dir, '../../.env.production')
 
 function step(msg: string) {
   console.log(`\n▸ ${msg}`)
@@ -487,7 +487,7 @@ async function deploy() {
   success('Data directory ready')
 
   step('Copying Caddyfile')
-  await root`cp ${REPO_DIR}/Caddyfile /etc/caddy/Caddyfile`
+  await root`cp ${REPO_DIR}/infra/caddy/Caddyfile /etc/caddy/Caddyfile`
   await root`chown caddy:caddy /etc/caddy/Caddyfile`
   success('Caddyfile copied')
 
