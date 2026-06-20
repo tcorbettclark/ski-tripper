@@ -528,6 +528,10 @@ async function deploy() {
   await app`cd ${REPO_DIR} && /usr/local/bin/bun run infra/scripts/configure-pocketbase.ts --env-file ${INSTALL_DIR}/.env`
   success('PocketBase settings configured')
 
+  step('Uploading resort data')
+  await app`${REPO_DIR}/infra/scripts/env-run.sh ${INSTALL_DIR}/.env 'cd ${REPO_DIR} && /usr/local/bin/bun run tools/resorts.ts upload'`
+  success('Resort data uploaded')
+
   await status()
 }
 
