@@ -523,7 +523,7 @@ async function deploy() {
   success('Services restarted')
 
   step('Configuring PocketBase settings')
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun run pb:config`
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run infra/scripts/configure-pocketbase.ts --env-file ${INSTALL_DIR}/.env`
   success('PocketBase settings configured')
 
   await status()

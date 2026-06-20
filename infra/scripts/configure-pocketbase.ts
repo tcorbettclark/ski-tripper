@@ -9,7 +9,23 @@ const EMAIL_TEMPLATES_FILE = resolve(
   PROJECT_ROOT,
   'infra/pocketbase/email-templates.json5'
 )
-const ENV_FILE = resolve(PROJECT_ROOT, '.env')
+
+function parseArgs(): string {
+  const args = process.argv.slice(2)
+  const envFileIdx = args.indexOf('--env-file')
+  if (envFileIdx === -1 || envFileIdx === args.length - 1) {
+    console.error(
+      `${RED}${BOLD}Usage:${RESET} bun run pb:config --env-file <path>`
+    )
+    console.error(
+      `${RED}${BOLD}Error:${RESET} --env-file is required (e.g. --env-file .env or --env-file /opt/ski-tripper/.env)`
+    )
+    process.exit(1)
+  }
+  return resolve(args[envFileIdx + 1])
+}
+
+const ENV_FILE = parseArgs()
 
 const BOLD = '\x1b[1m'
 const GREEN = '\x1b[32m'
