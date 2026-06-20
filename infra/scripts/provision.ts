@@ -640,7 +640,7 @@ Commands:
   create      Create a droplet and reserved IP (idempotent)
   configure   Install dependencies and set up systemd services on an existing droplet
   deploy      Pull latest code, build, and restart services [default branch: main]
-  status     Show service status, IP, and layout info
+  status      Show service status, IP, and layout info
   setup       Create, configure, and deploy (full setup)
   destroy     Unassign IP and delete the droplet (preserves the reserved IP)
 
