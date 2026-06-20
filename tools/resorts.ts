@@ -248,7 +248,6 @@ async function enrichResort(
         startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
-          highlights: true,
         },
       }),
       getExa().search(EXA_GENERAL_QUERY(resortName, country), {
@@ -258,7 +257,6 @@ async function enrichResort(
         startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
-          highlights: true,
         },
       }),
       getExa().search(EXA_TRAVEL_QUERY(resortName, country), {
@@ -268,7 +266,6 @@ async function enrichResort(
         startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
-          highlights: true,
         },
       }),
       getExa().search(EXA_LINKED_QUERY(resortName, country), {
@@ -278,7 +275,6 @@ async function enrichResort(
         startPublishedDate: publishedAfter,
         contents: {
           text: { maxCharacters: EXA_MAX_CHARS },
-          highlights: true,
         },
       }),
     ])
@@ -356,9 +352,6 @@ async function enrichResort(
       const parts = [
         `## ${r.title ?? 'Untitled'} (${tags.join(', ')}${dateTag})\nURL: ${r.url}`,
       ]
-      if (r.highlights?.length) {
-        parts.push(`### Key facts\n${r.highlights.join('\n')}`)
-      }
       parts.push(r.text!)
       return parts.join('\n')
     })
