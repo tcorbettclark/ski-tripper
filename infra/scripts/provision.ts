@@ -271,20 +271,6 @@ async function configureDroplet() {
   await root`chmod 600 ${skiTripperHome}/.ssh/authorized_keys`
   success('ski-tripper SSH access configured')
 
-  step('Setting up ski-tripper .bashrc')
-  const bashrcPath = `${skiTripperHome}/.bashrc`
-  const bashrcCheck =
-    await root`grep -c 'source /opt/ski-tripper/.env' ${bashrcPath}`
-      .nothrow()
-      .text()
-  if (bashrcCheck.trim() === '0') {
-    await root`bash -c "echo 'source /opt/ski-tripper/.env' | cat - ${bashrcPath} > /tmp/bashrc-tmp && mv /tmp/bashrc-tmp ${bashrcPath}"`
-    await root`chown ski-tripper:ski-tripper ${bashrcPath}`
-    success('.bashrc configured')
-  } else {
-    success('.bashrc already configured')
-  }
-
   const app = $.ssh({
     host: ip,
     username: 'ski-tripper',
@@ -482,7 +468,7 @@ async function deploy() {
   success('Dependencies installed')
 
   step('Building application')
-  await app`bash -l -c "cd ${REPO_DIR} && /usr/local/bin/bun run build"`
+  await app`${REPO_DIR}/infra/scripts/env-run.sh ${INSTALL_DIR}/.env 'cd ${REPO_DIR} && /usr/local/bin/bun run build'`
   success('Build complete')
 
   step('Stopping services')
