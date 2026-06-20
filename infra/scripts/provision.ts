@@ -475,9 +475,9 @@ async function deploy() {
 
   step('Installing artefacts')
   await root`mkdir -p ${INSTALL_DIR}/static ${INSTALL_DIR}/pb_migrations ${INSTALL_DIR}/server`
-  await root`cp ${REPO_DIR}/output/server/serve ${INSTALL_DIR}/server/serve`
-  await root`cp -r ${REPO_DIR}/output/static/ ${INSTALL_DIR}/static/`
-  await root`cp -r ${REPO_DIR}/output/pb_migrations/ ${INSTALL_DIR}/pb_migrations/`
+  await root`cp ${REPO_DIR}/dist/server/serve ${INSTALL_DIR}/server/serve`
+  await root`cp -r ${REPO_DIR}/dist/static/ ${INSTALL_DIR}/static/`
+  await root`cp -r ${REPO_DIR}/dist/pb_migrations/ ${INSTALL_DIR}/pb_migrations/`
   await root`chown -R ski-tripper:ski-tripper ${INSTALL_DIR}`
   success('Artefacts installed')
 

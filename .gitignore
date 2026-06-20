@@ -5,7 +5,8 @@
 .env.local
 .env.production
 node_modules/
-output/
+dist/
+dev/
 tools/data/resorts/ski_areas.csv
 tools/data/resorts/lifts.csv
 tools/data/resorts/runs.csv

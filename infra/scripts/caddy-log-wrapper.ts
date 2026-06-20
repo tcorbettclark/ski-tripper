@@ -119,7 +119,7 @@ const fileEnv = loadEnv()
 const mergedEnv = { ...process.env, ...fileEnv }
 
 const child = spawn(CADDY_CMD, CADDY_ARGS, {
-  cwd: resolve(import.meta.dir, '../..', 'output'),
+  cwd: resolve(import.meta.dir, '../..', 'dist'),
   env: mergedEnv,
   stdio: ['pipe', 'pipe', 'pipe'],
 })
