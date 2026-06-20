@@ -5,23 +5,23 @@
 Ski Tripper - a collaborative ski trip planning application to try to cut down on the chaos.
 
 Dead simple onboarding:
-  - signup with your email
-  - set your personal skiing preferences once (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group sees what kind of trip everyone wants.
-  - one person (who becomes the "coordinator") creates a trip and asks friends to join via a simple three-word code.
+  - signup with your email.
+  - set your personal skiing preferences once (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants, and AI - see below, can see the kind of trip you like.
+  - one person (the nominated "coordinator") creates a trip and asks friends to join via a simple three-word code.
 
 Browse thousands of resorts in one place:
   - use a fast, searchable, filterable database packed with detail: piste km, altitude range, snow reliability, transfer times, difficulty levels, and more.
-  - view as a map or list (PENDING)
+  - use the built-in AI assistant to query text generation, which uses everybody's preferences to suggest the best resorts for the trip.
 
 Propose to discuss and refine:
-  - create resort proposals with dates, rich descriptions, and linked accommodation options (cost, links, notes)
+  - create resort proposals with dates, descriptions, and linked accommodation options (cost, links, notes).
   - discuss and ask questions in a threaded comment section.
-  - submit for voting
+  - use the built-in AI assistant to describe suitability of each proposal against the likes and dislikes of the participants.
+  - submit for voting.
 
 Weighted token voting, not just one pick:
-  - the "coordinator" creates a poll from submitted proposals
-  - AI scored match between proposals and user preferences (PENDING)
-  - everyone distributes their votes across proposals (e.g. 3 tokens on your favourite, 1 on your backup) so the group's nuanced preferences actually surface.
+  - the "coordinator" creates a poll from submitted proposals.
+  - everyone distributes their votes across proposals (e.g. 3 tokens on your favourite, 1 on your backup).
 
 Guided "what next?" prompts:
   - the app reads the trip's state and tells each person exactly what to do (submit your draft, comment on proposals, vote before the poll closes) so nobody gets lost.
@@ -47,12 +47,12 @@ Testing is done with unit testing and [Playwright](https://playwright.dev/) + [M
 
 - [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
 - [PocketBase](https://pocketbase.io/) for the backend database and authentication.
-- [Resend](https://resend.com/) for email delivery (PENDING).
-- A small server (bun typescript) to run the backend server LLM functions.
+- [Resend](https://resend.com/) for email delivery.
+- A small typescript server to run the backend LLM functions.
 
 # Hosting
 
-The app runs on a single DigitalOcean droplet (Ubuntu 24.04) with three systemd services:
+The app runs on a single 1G DigitalOcean droplet (Ubuntu 24.04) with three systemd services:
 
 | Service | User | Description |
 |---------|------|-------------|
@@ -60,9 +60,9 @@ The app runs on a single DigitalOcean droplet (Ubuntu 24.04) with three systemd 
 | `ski-tripper-pb` | `ski-tripper` | PocketBase (localhost:8090) |
 | `ski-tripper-api` | `ski-tripper` | Custom Bun API server (localhost:5173) |
 
-Caddy is a shared reverse proxy that can host additional applications. The `ski-tripper` user owns the application code and data at `/opt/ski-tripper/`.
+No Docker involved — everything runs natively on the host.
 
-Deployment uses [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services. No Docker involved — everything runs natively on the host.
+Provisioning is automated (`bun run provision`), which uses [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services.
 
 | Command | Description |
 |---------|-------------|
