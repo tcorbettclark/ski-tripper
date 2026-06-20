@@ -62,12 +62,36 @@ The app runs on a single 1G DigitalOcean droplet (Ubuntu 24.04) with three syste
 
 No Docker involved — everything runs natively on the host.
 
-Provisioning is automated (`bun run provision`), which uses [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services.
+## Provisioning
+
+Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
 
 | Command | Description |
 |---------|-------------|
-| `bun run infra:provision create` | Create a DigitalOcean droplet |
-| `bun run infra:provision configure` | Install deps and set up systemd services on an existing droplet |
-| `bun run infra:provision deploy` | Pull latest code, build, restart services |
-| `bun run infra:provision setup` | Create droplet, configure, and deploy (full setup) |
-| `bun run infra:provision destroy` | Delete the droplet |
+| `bun run infra:provision create` | Create a droplet and reserved IP (idempotent) |
+| `bun run infra:provision configure` | Install dependencies and set up systemd services on an existing droplet |
+| `bun run infra:provision deploy` | Pull latest code, build, and restart services (default branch: main) |
+| `bun run infra:provision status` | Show service status, IP, and layout info |
+| `bun run infra:provision setup` | Create, configure, and deploy (full setup) |
+| `bun run infra:provision destroy` | Unassign IP and delete the droplet (preserves the reserved IP) |
+
+## Server layout
+
+| Path | Description |
+|------|-------------|
+| `/home/ski-tripper/ski-tripper/` | Git repository |
+| `/opt/ski-tripper/` | Installed app (`static/`, `server/serve`, `pb_migrations/`, `.env`) |
+| `/var/lib/ski-tripper/pb_data/` | PocketBase data |
+| `/etc/caddy/Caddyfile` | Caddy configuration |
+| `/usr/local/bin/{bun,caddy,pocketbase}` | Binaries |
+| `/etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service` | Systemd units |
+
+## Server logs
+
+SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`), then:
+
+| Service | Command |
+|---------|---------|
+| Caddy | `journalctl -u caddy` |
+| PocketBase | `journalctl -u ski-tripper-pb` |
+| API server | `journalctl -u ski-tripper-api` |
