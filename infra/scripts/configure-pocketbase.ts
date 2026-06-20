@@ -164,10 +164,10 @@ function deepDiff(
       )
       Object.assign(changes, nested)
     } else if (JSON.stringify(desiredVal) !== JSON.stringify(currentVal)) {
+      changes[fullPath] = { old: currentVal, new: desiredVal }
+    } else if (SENSITIVE_KEYS.has(fullPath) && currentVal === undefined) {
       // PocketBase masks secret fields in GET responses (returns undefined).
-      // Skip comparison for secrets when the current value is masked,
-      // since we can't determine if they actually changed.
-      if (SENSITIVE_KEYS.has(fullPath) && currentVal === undefined) continue
+      // Always include them in the patch since we can't tell if they match.
       changes[fullPath] = { old: currentVal, new: desiredVal }
     }
   }
