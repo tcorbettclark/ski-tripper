@@ -4,27 +4,29 @@
 
 Ski Tripper - a collaborative ski trip planning application to try to cut down on the chaos.
 
-Dead simple onboarding:
+Low-friction onboarding:
   - signup with your email.
-  - set your personal skiing preferences once (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants, and AI - see below, can see the kind of trip you like.
+  - set your personal skiing preferences (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants *and AI* can see the kind of trip you like.
   - one person (the nominated "coordinator") creates a trip and asks friends to join via a simple three-word code.
 
 Browse thousands of resorts in one place:
   - use a fast, searchable, filterable database packed with detail: piste km, altitude range, snow reliability, transfer times, difficulty levels, and more.
-  - use the built-in AI assistant to query text generation, which uses everybody's preferences to suggest the best resorts for the trip.
+  - use the built-in AI assistant to generate query text from everyone's preferences.
 
 Propose to discuss and refine:
-  - create resort proposals with dates, descriptions, and linked accommodation options (cost, links, notes).
-  - discuss and ask questions in a threaded comment section.
-  - use the built-in AI assistant to describe suitability of each proposal against the likes and dislikes of the participants.
-  - submit for voting.
+  - create resort proposals with dates, descriptions, and accommodation options.
+  - use the built-in AI assistant to describe suitability of each proposal against the likes and dislikes of all the participants.
+  - discuss and ask questions.
+  - submit ready for the next round of voting.
 
 Weighted token voting, not just one pick:
-  - the "coordinator" creates a poll from submitted proposals.
+  - the trip "coordinator" creates a poll from submitted proposals.
   - everyone distributes their votes across proposals (e.g. 3 tokens on your favourite, 1 on your backup).
+  - each poll has an end date, but can be terminated early by the coordinator.
+  - the coodinator decides the consequence of each poll (reject some and vote again, or just pick the winner if clear).
 
 Guided "what next?" prompts:
-  - the app reads the trip's state and tells each person exactly what to do (submit your draft, comment on proposals, vote before the poll closes) so nobody gets lost.
+  - show each person what they could do next - submit their draft, comment on a proposal, vote before the poll closes, etc.
 
 # Development
 
