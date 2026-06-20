@@ -137,9 +137,7 @@ describe('Resorts', () => {
   it('renders heading and search input', () => {
     render(<Resorts {...defaultProps()} />)
     expect(screen.getByText('Resorts Catalog')).toBeTruthy()
-    expect(
-      screen.getByPlaceholderText('Semantic search (more words are better)')
-    ).toBeTruthy()
+    expect(screen.getByPlaceholderText('Semantic search')).toBeTruthy()
   })
 
   it('renders country tag cloud with common countries', () => {

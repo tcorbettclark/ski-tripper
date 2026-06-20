@@ -475,9 +475,7 @@ export default function Resorts({
           <div style={resortsStyles.searchInputWrapper}>
             <textarea
               placeholder={
-                modelReady
-                  ? 'Semantic search (more words are better)'
-                  : 'Loading search model...'
+                modelReady ? 'Semantic search' : 'Loading search model...'
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
