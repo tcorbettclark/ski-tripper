@@ -4,7 +4,7 @@ import { resolve } from 'node:path'
 
 const isDebug = process.argv.includes('--debug')
 
-const ENV_FILE = resolve(import.meta.dir, '..', '.env')
+const ENV_FILE = resolve(import.meta.dir, '../..', '.env')
 const CADDY_CMD = 'caddy'
 const CADDY_ARGS = ['run']
 
@@ -119,7 +119,7 @@ const fileEnv = loadEnv()
 const mergedEnv = { ...process.env, ...fileEnv }
 
 const child = spawn(CADDY_CMD, CADDY_ARGS, {
-  cwd: resolve(import.meta.dir, '..', 'output'),
+  cwd: resolve(import.meta.dir, '../..', 'output'),
   env: mergedEnv,
   stdio: ['pipe', 'pipe', 'pipe'],
 })
