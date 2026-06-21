@@ -5,6 +5,7 @@ linker = "isolated"
 
 [test]
 preload = ["./src/client/test-setup.ts"]
+pathIgnorePatterns = ["e2e/**"]
 
 [test.env]
 BUN_TEST = "1"
