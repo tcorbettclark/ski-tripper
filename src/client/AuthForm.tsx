@@ -6,6 +6,7 @@ import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, fontSizes, formStyles } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface AuthFormProps {
@@ -51,6 +52,7 @@ export default function AuthForm({
     getPb().collection('users').requestVerification(email),
   sessionExpiredMessage = null,
 }: AuthFormProps) {
+  const isSmall = useIsSmallScreen()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -100,6 +102,7 @@ export default function AuthForm({
         ...authStyles.container,
         flexDirection: 'column',
         position: 'relative',
+        padding: isSmall ? '16px' : '24px',
       }}
     >
       <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
@@ -116,9 +119,14 @@ export default function AuthForm({
           zIndex: 1,
         }}
       >
-        <BrandTitle fontSize="24px" />
+        <BrandTitle fontSize={isSmall ? '18px' : '24px'} />
       </p>
-      <div style={authStyles.card}>
+      <div
+        style={{
+          ...authStyles.card,
+          padding: isSmall ? '28px 20px' : '48px 44px',
+        }}
+      >
         {sessionExpiredMessage && (
           <p style={formStyles.error}>{sessionExpiredMessage}</p>
         )}

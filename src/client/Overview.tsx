@@ -36,6 +36,7 @@ import {
 } from './Icons'
 import Paragraphs from './Paragraphs'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface OverviewProps {
@@ -92,6 +93,7 @@ export default function Overview({
   preferencesUpdated,
   onOpenPreferences,
 }: OverviewProps) {
+  const isSmall = useIsSmallScreen()
   const [participants, setParticipants] = useState<Participant[]>([])
   const [preferencesMap, setPreferencesMap] = useState<
     Record<string, Preferences | null>
@@ -467,7 +469,12 @@ export default function Overview({
   }, [aspectPopup])
 
   return (
-    <div style={overviewStyles.container}>
+    <div
+      style={{
+        ...overviewStyles.container,
+        padding: isSmall ? '16px 20px' : '40px 48px',
+      }}
+    >
       <div style={overviewStyles.toolbar}>
         <h2 style={overviewStyles.heading}>
           {trip.description || '—'}
@@ -565,7 +572,16 @@ export default function Overview({
                             ? 'participant-grid-row-clickable'
                             : undefined
                         }
-                        style={overviewStyles.gridRow}
+                        style={{
+                          ...overviewStyles.gridRow,
+                          ...(isSmall
+                            ? {
+                                padding: '8px 12px',
+                                gap: '0 10px',
+                                minWidth: '480px',
+                              }
+                            : {}),
+                        }}
                         onClick={isCurrentUser ? onOpenPreferences : undefined}
                         onKeyDown={
                           isCurrentUser

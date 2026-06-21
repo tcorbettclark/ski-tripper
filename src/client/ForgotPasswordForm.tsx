@@ -3,6 +3,7 @@ import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, formStyles } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface ForgotPasswordFormProps {
@@ -15,6 +16,7 @@ export default function ForgotPasswordForm({
   requestPasswordReset = (email) =>
     getPb().collection('users').requestPasswordReset(email),
 }: ForgotPasswordFormProps) {
+  const isSmall = useIsSmallScreen()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,12 +42,18 @@ export default function ForgotPasswordForm({
         ...authStyles.container,
         flexDirection: 'column',
         position: 'relative',
+        padding: isSmall ? '16px' : '24px',
       }}
     >
       <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
         <ThemeToggle />
       </div>
-      <div style={authStyles.card}>
+      <div
+        style={{
+          ...authStyles.card,
+          padding: isSmall ? '28px 20px' : '48px 44px',
+        }}
+      >
         <h1 style={authStyles.title}>Reset password</h1>
         {sent ? (
           <>

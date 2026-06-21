@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, formStyles } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface EmailVerifyScreenProps {
@@ -14,6 +15,7 @@ export default function EmailVerifyScreen({
   onBackToLogin,
   requestVerification,
 }: EmailVerifyScreenProps) {
+  const isSmall = useIsSmallScreen()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [resent, setResent] = useState(false)
@@ -37,12 +39,18 @@ export default function EmailVerifyScreen({
         ...authStyles.container,
         flexDirection: 'column',
         position: 'relative',
+        padding: isSmall ? '16px' : '24px',
       }}
     >
       <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
         <ThemeToggle />
       </div>
-      <div style={authStyles.card}>
+      <div
+        style={{
+          ...authStyles.card,
+          padding: isSmall ? '28px 20px' : '48px 44px',
+        }}
+      >
         <h1 style={authStyles.title}>Verify your email</h1>
         <p style={verifyStyles.message}>We sent a verification link to</p>
         <p style={verifyStyles.email}>{email}</p>

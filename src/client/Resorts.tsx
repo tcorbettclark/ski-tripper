@@ -1367,7 +1367,7 @@ const resortsStyles = {
     border: borders.card,
     overflow: 'hidden',
     background: colors.bgCard,
-    height: 'calc(100vh - 300px)',
+    height: 'calc(100dvh - 300px)',
     minHeight: '300px',
   },
   headerRow: {

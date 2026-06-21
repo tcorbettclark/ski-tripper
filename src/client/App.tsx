@@ -39,6 +39,7 @@ import Resorts from './Resorts'
 import Trips from './Trips'
 import { colors, fontSizes, fonts, mix } from './theme'
 import useAuth from './useAuth'
+import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface ListTripsResult {
@@ -120,7 +121,7 @@ type ProposalDetail = {
 
 export default function App({
   useAuthHook = useAuth,
-  useIsSmallScreenHook,
+  useIsSmallScreenHook = useIsSmallScreen,
   useAutoHideFooterHook,
   hasSession = _hasSession,
   confirmVerification = defaultConfirmVerification,
@@ -136,6 +137,7 @@ export default function App({
   updateName = defaultUpdateName,
   listTripParticipants = defaultListTripParticipants,
 }: AppProps) {
+  const isSmall = useIsSmallScreenHook()
   const {
     user,
     checking,
@@ -451,11 +453,11 @@ export default function App({
         style={{
           fontFamily: fonts.body,
           background: colors.bgPrimary,
-          minHeight: '100vh',
+          minHeight: '100dvh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '24px',
+          padding: isSmall ? '16px' : '24px',
         }}
       >
         <div
@@ -463,7 +465,7 @@ export default function App({
             background: colors.bgCard,
             border: `1px solid ${mix('--color-textSecondary', 0.12)}`,
             borderRadius: '16px',
-            padding: '48px 44px',
+            padding: isSmall ? '28px 20px' : '48px 44px',
             width: '100%',
             maxWidth: '520px',
           }}
@@ -510,7 +512,7 @@ export default function App({
       style={{
         fontFamily: fonts.body,
         background: colors.bgPrimary,
-        minHeight: '100vh',
+        minHeight: '100dvh',
       }}
     >
       <Header

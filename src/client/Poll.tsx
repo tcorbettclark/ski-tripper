@@ -20,6 +20,7 @@ import PastPoll from './PastPoll'
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { formatDate, getErrorMessage } from './utils'
 
 interface PollComponentProps {
@@ -73,6 +74,7 @@ export default function Poll({
   getCoordinatorParticipant = _getCoordinatorParticipant,
   listAccommodations = _listAccommodations,
 }: PollComponentProps) {
+  const isSmall = useIsSmallScreen()
   const [loading, setLoading] = useState(true)
   const [activePoll, setActivePoll] = useState<PollType | null>(null)
   const [pastPolls, setPastPolls] = useState<PollType[]>([])
@@ -220,7 +222,12 @@ export default function Poll({
   if (loading) return <p style={styles.message}>Loading…</p>
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: isSmall ? '16px 20px' : '40px 48px',
+      }}
+    >
       <div style={styles.toolbar}>
         <h2 style={styles.heading}>Voting</h2>
       </div>

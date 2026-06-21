@@ -25,6 +25,7 @@ import CreateProposalForm from './CreateProposalForm'
 import type { StatusFilter } from './ProposalsGrid'
 import ProposalsGrid from './ProposalsGrid'
 import { borders, colors, fontSizes, fonts } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface ProposalsProps {
@@ -134,6 +135,7 @@ export default function Proposals({
   getCoordinatorParticipant = _getCoordinatorParticipant,
   listDiscussion = _listDiscussion,
 }: ProposalsProps) {
+  const isSmall = useIsSmallScreen()
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [accommodations, setAccommodations] = useState<
     Record<string, Accommodation[]>
@@ -266,7 +268,12 @@ export default function Proposals({
   if (loading) return <p style={styles.message}>Loading…</p>
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: isSmall ? '16px 20px' : '40px 48px',
+      }}
+    >
       <div style={styles.toolbar}>
         <h2 style={styles.heading}>Proposals</h2>
         {tripId && (

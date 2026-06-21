@@ -404,7 +404,7 @@ const popupStyles = {
     borderRadius: '14px',
     padding: '20px 24px',
     maxWidth: '800px',
-    width: '800px',
+    width: 'min(90vw, 800px)',
     maxHeight: '70vh',
     overflow: 'auto',
     boxShadow: '0 16px 48px var(--color-shadow)',

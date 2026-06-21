@@ -47,8 +47,8 @@ export const fontSizes = {
   md: '16px',
   lg: '20px',
   xl: '24px',
-  '2xl': '30px',
-  '3xl': '40px',
+  '2xl': 'clamp(24px, 4vw, 30px)',
+  '3xl': 'clamp(28px, 5vw, 40px)',
 } as const
 
 export const fonts = {
@@ -106,7 +106,7 @@ export const formStyles = {
 
 export const authStyles = {
   container: {
-    minHeight: '100vh',
+    minHeight: '100dvh',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

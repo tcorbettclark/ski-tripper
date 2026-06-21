@@ -10,6 +10,7 @@ import CreateTripForm from './CreateTripForm'
 import JoinTripForm from './JoinTripForm'
 import TripTable from './TripTable'
 import { borders, colors, fontSizes, fonts } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 
 interface TripsProps {
   user: User
@@ -42,6 +43,7 @@ export default function Trips({
   joinTrip = _joinTrip,
   getCoordinatorParticipant = _getCoordinatorParticipant,
 }: TripsProps) {
+  const isSmall = useIsSmallScreen()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showJoinForm, setShowJoinForm] = useState(false)
 
@@ -54,7 +56,12 @@ export default function Trips({
   }, [onJoinedTrip])
 
   return (
-    <div style={styles.container}>
+    <div
+      style={{
+        ...styles.container,
+        padding: isSmall ? '16px 20px' : '40px 48px',
+      }}
+    >
       <div style={styles.toolbar}>
         <h2 style={styles.heading}>My Trips</h2>
         <div style={styles.buttons}>

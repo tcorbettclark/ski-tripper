@@ -3,6 +3,7 @@ import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface ResetPasswordFormProps {
@@ -21,6 +22,7 @@ export default function ResetPasswordForm({
   confirmPasswordReset = (t, pw, pwc) =>
     getPb().collection('users').confirmPasswordReset(t, pw, pwc),
 }: ResetPasswordFormProps) {
+  const isSmall = useIsSmallScreen()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
@@ -50,12 +52,18 @@ export default function ResetPasswordForm({
         ...authStyles.container,
         flexDirection: 'column',
         position: 'relative',
+        padding: isSmall ? '16px' : '24px',
       }}
     >
       <div style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 2 }}>
         <ThemeToggle />
       </div>
-      <div style={authStyles.card}>
+      <div
+        style={{
+          ...authStyles.card,
+          padding: isSmall ? '28px 20px' : '48px 44px',
+        }}
+      >
         <h1 style={authStyles.title}>Set new password</h1>
         <form onSubmit={handleSubmit} style={authStyles.form}>
           <Field
