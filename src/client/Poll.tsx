@@ -252,6 +252,7 @@ export default function Poll({
                 {isCoordinator && !showOutcomeForm && (
                   <button
                     type="button"
+                    data-testid="close-poll-btn"
                     onClick={() => setShowOutcomeForm(true)}
                     style={styles.closePollButton}
                   >
@@ -327,6 +328,7 @@ export default function Poll({
                   type="number"
                   min="1"
                   max="30"
+                  data-testid="poll-duration"
                   value={pollDuration}
                   onChange={(e) => setPollDuration(Number(e.target.value))}
                   style={styles.durationInput}
@@ -334,6 +336,7 @@ export default function Poll({
                 <span style={styles.daysLabel}>days</span>
                 <button
                   type="button"
+                  data-testid="create-poll-btn"
                   onClick={handleCreatePoll}
                   disabled={creatingPoll}
                   style={styles.createButton}

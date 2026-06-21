@@ -16,6 +16,7 @@ interface FieldProps {
   minLength?: number
   autoComplete?: string
   options?: string[]
+  'data-testid'?: string
 }
 
 export default function Field({
@@ -30,6 +31,7 @@ export default function Field({
   minLength,
   autoComplete,
   options,
+  'data-testid': dataTestId,
 }: FieldProps) {
   const styles = fieldStyles[variant] || fieldStyles.default
 
@@ -46,6 +48,7 @@ export default function Field({
           onChange={onChange}
           required={required}
           style={styles.input}
+          data-testid={dataTestId}
         >
           <option value="">{placeholder ?? 'Select an option…'}</option>
           {options.map((opt) => (
@@ -74,6 +77,7 @@ export default function Field({
         minLength={minLength}
         autoComplete={autoComplete}
         style={styles.input}
+        data-testid={dataTestId}
       />
     </div>
   )

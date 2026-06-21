@@ -138,6 +138,7 @@ export default function AuthForm({
             <Field
               label="Name"
               name="name"
+              data-testid="auth-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -148,6 +149,7 @@ export default function AuthForm({
           <Field
             label="Email"
             name="email"
+            data-testid="auth-email"
             type="email"
             autoComplete={isSignup ? 'email' : 'username'}
             value={email}
@@ -159,6 +161,7 @@ export default function AuthForm({
           <Field
             label="Password"
             name="password"
+            data-testid="auth-password"
             type="password"
             autoComplete={isSignup ? 'new-password' : 'current-password'}
             value={password}
@@ -172,6 +175,7 @@ export default function AuthForm({
             <div style={{ textAlign: 'right', marginTop: '-12px' }}>
               <button
                 type="button"
+                data-testid="auth-forgot-password"
                 onClick={onForgotPassword}
                 style={{ ...authStyles.switchLink, fontSize: fontSizes.sm }}
               >
@@ -182,6 +186,7 @@ export default function AuthForm({
           {error && <p style={formStyles.error}>{error}</p>}
           <button
             type="submit"
+            data-testid="auth-submit"
             disabled={loading}
             style={formStyles.primaryButton}
           >
@@ -198,6 +203,7 @@ export default function AuthForm({
           {isSignup ? 'Already have an account? ' : "Don't have an account? "}
           <button
             type="button"
+            data-testid="auth-switch-mode"
             onClick={onSwitchMode}
             style={authStyles.switchLink}
           >

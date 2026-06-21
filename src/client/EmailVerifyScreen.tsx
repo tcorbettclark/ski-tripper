@@ -63,6 +63,7 @@ export default function EmailVerifyScreen({
         )}
         <button
           type="button"
+          data-testid="resend-verification"
           disabled={loading}
           onClick={handleResend}
           style={{

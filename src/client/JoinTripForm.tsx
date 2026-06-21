@@ -69,6 +69,7 @@ export default function JoinTripForm({
       <Field
         label="Trip Code"
         name="code"
+        data-testid="trip-code"
         value={code}
         onChange={(e) => setCode(e.target.value)}
         placeholder="e.g. colourful-skinny-screwdriver"
@@ -76,7 +77,12 @@ export default function JoinTripForm({
       />
       {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
-        <button type="submit" disabled={saving} style={formStyles.saveButton}>
+        <button
+          type="submit"
+          disabled={saving}
+          style={formStyles.saveButton}
+          data-testid="trip-join"
+        >
           {saving ? 'Joining…' : 'Join Trip'}
         </button>
         <button

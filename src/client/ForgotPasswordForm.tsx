@@ -86,6 +86,7 @@ export default function ForgotPasswordForm({
               <Field
                 label="Email"
                 name="email"
+                data-testid="forgot-email"
                 type="email"
                 autoComplete="email"
                 value={email}
@@ -97,6 +98,7 @@ export default function ForgotPasswordForm({
               {error && <p style={formStyles.error}>{error}</p>}
               <button
                 type="submit"
+                data-testid="send-reset-link"
                 disabled={loading}
                 style={formStyles.primaryButton}
               >

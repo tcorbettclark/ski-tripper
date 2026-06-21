@@ -280,6 +280,7 @@ export default function Proposals({
           <div style={styles.buttons}>
             <button
               type="button"
+              data-testid="new-proposal-btn"
               onClick={() => setShowCreateForm((v) => !v)}
               style={styles.actionButton}
             >

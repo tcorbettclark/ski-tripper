@@ -59,6 +59,7 @@ function UserMenu({
     <div style={headerStyles.userMenuWrapper} ref={menuRef}>
       <button
         type="button"
+        data-testid="user-menu-trigger"
         onClick={() => setOpen((o) => !o)}
         style={headerStyles.userMenuTrigger}
         aria-expanded={open}
@@ -84,6 +85,7 @@ function UserMenu({
           )}
           <button
             type="button"
+            data-testid="sign-out"
             onClick={() => {
               onLogout()
             }}
@@ -133,6 +135,7 @@ function NavTabs({
         <button
           key={tab.id}
           type="button"
+          data-testid={`nav-tab-${tab.id}`}
           onClick={() => onTripDetailTabChange(tab.id)}
           style={
             tripDetailTab === tab.id
@@ -216,6 +219,7 @@ function MobileMenu({
         <button
           key={tab.id}
           type="button"
+          data-testid={`nav-tab-${tab.id}`}
           onClick={() => {
             onTripDetailTabChange(tab.id)
             onClose()

@@ -512,7 +512,9 @@ export default function Overview({
           Code to share with friends so they can join this trip:
         </span>
         <span style={overviewStyles.codeWithCopy}>
-          <span style={overviewStyles.codeValue}>{trip.code}</span>
+          <span style={overviewStyles.codeValue} data-testid="invite-code">
+            {trip.code}
+          </span>
           <button
             type="button"
             onClick={handleCopyCode}

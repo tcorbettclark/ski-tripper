@@ -67,6 +67,7 @@ export default function CreateTripForm({
       <Field
         label="Description"
         name="description"
+        data-testid="trip-description"
         value={form.description}
         onChange={handleChange}
         placeholder="e.g. 5 days in Val d'Isère, late February, intermediate+ skiers"
@@ -74,7 +75,12 @@ export default function CreateTripForm({
       />
       {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
-        <button type="submit" disabled={saving} style={formStyles.saveButton}>
+        <button
+          type="submit"
+          disabled={saving}
+          style={formStyles.saveButton}
+          data-testid="trip-save"
+        >
           {saving ? 'Saving…' : 'Save Trip'}
         </button>
         <button

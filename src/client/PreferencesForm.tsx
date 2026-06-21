@@ -184,6 +184,7 @@ export default function PreferencesForm({
                   checked={checked}
                   onChange={() => toggleOption(opt, selected, setter)}
                   style={styles.checkbox}
+                  data-testid={`pref-${opt.toLowerCase().replace(/ /g, '-')}`}
                 />
                 {icons?.[i] && (
                   <span style={styles.checkboxIcon}>{icons[i](!checked)}</span>
@@ -312,7 +313,12 @@ export default function PreferencesForm({
       {error && <p style={formStyles.error}>{error}</p>}
 
       <div style={styles.actions}>
-        <button type="submit" disabled={saving} style={formStyles.saveButton}>
+        <button
+          type="submit"
+          disabled={saving}
+          style={formStyles.saveButton}
+          data-testid="pref-save"
+        >
           {saving
             ? 'Saving…'
             : initial

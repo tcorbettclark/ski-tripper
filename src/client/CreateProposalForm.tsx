@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+
 import { COUNTRIES } from '../shared/countries'
 import type { ResortWithEmbedding, User } from '../shared/types.d'
 import { createProposal as _createProposal, getPb } from './backend'
@@ -262,6 +263,7 @@ export default function CreateProposalForm({
             ref={resortInputRef}
             id="resortName"
             name="resortName"
+            data-testid="proposal-resort-name"
             value={form.resortName}
             onChange={handleChange}
             onFocus={() => {
@@ -374,6 +376,7 @@ export default function CreateProposalForm({
         type="number"
         value={form.beginnerPct}
         onChange={handleChange}
+        required
         placeholder="e.g. 25"
       />
       <Field
@@ -382,6 +385,7 @@ export default function CreateProposalForm({
         type="number"
         value={form.intermediatePct}
         onChange={handleChange}
+        required
         placeholder="e.g. 50"
       />
       <Field
@@ -390,6 +394,7 @@ export default function CreateProposalForm({
         type="number"
         value={form.advancedPct}
         onChange={handleChange}
+        required
         placeholder="e.g. 25"
       />
       <Field
@@ -474,11 +479,17 @@ export default function CreateProposalForm({
       </div>
       {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
-        <button type="submit" disabled={saving} style={formStyles.saveButton}>
+        <button
+          type="submit"
+          disabled={saving}
+          style={formStyles.saveButton}
+          data-testid="proposal-submit"
+        >
           {saving ? 'Saving draft…' : 'Create Draft Proposal'}
         </button>
         <button
           type="button"
+          data-testid="proposal-cancel"
           onClick={onDismiss}
           style={formStyles.cancelButton}
         >

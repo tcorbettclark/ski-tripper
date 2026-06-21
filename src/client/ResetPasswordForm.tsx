@@ -69,6 +69,7 @@ export default function ResetPasswordForm({
           <Field
             label="New password"
             name="password"
+            data-testid="reset-password"
             type="password"
             autoComplete="new-password"
             value={password}
@@ -81,6 +82,7 @@ export default function ResetPasswordForm({
           <Field
             label="Confirm password"
             name="confirmPassword"
+            data-testid="reset-confirm-password"
             type="password"
             autoComplete="new-password"
             value={confirmPassword}
@@ -93,6 +95,7 @@ export default function ResetPasswordForm({
           {error && <p style={formStyles.error}>{error}</p>}
           <button
             type="submit"
+            data-testid="reset-submit"
             disabled={loading}
             style={formStyles.primaryButton}
           >

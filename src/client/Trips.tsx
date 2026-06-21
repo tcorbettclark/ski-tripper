@@ -67,6 +67,7 @@ export default function Trips({
         <div style={styles.buttons}>
           <button
             type="button"
+            data-testid="new-trip-btn"
             onClick={() => {
               setShowCreateForm((v) => !v)
               setShowJoinForm(false)
@@ -77,6 +78,7 @@ export default function Trips({
           </button>
           <button
             type="button"
+            data-testid="join-trip-btn"
             onClick={() => {
               setShowJoinForm((v) => !v)
               setShowCreateForm(false)

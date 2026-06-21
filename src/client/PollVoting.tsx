@@ -126,6 +126,7 @@ export default function PollVoting({
         </span>
         <button
           type="button"
+          data-testid="save-vote-btn"
           onClick={handleSave}
           disabled={saving || !!isUnchanged}
           style={{

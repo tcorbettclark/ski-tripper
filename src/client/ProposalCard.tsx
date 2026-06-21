@@ -615,6 +615,7 @@ export default function ProposalCard({
               <>
                 <button
                   type="button"
+                  data-testid="proposal-delete"
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={isAccommodationEditing}
                   style={{
@@ -627,6 +628,7 @@ export default function ProposalCard({
                 <div style={styles.actionsRight}>
                   <button
                     type="button"
+                    data-testid="proposal-submit-btn"
                     onClick={initiateSubmit}
                     disabled={submitting || isAccommodationEditing}
                     style={{
@@ -645,6 +647,7 @@ export default function ProposalCard({
             {canReject && (
               <button
                 type="button"
+                data-testid="proposal-reject"
                 onClick={handleReject}
                 disabled={rejecting}
                 style={styles.rejectButton}
@@ -656,6 +659,7 @@ export default function ProposalCard({
             {canRevertToDraft && (
               <button
                 type="button"
+                data-testid="proposal-revert"
                 onClick={handleRevertToDraft}
                 disabled={reverting}
                 style={styles.revertButton}
