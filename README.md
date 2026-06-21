@@ -4,39 +4,39 @@
 
 ## What is it?
 
-A collaborative ski trip planning application to help groups of people research and decide.
+A collaborative ski trip planning application to help groups of friends find and discuss resorts, and make a decision through one or more voting rounds.
 
 Low-friction onboarding:
-  - signup with your email.
-  - set your personal skiing preferences (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants *and AI* can see the kind of trip you like.
-  - one person (the nominated "coordinator") creates a trip and asks friends to join via a simple three-word code.
+  - signup with your email
+  - set your personal skiing preferences (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants *and AI* can see the kind of trip you like
+  - one person (the nominated "coordinator") creates a trip and asks friends to join via a simple three-word code
 
-Browse thousands of resorts in one place:
-  - use a fast, searchable, filterable database packed with detail: piste km, altitude range, snow reliability, transfer times, difficulty levels, and more.
-  - use the built-in AI assistant to generate query text from everyone's preferences.
+Browse thousands of resorts:
+  - use a fast, searchable, filterable database packed with detail: piste km, altitude range, snow reliability, transfer times, difficulty levels, AI generated descriptions, linked resorts,and more
+  - use the built-in AI assistant to generate query text from everyone's preferences
 
 Propose to discuss and refine:
-  - create resort proposals with dates, descriptions, and accommodation options.
-  - use the built-in AI assistant to describe suitability of each proposal against the likes and dislikes of all the participants.
-  - discuss and ask questions.
-  - submit ready for the next round of voting.
+  - create resort proposals with dates, descriptions, and accommodation options
+  - use the built-in AI assistant to describe suitability of each proposal against the likes and dislikes of all the participants
+  - discuss and add notes
+  - submit ready for a round of voting
 
 Weighted token voting, not just one pick:
-  - the trip coordinator creates a poll from submitted proposals.
-  - everyone distributes their votes across proposals (e.g. 3 tokens on your favourite, 1 on your backup).
-  - each poll has an end date, but can be terminated early by the coordinator.
-  - the coodinator decides the consequence of each poll (reject some and vote again, or just pick the winner if clear).
+  - the trip coordinator creates a poll from submitted proposals
+  - everyone distributes their votes across proposals (e.g. 3 tokens on your favourite, 1 on your backup)
+  - each poll has an end date, but can be terminated early by the coordinator
+  - the coodinator decides the consequence of each poll (reject some and vote again, or just pick the winner if clear)
 
-Guided "what next?" prompts:
-  - show each person what they could do next - submit their draft, comment on a proposal, vote before the poll closes, etc.
+Guided "what next?" prompting:
+  - show each person what they could do next - submit their draft, comment on a proposal, vote before the poll closes, etc
 
 ## Who built it?
 
-My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life, have an academic origin including AI research, was a CTO in Life Sciencesfor 20 years, and am now semi-retired enjoying all sorts of interesting things.
+My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life; have academic origins in engineering, computer science, and AI research; was a CTO in Life Sciences for 20 years; and am now semi-retired enjoying all sorts of interesting things.
   
 ## Why did I build it?
 
-I built ski-tripper for two reasons: to learn about AI and to help organise Boys Ski Trips.
+I built ski-tripper for two reasons: to learn about AI and to help organise "Boys Ski Trips".
 
 AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense for the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
 
@@ -47,14 +47,16 @@ Having organised a boys ski trip for a few years, I thought an application could
 
 ## How is AI used?
 
-1. *To build the application*. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
-2. *To create a rich catalogue of resorts with standard fields and descriptions*. This required seeding the list, enriching from qualified sources, assessing quality and fixing inconsistencies in the result using an independent model.
-3. *To make it easier for users to search the catalogue of resorts*. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
-4. Further, an LLM is used *to generate resort search text from participant preferences*, to make it easier to home in on candidate resorts the group will enjoy.
-5. *To assess a proposal against the likes/dislikes of the participants*. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
-6. Lastly, AI was used *to automate the testing of the applicaton UI*, by simulating user interactions and verifying the application behaves in a resonable way.
-  
-## Development
+1. **To build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
+2. **To create a rich catalogue of resorts with standard fields and descriptions**. This required seeding the list, enriching from qualified sources, assessing quality, and fixing inconsistencies in the result using an independent model.
+3. **To make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
+4. **To generate resort search text from participant preferences**. Further, an LLM is used **to generate resort search text from participant preferences**, to make it easier to home in on candidate resorts the group will enjoy.
+5. **To assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
+6. **To automate the testing of the applicaton UI**. Lastly, AI was used **to automate the testing of the UI** by performing user interactions using a headless browser to find bugs and verify that the application behaves in a reasonable way.
+
+## Technical
+
+### Development
 
 Configured for OpenCode development.
 
@@ -73,7 +75,7 @@ Testing is done with unit testing and [Playwright](https://playwright.dev/) + [M
 
 Versioning follows [Semantic Versioning](https://semver.org/), using `bun pm version patch|minor|major` (which creates an annotated tag). Push commits and tags together from the root worktree with `wtp`.
 
-## Architecture
+### Architecture
 
 - [React](https://react.dev/) for the frontend UI application.
 - [PocketBase](https://pocketbase.io/) for the backend database and authentication.
@@ -81,7 +83,7 @@ Versioning follows [Semantic Versioning](https://semver.org/), using `bun pm ver
 - [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
 - A bun/typescript server to run the backend LLM functions using a cloud LLM provider.
 
-## Hosting
+### Hosting
 
 The app runs fine on a single 1G [DigitalOcean droplet](https://www.digitalocean.com/products/droplets/) (Ubuntu 24.04) with three [systemd services](https://www.freedesktop.org/wiki/Software/systemd/):
 
@@ -93,7 +95,7 @@ The app runs fine on a single 1G [DigitalOcean droplet](https://www.digitalocean
 
 No Docker involved — everything runs natively on the host.
 
-## Provisioning
+### Provisioning
 
 Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
 
@@ -106,7 +108,7 @@ Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec
 | `bun run infra:provision setup` | Create, configure, and deploy (full setup) |
 | `bun run infra:provision destroy` | Unassign IP and delete the droplet (preserves the reserved IP) |
 
-## Server layout
+### Server layout
 
 | Path | Description |
 |------|-------------|
@@ -117,7 +119,7 @@ Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec
 | `/usr/local/bin/{bun,caddy,pocketbase}` | Binaries |
 | `/etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service` | Systemd units |
 
-## Server logs
+### Server logs
 
 SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`), then:
 
