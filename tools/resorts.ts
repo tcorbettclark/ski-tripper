@@ -624,278 +624,208 @@ function formatIssueTags(issues: AuditIssue[]): string {
   return tags.map((t) => `${t.colour}${t.label}${ANSI_RESET}`).join('  ')
 }
 
-async function fixInconsistencies(options: {
-  model?: string
-  resort?: string
-  region?: string
-  maxResorts?: number
-  retries?: number
-}) {
-  const model = options.model ?? server_get_ollama_model_audit()
+async function checkAndFixResortInconsistencies(
+  seeded: SeededResort,
+  enriched: EnrichedResort,
+  model: string,
+  maxRetries: number,
+  enrichedById: Map<string, EnrichedResort>,
+  index?: { current: number; total: number }
+): Promise<{ fixed: number; skipped: boolean }> {
+  const e = enriched
+  const m = mergeEnrichedIntoSeeded(seeded, e)
+  const label = index != null ? `[${index.current}/${index.total}] ` : ''
 
-  log('info', 'fix-inconsistencies', `Seeded file: ${SEEDED_PATH}`)
-  log('info', 'fix-inconsistencies', `Enriched file: ${ENRICHED_PATH}`)
-  log('info', 'fix-inconsistencies', `Model: ${model}`)
-
-  const seeded = readSeeded()
-  const enriched = readEnriched()
-  const enrichedById = new Map(enriched.map((r) => [r.id, r]))
-
-  const bothEnriched = seeded.filter((s) => enrichedById.has(s.id))
-  let toCheck = bothEnriched
-
-  if (options.resort) {
-    toCheck = toCheck.filter((s) => s.id === options.resort)
-    if (toCheck.length === 0) {
-      log(
-        'error',
-        'fix-inconsistencies',
-        `No resort with id "${options.resort}". Available: ${seeded.map((r) => r.id).join(', ')}`
-      )
-      process.exit(1)
-    }
-  } else if (options.region) {
-    const before = toCheck.length
-    toCheck = toCheck.filter((s) => s.region === options.region)
-    if (toCheck.length === 0) {
-      log(
-        'error',
-        'fix-inconsistencies',
-        `No resorts in region "${options.region}". Available: ${[...new Set(seeded.map((r) => r.region))].sort().join(', ')}`
-      )
-      process.exit(1)
-    }
+  const description = buildDescription(e)
+  if (!description || description.trim().length < 50) {
     log(
-      'info',
+      'warn',
       'fix-inconsistencies',
-      `Region filter: ${ANSI_BOLD}${options.region}${ANSI_RESET} (${before - toCheck.length} excluded, ${toCheck.length} remaining)`
+      `${label}Skipping ${seeded.resortName} - insufficient description text`,
+      1
     )
-  }
-
-  if (options.maxResorts != null && options.maxResorts < toCheck.length) {
-    log(
-      'info',
-      'fix-inconsistencies',
-      `--max-resorts ${options.maxResorts}: limiting from ${toCheck.length} to ${options.maxResorts}`
-    )
-    toCheck = toCheck.slice(0, options.maxResorts)
+    return { fixed: 0, skipped: true }
   }
 
   log(
     'info',
     'fix-inconsistencies',
-    `Checking ${toCheck.length} resort(s) for inconsistencies`
+    `${label}Checking ${seeded.resortName} (${seeded.country})...`
   )
 
-  const maxRetries = options.retries ?? 1
+  const thinkingFile = path.join(THINKING_DIR, 'audit', `${seeded.id}.txt`)
+  fs.mkdirSync(path.dirname(thinkingFile), { recursive: true })
+  fs.writeFileSync(thinkingFile, '')
+  log('info', 'fix-inconsistencies', `Thinking output: ${thinkingFile}`, 1)
+
+  const fields: Record<string, number | null> = {}
+  for (const field of CONSISTENCY_FIELDS) {
+    fields[field] = m[field as keyof SeededResort] as number
+  }
+
+  const userPrompt = CONSISTENCY_USER_PROMPT(
+    seeded.resortName,
+    seeded.country,
+    description,
+    fields,
+    JSON.stringify(buildConsistencyJsonSchema(), null, 2)
+  )
+
+  const messages: Array<{
+    role: 'system' | 'user' | 'assistant'
+    content: string
+    thinking?: string
+  }> = [
+    { role: 'system', content: CONSISTENCY_SYSTEM_PROMPT },
+    { role: 'user', content: userPrompt },
+  ]
+
   const responseCodec = jsonCodec(consistencySchema)
-  let totalFixed = 0
-  let totalSkipped = 0
-  let totalInconsistenciesFound = 0
+  let result: z.infer<typeof consistencySchema> | null = null
 
-  for (let i = 0; i < toCheck.length; i++) {
-    const s = toCheck[i]
-    const e = enrichedById.get(s.id)!
-    const m = mergeEnrichedIntoSeeded(s, e)
-
-    const description = buildDescription(e)
-    if (!description || description.trim().length < 50) {
-      log(
-        'warn',
-        'fix-inconsistencies',
-        `[${i + 1}/${toCheck.length}] Skipping ${s.resortName} - insufficient description text`,
-        1
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    if (attempt > 0) {
+      fs.appendFileSync(
+        thinkingFile,
+        `\n--- Retry attempt ${attempt + 1} ---\n`
       )
-      totalSkipped++
-      continue
-    }
-
-    log(
-      'info',
-      'fix-inconsistencies',
-      `[${i + 1}/${toCheck.length}] Checking ${s.resortName} (${s.country})...`
-    )
-
-    const thinkingFile = path.join(THINKING_DIR, 'audit', `${s.id}.txt`)
-    fs.mkdirSync(path.dirname(thinkingFile), { recursive: true })
-    fs.writeFileSync(thinkingFile, '')
-    log('info', 'fix-inconsistencies', `Thinking output: ${thinkingFile}`, 1)
-
-    const fields: Record<string, number | null> = {}
-    for (const field of CONSISTENCY_FIELDS) {
-      fields[field] = m[field as keyof SeededResort] as number
-    }
-
-    const userPrompt = CONSISTENCY_USER_PROMPT(
-      s.resortName,
-      s.country,
-      description,
-      fields,
-      JSON.stringify(buildConsistencyJsonSchema(), null, 2)
-    )
-
-    const messages: Array<{
-      role: 'system' | 'user' | 'assistant'
-      content: string
-      thinking?: string
-    }> = [
-      { role: 'system', content: CONSISTENCY_SYSTEM_PROMPT },
-      { role: 'user', content: userPrompt },
-    ]
-
-    let result: z.infer<typeof consistencySchema> | null = null
-
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      if (attempt > 0) {
-        fs.appendFileSync(
-          thinkingFile,
-          `\n--- Retry attempt ${attempt + 1} ---\n`
-        )
-        log(
-          'info',
-          'fix-inconsistencies',
-          `Retry ${attempt}/${maxRetries} for ${s.resortName}`,
-          1
-        )
-      }
-
-      const stream = await getOllama().chat({
-        stream: true,
-        think: true,
-        model,
-        messages,
-        options: { num_ctx: 16384, num_predict: 4096 },
-      })
-
-      let content = ''
-      let thinking = ''
-      try {
-        const streamResult = await streamThinking(
-          stream,
-          (chunk) => {
-            content += chunk
-          },
-          thinkingFile
-        )
-        thinking = streamResult.thinking
-      } catch (err) {
-        log(
-          'warn',
-          'fix-inconsistencies',
-          `Stream error: ${err instanceof Error ? err.message : String(err)}`,
-          1
-        )
-        continue
-      }
-
-      if (!content) {
-        log(
-          'warn',
-          'fix-inconsistencies',
-          `Empty response for ${s.resortName}`,
-          1
-        )
-        messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
-        continue
-      }
-
-      let parsed: z.infer<typeof consistencySchema> | null = null
-      try {
-        parsed = responseCodec.decode(content, { reportInput: true })
-      } catch (err) {
-        log(
-          'warn',
-          'fix-inconsistencies',
-          `Schema validation error for ${s.resortName}: ${err instanceof Error ? err.message : String(err)}`,
-          1
-        )
-      }
-      if (parsed) {
-        result = parsed
-        break
-      }
-
-      messages.push({ role: 'assistant', content, thinking })
-      messages.push({
-        role: 'user',
-        content: LLM_RETRY_PARSE_PROMPT(content.slice(0, 500)),
-      })
-    }
-
-    if (!result) {
-      log(
-        'warn',
-        'fix-inconsistencies',
-        `Failed to parse response for ${s.resortName}, skipping.`,
-        1
-      )
-      totalSkipped++
-      continue
-    }
-
-    const validInconsistencies = filterValidInconsistencies(result)
-
-    if (validInconsistencies.length === 0) {
-      if (result.inconsistencies.length > 0) {
-        log(
-          'warn',
-          'fix-inconsistencies',
-          `LLM returned ${result.inconsistencies.length} inconsistency(ies) but none had valid correctedValue/reason for ${s.resortName}`,
-          1
-        )
-      } else {
-        log(
-          'success',
-          'fix-inconsistencies',
-          `No inconsistencies found for ${s.resortName}`,
-          1
-        )
-      }
-      continue
-    }
-
-    totalInconsistenciesFound += validInconsistencies.length
-    log(
-      'warn',
-      'fix-inconsistencies',
-      `Found ${validInconsistencies.length} inconsistency(ies) for ${s.resortName}:`,
-      1
-    )
-
-    const updatedFields: string[] = []
-    for (const inc of validInconsistencies) {
-      const fieldName = inc.field
-      const correctedValue = inc.correctedValue
       log(
         'info',
         'fix-inconsistencies',
-        `  ${ANSI_RED}${fieldName}${ANSI_RESET}: ${fields[fieldName] ?? 'N/A'} → ${ANSI_GREEN}${correctedValue}${ANSI_RESET} (${ANSI_DIM}${inc.reason}${ANSI_RESET})`,
-        2
+        `Retry ${attempt}/${maxRetries} for ${seeded.resortName}`,
+        1
       )
-
-      ;(e as unknown as Record<string, unknown>)[fieldName] = correctedValue
-      updatedFields.push(fieldName)
     }
 
-    enrichedById.set(s.id, e)
-    writeJsonl(
-      ENRICHED_PATH,
-      [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
-    )
+    const stream = await getOllama().chat({
+      stream: true,
+      think: true,
+      model,
+      messages,
+      options: { num_ctx: 16384, num_predict: 4096 },
+    })
 
-    totalFixed++
-    log(
-      'success',
-      'fix-inconsistencies',
-      `Updated ${s.resortName}: ${updatedFields.join(', ')}`,
-      1
-    )
+    let content = ''
+    let thinking = ''
+    try {
+      const streamResult = await streamThinking(
+        stream,
+        (chunk) => {
+          content += chunk
+        },
+        thinkingFile
+      )
+      thinking = streamResult.thinking
+    } catch (err) {
+      log(
+        'warn',
+        'fix-inconsistencies',
+        `Stream error: ${err instanceof Error ? err.message : String(err)}`,
+        1
+      )
+      continue
+    }
+
+    if (!content) {
+      log(
+        'warn',
+        'fix-inconsistencies',
+        `Empty response for ${seeded.resortName}`,
+        1
+      )
+      messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
+      continue
+    }
+
+    let parsed: z.infer<typeof consistencySchema> | null = null
+    try {
+      parsed = responseCodec.decode(content, { reportInput: true })
+    } catch (err) {
+      log(
+        'warn',
+        'fix-inconsistencies',
+        `Schema validation error for ${seeded.resortName}: ${err instanceof Error ? err.message : String(err)}`,
+        1
+      )
+    }
+    if (parsed) {
+      result = parsed
+      break
+    }
+
+    messages.push({ role: 'assistant', content, thinking })
+    messages.push({
+      role: 'user',
+      content: LLM_RETRY_PARSE_PROMPT(content.slice(0, 500)),
+    })
   }
 
-  console.log()
-  console.log(
-    `${ANSI_BOLD}Consistency check complete${ANSI_RESET}: ${toCheck.length} checked, ${totalInconsistenciesFound} inconsistencies found, ${totalFixed} resorts updated, ${totalSkipped} skipped`
+  if (!result) {
+    log(
+      'warn',
+      'fix-inconsistencies',
+      `Failed to parse response for ${seeded.resortName}, skipping.`,
+      1
+    )
+    return { fixed: 0, skipped: true }
+  }
+
+  const validInconsistencies = filterValidInconsistencies(result)
+
+  if (validInconsistencies.length === 0) {
+    if (result.inconsistencies.length > 0) {
+      log(
+        'warn',
+        'fix-inconsistencies',
+        `LLM returned ${result.inconsistencies.length} inconsistency(ies) but none had valid correctedValue/reason for ${seeded.resortName}`,
+        1
+      )
+    } else {
+      log(
+        'success',
+        'fix-inconsistencies',
+        `No inconsistencies found for ${seeded.resortName}`,
+        1
+      )
+    }
+    return { fixed: 0, skipped: false }
+  }
+
+  log(
+    'warn',
+    'fix-inconsistencies',
+    `Found ${validInconsistencies.length} inconsistency(ies) for ${seeded.resortName}:`,
+    1
   )
+
+  const updatedFields: string[] = []
+  for (const inc of validInconsistencies) {
+    const fieldName = inc.field
+    const correctedValue = inc.correctedValue
+    log(
+      'info',
+      'fix-inconsistencies',
+      `  ${ANSI_RED}${fieldName}${ANSI_RESET}: ${fields[fieldName] ?? 'N/A'} → ${ANSI_GREEN}${correctedValue}${ANSI_RESET} (${ANSI_DIM}${inc.reason}${ANSI_RESET})`,
+      2
+    )
+
+    ;(e as unknown as Record<string, unknown>)[fieldName] = correctedValue
+    updatedFields.push(fieldName)
+  }
+
+  enrichedById.set(seeded.id, e)
+  writeJsonl(
+    ENRICHED_PATH,
+    [...enrichedById.values()].sort((a, b) => a.id.localeCompare(b.id))
+  )
+
+  log(
+    'success',
+    'fix-inconsistencies',
+    `Updated ${seeded.resortName}: ${updatedFields.join(', ')}`,
+    1
+  )
+  return { fixed: validInconsistencies.length, skipped: false }
 }
 
 function audit(options: { detail?: boolean }) {
@@ -1150,6 +1080,7 @@ async function enrich(options: {
 
   let enrichedCount = 0
   let skipped = 0
+  let totalInconsistenciesFixed = 0
 
   const maxResorts = options.maxResorts
   if (maxResorts != null && maxResorts < toEnrich.length) {
@@ -1160,6 +1091,9 @@ async function enrich(options: {
     )
     toEnrich = toEnrich.slice(0, maxResorts)
   }
+
+  const auditModel = options.auditModel ?? server_get_ollama_model_audit()
+  const auditRetries = options.auditRetries ?? 1
 
   for (let i = 0; i < toEnrich.length; i++) {
     const seededResort = toEnrich[i]
@@ -1216,23 +1150,22 @@ async function enrich(options: {
       `Written ${seededResort.resortName} to enriched.jsonl`,
       1
     )
+
+    const fixResult = await checkAndFixResortInconsistencies(
+      seededResort,
+      enrichedEntry,
+      auditModel,
+      auditRetries,
+      enrichedById
+    )
+    totalInconsistenciesFixed += fixResult.fixed
   }
 
   log(
     'success',
     'enrich',
-    `Done. Enriched: ${enrichedCount}, Skipped: ${skipped}, Total: ${toEnrich.length}`
+    `Done. Enriched: ${enrichedCount}, Skipped: ${skipped}, Inconsistencies fixed: ${totalInconsistenciesFixed}, Total: ${toEnrich.length}`
   )
-
-  console.log()
-  log('info', 'enrich', 'Running consistency check...')
-  await fixInconsistencies({
-    model: options.auditModel,
-    resort: options.resort,
-    region: options.region,
-    maxResorts: options.maxResorts,
-    retries: options.auditRetries,
-  })
 }
 
 function computeSearchText(
