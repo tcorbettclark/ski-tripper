@@ -380,114 +380,109 @@ export default function ProposalCard({
         )}
 
         <div style={previewMode ? undefined : styles.tabContent}>
-          <div style={styles.section}>
-            {(previewMode || activeTab === 'proposal') && (
-              <>
-                <div style={styles.grid}>
-                  <DetailField
-                    label="Start Date"
-                    value={formatDate(proposal.startDate)}
+          {(previewMode || activeTab === 'proposal') && (
+            <div style={styles.section}>
+              <div style={styles.grid}>
+                <DetailField
+                  label="Start Date"
+                  value={formatDate(proposal.startDate)}
+                />
+                <DetailField
+                  label="End Date"
+                  value={formatDate(proposal.endDate)}
+                />
+                <DetailField
+                  label="Altitude Range"
+                  value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
+                />
+                <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
+                <DetailField label="Piste Breakdown">
+                  <PisteBreakdown
+                    beginnerPct={proposal.beginnerPct}
+                    intermediatePct={proposal.intermediatePct}
+                    advancedPct={proposal.advancedPct}
                   />
+                </DetailField>
+                <DetailField label="Lifts" value={String(proposal.liftCount)} />
+                <DetailField
+                  label="Snow Reliability"
+                  value={
+                    snowReliabilityLabels[proposal.snowReliability] ??
+                    proposal.snowReliability
+                  }
+                />
+                <DetailField
+                  label="Ski Season"
+                  value={proposal.skiSeasonMonths}
+                />
+                <DetailField
+                  label="Nearest Airport"
+                  value={proposal.nearestAirport}
+                />
+                <DetailField
+                  label="Transfer Time"
+                  value={formatTransferTime(proposal.transferTime)}
+                />
+                {proposal.websites && proposal.websites.length > 0 && (
                   <DetailField
-                    label="End Date"
-                    value={formatDate(proposal.endDate)}
-                  />
-                  <DetailField
-                    label="Altitude Range"
-                    value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
-                  />
-                  <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
-                  <DetailField label="Piste Breakdown">
-                    <PisteBreakdown
-                      beginnerPct={proposal.beginnerPct}
-                      intermediatePct={proposal.intermediatePct}
-                      advancedPct={proposal.advancedPct}
-                    />
+                    label="Websites"
+                    style={{ gridColumn: 'span 2' }}
+                  >
+                    <ul style={styles.websiteList}>
+                      {proposal.websites.map((url) => (
+                        <li key={url}>
+                          <a
+                            href={sanitizeUrl(ensureUrlScheme(url))}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              ...detailStyles.websiteLink,
+                              textDecoration:
+                                hoveredWebsite === url ? 'underline' : 'none',
+                            }}
+                            onMouseEnter={() => setHoveredWebsite(url)}
+                            onMouseLeave={() => setHoveredWebsite(null)}
+                          >
+                            {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
                   </DetailField>
-                  <DetailField
-                    label="Lifts"
-                    value={String(proposal.liftCount)}
-                  />
-                  <DetailField
-                    label="Snow Reliability"
-                    value={
-                      snowReliabilityLabels[proposal.snowReliability] ??
-                      proposal.snowReliability
-                    }
-                  />
-                  <DetailField
-                    label="Ski Season"
-                    value={proposal.skiSeasonMonths}
-                  />
-                  <DetailField
-                    label="Nearest Airport"
-                    value={proposal.nearestAirport}
-                  />
-                  <DetailField
-                    label="Transfer Time"
-                    value={formatTransferTime(proposal.transferTime)}
-                  />
-                  {proposal.websites && proposal.websites.length > 0 && (
-                    <DetailField
-                      label="Websites"
-                      style={{ gridColumn: 'span 2' }}
-                    >
-                      <ul style={styles.websiteList}>
-                        {proposal.websites.map((url) => (
-                          <li key={url}>
-                            <a
-                              href={sanitizeUrl(ensureUrlScheme(url))}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{
-                                ...detailStyles.websiteLink,
-                                textDecoration:
-                                  hoveredWebsite === url ? 'underline' : 'none',
-                              }}
-                              onMouseEnter={() => setHoveredWebsite(url)}
-                              onMouseLeave={() => setHoveredWebsite(null)}
-                            >
-                              {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </DetailField>
-                  )}
-                </div>
-                {proposal.linkedResortsDescription && (
-                  <div style={styles.descriptionSection}>
-                    <DetailField label="Linked Resorts">
-                      <Paragraphs
-                        text={proposal.linkedResortsDescription}
-                        style={detailStyles.descriptionText}
-                      />
-                    </DetailField>
-                  </div>
                 )}
-                {proposal.description && (
-                  <DetailField label="Description">
+              </div>
+              {proposal.linkedResortsDescription && (
+                <div style={styles.descriptionSection}>
+                  <DetailField label="Linked Resorts">
                     <Paragraphs
-                      text={proposal.description}
+                      text={proposal.linkedResortsDescription}
                       style={detailStyles.descriptionText}
                     />
                   </DetailField>
-                )}
-                {canAct && (
-                  <div style={styles.editButtonRow}>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditing(true)}
-                      style={styles.accommodationEditButton}
-                      aria-label="Edit proposal"
-                    >
-                      Edit
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                </div>
+              )}
+              {proposal.description && (
+                <DetailField label="Description">
+                  <Paragraphs
+                    text={proposal.description}
+                    style={detailStyles.descriptionText}
+                  />
+                </DetailField>
+              )}
+              {canAct && (
+                <div style={styles.editButtonRow}>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    style={styles.accommodationEditButton}
+                    aria-label="Edit proposal"
+                  >
+                    Edit
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {!previewMode && activeTab === 'accommodations' && (
             <div style={styles.accommodationsSection}>
@@ -1050,6 +1045,9 @@ const styles = {
     borderTop: borders.subtle,
     paddingTop: '10px',
     marginBottom: '10px',
+    flex: '1 1 0%',
+    minHeight: 0,
+    overflowY: 'auto' as const,
   },
   tabs: {
     display: 'flex',
@@ -1060,9 +1058,11 @@ const styles = {
     flexShrink: 0,
   },
   tabContent: {
-    overflowY: 'auto' as const,
-    flex: '1 1 auto',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    flex: '1 1 0%',
     minHeight: 0,
+    overflow: 'hidden',
   },
   tabActive: {
     padding: '10px 20px',
@@ -1104,6 +1104,9 @@ const styles = {
   accommodationsSection: {
     paddingTop: '10px',
     marginBottom: '10px',
+    flex: '1 1 0%',
+    minHeight: 0,
+    overflowY: 'auto' as const,
   },
   noAccommodations: {
     fontFamily: fonts.body,

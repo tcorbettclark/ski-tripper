@@ -298,7 +298,9 @@ const sectionStyles = {
   container: {
     display: 'flex',
     flexDirection: 'column' as const,
-    height: '100%',
+    flex: '1 1 0%',
+    minHeight: 0,
+    overflow: 'hidden',
   },
   commentList: {
     flex: '1 1 auto',
