@@ -54,7 +54,7 @@ Having organised a boys ski trip for a few years, I thought an application could
 5. To **assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
 6. To **automate the testing of the applicaton UI** by performing user interactions using a headless browser, looking for bugs and increasing confidence that the application behaves in a reasonable way.
 
-## Technical
+## Technical Overview
 
 A brief overview of the technical stack, architecture, development practices, and provisioning.
 
@@ -133,7 +133,7 @@ SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`
 
 ### Resort data
 
-The resort catalogue is generated offline via a pipeline (`bun run tools:resorts`) and uploaded to PocketBase. Hence adding or improving the resort catalogue does not involve any server-side changes or updates to source code.
+The resort catalogue is generated offline via a pipeline (`bun run tools:resorts`) and uploaded to PocketBase. Hence, adding or improving the resort catalogue does not involve any server-side changes or changes to the source code.
 
 The tool has six subcommands: `seed`, `enrich`, `audit`, `encode`, `build`, and `upload` (plus `deploy` which chains encode → build → upload).
 
