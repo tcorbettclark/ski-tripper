@@ -1,4 +1,4 @@
-name: Bun CI
+name: CI
 
 on:
   push:
