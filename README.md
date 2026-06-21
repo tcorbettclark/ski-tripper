@@ -2,15 +2,15 @@
 
 # Ski Tripper
 
-## What is it?
+## What is this?
 
-A collaborative ski trip planning application to help groups of friends find and discuss resorts, and make a decision through one or more rounds of voting.
+A collaborative ski trip planning application to help groups of friends find and discuss resorts, and select by concensus through one or more rounds of voting.
 
-It takes a "resort-first" approach. The trip is "an idea" (e.g. "let's go skiing in 2027"). Each trip holds multiple proposals. Each proposal has detail about the skiing experience at a particular resort (piste km, altitude range, transfer times to nearest international airport, difficulty levels, etc). Each proposal also has begin and end dates (because the best dates may depend on race events or other annual events at the specific resort). Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
+It takes a "resort-first" approach. The trip is "an idea" (e.g. "let's go skiing in 2027"). Multiple proposals are attached to the trip. Each proposal has detail about the skiing experience at a particular resort (piste km, altitude range, transfer times to nearest international airport, difficulty levels, etc). Each proposal also has begin and end date (because the best dates may depend on notable annual events such as races specific to the resort). Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
 
-So friends belong to the pending trip, make proposals about different resorts, with proposal-specific accommodations and dates, and then vote.
+In short: friends join the pending trip idea, make proposals about different resorts, with proposal-specific accommodations and dates, and then vote.
 
-In this sense, it is not "date-first" or "hotel-first" like many other sites. Existing websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can be used to find accommodations as part of the proposal drafting process.
+Many holiday sites start with a search by date, departure airports, and rough location, before presenting hotels to choose from. Useful in part, but less helpfull if people are travelling from different places, may want to stay in different accommodation, and most importantly: **does not help the group find resorts and decide primarily upon the skiing experience on the mountain**. Of course, websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can and should all be used to find accommodations as part of the proposal drafting process.
 
 ## How does it work?
 
