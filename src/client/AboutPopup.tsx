@@ -30,7 +30,10 @@ export default function AboutPopup({
         if (!res.ok) throw new Error(`Failed to load README (${res.status})`)
         return res.text()
       })
-      .then((text) => setContent(text))
+      .then((text) => {
+        const trimmed = text.replace(/^.*# Ski Tripper\s*/s, '')
+        setContent(trimmed)
+      })
       .catch((err) => setError(err.message))
   }, [open, readmeUrl])
 

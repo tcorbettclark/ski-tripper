@@ -39,7 +39,7 @@ describe('AboutPopup', () => {
       render(<AboutPopup open={true} onClose={() => {}} readmeUrl={testUrl} />)
     })
     expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy()
-    expect(screen.getByText('Ski Tripper')).toBeTruthy()
+    expect(screen.getByText('What is it?')).toBeTruthy()
   })
 
   it('fetches and displays README as markdown', async () => {
@@ -47,8 +47,8 @@ describe('AboutPopup', () => {
     await act(async () => {
       render(<AboutPopup open={true} onClose={() => {}} readmeUrl={testUrl} />)
     })
-    expect(screen.getByText('Ski Tripper')).toBeTruthy()
     expect(screen.getByText('What is it?')).toBeTruthy()
+    expect(screen.getByText(/Ski Tripper is a collaborative/)).toBeTruthy()
   })
 
   it('shows error when fetch fails', async () => {
@@ -118,6 +118,17 @@ describe('AboutPopup', () => {
       render(<AboutPopup open={true} onClose={() => {}} readmeUrl={testUrl} />)
     })
     expect(globalThis.fetch).toHaveBeenCalledWith(testUrl)
+  })
+
+  it('trims content before and including the first h1 heading', async () => {
+    const badgeAndTitle = `[![CI](badge.svg)](url)\n\n# Ski Tripper\n\n## Overview\n\nSome content.`
+    mockFetchResponse(badgeAndTitle)
+    await act(async () => {
+      render(<AboutPopup open={true} onClose={() => {}} readmeUrl={testUrl} />)
+    })
+    expect(screen.queryByText('Ski Tripper')).toBeNull()
+    expect(screen.getByText('Overview')).toBeTruthy()
+    expect(screen.getByText('Some content.')).toBeTruthy()
   })
 
   it('renders GFM tables', async () => {
