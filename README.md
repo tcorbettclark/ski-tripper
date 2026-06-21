@@ -12,6 +12,8 @@ So a trip has multiple proposals, each proposal details a resort, the dates, and
 
 Existing websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can be used to find accommodations.
 
+## How does it work?
+
 Low-friction onboarding:
   - everyone signs up with their email
   - each person sets their personal skiing preferences (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants *and AI* can see the kind of trip you like
@@ -36,7 +38,7 @@ Weighted token voting, not just one pick:
 Guided "what next?" prompting:
   - show each person what they could do next - submit their draft, comment on a proposal, vote before the poll closes, etc
 
-## Who built it?
+## Who created it?
 
 My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life; have academic origins in engineering, computer science, and AI research; was a CTO in Life Sciences for 20 years; and am now semi-retired enjoying all sorts of interesting things.
   
