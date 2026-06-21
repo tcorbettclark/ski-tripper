@@ -582,6 +582,7 @@ export default function ProposalCard({
               {canAct && !addingAccommodation && accommodations.length < 5 && (
                 <button
                   type="button"
+                  data-testid="add-accommodation-btn"
                   onClick={() => {
                     setAddingAccommodation(true)
                     setAccommodationError(null)
@@ -961,6 +962,7 @@ function AccommodationEditForm({
         <div style={accFormStyles.actionsRight}>
           <button
             type="submit"
+            data-testid="acc-save-btn"
             disabled={saving}
             style={accFormStyles.saveButton}
           >

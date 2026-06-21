@@ -171,7 +171,22 @@ export class ProposalsPage {
       description: 'Great resort',
     })
     await this.submitButton.click()
-    await expect(this.page.getByText(resortName)).toBeVisible()
+    await expect(this.page.getByText(resortName).first()).toBeVisible()
+  }
+
+  async addAccommodation(name: string) {
+    await this.page
+      .getByRole('button', { name: /^accommodations/i })
+      .first()
+      .click()
+    await this.page.getByTestId('add-accommodation-btn').click()
+    await this.page.locator('#acc-name').fill(name)
+    await this.page.getByTestId('acc-save-btn').click()
+    await expect(this.page.getByText(name)).toBeVisible({ timeout: 10000 })
+  }
+
+  async dismissSubmitDialog() {
+    await this.page.getByRole('button', { name: /^ok$/i }).click()
   }
 
   async submitProposal() {

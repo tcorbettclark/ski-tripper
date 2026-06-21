@@ -63,8 +63,9 @@ test.describe('Proposals and voting', () => {
       description: 'Great resort',
     })
     await proposals.submitButton.click()
-    await expect(page.getByText('Chamonix')).toBeVisible()
+    await expect(page.getByText('Chamonix').first()).toBeVisible()
 
+    await proposals.addAccommodation('Hotel Mont Blanc')
     await proposals.proposalSubmitBtn.click()
     await expect(page.getByText(/submitted/i)).toBeVisible()
   })
@@ -75,6 +76,7 @@ test.describe('Proposals and voting', () => {
     const proposals = new ProposalsPage(page)
     await proposals.goToProposalsTab()
     await proposals.createDraftProposal('Zermatt')
+    await proposals.addAccommodation('Hotel Zermatt')
     await proposals.proposalSubmitBtn.click()
     await expect(page.getByText(/submitted/i)).toBeVisible()
 
@@ -94,6 +96,7 @@ test.describe('Proposals and voting', () => {
     const proposals = new ProposalsPage(page)
     await proposals.goToProposalsTab()
     await proposals.createDraftProposal('Morzine')
+    await proposals.addAccommodation('Hotel Morzine')
     await proposals.proposalSubmitBtn.click()
     await expect(page.getByText(/submitted/i)).toBeVisible()
 
