@@ -167,6 +167,10 @@ type ResolvedEnrichData = Omit<
   'transferTime'
 > & { transferTime: number | null }
 
+type EnrichResult =
+  | { ok: true; data: ResolvedEnrichData }
+  | { ok: false; reason: string }
+
 const enrichDefaults: Record<string, string | string[] | number | null> = {
   terrainDescription: '',
   offPisteDescription: '',
@@ -227,7 +231,7 @@ async function enrichResort(
   seeded: SeededResort,
   maxRetries: number,
   freshnessYear: number = DEFAULT_FRESHNESS_YEAR
-): Promise<ResolvedEnrichData | null> {
+): Promise<EnrichResult> {
   const responseCodec = jsonCodec(enrichSchema)
 
   log(
@@ -366,7 +370,7 @@ async function enrichResort(
 
   if (!sourceText) {
     log('error', 'enrich', 'No source text found', 1)
-    return null
+    return { ok: false, reason: 'no source text from Exa' }
   }
 
   if (includedCount < sourceBlocks.length) {
@@ -489,7 +493,7 @@ async function enrichResort(
         messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
         continue
       }
-      return null
+      return { ok: false, reason: 'stream error' }
     }
 
     if (!content) {
@@ -505,7 +509,7 @@ async function enrichResort(
           messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
           continue
         }
-        return null
+        return { ok: false, reason: 'LLM hit token limit' }
       }
       log(
         'warn',
@@ -520,7 +524,7 @@ async function enrichResort(
         messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
         continue
       }
-      return null
+      return { ok: false, reason: 'LLM returned empty content' }
     }
 
     try {
@@ -537,7 +541,7 @@ async function enrichResort(
       log('success', 'enrich', `Successfully enriched "${resortName}"`, 1)
       const defaulted = withDefaults(result)
       defaulted.websites = cleanUrls(defaulted.websites)
-      return defaulted
+      return { ok: true, data: defaulted }
     }
 
     lastContent = content
@@ -551,7 +555,7 @@ async function enrichResort(
       1
     )
     if (attempt >= maxRetries) {
-      return null
+      return { ok: false, reason: 'failed to parse LLM response' }
     }
 
     messages.push({
@@ -565,7 +569,7 @@ async function enrichResort(
     })
   }
 
-  return null
+  return { ok: false, reason: 'exhausted retries' }
 }
 
 function toEnrichedEntry(
@@ -1081,6 +1085,7 @@ async function enrich(options: {
   let enrichedCount = 0
   let skipped = 0
   let totalInconsistenciesFixed = 0
+  const skippedResorts: Array<{ id: string; name: string; reason: string }> = []
 
   const maxResorts = options.maxResorts
   if (maxResorts != null && maxResorts < toEnrich.length) {
@@ -1118,25 +1123,30 @@ async function enrich(options: {
       maxRetries,
       freshnessYear
     )
-    if (!result) {
+    if (!result.ok) {
       log(
         'warn',
         'enrich',
         `Failed to enrich ${seededResort.resortName}, skipping.`,
         1
       )
+      skippedResorts.push({
+        id: seededResort.id,
+        name: seededResort.resortName,
+        reason: result.reason,
+      })
       skipped++
       continue
     }
 
     let enrichedEntry: EnrichedResort
     if (reEnrichMode && existing && mode === 'fill') {
-      const merged = mergeEnriched(existing, result, seededResort)
+      const merged = mergeEnriched(existing, result.data, seededResort)
       const lowFields = listLowQualityFields(existing)
       log('info', 'enrich', `Filled fields: ${lowFields.join(', ')}`, 1)
       enrichedEntry = merged
     } else {
-      enrichedEntry = toEnrichedEntry(seededResort, result)
+      enrichedEntry = toEnrichedEntry(seededResort, result.data)
     }
     enrichedById.set(seededResort.id, enrichedEntry)
     enrichedCount++
@@ -1166,6 +1176,12 @@ async function enrich(options: {
     'enrich',
     `Done. Enriched: ${enrichedCount}, Skipped: ${skipped}, Inconsistencies fixed: ${totalInconsistenciesFixed}, Total: ${toEnrich.length}`
   )
+  if (skippedResorts.length > 0) {
+    log('warn', 'enrich', 'Skipped resorts:')
+    for (const r of skippedResorts) {
+      log('warn', 'enrich', `  ${r.name} (${r.id}): ${r.reason}`, 1)
+    }
+  }
 }
 
 function computeSearchText(
