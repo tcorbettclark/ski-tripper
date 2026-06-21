@@ -133,15 +133,17 @@ SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`
 
 ### Resort data
 
-The resort catalogue is generated offline via a pipeline (`bun run tools:resorts`) with six subcommands: `seed`, `enrich`, `audit`, `encode`, `build`, and `upload` (plus `deploy` which chains encode → build → upload).
+The resort catalogue is generated offline via a pipeline (`bun run tools:resorts`) and uploaded to PocketBase. Hence adding or improving the resort catalogue does not involve any server-side changes or updates to source code.
+
+The tool has six subcommands: `seed`, `enrich`, `audit`, `encode`, `build`, and `upload` (plus `deploy` which chains encode → build → upload).
 
 | Stage | Input | Output | What happens |
 |-------|-------|--------|---------------|
 | **Seed** | OpenSkiMap CSVs (ski areas, lifts, runs) | `seeded.jsonl` | Download & cache CSVs; filter for operating downhill resorts with ≥5 km pistes and ≥1 non-surface lift; compute difficulty percentages from run data; map countries to 17 ski regions; generate slug IDs |
 | **Enrich** | `seeded.jsonl` + Exa web search + Ollama LLM | `enriched.jsonl` | For each resort, run 4 parallel Exa searches (authoritative ski sources, general, airports, linked resorts); feed results to an LLM to extract descriptions (terrain, off-piste, value, family, après-ski, lift system), airport/transfer, snow reliability, and season; a separate LLM audits for contradictions with seeded numeric fields and corrects them; URLs are cleaned and deduplicated |
 | **Audit** | `enriched.jsonl` | quality reports | Check for empty/low-quality fields, invalid values, orphans, and duplicates |
-| **Encode** | `enriched.jsonl` | `encoded.jsonl` | Concatenate name, country, region, and all enriched descriptions into search text; generate embeddings using `Xenova/multi-qa-MiniLM-L6-cos-v1`; incremental — skips resorts whose search text hasn't changed |
-| **Build** | `seeded.jsonl` + `enriched.jsonl` + `encoded.jsonl` | `all.jsonl` | Take the intersection of all three files; merge seeded and enriched data (enriched overrides numeric fields if corrected by audit); build a combined description; flatten into a single record per resort |
-| **Upload** | `all.jsonl` | PocketBase `resorts` collection | Authenticate as admin; delete all existing records; upload the full JSONL as a single file attachment |
+| **Encode** | `enriched.jsonl` | `encoded.jsonl` | Concatenate name, country, region, and all enriched descriptions into search text; generate embeddings using `Xenova/multi-qa-MiniLM-L6-cos-v1` |
+| **Build** | `seeded.jsonl` + `enriched.jsonl` + `encoded.jsonl` | `all.jsonl` | Merge seeded and enriched data (enriched overrides numeric fields if corrected by audit); build a combined description; flatten into a single record per resort |
+| **Upload** | `all.jsonl` | PocketBase file | Upload the full JSONL as a single file attachment to PocketBase, replacing previous records. |
 
-On the client, the JSONL file is fetched from PocketBase, parsed line-by-line, and used for embedding-based resort search.
+On the client, the JSONL file is fetched from PocketBase and parsed line-by-line.
