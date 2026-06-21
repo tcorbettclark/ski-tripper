@@ -40,12 +40,12 @@ Having organised a boys ski trip for a few years, I thought an application could
 
 ## How is AI used?
 
-1. To build the application. I experimented with a number of tools and models, settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
-2. To create a rich catalogue of resorts with standard fields and descriptions. This required seeding the list, enriching from qualified sources, assessing quality and fixing inconsistencies in the result using an independent model.
-3. To make it easier for users to search the catalogue of resorts. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
-4. Further, an LLM is used to generate resort search text from participant preferences, to make it easier to home in on candidate resorts the group will enjoy.
-5. To assess a proposal against the likes/dislikes of the participants. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
-6. Lastly, AI was used to automate the testing of the applicaton UI, by simulating user interactions and verifying the application behaves in a resonable way.
+1. *To build the application*. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
+2. *To create a rich catalogue of resorts with standard fields and descriptions*. This required seeding the list, enriching from qualified sources, assessing quality and fixing inconsistencies in the result using an independent model.
+3. *To make it easier for users to search the catalogue of resorts*. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
+4. Further, an LLM is used *to generate resort search text from participant preferences*, to make it easier to home in on candidate resorts the group will enjoy.
+5. *To assess a proposal against the likes/dislikes of the participants*. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
+6. Lastly, AI was used *to automate the testing of the applicaton UI*, by simulating user interactions and verifying the application behaves in a resonable way.
   
 ## Development
 
@@ -72,11 +72,11 @@ Versioning follows [Semantic Versioning](https://semver.org/), and uses `bun pm 
 - [PocketBase](https://pocketbase.io/) for the backend database and authentication.
 - [Resend](https://resend.com/) for email delivery.
 - [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
-- A bun/typescript server to run the backend LLM functions.
+- A bun/typescript server to run the backend LLM functions using a cloud LLM provider.
 
 ## Hosting
 
-The app runs on a single 1G DigitalOcean droplet (Ubuntu 24.04) with three systemd services:
+The app runs fine on a single 1G [DigitalOcean droplet](https://www.digitalocean.com/products/droplets/) (Ubuntu 24.04) with three [systemd services](https://www.freedesktop.org/wiki/Software/systemd/):
 
 | Service | User | Description |
 |---------|------|-------------|
