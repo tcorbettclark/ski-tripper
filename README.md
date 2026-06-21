@@ -4,12 +4,18 @@
 
 ## What is it?
 
-A collaborative ski trip planning application to help groups of friends find and discuss resorts, and make a decision through one or more voting rounds.
+A collaborative ski trip planning application to help groups of friends find and discuss resorts, and make a decision through one or more rounds of voting.
+
+It takes a "resort-first" approach. The trip is "an idea" (e.g. "let's go skiing in 2027"). Each trip has multiple proposals. Each proposal has lots of detail about the skiing experience at the resort (piste km, altitude range, snow reliability, transfer times, difficulty levels, and AI generated descriptions, etc). Each proposal also has begin/end dates (because the best dates may depend on race events or other annual events at the specific resort). Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
+
+So a trip has multiple proposals, each proposal details a resort, the dates, and multiple accommodations. And each proposal is voted on by the group members.
+
+Existing websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can be used to find accommodations.
 
 Low-friction onboarding:
-  - signup with your email
-  - set your personal skiing preferences (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants *and AI* can see the kind of trip you like
-  - one person (the nominated "coordinator") creates a trip and asks friends to join via a simple three-word code
+  - everyone signs up with their email
+  - each person sets their personal skiing preferences (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants *and AI* can see the kind of trip you like
+  - one person (the nominated "coordinator") creates a "trip" and asks friends to join via a simple three-word code
 
 Browse thousands of resorts:
   - use a fast, searchable, filterable database packed with detail: piste km, altitude range, snow reliability, transfer times, difficulty levels, AI generated descriptions, linked resorts,and more
