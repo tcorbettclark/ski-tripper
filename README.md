@@ -47,18 +47,28 @@ Having organised a boys ski trip for a few years, I thought an application could
 
 ## How is AI used?
 
-1. **To build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
-2. **To create a rich catalogue of resorts with standard fields and descriptions**. This required seeding the list, enriching from qualified sources, assessing quality, and fixing inconsistencies in the result using an independent model.
-3. **To make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
-4. **To generate resort search text from participant preferences**. Further, an LLM is used **to generate resort search text from participant preferences**, to make it easier to home in on candidate resorts the group will enjoy.
-5. **To assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
-6. **To automate the testing of the applicaton UI**. Lastly, AI was used **to automate the testing of the UI** by performing user interactions using a headless browser to find bugs and verify that the application behaves in a reasonable way.
+1. To **build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
+2. To **create a rich catalogue of resorts with standard fields and descriptions**. This required seeding the list, enriching from qualified sources, assessing quality, and fixing inconsistencies in the result using an independent model.
+3. To **make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
+4. To **generate resort search text from participant preferences**, and so make it easier to home in on candidate resorts the group will enjoy.
+5. To **assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
+6. To **automate the testing of the applicaton UI** by performing user interactions using a headless browser, looking for bugs and increasing confidence that the application behaves in a reasonable way.
 
 ## Technical
 
+A brief overview of the technical stack, architecture, development practices, and provisioning.
+
+### Architecture
+
+- [React](https://react.dev/) for the frontend UI application.
+- [PocketBase](https://pocketbase.io/) for the backend database and authentication.
+- [Resend](https://resend.com/) for email delivery.
+- [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
+- A bun/typescript server to run the backend LLM functions using a cloud LLM provider.
+
 ### Development
 
-Configured for OpenCode development.
+Lightly configured for development using [OpenCode](https://opencode.ai/).
 
 Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some convenient aliases and hooks have been added to `.config/wt.toml`, resulting in the following workflow:
 
@@ -71,17 +81,9 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 | Sync main back to all worktrees                         | `wts`                | `wt sync-all-from-main`                          |
 | Push main (commits + annotated tags) to origin          | `wtp`                | `git push --follow-tags origin main`             |
 
-Testing is done with unit testing and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
+Testing is done with unit testing (`bun test`) and with [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
 
-Versioning follows [Semantic Versioning](https://semver.org/), using `bun pm version patch|minor|major` (which creates an annotated tag). Push commits and tags together from the root worktree with `wtp`.
-
-### Architecture
-
-- [React](https://react.dev/) for the frontend UI application.
-- [PocketBase](https://pocketbase.io/) for the backend database and authentication.
-- [Resend](https://resend.com/) for email delivery.
-- [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
-- A bun/typescript server to run the backend LLM functions using a cloud LLM provider.
+Versioning follows [Semantic Versioning](https://semver.org/), best managed with `bun pm version patch|minor|major` to clock the version in the source and create an annotated tag. THe `wtp` alias then pushes commits and tags to GitHub ready for provisioning.
 
 ### Hosting
 
