@@ -1,3 +1,4 @@
+import { Info } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type {
   Participant,
@@ -5,6 +6,7 @@ import type {
   ResortWithEmbedding,
   Trip,
 } from '../shared/types.d'
+import AboutPopup from './AboutPopup'
 import AuthForm from './AuthForm'
 import {
   createPreferences as _createPreferences,
@@ -173,6 +175,7 @@ export default function App({
     null
   )
   const [resorts, setResorts] = useState<ResortWithEmbedding[]>([])
+  const [aboutOpen, setAboutOpen] = useState(false)
   const autoSelectedRef = useRef(false)
 
   useEffect(() => {
@@ -333,9 +336,37 @@ export default function App({
   if (checking) return null
 
   if (!user) {
+    const aboutButton = (
+      <button
+        type="button"
+        onClick={() => setAboutOpen(true)}
+        style={{
+          position: 'fixed',
+          top: '16px',
+          left: '16px',
+          zIndex: 2,
+          background: 'none',
+          border: 'none',
+          color: colors.textSecondary,
+          fontFamily: fonts.body,
+          fontSize: fontSizes.sm,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '4px 8px',
+          lineHeight: 1,
+        }}
+        aria-label="About Ski Tripper"
+      >
+        <Info size={14} />
+        About
+      </button>
+    )
     if (resetPasswordToken) {
       return (
         <>
+          {aboutButton}
           <ResetPasswordForm
             token={resetPasswordToken}
             onSuccess={() => {
@@ -346,12 +377,14 @@ export default function App({
             confirmPasswordReset={confirmPasswordReset}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+          <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </>
       )
     }
     if (emailChangeToken) {
       return (
         <>
+          {aboutButton}
           <ConfirmEmailChangeScreen
             token={emailChangeToken}
             onSuccess={() => {
@@ -364,19 +397,23 @@ export default function App({
             }}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+          <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </>
       )
     }
     if (page === 'forgotPassword') {
       return (
         <>
+          {aboutButton}
           <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+          <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </>
       )
     }
     return (
       <>
+        {aboutButton}
         <AuthForm
           mode={page as 'login' | 'signup'}
           onSuccess={login}
@@ -389,6 +426,7 @@ export default function App({
           }
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+        <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
       </>
     )
   }
