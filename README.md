@@ -4,7 +4,7 @@
 
 ## What is it?
 
-Ski Tripper is a collaborative ski trip planning application to try to cut down on the chaos.
+A collaborative ski trip planning application to help groups of people research and decide.
 
 Low-friction onboarding:
   - signup with your email.
@@ -22,7 +22,7 @@ Propose to discuss and refine:
   - submit ready for the next round of voting.
 
 Weighted token voting, not just one pick:
-  - the trip "coordinator" creates a poll from submitted proposals.
+  - the trip coordinator creates a poll from submitted proposals.
   - everyone distributes their votes across proposals (e.g. 3 tokens on your favourite, 1 on your backup).
   - each poll has an end date, but can be terminated early by the coordinator.
   - the coodinator decides the consequence of each poll (reject some and vote again, or just pick the winner if clear).
@@ -30,13 +30,20 @@ Weighted token voting, not just one pick:
 Guided "what next?" prompts:
   - show each person what they could do next - submit their draft, comment on a proposal, vote before the poll closes, etc.
 
+## Who built it?
+
+My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life, have an academic origin including AI research, was a CTO for 20 years, and am now semi-retired enjoying all sorts of interesting things.
+  
 ## Why did I build it?
 
-I built ski-tripper for two reasons: to learn about AI and to help organise boys ski trips.
+I built ski-tripper for two reasons: to learn about AI and to help organise Boys Ski Trips.
 
-AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense of the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
+AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense for the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
 
-Having organised a boys ski trip for a few years, I thought an application could add a bit of structure to the process, help cut down on some of the chaotic aspects, and simultaneously generate new ideas for destinations by separating the role of coordinator from the role of proposer.
+Having organised a boys ski trip for a few years, I thought an application could
+* add a bit of structure to the process,
+* help cut down on some of the chaos, and 
+* generate new ideas for destinations by separating the role of coordinator from the role of proposer.
 
 ## How is AI used?
 
