@@ -1,8 +1,10 @@
 [![Bun CI](https://github.com/tcorbettclark/ski-tripper/actions/workflows/bun.js.yml/badge.svg)](https://github.com/tcorbettclark/ski-tripper/actions/workflows/bun.js.yml)
 
-# About
+# Ski Tripper
 
-Ski Tripper - a collaborative ski trip planning application to try to cut down on the chaos.
+## What is it?
+
+Ski Tripper is a collaborative ski trip planning application to try to cut down on the chaos.
 
 Low-friction onboarding:
   - signup with your email.
@@ -28,7 +30,24 @@ Weighted token voting, not just one pick:
 Guided "what next?" prompts:
   - show each person what they could do next - submit their draft, comment on a proposal, vote before the poll closes, etc.
 
-# Development
+## Why did I build it?
+
+I built ski-tripper for two reasons: to learn about AI and to help organise boys ski trips.
+
+AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense of the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
+
+Having organised a boys ski trip for a few years, I thought an application could add a bit of structure to the process, help cut down on some of the chaotic aspects, and simultaneously generate new ideas for destinations by separating the role of coordinator from the role of proposer.
+
+## How is AI used?
+
+1. To build the application. I experimented with a number of tools and models, settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
+2. To create a rich catalogue of resorts with standard fields and descriptions. This required seeding the list, enriching from qualified sources, assessing quality and fixing inconsistencies in the result using an independent model.
+3. To make it easier for users to search the catalogue of resorts. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
+4. Further, an LLM is used to generate resort search text from participant preferences, to make it easier to home in on candidate resorts the group will enjoy.
+5. To assess a proposal against the likes/dislikes of the participants. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
+6. Lastly, AI was used to automate the testing of the applicaton UI, by simulating user interactions and verifying the application behaves in a resonable way.
+  
+## Development
 
 Configured for OpenCode development.
 
@@ -45,7 +64,9 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 
 Testing is done with unit testing and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
 
-# Architecture
+Versioning follows [Semantic Versioning](https://semver.org/), and uses `bun pm version patch|minor|major` with preversion/postversion lifecycle hooks.
+
+## Architecture
 
 - [React](https://react.dev/) for the frontend UI application.
 - [PocketBase](https://pocketbase.io/) for the backend database and authentication.
@@ -53,7 +74,7 @@ Testing is done with unit testing and [Playwright](https://playwright.dev/) + [M
 - [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
 - A bun/typescript server to run the backend LLM functions.
 
-# Hosting
+## Hosting
 
 The app runs on a single 1G DigitalOcean droplet (Ubuntu 24.04) with three systemd services:
 
