@@ -32,7 +32,7 @@ Guided "what next?" prompts:
 
 ## Who built it?
 
-My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life, have an academic origin including AI research, was a CTO for 20 years, and am now semi-retired enjoying all sorts of interesting things.
+My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life, have an academic origin including AI research, was a CTO in Life Sciencesfor 20 years, and am now semi-retired enjoying all sorts of interesting things.
   
 ## Why did I build it?
 
