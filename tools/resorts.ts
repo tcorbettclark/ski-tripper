@@ -1069,10 +1069,29 @@ async function enrich(options: {
     )
   }
 
+  const inRegionCount = options.region
+    ? seeded.filter((r) => r.region === options.region).length
+    : seeded.length
+  const enrichedInRegion = options.region
+    ? seeded.filter(
+        (r) => r.region === options.region && enrichedById.has(r.id)
+      ).length
+    : enrichedById.size
+  const notYetEnriched = inRegionCount - enrichedInRegion - toEnrich.length
+
+  const summaryParts = [
+    `${toEnrich.length} to enrich`,
+    `${enrichedInRegion} already enriched`,
+  ]
+  if (notYetEnriched > 0) {
+    summaryParts.push(`${notYetEnriched} not yet enriched`)
+  }
+  const summary = summaryParts.join(', ')
+
   log(
     'info',
     'enrich',
-    `Found ${toEnrich.length} resort(s) to enrich (out of ${seeded.length} total, ${enrichedById.size} already enriched)`
+    `Found ${summary} (out of ${inRegionCount}${options.region ? ` in ${options.region}` : ''} total)`
   )
   log('info', 'enrich', `Model: ${model}`)
 
