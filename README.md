@@ -53,18 +53,18 @@ Configured for OpenCode development.
 
 Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some convenient aliases and hooks have been added to `.config/wt.toml`, resulting in the following workflow:
 
-| Task                                                    | Example shell alias | Command                         |
-| ------------------------------------------------------- | ------------------- | ------------------------------- |
-| New worktree with `.env` and packages installed         | `wtn <worktree>`    | `wt switch --create <worktree>` |
-| Remove a worktree and clean everything up               | `wtr <worktree>`    | `wt remove <worktree>`          |
-| List all worktrees with their status                    | `wtl`               | `wt list`                       |
-| Run the dev server on a port unique to current worktree | `wtd`               | `wt step dev-server`            |
-| Merge current worktree back to main                     | `wtm`               | `wt step merge-and-continue`    |
-| Sync main back to all worktrees                         | `wts`               | `wt step sync-all-from-main`    |
+| Task                                                    | Shell alias          | Command                                          |
+| ------------------------------------------------------- | -------------------- | ------------------------------------------------ |
+| New worktree with `.env` and packages installed         | `wtn <worktree>`     | `wt switch --create <worktree>`                 |
+| Remove a worktree and clean everything up               | `wtr <worktree>`     | `wt remove <worktree>`                           |
+| List all worktrees with their status                    | `wtl`                | `wt list`                                        |
+| Merge current worktree back to main                     | `wtm`                | `wt merge-and-continue`                          |
+| Sync main back to all worktrees                         | `wts`                | `wt sync-all-from-main`                          |
+| Push main (commits + annotated tags) to origin          | `wtp`                | `git push --follow-tags origin main`             |
 
 Testing is done with unit testing and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
 
-Versioning follows [Semantic Versioning](https://semver.org/), and uses `bun pm version patch|minor|major` with preversion/postversion lifecycle hooks.
+Versioning follows [Semantic Versioning](https://semver.org/), using `bun pm version patch|minor|major` (which creates an annotated tag). Push commits and tags together from the root worktree with `wtp`.
 
 ## Architecture
 

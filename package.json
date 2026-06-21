@@ -39,7 +39,6 @@
     "build:caddy": "bun run infra/scripts/build-caddyfile.ts",
     "test": "bun test --max-concurrency 1",
     "preversion": "bun run check && bun run test",
-    "postversion": "git push && git push --tags",
     "check:fix": "bun tsc --noEmit && biome check --write",
     "check": "bun tsc --noEmit && biome ci",
     "tools:resorts": "bun run tools/resorts.ts",

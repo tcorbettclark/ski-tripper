@@ -15,14 +15,3 @@ sync-all-from-main = "wt step for-each -- sh -c 'git rebase main && wt step copy
 # Use from within a worktree to copy e.g. .env files to/from main.
 copy-to-main = "wt step copy-ignored --from {{ branch }} --to {{ default_branch }} --force"
 copy-from-main = "wt step copy-ignored --from {{ default_branch }} --to {{ branch }} --force"
-
-# Start up the developement server on a unique port (also shown in `wt list`).
-dev-server = "bun run dev --port={{ branch | hash_port }}"
-
-[list]
-# Include development server port in `wt list` output.
-url = "http://localhost:{{ branch | hash_port }}"
-
-[pre-remove]
-# Kill the development server process when a worktree is removed.
-server = "lsof -ti :{{ branch | hash_port }} -sTCP:LISTEN | xargs kill 2>/dev/null || true"
