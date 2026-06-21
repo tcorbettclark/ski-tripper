@@ -6,11 +6,11 @@
 
 A collaborative ski trip planning application to help groups of friends find and discuss resorts, and make a decision through one or more rounds of voting.
 
-It takes a "resort-first" approach. The trip is "an idea" (e.g. "let's go skiing in 2027"). Each trip has multiple proposals. Each proposal has lots of detail about the skiing experience at the resort (piste km, altitude range, snow reliability, transfer times, difficulty levels, and AI generated descriptions, etc). Each proposal also has begin/end dates (because the best dates may depend on race events or other annual events at the specific resort). Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
+It takes a "resort-first" approach. The trip is "an idea" (e.g. "let's go skiing in 2027"). Each trip holds multiple proposals. Each proposal has detail about the skiing experience at a particular resort (piste km, altitude range, transfer times to nearest international airport, difficulty levels, etc). Each proposal also has begin and end dates (because the best dates may depend on race events or other annual events at the specific resort). Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
 
-So a trip has multiple proposals, each proposal details a resort, the dates, and multiple accommodations. And each proposal is voted on by the group members.
+So friends belong to the pending trip, make proposals about different resorts, with proposal-specific accommodations and dates, and then vote.
 
-Existing websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can be used to find accommodations.
+In this sense, it is not "date-first" or "hotel-first" like many other sites. Existing websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can be used to find accommodations as part of the proposal drafting process.
 
 ## How does it work?
 
