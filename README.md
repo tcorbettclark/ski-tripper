@@ -6,7 +6,7 @@
 
 Ski Tripper is an application to help groups of friends find, discuss, and decide on a ski resort for a holiday, arriving at a concensus through one or more rounds of voting.
 
-It takes a "resort-first" approach. The trip is "an idea" (e.g. "let's go skiing in 2027"). Anyone can create proposals for a trip by browsing a resort catalog, adding proposal-specific accommodations and dates, and submitting for a vote. The AI generated catalog means each proposal has structured data on the skiing experience at the resort (piste km, altitude range, transfer times to nearest international airport, difficulty levels, etc). Each proposal also has a begin and end date because the best dates may depend on notable annual events such as races. Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
+It takes a "resort-first" approach. The trip is the holder of an idea (e.g. "let's go skiing in 2027"). Anyone can create proposals for a trip by browsing a resort catalog, adding proposal-specific accommodations and dates, and submitting for a vote. The AI generated catalog means each proposal has structured data on the skiing experience at the resort (piste km, altitude range, transfer times to nearest international airport, difficulty levels, etc). Each proposal also has a begin and end date because the best dates may depend on notable annual events such as races. Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
 
 Many holiday sites start with a search by date, departure airports, and rough location, before presenting a list of hotels to choose from. Useful in part, but less helpful if people are travelling from different places, may want to stay in different accommodation, and most importantly **does not really help the group find resorts based upon the on-mountain experience**. Of course, websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can and should all be used to find accommodations as part of the proposal drafting process.
 
@@ -38,7 +38,7 @@ Guided "what next?" prompting:
 
 ## Who created it?
 
-My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life; have academic origins in engineering, computer science, and AI research; was a CTO in Life Sciences for 20 years; and am now semi-retired enjoying all sorts of interesting things.
+My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life; have academic origins in engineering, computer science, and AI research; was a CTO in Life Sciences for 20 years; and am now semi-retired enjoying all sorts of interesting things. No surprise that I also love skiing.
   
 ## Why did I build it?
 
@@ -89,7 +89,7 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 
 Testing is done with unit testing, and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
 
-Versioning follows [Semantic Versioning](https://semver.org/), best managed with `bun pm version patch|minor|major` to clock the version in the source and create an annotated tag. THe `wtp` alias then pushes commits and tags to GitHub ready for provisioning.
+Versioning follows [Semantic Versioning](https://semver.org/), best managed with `bun pm version patch|minor|major` to clock the version in the source and create an annotated tag. The `wtp` alias then pushes commits and tags to GitHub ready for provisioning.
 
 ### Hosting
 
