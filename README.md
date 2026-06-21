@@ -68,7 +68,7 @@ A brief overview of the technical stack, architecture, development practices, an
 
 ### Development
 
-Lightly configured for development using [OpenCode](https://opencode.ai/).
+Lightly configured for development using the [OpenCode](https://opencode.ai/) coding agent.
 
 Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some convenient aliases and hooks have been added to `.config/wt.toml`, resulting in the following workflow:
 
@@ -81,7 +81,7 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 | Sync main back to all worktrees                         | `wts`                | `wt sync-all-from-main`                          |
 | Push main (commits + annotated tags) to origin          | `wtp`                | `git push --follow-tags origin main`             |
 
-Testing is done with unit testing (`bun test`) and with [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
+Testing is done with unit testing, and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
 
 Versioning follows [Semantic Versioning](https://semver.org/), best managed with `bun pm version patch|minor|major` to clock the version in the source and create an annotated tag. THe `wtp` alias then pushes commits and tags to GitHub ready for provisioning.
 
@@ -130,3 +130,18 @@ SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`
 | Caddy | `journalctl -u caddy` |
 | PocketBase | `journalctl -u ski-tripper-pb` |
 | API server | `journalctl -u ski-tripper-api` |
+
+### Resort data
+
+The resort catalogue is generated offline via a pipeline (`bun run tools:resorts`) with six subcommands: `seed`, `enrich`, `audit`, `encode`, `build`, and `upload` (plus `deploy` which chains encode → build → upload).
+
+| Stage | Input | Output | What happens |
+|-------|-------|--------|---------------|
+| **Seed** | OpenSkiMap CSVs (ski areas, lifts, runs) | `seeded.jsonl` | Download & cache CSVs; filter for operating downhill resorts with ≥5 km pistes and ≥1 non-surface lift; compute difficulty percentages from run data; map countries to 17 ski regions; generate slug IDs |
+| **Enrich** | `seeded.jsonl` + Exa web search + Ollama LLM | `enriched.jsonl` | For each resort, run 4 parallel Exa searches (authoritative ski sources, general, airports, linked resorts); feed results to an LLM to extract descriptions (terrain, off-piste, value, family, après-ski, lift system), airport/transfer, snow reliability, and season; a separate LLM audits for contradictions with seeded numeric fields and corrects them; URLs are cleaned and deduplicated |
+| **Audit** | `enriched.jsonl` | quality reports | Check for empty/low-quality fields, invalid values, orphans, and duplicates |
+| **Encode** | `enriched.jsonl` | `encoded.jsonl` | Concatenate name, country, region, and all enriched descriptions into search text; generate embeddings using `Xenova/multi-qa-MiniLM-L6-cos-v1`; incremental — skips resorts whose search text hasn't changed |
+| **Build** | `seeded.jsonl` + `enriched.jsonl` + `encoded.jsonl` | `all.jsonl` | Take the intersection of all three files; merge seeded and enriched data (enriched overrides numeric fields if corrected by audit); build a combined description; flatten into a single record per resort |
+| **Upload** | `all.jsonl` | PocketBase `resorts` collection | Authenticate as admin; delete all existing records; upload the full JSONL as a single file attachment |
+
+On the client, the JSONL file is fetched from PocketBase, parsed line-by-line, and used for embedding-based resort search.
