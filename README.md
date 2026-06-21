@@ -36,7 +36,7 @@ My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programme
   
 ## Why did I build it?
 
-I built ski-tripper for two reasons: to learn about AI and to help organise "Boys Ski Trips".
+I built ski-tripper for two reasons: to understand the practical state of AI today, and to help organise "Boys Ski Trips".
 
 AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense for the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
 
@@ -74,7 +74,7 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 
 | Task                                                    | Shell alias          | Command                                          |
 | ------------------------------------------------------- | -------------------- | ------------------------------------------------ |
-| New worktree with `.env` and packages installed         | `wtn <worktree>`     | `wt switch --create <worktree>`                 |
+| New worktree with `.env` and packages installed         | `wtn <worktree>`     | `wt switch --create <worktree>`                  |
 | Remove a worktree and clean everything up               | `wtr <worktree>`     | `wt remove <worktree>`                           |
 | List all worktrees with their status                    | `wtl`                | `wt list`                                        |
 | Merge current worktree back to main                     | `wtm`                | `wt merge-and-continue`                          |
@@ -101,14 +101,14 @@ No Docker involved — everything runs natively on the host.
 
 Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
 
-| Command | Description |
+| Sub-command | Description |
 |---------|-------------|
-| `bun run infra:provision create` | Create a droplet and reserved IP (idempotent) |
-| `bun run infra:provision configure` | Install dependencies and set up systemd services on an existing droplet |
-| `bun run infra:provision deploy` | Pull latest code, build, and restart services (default branch: main) |
-| `bun run infra:provision status` | Show service status, IP, and layout info |
-| `bun run infra:provision setup` | Create, configure, and deploy (full setup) |
-| `bun run infra:provision destroy` | Unassign IP and delete the droplet (preserves the reserved IP) |
+| `create` | Create a droplet and reserved IP (idempotent) |
+| `configure` | Install dependencies and set up systemd services on an existing droplet |
+| `status` | Show service status, IP, and layout info |
+| `setup` | Create, configure, and deploy (full setup) |
+| `deploy` | Pull latest code, build, and restart services (default branch: main) |
+| `destroy` | Unassign IP and delete the droplet (preserves the reserved IP) |
 
 ### Server layout
 
@@ -133,9 +133,9 @@ SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`
 
 ### Resort data
 
-The resort catalogue is generated offline via a pipeline (`bun run tools:resorts`) and uploaded to PocketBase. Hence, adding or improving the resort catalogue does not involve any server-side changes or changes to the source code.
+The resort catalogue is generated offline via a pipeline and uploaded to PocketBase. Hence, adding or improving the resort catalogue does not involve any server-side changes or changes to the source code.
 
-The tool has six subcommands: `seed`, `enrich`, `audit`, `encode`, `build`, and `upload` (plus `deploy` which chains encode → build → upload).
+The tool, `bun run tools:resorts`, has six sub-commands: `seed`, `enrich`, `audit`, `encode`, `build`, and `upload`.
 
 | Stage | Input | Output | What happens |
 |-------|-------|--------|---------------|
@@ -146,4 +146,4 @@ The tool has six subcommands: `seed`, `enrich`, `audit`, `encode`, `build`, and 
 | **Build** | `seeded.jsonl` + `enriched.jsonl` + `encoded.jsonl` | `all.jsonl` | Merge seeded and enriched data (enriched overrides numeric fields if corrected by audit); build a combined description; flatten into a single record per resort |
 | **Upload** | `all.jsonl` | PocketBase file | Upload the full JSONL as a single file attachment to PocketBase, replacing previous records. |
 
-On the client, the JSONL file is fetched from PocketBase and parsed line-by-line.
+On the client ikn the browser, the JSONL file is fetched from PocketBase and parsed line-by-line.
