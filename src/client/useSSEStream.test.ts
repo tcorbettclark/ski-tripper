@@ -55,10 +55,17 @@ describe('useSSEStream', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('fetches SSE endpoint when enabled for analysis', () => {
-    renderHook(() =>
-      useSSEStream({ type: 'analysis', tripId: 'trip-1', proposalId: 'prop-1' })
-    )
+  it('fetches SSE endpoint when enabled for analysis', async () => {
+    await act(() => {
+      renderHook(() =>
+        useSSEStream({
+          type: 'analysis',
+          tripId: 'trip-1',
+          proposalId: 'prop-1',
+        })
+      )
+    })
+    await act(() => new Promise((r) => setTimeout(r, 0)))
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url, options] = fetchMock.mock.calls[0]
     expect(url).toBe(browser_get_api_url('/api/analyse-proposal'))
@@ -69,10 +76,13 @@ describe('useSSEStream', () => {
     })
   })
 
-  it('fetches preference-search endpoint', () => {
-    renderHook(() =>
-      useSSEStream({ type: 'preference-search', tripId: 'trip-1' })
-    )
+  it('fetches preference-search endpoint', async () => {
+    await act(() => {
+      renderHook(() =>
+        useSSEStream({ type: 'preference-search', tripId: 'trip-1' })
+      )
+    })
+    await act(() => new Promise((r) => setTimeout(r, 0)))
     expect(fetchMock).toHaveBeenCalledTimes(1)
     const [url] = fetchMock.mock.calls[0]
     expect(url).toBe(browser_get_api_url('/api/preference-search'))
@@ -230,11 +240,16 @@ describe('useSSEStream', () => {
       )
     }) as unknown as typeof globalThis.fetch
 
-    const { unmount } = renderHook(() =>
-      useSSEStream({ type: 'analysis', tripId: 'trip-1' })
-    )
+    let unmount: () => void
+    await act(() => {
+      const result = renderHook(() =>
+        useSSEStream({ type: 'analysis', tripId: 'trip-1' })
+      )
+      unmount = result.unmount
+    })
+    await act(() => new Promise((r) => setTimeout(r, 0)))
 
-    unmount()
+    unmount!()
 
     const { result } = renderHook(() =>
       useSSEStream({ type: 'analysis', tripId: 'trip-1' })
@@ -245,13 +260,16 @@ describe('useSSEStream', () => {
     expect(result.current.status).not.toBe('error')
   })
 
-  it('sends authorization header', () => {
-    renderHook(() => useSSEStream({ type: 'analysis', tripId: 'trip-1' }))
+  it('sends authorization header', async () => {
+    await act(() => {
+      renderHook(() => useSSEStream({ type: 'analysis', tripId: 'trip-1' }))
+    })
+    await act(() => new Promise((r) => setTimeout(r, 0)))
     const [, options] = fetchMock.mock.calls[0]
     expect(options.headers.Authorization).toMatch(/^Bearer /)
   })
 
-  it('does not refetch for same params', () => {
+  it('does not refetch for same params', async () => {
     const { rerender } = renderHook(
       ({
         type,
@@ -270,13 +288,17 @@ describe('useSSEStream', () => {
         },
       }
     )
+    await act(() => new Promise((r) => setTimeout(r, 0)))
     expect(fetchMock).toHaveBeenCalledTimes(1)
 
-    rerender({ type: 'analysis', tripId: 'trip-1', proposalId: 'prop-1' })
+    await act(() => {
+      rerender({ type: 'analysis', tripId: 'trip-1', proposalId: 'prop-1' })
+    })
+    await act(() => new Promise((r) => setTimeout(r, 0)))
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('refetches when params change', () => {
+  it('refetches when params change', async () => {
     const { rerender } = renderHook(
       ({
         type,
@@ -295,9 +317,13 @@ describe('useSSEStream', () => {
         },
       }
     )
+    await act(() => new Promise((r) => setTimeout(r, 0)))
     expect(fetchMock).toHaveBeenCalledTimes(1)
 
-    rerender({ type: 'analysis', tripId: 'trip-1', proposalId: 'prop-2' })
+    await act(() => {
+      rerender({ type: 'analysis', tripId: 'trip-1', proposalId: 'prop-2' })
+    })
+    await act(() => new Promise((r) => setTimeout(r, 0)))
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
