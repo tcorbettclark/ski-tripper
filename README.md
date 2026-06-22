@@ -9,7 +9,7 @@ Ski Tripper helps groups of friends agree on the perfect ski holiday without the
 Instead of getting bogged down in flight times and hotel rooms on day one, Ski Tripper focuses on what actually matters: the mountain.
 
 - The "Trip" is your master plan: Think of a Trip as your group's shared folder (e.g., "Ski Trip 2027"). It’s the placeholder where everyone gathers ideas and votes.
-- Data-driven matchmaking: Everyone declares what they like (e.g., short airport transfers, high altitude, heavy on blues, off-piste). Our AI-powered catalog automatically scores resorts against your group's profile.
+- Data-driven matchmaking: Everyone declares what they like (e.g., short airport transfers, high altitude, heavy on blues, off-piste). The AI-powered catalog automatically scores resorts against your group's profile.
 - "Proposals" are the pitches: Anyone can build a concrete option (a "Proposal") inside the Trip. You pick a highly-rated resort, add dates that work around mountain events, and drop in a few accommodation choices so friends can split between hotels or cheaper apartments.
 - Structured voting: Once the options are locked in, the group votes in rounds until you systematically narrow it down to a winner.
 
