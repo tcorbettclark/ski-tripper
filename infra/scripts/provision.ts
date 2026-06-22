@@ -422,7 +422,8 @@ WantedBy=multi-user.target
 EOF"`
 
   await root`systemctl daemon-reload`
-  success('Systemd units installed')
+  await root`systemctl enable ski-tripper-pb ski-tripper-api caddy`
+  success('Systemd units installed and enabled')
 
   await root`mkdir -p /etc/caddy`
 
