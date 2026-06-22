@@ -22,7 +22,7 @@ import {
   type Participant as PSParticipant,
   type Preferences as PSPreferences,
 } from './logic/preference-search'
-import { extractUserIdFromToken, getAdminClient } from './pocketbase'
+import { getAdminClient, verifyTokenAndGetUserId } from './pocketbase'
 
 function createOllama(): Ollama {
   const ollamaApiKey = server_get_ollama_api_key()
@@ -428,9 +428,9 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
   }
   const authToken = authHeader.slice(7)
 
-  const userId = extractUserIdFromToken(authToken)
+  const userId = await verifyTokenAndGetUserId(authToken)
   if (!userId) {
-    console.log('[analysis] Invalid auth token - could not extract user ID')
+    console.log('[analysis] Invalid auth token - verification failed')
     return Response.json({ error: 'Invalid token' }, { status: 401 })
   }
   console.log(
@@ -546,11 +546,9 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
   }
   const authToken = authHeader.slice(7)
 
-  const userId = extractUserIdFromToken(authToken)
+  const userId = await verifyTokenAndGetUserId(authToken)
   if (!userId) {
-    console.log(
-      '[preference-search] Invalid auth token - could not extract user ID'
-    )
+    console.log('[preference-search] Invalid auth token - verification failed')
     return Response.json({ error: 'Invalid token' }, { status: 401 })
   }
   console.log(`[preference-search] Authenticated user ${userId}`)

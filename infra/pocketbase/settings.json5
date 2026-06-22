@@ -61,7 +61,7 @@
       { label: "/api/", audience: "", duration: 10, maxRequests: 300 },
     ],
     excludedIPs: [],
-    enabled: false,
+    enabled: true,
   },
 
   trustedProxy: {

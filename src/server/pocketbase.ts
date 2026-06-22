@@ -26,13 +26,21 @@ export async function getAdminClient(): Promise<PocketBase> {
   return adminClient
 }
 
-export function extractUserIdFromToken(authToken: string): string | null {
+export async function verifyTokenAndGetUserId(
+  authToken: string
+): Promise<string | null> {
+  const hostname = server_get_pocketbase_hostname()
+  const port = server_get_pocketbase_port()
+  const url = `http://${hostname}:${port}`
+
+  const pb = new PocketBase(url)
+  pb.authStore.save(authToken, null)
+
   try {
-    const parts = authToken.split('.')
-    if (parts.length !== 3) return null
-    const payload = JSON.parse(atob(parts[1]))
-    return payload.id ?? payload.sub ?? null
+    const authResponse = await pb.collection('users').authRefresh()
+    return authResponse.record.id
   } catch {
+    pb.authStore.clear()
     return null
   }
 }
