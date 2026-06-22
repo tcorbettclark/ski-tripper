@@ -1,3 +1,20 @@
+(security_headers) {
+	# Tell browsers to always use HTTPS for the next year, including subdomains
+	Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	# Prevent browsers from MIME-sniffing responses away from the declared content type
+	X-Content-Type-Options "nosniff"
+	# Block this site from being embedded in iframes on other origins (clickjacking protection)
+	X-Frame-Options "DENY"
+	# Disable legacy XSS filter — modern browsers don't need it and it can introduce vulnerabilities
+	X-XSS-Protection "0"
+	# Only send the origin when navigating to same-origin; strip referrer on cross-origin
+	Referrer-Policy "strict-origin-when-cross-origin"
+	# Disable browser APIs the app doesn't use
+	Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	# Remove Server header to reduce fingerprinting
+	-Server
+}
+
 __PUBLIC_DOMAIN__ {
 	log
 
@@ -5,22 +22,9 @@ __PUBLIC_DOMAIN__ {
 	encode gzip zstd
 
 	header {
-		# Tell browsers to always use HTTPS for the next year, including subdomains
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		# Prevent browsers from MIME-sniffing responses away from the declared content type
-		X-Content-Type-Options "nosniff"
-		# Block this site from being embedded in iframes on other origins (clickjacking protection)
-		X-Frame-Options "DENY"
-		# Disable legacy XSS filter — modern browsers don't need it and it can introduce vulnerabilities
-		X-XSS-Protection "0"
-		# Only send the origin when navigating to same-origin; strip referrer on cross-origin
-		Referrer-Policy "strict-origin-when-cross-origin"
+		import security_headers
 		# Restrict resource loading to known origins; data: and blob: needed for app icons
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com; font-src 'self'; frame-ancestors 'none'"
-		# Disable browser APIs the app doesn't use
-		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		# Remove Server header to reduce fingerprinting
-		-Server
 	}
 
 	# API endpoints — Bun server with SSE streaming for LLM responses
@@ -71,22 +75,9 @@ __PUBLIC_POCKETBASE_DOMAIN__ {
 	}
 
 	header {
-		# Tell browsers to always use HTTPS for the next year, including subdomains
-		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-		# Prevent browsers from MIME-sniffing responses away from the declared content type
-		X-Content-Type-Options "nosniff"
-		# Block this site from being embedded in iframes on other origins (clickjacking protection)
-		X-Frame-Options "DENY"
-		# Disable legacy XSS filter — modern browsers don't need it and it can introduce vulnerabilities
-		X-XSS-Protection "0"
-		# Only send the origin when navigating to same-origin; strip referrer on cross-origin
-		Referrer-Policy "strict-origin-when-cross-origin"
+		import security_headers
 		# CSP relaxed for PocketBase admin UI: inline scripts/eval, self connections, data/blob images
 		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self'; frame-ancestors 'none'"
-		# Disable browser APIs the app doesn't use
-		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		# Remove Server header to reduce fingerprinting
-		-Server
 	}
 
 	reverse_proxy __POCKETBASE_HOSTNAME__:__POCKETBASE_PORT__ {
