@@ -31,7 +31,7 @@ export default function AboutPopup({
         return res.text()
       })
       .then((text) => {
-        const trimmed = text.replace(/^.*# Ski Tripper\s*/s, '')
+        const trimmed = text.replace(/^.*?(#\s*Ski\s+Tripper)/s, '$1')
         setContent(trimmed)
       })
       .catch((err) => setError(err.message))
