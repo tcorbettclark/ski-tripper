@@ -32,8 +32,8 @@ __PUBLIC_DOMAIN__ {
 	}
 
 	# SPA routing: if the requested file doesn't exist on disk, serve index.html
-	# so client-side routing works. Real missing files (e.g. /robots.txt, /.env)
-	# will still 404 because they match the file matcher and aren't found.
+	# so client-side routing works. Requests for nonexistent files (e.g. /foo.bar)
+	# will 404 instead of returning index.html.
 	@notFile not file
 
 	handle {
