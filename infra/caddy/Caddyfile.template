@@ -35,19 +35,10 @@ __PUBLIC_DOMAIN__ {
 		}
 	}
 
-	# SPA routing: if the requested file doesn't exist on disk, serve index.html
-	# so client-side routing works. Requests for nonexistent files (e.g. /foo.bar)
-	# will 404 instead of returning index.html.
-	@notFile not file
-
+	# Static files — serve directly; missing files get 404 via handle_errors below
 	handle {
 		root * __STATIC_ROOT__
 		header Cache-Control "no-cache"
-
-		handle @notFile {
-			rewrite * /index.html
-		}
-
 		file_server
 	}
 
