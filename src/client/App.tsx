@@ -205,7 +205,7 @@ export default function App({
     if (window.location.pathname === '/reset-password') {
       setResetPasswordToken(token)
       setPasswordResetSuccess(false)
-      window.history.replaceState({}, '', window.location.pathname)
+      window.history.replaceState({}, '', '/')
       return
     }
     if (window.location.pathname === '/verify') {
@@ -221,7 +221,7 @@ export default function App({
     }
     if (window.location.pathname === '/confirm-email') {
       setEmailChangeToken(token)
-      window.history.replaceState({}, '', window.location.pathname)
+      window.history.replaceState({}, '', '/')
     }
   }, [confirmVerification, refreshUser])
 
