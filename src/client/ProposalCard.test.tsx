@@ -501,6 +501,7 @@ describe('ProposalCard', () => {
     expect(screen.getByLabelText('Name')).toBeDefined()
 
     await user.type(screen.getByLabelText('Name'), 'New Hotel')
+    await user.type(screen.getByLabelText('URL'), 'https://example.com')
     await user.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(createAccommodation).toHaveBeenCalledWith(
@@ -618,7 +619,7 @@ describe('ProposalCard', () => {
         updated: '2024-01-01T00:00:00Z',
         proposal: 'proposal-1',
         name: 'Hotel',
-        url: '',
+        url: 'https://example.com',
         cost: '',
         description: '',
       },

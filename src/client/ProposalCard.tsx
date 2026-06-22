@@ -34,7 +34,6 @@ import {
   formatDate,
   formatTransferTime,
   getErrorMessage,
-  isValidUrl,
   sanitizeUrl,
 } from './utils'
 
@@ -74,7 +73,7 @@ interface ProposalCardProps {
   createAccommodation?: (
     proposalId: string,
     userId: string,
-    data: { name: string; url?: string; cost?: string; description?: string }
+    data: { name: string; url: string; cost?: string; description?: string }
   ) => Promise<unknown>
   updateAccommodation?: (
     accommodationId: string,
@@ -245,7 +244,7 @@ export default function ProposalCard({
 
   async function handleAddAccommodation(data: {
     name: string
-    url?: string
+    url: string
     cost?: string
     description?: string
   }) {
@@ -511,24 +510,15 @@ export default function ProposalCard({
                     <div style={styles.accommodationItem}>
                       <div style={styles.accommodationItemContent}>
                         <div style={styles.grid}>
-                          <DetailField
-                            label="Name"
-                            value={
-                              acc.url && isValidUrl(acc.url)
-                                ? undefined
-                                : acc.name || '—'
-                            }
-                          >
-                            {acc.url && isValidUrl(acc.url) && (
-                              <a
-                                href={sanitizeUrl(acc.url)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={styles.accommodationLink}
-                              >
-                                {acc.name || '—'}
-                              </a>
-                            )}
+                          <DetailField label="Name">
+                            <a
+                              href={sanitizeUrl(acc.url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={styles.accommodationLink}
+                            >
+                              {acc.name || '—'}
+                            </a>
                           </DetailField>
                           <DetailField label="Cost" value={acc.cost} />
                           <div style={{ gridColumn: '1/-1', maxWidth: '75%' }}>
@@ -865,7 +855,7 @@ function AccommodationEditForm({
   initialData?: { name: string; url: string; cost: string; description: string }
   onSave: (data: {
     name: string
-    url?: string
+    url: string
     cost?: string
     description?: string
   }) => void
@@ -884,7 +874,7 @@ function AccommodationEditForm({
     try {
       await onSave({
         name,
-        url: url ? ensureUrlScheme(url) : undefined,
+        url: ensureUrlScheme(url),
         cost: cost || undefined,
         description: description || undefined,
       })
@@ -921,6 +911,7 @@ function AccommodationEditForm({
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            required
             style={accFormStyles.input}
             placeholder="e.g. example.com/hotel"
           />

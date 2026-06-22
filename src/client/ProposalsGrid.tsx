@@ -55,7 +55,7 @@ interface ProposalsGridProps {
   createAccommodation?: (
     proposalId: string,
     userId: string,
-    data: { name: string; url?: string; cost?: string; description?: string }
+    data: { name: string; url: string; cost?: string; description?: string }
   ) => Promise<unknown>
   updateAccommodation?: (
     accommodationId: string,

@@ -176,12 +176,20 @@ export class ProposalsPage {
   }
 
   async addAccommodation(name: string) {
-    await this.page
+    const accTab = this.page
       .getByRole('button', { name: /^accommodations/i })
       .first()
-      .click()
+    await accTab.waitFor({ state: 'visible' })
+    await accTab.click()
     await this.page.getByTestId('add-accommodation-btn').click()
-    await this.page.getByLabel('Name').fill(name)
+    const nameInput = this.page.locator('#acc-name')
+    await nameInput.waitFor({ state: 'visible' })
+    await nameInput.click()
+    await nameInput.pressSequentially(name)
+    const urlInput = this.page.locator('#acc-url')
+    await urlInput.waitFor({ state: 'visible' })
+    await urlInput.click()
+    await urlInput.pressSequentially('https://example.com')
     await this.page.getByTestId('acc-save-btn').click()
     await expect(this.page.getByText(name)).toBeVisible()
   }

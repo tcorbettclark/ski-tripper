@@ -819,7 +819,7 @@ export async function createAccommodation(
   proposerUserId: string,
   data: {
     name: string
-    url?: string
+    url: string
     cost?: string
     description?: string
   },

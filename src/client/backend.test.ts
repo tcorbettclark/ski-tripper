@@ -1445,7 +1445,7 @@ describe('createAccommodation', () => {
     const result = await createAccommodation(
       'prop-1',
       'user-1',
-      { name: 'Hotel Nevai' },
+      { name: 'Hotel Nevai', url: 'https://example.com' },
       client
     )
     expect(result.name).toBe('Hotel Nevai')
@@ -1465,7 +1465,12 @@ describe('createAccommodation', () => {
       },
     })
     expect(
-      createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, client)
+      createAccommodation(
+        'prop-1',
+        'user-1',
+        { name: 'Hotel Nevai', url: 'https://example.com' },
+        client
+      )
     ).rejects.toThrow('Only the creator can add accommodations.')
   })
 
@@ -1482,7 +1487,12 @@ describe('createAccommodation', () => {
       },
     })
     expect(
-      createAccommodation('prop-1', 'user-1', { name: 'Hotel Nevai' }, client)
+      createAccommodation(
+        'prop-1',
+        'user-1',
+        { name: 'Hotel Nevai', url: 'https://example.com' },
+        client
+      )
     ).rejects.toThrow('Accommodations can only be added to draft proposals.')
   })
 
@@ -1519,7 +1529,7 @@ describe('createAccommodation', () => {
     expect(callArgs[0].url).toBe('https://example.com')
   })
 
-  it('passes undefined url through without error', async () => {
+  it('does not modify accommodation URL that already has https://', async () => {
     const client = createMockClient({
       proposals: {
         getOne: mock(() =>
@@ -1535,6 +1545,7 @@ describe('createAccommodation', () => {
           Promise.resolve({
             id: 'acc-1',
             name: 'Hotel Nevai',
+            url: 'https://example.com',
             proposal: 'prop-1',
           })
         ),
@@ -1543,12 +1554,12 @@ describe('createAccommodation', () => {
     await createAccommodation(
       'prop-1',
       'user-1',
-      { name: 'Hotel Nevai' },
+      { name: 'Hotel Nevai', url: 'https://example.com' },
       client
     )
     const callArgs = (client.collection('accommodations').create as MockFn).mock
       .calls[0]
-    expect(callArgs[0].url).toBeUndefined()
+    expect(callArgs[0].url).toBe('https://example.com')
   })
 })
 

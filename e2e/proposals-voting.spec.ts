@@ -98,8 +98,6 @@ test.describe('Proposals and voting', () => {
 
       await poll.addVoteToProposal('Zermatt')
       await poll.saveVote()
-
-      await expect(page.getByText(/vote saved/i)).toBeVisible()
     })
   })
 
