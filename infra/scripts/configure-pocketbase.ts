@@ -233,14 +233,14 @@ function createSuperuser(env: Record<string, string>): void {
   }
 
   console.log(
-    `Creating PocketBase superuser (data dir: ${dataDir}, email: ${adminEmail})...`
+    `Upserting PocketBase superuser (data dir: ${dataDir}, email: ${adminEmail})...`
   )
 
   const result = spawnSync('pocketbase', [
     '--dir',
     dataDir,
     'superuser',
-    'create',
+    'upsert',
     adminEmail,
     adminPassword,
   ])
@@ -251,13 +251,14 @@ function createSuperuser(env: Record<string, string>): void {
 
   if (
     output.includes('created') ||
+    output.includes('updated') ||
     output.includes('already exists') ||
     output.includes('must be unique')
   ) {
     console.log(`${GREEN}PocketBase superuser ready${RESET}`)
   } else {
     console.error(
-      `${YELLOW}${BOLD}Warning:${RESET} PocketBase superuser creation returned: ${output || '(no output)'}`
+      `${YELLOW}${BOLD}Warning:${RESET} PocketBase superuser upsert returned: ${output || '(no output)'}`
     )
     console.error(
       `${YELLOW}You may need to create the superuser manually via the PocketBase admin UI.${RESET}`
