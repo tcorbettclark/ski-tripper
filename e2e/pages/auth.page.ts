@@ -24,6 +24,7 @@ export class AuthPage {
 
   async goto() {
     await this.page.goto(BASE_URL)
+    await expect(this.emailInput).toBeVisible()
   }
 
   async signup(user: { name: string; email: string; password: string }) {
@@ -33,6 +34,7 @@ export class AuthPage {
     await this.emailInput.fill(user.email)
     await this.passwordInput.fill(user.password)
     await this.submitButton.click()
+    await expect(this.submitButton).toBeEnabled()
     await expect(
       this.page.getByRole('heading', { name: /verify your email/i })
     ).toBeVisible()
@@ -43,6 +45,7 @@ export class AuthPage {
     await this.emailInput.fill(user.email)
     await this.passwordInput.fill(user.password)
     await this.submitButton.click()
+    await expect(this.submitButton).toBeEnabled()
   }
 
   async clickForgotPassword() {
@@ -87,6 +90,7 @@ export class AuthPage {
     const link = extractLink(message.HTML)
     const localLink = link.replace('https://ski-tripper.localhost', BASE_URL)
     await this.page.goto(localLink)
+    await expect(this.page.getByTestId('reset-password')).toBeVisible()
 
     await this.fillResetPassword(newPassword)
     await this.clickResetSubmit()

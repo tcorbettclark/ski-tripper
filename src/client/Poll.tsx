@@ -274,6 +274,7 @@ export default function Poll({
                     <div style={styles.outcomeActions}>
                       <button
                         type="button"
+                        data-testid="confirm-close-poll-btn"
                         onClick={handleClosePoll}
                         disabled={closingPoll || !outcomeText.trim()}
                         style={styles.outcomeSubmitButton}

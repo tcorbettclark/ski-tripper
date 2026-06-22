@@ -317,6 +317,7 @@ export default function CreateProposalForm({
         required
         options={COUNTRIES}
         placeholder="Select a country…"
+        data-testid="proposal-country"
       />
       <Field
         label="Region"
@@ -325,6 +326,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. Alps"
+        data-testid="proposal-region"
       />
       <Field
         label="Summit Altitude (m)"
@@ -334,6 +336,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 3330"
+        data-testid="proposal-summit-altitude"
       />
       <Field
         label="Base Altitude (m)"
@@ -343,6 +346,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 1500"
+        data-testid="proposal-base-altitude"
       />
       <Field
         label="Nearest Airport"
@@ -351,6 +355,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. GVA"
+        data-testid="proposal-nearest-airport"
       />
       <Field
         label="Transfer Time (mins)"
@@ -360,6 +365,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 90"
+        data-testid="proposal-transfer-time"
       />
       <Field
         label="Piste Km"
@@ -369,6 +375,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 600"
+        data-testid="proposal-piste-km"
       />
       <Field
         label="Beginner %"
@@ -378,6 +385,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 25"
+        data-testid="proposal-beginner-pct"
       />
       <Field
         label="Intermediate %"
@@ -387,6 +395,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 50"
+        data-testid="proposal-intermediate-pct"
       />
       <Field
         label="Advanced %"
@@ -396,6 +405,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 25"
+        data-testid="proposal-advanced-pct"
       />
       <Field
         label="Lift Count"
@@ -405,6 +415,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 50"
+        data-testid="proposal-lift-count"
       />
       <Field
         label="Snow Reliability"
@@ -414,6 +425,7 @@ export default function CreateProposalForm({
         required
         options={['high', 'medium', 'low']}
         placeholder="Select snow reliability…"
+        data-testid="proposal-snow-reliability"
       />
       <Field
         label="Ski Season Months"
@@ -422,6 +434,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. Dec-Apr"
+        data-testid="proposal-ski-season-months"
       />
       <Field
         label="Websites"
@@ -431,6 +444,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. example.com, ski-resort.com"
+        data-testid="proposal-websites"
       />
       <Field
         label="Linked Resorts"
@@ -438,6 +452,7 @@ export default function CreateProposalForm({
         value={form.linkedResortsDescription}
         onChange={handleChange}
         placeholder="e.g. Part of the 3 Vallées with Méribel and Courchevel"
+        data-testid="proposal-linked-resorts"
       />
       <Field
         label="Latitude"
@@ -446,6 +461,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 45.9163"
+        data-testid="proposal-latitude"
       />
       <Field
         label="Longitude"
@@ -454,6 +470,7 @@ export default function CreateProposalForm({
         onChange={handleChange}
         required
         placeholder="e.g. 7.7554"
+        data-testid="proposal-longitude"
       />
       <DateRangeField
         startDate={form.startDate}
@@ -471,6 +488,7 @@ export default function CreateProposalForm({
         <textarea
           id="description"
           name="description"
+          data-testid="proposal-description"
           value={form.description}
           onChange={handleChange}
           required

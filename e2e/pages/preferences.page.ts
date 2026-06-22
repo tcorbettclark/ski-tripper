@@ -41,6 +41,7 @@ export class PreferencesPage {
     }
 
     await this.saveButton.click()
+    await expect(this.saveButton).toBeEnabled()
     await expect(this.page.getByText(/my trips/i)).toBeVisible()
   }
 }

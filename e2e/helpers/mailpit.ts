@@ -1,3 +1,5 @@
+import { expect } from '@playwright/test'
+
 const MAILPIT_API = 'http://localhost:8025/api/v1'
 
 interface MailpitMessageSummary {
@@ -22,33 +24,49 @@ interface MailpitSearchResponse {
   total: number
 }
 
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url)
+  if (!res.ok) {
+    throw new Error(
+      `Mailpit API error: ${res.status} ${res.statusText} at ${url}`
+    )
+  }
+  return (await res.json()) as T
+}
+
 export async function waitForEmail(
   to: string,
   options?: { subject?: string; timeout?: number }
 ): Promise<MailpitMessage> {
-  const timeout = options?.timeout ?? 5_000
+  const timeout = options?.timeout ?? 10_000
   const subject = options?.subject
-  const deadline = Date.now() + timeout
 
-  while (Date.now() < deadline) {
-    const params = new URLSearchParams({
-      query: `to:${to}${subject ? ` subject:${subject}` : ''}`,
-    })
-    const res = await fetch(`${MAILPIT_API}/search?${params}`)
-    const data = (await res.json()) as MailpitSearchResponse
+  const params = new URLSearchParams({
+    query: `to:${to}${subject ? ` subject:${subject}` : ''}`,
+  })
 
-    if (data.messages.length > 0) {
-      const messageId = data.messages[0].ID
-      const msgRes = await fetch(`${MAILPIT_API}/message/${messageId}`)
-      return (await msgRes.json()) as MailpitMessage
-    }
+  let message: MailpitMessage | null = null
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
-  }
+  await expect
+    .poll(
+      async () => {
+        const data = await fetchJson<MailpitSearchResponse>(
+          `${MAILPIT_API}/search?${params}`
+        )
+        if (data.messages.length === 0) return false
+        message = await fetchJson<MailpitMessage>(
+          `${MAILPIT_API}/message/${data.messages[0].ID}`
+        )
+        return true
+      },
+      {
+        timeout,
+        message: `Email to ${to}${subject ? ` with subject "${subject}"` : ''} not found`,
+      }
+    )
+    .toBe(true)
 
-  throw new Error(
-    `Timed out waiting for email to ${to}${subject ? ` with subject containing "${subject}"` : ''}`
-  )
+  return message!
 }
 
 export function extractLink(html: string): string {
@@ -60,5 +78,10 @@ export function extractLink(html: string): string {
 }
 
 export async function deleteAllEmails(): Promise<void> {
-  await fetch(`${MAILPIT_API}/messages`, { method: 'DELETE' })
+  const res = await fetch(`${MAILPIT_API}/messages`, { method: 'DELETE' })
+  if (!res.ok) {
+    throw new Error(
+      `Failed to delete emails from Mailpit: ${res.status} ${res.statusText}`
+    )
+  }
 }

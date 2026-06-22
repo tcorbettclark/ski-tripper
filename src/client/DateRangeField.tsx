@@ -48,7 +48,7 @@ export default function DateRangeField({
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} data-testid="date-range-field">
       <span style={fieldStyles.default.label}>{label}</span>
       <DayPicker
         mode="range"

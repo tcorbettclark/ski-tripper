@@ -45,8 +45,9 @@ export class ProposalsPage {
     const startStr = startDate.toISOString().split('T')[0]
     const endStr = endDate.toISOString().split('T')[0]
 
-    await this.page.locator(`[data-day="${startStr}"]`).click()
-    await this.page.locator(`[data-day="${endStr}"]`).click()
+    const dateField = this.page.getByTestId('date-range-field')
+    await dateField.locator(`[data-day="${startStr}"]`).click()
+    await dateField.locator(`[data-day="${endStr}"]`).click()
   }
 
   async fillResortProposal(data: {
@@ -72,77 +73,75 @@ export class ProposalsPage {
     await this.resortNameInput.fill(data.resortName)
 
     if (data.country) {
-      await this.page.locator('select[name="country"]').selectOption({
-        label: data.country,
-      })
+      await this.page
+        .getByTestId('proposal-country')
+        .selectOption({ label: data.country })
     }
     if (data.region) {
-      await this.page.locator('input[name="region"]').fill(data.region)
+      await this.page.getByTestId('proposal-region').fill(data.region)
     }
     if (data.summitAltitude) {
       await this.page
-        .locator('input[name="summitAltitude"]')
+        .getByTestId('proposal-summit-altitude')
         .fill(data.summitAltitude)
     }
     if (data.baseAltitude) {
       await this.page
-        .locator('input[name="baseAltitude"]')
+        .getByTestId('proposal-base-altitude')
         .fill(data.baseAltitude)
     }
     if (data.nearestAirport) {
       await this.page
-        .locator('input[name="nearestAirport"]')
+        .getByTestId('proposal-nearest-airport')
         .fill(data.nearestAirport)
     }
     if (data.transferTime) {
       await this.page
-        .locator('input[name="transferTime"]')
+        .getByTestId('proposal-transfer-time')
         .fill(data.transferTime)
     }
     if (data.pisteKm) {
-      await this.page.locator('input[name="pisteKm"]').fill(data.pisteKm)
+      await this.page.getByTestId('proposal-piste-km').fill(data.pisteKm)
     }
     if (data.beginnerPct) {
       await this.page
-        .locator('input[name="beginnerPct"]')
+        .getByTestId('proposal-beginner-pct')
         .fill(data.beginnerPct)
     }
     if (data.intermediatePct) {
       await this.page
-        .locator('input[name="intermediatePct"]')
+        .getByTestId('proposal-intermediate-pct')
         .fill(data.intermediatePct)
     }
     if (data.advancedPct) {
       await this.page
-        .locator('input[name="advancedPct"]')
+        .getByTestId('proposal-advanced-pct')
         .fill(data.advancedPct)
     }
     if (data.liftCount) {
-      await this.page.locator('input[name="liftCount"]').fill(data.liftCount)
+      await this.page.getByTestId('proposal-lift-count').fill(data.liftCount)
     }
     if (data.snowReliability) {
       await this.page
-        .locator('select[name="snowReliability"]')
+        .getByTestId('proposal-snow-reliability')
         .selectOption(data.snowReliability)
     }
     if (data.skiSeasonMonths) {
       await this.page
-        .locator('input[name="skiSeasonMonths"]')
+        .getByTestId('proposal-ski-season-months')
         .fill(data.skiSeasonMonths)
     }
     if (data.websites) {
-      await this.page.locator('input[name="websites"]').fill(data.websites)
+      await this.page.getByTestId('proposal-websites').fill(data.websites)
     }
     if (data.latitude) {
-      await this.page.locator('input[name="latitude"]').fill(data.latitude)
+      await this.page.getByTestId('proposal-latitude').fill(data.latitude)
     }
     if (data.longitude) {
-      await this.page.locator('input[name="longitude"]').fill(data.longitude)
+      await this.page.getByTestId('proposal-longitude').fill(data.longitude)
     }
     if (data.description) {
-      await this.page
-        .locator('textarea[name="description"]')
-        .fill(data.description)
+      await this.page.getByTestId('proposal-description').fill(data.description)
     }
 
     await this.selectFutureDates()
@@ -171,6 +170,7 @@ export class ProposalsPage {
       description: 'Great resort',
     })
     await this.submitButton.click()
+    await expect(this.submitButton).toBeEnabled()
     await expect(this.page.getByText(resortName).first()).toBeVisible()
   }
 
@@ -180,9 +180,10 @@ export class ProposalsPage {
       .first()
       .click()
     await this.page.getByTestId('add-accommodation-btn').click()
-    await this.page.locator('#acc-name').fill(name)
+    await this.page.getByLabel('Name').fill(name)
     await this.page.getByTestId('acc-save-btn').click()
-    await expect(this.page.getByText(name)).toBeVisible({ timeout: 10000 })
+    await expect(this.page.getByTestId('acc-save-btn')).toBeEnabled()
+    await expect(this.page.getByText(name)).toBeVisible()
   }
 
   async dismissSubmitDialog() {
@@ -191,6 +192,7 @@ export class ProposalsPage {
 
   async submitProposal() {
     await this.proposalSubmitBtn.click()
+    await expect(this.proposalSubmitBtn).toBeEnabled()
     await expect(this.page.getByText(/submitted/i)).toBeVisible()
   }
 }
