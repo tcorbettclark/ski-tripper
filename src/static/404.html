@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 — Page Not Found</title>
+    <style>
+      :root {
+        --bg: #07111f;
+        --text: #edf6fc;
+        --accent: #3bbde8;
+        --secondary: #6a94ae;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #eef4fd;
+          --text: #0f172a;
+          --accent: #0284c7;
+          --secondary: #64748b;
+        }
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+        text-align: center;
+      }
+      h1 { font-size: 4rem; color: var(--accent); margin-bottom: 0.5rem; }
+      p { color: var(--secondary); font-size: 1.1rem; margin-bottom: 1.5rem; }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+      }
+      a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>404</h1>
+      <p>This page doesn't exist.</p>
+      <a href="/">Back to Ski Tripper</a>
+    </div>
+  </body>
+</html>

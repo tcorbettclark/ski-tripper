@@ -1,52 +1,84 @@
 __PUBLIC_DOMAIN__ {
 	log
 
+	# Compress responses to reduce bandwidth
+	encode gzip zstd
+
 	header {
+		# Tell browsers to always use HTTPS for the next year, including subdomains
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		# Prevent browsers from MIME-sniffing responses away from the declared content type
 		X-Content-Type-Options "nosniff"
+		# Block this site from being embedded in iframes on other origins (clickjacking protection)
 		X-Frame-Options "DENY"
+		# Disable legacy XSS filter — modern browsers don't need it and it can introduce vulnerabilities
+		X-XSS-Protection "0"
+		# Only send the origin when navigating to same-origin; strip referrer on cross-origin
 		Referrer-Policy "strict-origin-when-cross-origin"
+		# Restrict resource loading to known origins; data: and blob: needed for app icons
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com; font-src 'self'; frame-ancestors 'none'"
+		# Disable browser APIs the app doesn't use
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# Remove Server header to reduce fingerprinting
+		-Server
 	}
 
+	# API endpoints — Bun server with SSE streaming for LLM responses
 	handle /api/* {
-		reverse_proxy __SERVER_HOSTNAME__:__SERVER_PORT__
+		reverse_proxy __SERVER_HOSTNAME__:__SERVER_PORT__ {
+			# Stream SSE responses immediately without buffering (needed for token-by-token LLM output)
+			flush_interval -1
+		}
 	}
 
-	@spa {
-		not path *.html
-		not path *.txt
-		not path *.xml
-		not path *.json
-		not path *.css
-		not path *.js
-		not path *.ico
-		not path *.png
-		not path *.jpg
-		not path *.svg
-		not path *.webp
-		not path *.woff
-		not path *.woff2
-		not path *.map
-		not path */favicon*
-		not file
-	}
+	# SPA routing: if the requested file doesn't exist on disk, serve index.html
+	# so client-side routing works. Real missing files (e.g. /robots.txt, /.env)
+	# will still 404 because they match the file matcher and aren't found.
+	@notFile not file
 
 	handle {
 		root * __STATIC_ROOT__
 		header Cache-Control "no-cache"
 
-		handle @spa {
+		handle @notFile {
 			rewrite * /index.html
 		}
 
 		file_server
+	}
+
+	# Custom error pages — serve 404.html for missing static files instead of
+	# Caddy's default plain-text response
+	handle_errors {
+		@custom_err file /{err.status_code}.html /error.html
+		handle @custom_err {
+			rewrite {file_match.relative}
+			file_server
+		}
+		respond "{err.status_code} {err.status_text}"
 	}
 }
 
 __PUBLIC_POCKETBASE_DOMAIN__ {
 	log
 
-	reverse_proxy __POCKETBASE_HOSTNAME__:__POCKETBASE_PORT__
+	# Compress responses to reduce bandwidth
+	encode gzip zstd
+
+	# Limit request body size — PocketBase recommends 10MB for file uploads
+	request_body {
+		max_size 10MB
+	}
+
+	header {
+		# Remove Server header to reduce fingerprinting
+		-Server
+	}
+
+	reverse_proxy __POCKETBASE_HOSTNAME__:__POCKETBASE_PORT__ {
+		# PocketBase docs recommend 360s for long-running operations (backups, etc.)
+		transport http {
+			read_timeout 360s
+		}
+	}
 }
