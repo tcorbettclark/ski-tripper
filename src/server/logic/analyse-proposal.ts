@@ -124,13 +124,15 @@ export function buildSystemPrompt(): string {
 Rules:
 - Use real participant names (not anonymized labels)
 - Exclude participants without preferences — do not mention them at all
-- Include accommodation fit — evaluate whether accommodation types match participant preferences
-- Check seasonal fit — mention if proposed dates fall outside the resort's reliable ski season (skiSeasonMonths)
+- Include accommodation fit — evaluate whether accommodation types match participant preferences; skip if accommodation data is placeholder or test data and note "accommodation data unavailable"
+- Check seasonal fit — mention only if proposed dates fall outside the resort's reliable ski season (skiSeasonMonths); if within season, do not mention it
 - Be specific and concrete, not generic
+- The same participant CAN appear in both "Who should love this" and "Who might struggle" if they have both strong fits and notable concerns — decide placement once and move on
+- If structured data (Piste km, percentages) conflicts with the free-text Description, trust the structured Piste line — do not reconcile them
 - Think concisely: state each insight once, do not repeat or rephrase
 - Do not second-guess conclusions you have already reached
 - When you have enough information to assess each participant, stop thinking and write your analysis
-- Format your response exactly as shown below, with no additional text before or after
+- Format your response exactly as shown below, with no additional text before or after. If no participant might struggle, write "None" under that heading
 
 ## Summary
 1-2 sentence overall assessment.
@@ -170,6 +172,9 @@ export function buildUserPrompt(
   lines.push(`Lifts: ${proposal.liftCount}`)
   lines.push(`Snow reliability: ${proposal.snowReliability}`)
   lines.push(`Ski season: ${proposal.skiSeasonMonths}`)
+  lines.push(
+    '(Resort stats above are authoritative; the description may contain approximate or conflicting figures.)'
+  )
   if (proposal.linkedResortsDescription) {
     lines.push(`Linked resorts: ${proposal.linkedResortsDescription}`)
   }
@@ -202,7 +207,9 @@ export function buildUserPrompt(
   }
 
   lines.push('')
-  lines.push('Think briefly, then write your analysis. Do not repeat yourself.')
+  lines.push(
+    'Assess each participant once, then write your analysis. Do not repeat or reconsider.'
+  )
 
   return lines.join('\n')
 }

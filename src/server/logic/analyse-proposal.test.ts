@@ -111,6 +111,7 @@ describe('analyse-proposal logic', () => {
     expect(prompt).toContain('Chamonix')
     expect(prompt).toContain('Bob')
     expect(prompt).toContain('Chalet Alice')
-    expect(prompt).toContain('Think briefly, then write your analysis.')
+    expect(prompt).toContain('authoritative')
+    expect(prompt).toContain('Assess each participant once')
   })
 })
