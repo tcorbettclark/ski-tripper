@@ -83,89 +83,83 @@ const EXA_TRAVEL_QUERY = (resortName: string, country: string) =>
 const EXA_LINKED_QUERY = (resortName: string, country: string) =>
   `${resortName} ${country} linked ski areas, connected resorts, lift-linked domain, ski area name`
 
+const nullableString = z.string().nullable().optional()
+const nullableNumber = z.number().nullable().optional()
+
 const enrichSchema = z.object({
-  terrainDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One paragraph about terrain character: e.g. "wide, gentle cruising runs above the treeline" not "fantastic terrain for all". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
-    ),
-  offPisteDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One paragraph about off-piste quality: e.g. "steep north-facing couloirs accessed from the top lift" not "superior off-piste". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
-    ),
-  valueDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One paragraph about value: e.g. "one of the cheaper French resorts for lift passes" not "great value". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
-    ),
-  familyDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One paragraph about suitability for families vs groups: e.g. "nursery slopes are at resort level, separate from faster traffic" not "perfect for families". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
-    ),
-  apresSkiDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One paragraph about apres-ski and nightlife: e.g. "cosy old-town bars cluster around the church" not "vibrant nightlife". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
-    ),
-  resortCharacterDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One paragraph about whether the resort is picturesque or purpose-built: e.g. "a purpose-built 1970s station with concrete apartment blocks" not "charming resort". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
-    ),
-  liftSystemDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One paragraph about lift system quality and age: e.g. "the lift network is modern and efficient, with heated chairlifts on the main sectors" not "excellent lift system". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
-    ),
-  nearestAirport: z
-    .string()
-    .nullable()
-    .describe(
-      'Name of the nearest international airport, e.g. "Geneva Airport"'
-    ),
-  transferTime: z
-    .number()
-    .nullable()
-    .describe(
-      'Transfer time from nearest international airport in minutes, e.g. 120'
-    ),
+  terrainDescription: nullableString.describe(
+    'One paragraph about terrain character: e.g. "wide, gentle cruising runs above the treeline" not "fantastic terrain for all". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+  ),
+  offPisteDescription: nullableString.describe(
+    'One paragraph about off-piste quality: e.g. "steep north-facing couloirs accessed from the top lift" not "superior off-piste". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+  ),
+  valueDescription: nullableString.describe(
+    'One paragraph about value: e.g. "one of the cheaper French resorts for lift passes" not "great value". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+  ),
+  familyDescription: nullableString.describe(
+    'One paragraph about suitability for families vs groups: e.g. "nursery slopes are at resort level, separate from faster traffic" not "perfect for families". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+  ),
+  apresSkiDescription: nullableString.describe(
+    'One paragraph about apres-ski and nightlife: e.g. "cosy old-town bars cluster around the church" not "vibrant nightlife". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+  ),
+  resortCharacterDescription: nullableString.describe(
+    'One paragraph about whether the resort is picturesque or purpose-built: e.g. "a purpose-built 1970s station with concrete apartment blocks" not "charming resort". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+  ),
+  liftSystemDescription: nullableString.describe(
+    'One paragraph about lift system quality and age: e.g. "the lift network is modern and efficient, with heated chairlifts on the main sectors" not "excellent lift system". Use concrete facts, not adjectives. If the source text lacks detail, set to null.'
+  ),
+  nearestAirport: nullableString.describe(
+    'Name of the nearest international airport, e.g. "Geneva Airport"'
+  ),
+  transferTime: nullableNumber.describe(
+    'Transfer time from nearest international airport in minutes, e.g. 120'
+  ),
   snowReliability: z
     .enum(['high', 'medium', 'low'])
     .nullable()
+    .optional()
     .describe('Snow reliability rating'),
-  skiSeasonMonths: z
-    .string()
-    .nullable()
-    .describe('Typical ski season, e.g. "Dec-Apr"'),
+  skiSeasonMonths: nullableString.describe(
+    'Typical ski season, e.g. "Dec-Apr"'
+  ),
   websites: z
-    .array(z.string())
+    .union([
+      z.array(z.string()),
+      z.string().transform((v) => {
+        try {
+          return JSON.parse(v) as string[]
+        } catch {
+          return []
+        }
+      }),
+    ])
     .nullable()
+    .optional()
     .describe(
       'All URLs of websites with information about skiing at the resort. Include every relevant URL found in the source text; do not attempt to consolidate or deduplicate.'
     ),
-  linkedResortsDescription: z
-    .string()
-    .nullable()
-    .describe(
-      'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."'
-    ),
+  linkedResortsDescription: nullableString.describe(
+    'One sentence describing nearby linked resorts, e.g. "Part of the 3 Vallées ski area, linked to Méribel and Courchevel by lift."'
+  ),
 })
 
 type EnrichData = z.infer<typeof enrichSchema>
 
-type ResolvedEnrichData = Omit<
-  { [K in keyof EnrichData]: NonNullable<EnrichData[K]> },
-  'transferTime'
-> & { transferTime: number | null }
+type ResolvedEnrichData = {
+  terrainDescription: string
+  offPisteDescription: string
+  valueDescription: string
+  familyDescription: string
+  apresSkiDescription: string
+  resortCharacterDescription: string
+  liftSystemDescription: string
+  nearestAirport: string
+  transferTime: number | null
+  snowReliability: string
+  skiSeasonMonths: string
+  websites: string[]
+  linkedResortsDescription: string
+}
 
 type EnrichResult =
   | { ok: true; data: ResolvedEnrichData }
@@ -190,7 +184,7 @@ const enrichDefaults: Record<string, string | string[] | number | null> = {
 function withDefaults(data: EnrichData): ResolvedEnrichData {
   const result = { ...data } as Record<string, unknown>
   for (const [key, fallback] of Object.entries(enrichDefaults)) {
-    if (result[key] === null) {
+    if (result[key] === null || result[key] === undefined) {
       result[key] = fallback
     }
   }
