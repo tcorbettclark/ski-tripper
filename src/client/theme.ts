@@ -165,6 +165,100 @@ export const authStyles = {
   },
 }
 
+export const mdStyles = {
+  h1: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes['2xl'],
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+    margin: '0 0 16px',
+    lineHeight: 1.2,
+  },
+  h2: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xl,
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+    margin: '24px 0 12px',
+    lineHeight: 1.3,
+  },
+  h3: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.lg,
+    fontWeight: '600' as const,
+    color: colors.textPrimary,
+    margin: '20px 0 8px',
+    lineHeight: 1.4,
+  },
+  p: {
+    margin: '0 0 12px',
+  },
+  ul: {
+    margin: '0 0 12px',
+    paddingLeft: '24px',
+    listStyleType: 'disc' as const,
+  },
+  ol: {
+    margin: '0 0 12px',
+    paddingLeft: '24px',
+    listStyleType: 'decimal' as const,
+  },
+  li: {
+    marginBottom: '4px',
+  },
+  a: {
+    color: colors.accent,
+    textDecoration: 'underline' as const,
+  },
+  blockquote: {
+    margin: '0 0 12px',
+    paddingLeft: '16px',
+    borderLeft: `3px solid ${colors.accent}`,
+    color: colors.textSecondary,
+    fontStyle: 'italic' as const,
+  },
+  inlineCode: {
+    fontFamily: fonts.mono,
+    fontSize: fontSizes.sm,
+    padding: '2px 4px',
+    borderRadius: '3px',
+  },
+  codeBlock: {
+    fontFamily: fonts.mono,
+    fontSize: fontSizes.sm,
+  },
+  pre: {
+    fontFamily: fonts.mono,
+    fontSize: fontSizes.sm,
+    background: colors.bgInput,
+    padding: '16px',
+    borderRadius: '8px',
+    overflowX: 'auto' as const,
+    margin: '0 0 12px',
+  },
+  table: {
+    borderCollapse: 'collapse' as const,
+    width: '100%',
+    margin: '0 0 12px',
+    fontSize: fontSizes.sm,
+  },
+  th: {
+    border: `1px solid ${mix('--color-textSecondary', 0.3)}`,
+    padding: '8px 12px',
+    textAlign: 'left' as const,
+    fontWeight: '600' as const,
+  },
+  td: {
+    border: `1px solid ${mix('--color-textSecondary', 0.3)}`,
+    padding: '8px 12px',
+  },
+  hr: {
+    border: 'none',
+    borderTop: `1px solid ${mix('--color-textSecondary', 0.3)}`,
+    margin: '16px 0',
+  },
+} as const
+
 export const detailStyles = {
   title: {
     fontFamily: fonts.display,

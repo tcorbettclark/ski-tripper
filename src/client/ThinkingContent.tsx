@@ -1,6 +1,6 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import Markdown from 'react-markdown'
+import StyledMarkdown from './StyledMarkdown'
 import { borders, fontSizes, fonts } from './theme'
 
 interface ThinkingContentProps {
@@ -24,15 +24,6 @@ export default function ThinkingContent({
       userScrolledUpRef.current = false
     }
   }, [hasContent])
-
-  useEffect(() => {
-    const style = document.createElement('style')
-    style.textContent = `.thinking-content ul, .thinking-content ol { margin: 0; padding-left: 1.5em; } .thinking-content p { margin: 0 0 0.5em; } .thinking-content p:last-child { margin-bottom: 0; }`
-    document.head.appendChild(style)
-    return () => {
-      document.head.removeChild(style)
-    }
-  }, [])
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current
@@ -66,7 +57,7 @@ export default function ThinkingContent({
           style={thinkingStyles.generatingContent}
         >
           {thinking ? (
-            <Markdown>{thinking}</Markdown>
+            <StyledMarkdown>{thinking}</StyledMarkdown>
           ) : (
             <p style={thinkingStyles.placeholder}>Starting…</p>
           )}
@@ -87,7 +78,7 @@ export default function ThinkingContent({
       </button>
       {!collapsed && (
         <div className="thinking-content" style={thinkingStyles.content}>
-          <Markdown>{thinking}</Markdown>
+          <StyledMarkdown>{thinking}</StyledMarkdown>
         </div>
       )}
     </div>

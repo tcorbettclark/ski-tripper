@@ -1,6 +1,6 @@
 import { RotateCw, Sparkles, X } from 'lucide-react'
 import { useState } from 'react'
-import Markdown from 'react-markdown'
+import StyledMarkdown from './StyledMarkdown'
 import ThinkingContent from './ThinkingContent'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import type { UseSSEStreamResult } from './useSSEStream'
@@ -108,7 +108,7 @@ export default function PreferenceSearchPopup({
 
         {content && (
           <div style={popupStyles.contentSection}>
-            <Markdown>{content}</Markdown>
+            <StyledMarkdown>{content}</StyledMarkdown>
           </div>
         )}
 
