@@ -26,9 +26,10 @@ __PUBLIC_DOMAIN__ {
 		# Restrict resource loading to known origins
 		# wasm-unsafe-eval: ONNX Runtime WebAssembly compilation
 		# blob: worker-src: ONNX Runtime Web Workers from blob URLs
+		# unsafe-inline script-src: inline theme detection script in index.html
 		# data: and blob: img-src: app icons
-		# connect-src includes HuggingFace and jsDelivr for search model weights and WASM files
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://cdn.jsdelivr.net; font-src 'self'; frame-ancestors 'none'"
+		# connect-src includes HuggingFace, Xet/CAS bridge (model weights), and jsDelivr (WASM files)
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://*.xethub.hf.co https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'"
 	}
 
 	# API endpoints — Bun server with SSE streaming for LLM responses
