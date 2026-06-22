@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
@@ -80,3 +81,5 @@ if (unreplaced) {
 }
 
 writeFileSync(OUTPUT, template)
+
+execSync(`caddy fmt --overwrite ${OUTPUT}`, { stdio: 'inherit' })
