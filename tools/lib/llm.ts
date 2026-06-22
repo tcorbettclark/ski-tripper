@@ -100,6 +100,36 @@ export function jsonCodec<T extends z.core.$ZodType>(schema: T) {
   })
 }
 
+export function stringCoercedArray<T extends z.core.$ZodType>(
+  elementSchema: T
+) {
+  return z.union([
+    z.array(elementSchema),
+    z.string().transform((v, ctx) => {
+      try {
+        const parsed = JSON.parse(v)
+        if (!Array.isArray(parsed)) {
+          ctx.addIssue({
+            code: 'invalid_type',
+            expected: 'array',
+            received: typeof parsed,
+            message: 'String did not parse to an array',
+          })
+          return z.NEVER as unknown as z.infer<T>[]
+        }
+        return parsed as z.infer<T>[]
+      } catch {
+        ctx.addIssue({
+          code: 'invalid_format',
+          format: 'json',
+          message: 'Failed to parse string as JSON',
+        })
+        return z.NEVER as unknown as z.infer<T>[]
+      }
+    }),
+  ])
+}
+
 export interface StreamResult {
   thinking: string
   doneReason: string | null

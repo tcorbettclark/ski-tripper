@@ -44,6 +44,7 @@ import {
   LLM_SYSTEM_PROMPT,
   LLM_USER_PROMPT,
   streamThinking,
+  stringCoercedArray,
 } from './lib/llm'
 import {
   ANSI_BOLD,
@@ -122,17 +123,7 @@ const enrichSchema = z.object({
   skiSeasonMonths: nullableString.describe(
     'Typical ski season, e.g. "Dec-Apr"'
   ),
-  websites: z
-    .union([
-      z.array(z.string()),
-      z.string().transform((v) => {
-        try {
-          return JSON.parse(v) as string[]
-        } catch {
-          return []
-        }
-      }),
-    ])
+  websites: stringCoercedArray(z.string())
     .nullable()
     .optional()
     .describe(

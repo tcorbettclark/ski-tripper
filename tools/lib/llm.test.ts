@@ -7,7 +7,68 @@ import {
   LLM_RETRY_PARSE_PROMPT,
   LLM_SYSTEM_PROMPT,
   LLM_USER_PROMPT,
+  stringCoercedArray,
 } from './llm'
+
+describe('stringCoercedArray', () => {
+  it('accepts a valid array', () => {
+    const schema = z.object({
+      items: stringCoercedArray(z.string()),
+    })
+    const result = schema.parse({ items: ['a', 'b'] })
+    expect(result).toEqual({ items: ['a', 'b'] })
+  })
+
+  it('parses a JSON string into an array', () => {
+    const schema = z.object({
+      items: stringCoercedArray(z.string()),
+    })
+    const result = schema.parse({ items: '["a","b"]' })
+    expect(result).toEqual({ items: ['a', 'b'] })
+  })
+
+  it('rejects a string that is not valid JSON', () => {
+    const schema = z.object({
+      items: stringCoercedArray(z.string()),
+    })
+    expect(() => schema.parse({ items: 'not json' })).toThrow()
+  })
+
+  it('rejects a JSON string that parses to a non-array', () => {
+    const schema = z.object({
+      items: stringCoercedArray(z.string()),
+    })
+    expect(() => schema.parse({ items: '"hello"' })).toThrow()
+  })
+
+  it('accepts nullable optional string arrays', () => {
+    const schema = z.object({
+      websites: stringCoercedArray(z.string()).nullable().optional(),
+    })
+    expect(schema.parse({ websites: ['https://example.com'] })).toEqual({
+      websites: ['https://example.com'],
+    })
+    expect(schema.parse({ websites: null })).toEqual({ websites: null })
+    expect(schema.parse({})).toEqual({})
+  })
+
+  it('works with complex element schemas', () => {
+    const schema = z.object({
+      inconsistencies: stringCoercedArray(
+        z.object({
+          field: z.enum(['a', 'b']),
+          value: z.number().optional(),
+        })
+      ),
+    })
+    const result = schema.parse({
+      inconsistencies: '[{"field":"a","value":1}]',
+    })
+    expect(result).toEqual({
+      inconsistencies: [{ field: 'a', value: 1 }],
+    })
+  })
+})
 
 describe('jsonCodec', () => {
   const simpleSchema = z.object({

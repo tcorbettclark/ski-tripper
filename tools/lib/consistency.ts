@@ -1,5 +1,6 @@
 import * as z from 'zod'
 import type { JSONSchema } from 'zod/v4/core'
+import { stringCoercedArray } from './llm'
 
 export const CONSISTENCY_FIELDS = [
   'summitAltitude',
@@ -11,19 +12,17 @@ export const CONSISTENCY_FIELDS = [
   'advancedPct',
 ] as const
 
+const inconsistencyItemSchema = z.object({
+  field: z.enum(CONSISTENCY_FIELDS),
+  currentValue: z.union([z.number(), z.null()]).optional(),
+  correctedValue: z.number().optional(),
+  reason: z.string().optional(),
+})
+
 export const consistencySchema = z.object({
-  inconsistencies: z
-    .array(
-      z.object({
-        field: z.enum(CONSISTENCY_FIELDS),
-        currentValue: z.union([z.number(), z.null()]).optional(),
-        correctedValue: z.number().optional(),
-        reason: z.string().optional(),
-      })
-    )
-    .describe(
-      'List of fields where the description text clearly contradicts the current numeric value. Only include fields where you have high confidence the description states a different value.'
-    ),
+  inconsistencies: stringCoercedArray(inconsistencyItemSchema).describe(
+    'List of fields where the description text clearly contradicts the current numeric value. Only include fields where you have high confidence the description states a different value.'
+  ),
 })
 
 export type ConsistencyResult = z.infer<typeof consistencySchema>
