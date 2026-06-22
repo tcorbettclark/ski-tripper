@@ -197,12 +197,12 @@ async function streamCachedResponse(
       if (/\s/.test(word) || buffer.length >= 8) {
         controller.enqueue(sseEvent('thinking', { text: buffer }))
         buffer = ''
-        await sleep(15 + Math.random() * 25)
+        await sleep(8 + Math.random() * 13)
       }
     }
     if (buffer) {
       controller.enqueue(sseEvent('thinking', { text: buffer }))
-      await sleep(15 + Math.random() * 25)
+      await sleep(8 + Math.random() * 13)
     }
   }
 
@@ -216,7 +216,7 @@ async function streamCachedResponse(
       if (/\s/.test(word) || buffer.length >= 8) {
         controller.enqueue(sseEvent('content', { text: buffer }))
         buffer = ''
-        await sleep(20 + Math.random() * 40)
+        await sleep(10 + Math.random() * 20)
       }
     }
     if (buffer) {
