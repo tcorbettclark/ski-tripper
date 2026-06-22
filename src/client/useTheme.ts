@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 function getTheme(): 'dark' | 'light' {
-  return (document.documentElement.dataset.theme as 'dark' | 'light') || 'dark'
+  return (document.documentElement.dataset.theme as 'dark' | 'light') || 'light'
 }
 
 export default function useTheme(): 'dark' | 'light' {

@@ -8,7 +8,7 @@
     <script>
       (() => {
         var t = localStorage.getItem('theme');
-        var s = (t === 'light' || (t !== 'dark' && window.matchMedia('(prefers-color-scheme: light)').matches)) ? 'light' : 'dark';
+        var s = (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) ? 'dark' : 'light';
         document.documentElement.dataset.theme = s;
         var m = document.createElement('meta');
         m.name = 'color-scheme';

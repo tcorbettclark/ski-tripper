@@ -5,21 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>404 — Page Not Found</title>
     <script>
-      var s = (localStorage.getItem('theme') === 'light' || (localStorage.getItem('theme') !== 'dark' && window.matchMedia('(prefers-color-scheme: light)').matches)) ? 'light' : 'dark';
+      var s = (localStorage.getItem('theme') === 'dark' || (localStorage.getItem('theme') !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) ? 'dark' : 'light';
       document.documentElement.dataset.theme = s;
     </script>
     <style>
-      [data-theme="dark"] {
-        --bg: #07111f;
-        --text: #edf6fc;
-        --accent: #3bbde8;
-        --secondary: #6a94ae;
-      }
+      :root,
       [data-theme="light"] {
         --bg: #eef4fd;
         --text: #0f172a;
         --accent: #0284c7;
         --secondary: #64748b;
+      }
+      [data-theme="dark"] {
+        --bg: #07111f;
+        --text: #edf6fc;
+        --accent: #3bbde8;
+        --secondary: #6a94ae;
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {

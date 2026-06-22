@@ -1,47 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap");
 
 :root,
-[data-theme="dark"] {
-  color-scheme: dark;
-  --color-accent: #3bbde8;
-  --color-bgPrimary: #07111f;
-  --color-bgCard: #0d1e30;
-  --color-bgInput: #060f1b;
-  --color-textPrimary: #edf6fc;
-  --color-textSecondary: #6a94ae;
-  --color-textData: #b0cedf;
-  --color-error: #ff6b6b;
-  --color-overlay: rgba(4, 12, 24, 0.85);
-  --color-shadow: rgba(0, 0, 0, 0.6);
-  --color-pisteBeginner: #4a90d9;
-  --color-pisteIntermediate: #e53935;
-  --color-pisteAdvanced: #888888;
-  --color-timeEating: #f0a050;
-  --color-timeApres: #c070d0;
-  --color-timeHotel: #7090d0;
-  --color-snowboard: #f0a050;
-  --color-slopeBlack: #555555;
-  --color-slopeRed: #c40000;
-  --color-slopeBlue: #0055a4;
-  --color-onPiste: #d4a017;
-  --color-offPiste: #c070d0;
-  --color-hotel5Star: #e0a040;
-  --color-hotel: #50b080;
-  --color-chalet: #7090d0;
-  --color-guesthouse: #a08860;
-  --color-palette0: #3bbde8;
-  --color-palette1: #5ecfcf;
-  --color-palette2: #8be28a;
-  --color-palette3: #e2c94a;
-  --color-palette4: #e89a3b;
-  --color-palette5: #e26a7b;
-  --color-palette6: #b08be2;
-  --color-palette7: #e88b6a;
-  --color-medalGold: #ffd700;
-  --color-medalSilver: #c0c0c0;
-  --color-medalBronze: #cd7f32;
-}
-
 [data-theme="light"] {
   color-scheme: light;
   --color-accent: #0284c7;
@@ -81,6 +40,47 @@
   --color-medalGold: #c5a000;
   --color-medalSilver: #8a8a8a;
   --color-medalBronze: #a06528;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-accent: #3bbde8;
+  --color-bgPrimary: #07111f;
+  --color-bgCard: #0d1e30;
+  --color-bgInput: #060f1b;
+  --color-textPrimary: #edf6fc;
+  --color-textSecondary: #6a94ae;
+  --color-textData: #b0cedf;
+  --color-error: #ff6b6b;
+  --color-overlay: rgba(4, 12, 24, 0.85);
+  --color-shadow: rgba(0, 0, 0, 0.6);
+  --color-pisteBeginner: #4a90d9;
+  --color-pisteIntermediate: #e53935;
+  --color-pisteAdvanced: #888888;
+  --color-timeEating: #f0a050;
+  --color-timeApres: #c070d0;
+  --color-timeHotel: #7090d0;
+  --color-snowboard: #f0a050;
+  --color-slopeBlack: #555555;
+  --color-slopeRed: #c40000;
+  --color-slopeBlue: #0055a4;
+  --color-onPiste: #d4a017;
+  --color-offPiste: #c070d0;
+  --color-hotel5Star: #e0a040;
+  --color-hotel: #50b080;
+  --color-chalet: #7090d0;
+  --color-guesthouse: #a08860;
+  --color-palette0: #3bbde8;
+  --color-palette1: #5ecfcf;
+  --color-palette2: #8be28a;
+  --color-palette3: #e2c94a;
+  --color-palette4: #e89a3b;
+  --color-palette5: #e26a7b;
+  --color-palette6: #b08be2;
+  --color-palette7: #e88b6a;
+  --color-medalGold: #ffd700;
+  --color-medalSilver: #c0c0c0;
+  --color-medalBronze: #cd7f32;
 }
 
 /* react-day-picker theme overrides */
