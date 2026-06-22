@@ -464,7 +464,7 @@ async function enrichResort(
       think: true,
       model,
       messages,
-      options: { num_ctx: 32768, num_predict: 8192 },
+      options: { num_ctx: 32768, num_predict: numPredict },
     })
 
     let content = ''
@@ -496,21 +496,22 @@ async function enrichResort(
       return { ok: false, reason: 'stream error' }
     }
 
-    if (!content) {
-      if (doneReason === 'length') {
-        numPredict *= 2
-        log(
-          'warn',
-          'enrich',
-          `LLM hit token limit, increasing to ${numPredict} and retrying...`,
-          1
-        )
-        if (attempt < maxRetries) {
-          messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
-          continue
-        }
-        return { ok: false, reason: 'LLM hit token limit' }
+    if (doneReason === 'length') {
+      numPredict *= 2
+      log(
+        'warn',
+        'enrich',
+        `LLM hit token limit (content: ${content.length} chars), increasing num_predict to ${numPredict} and retrying...`,
+        1
+      )
+      if (attempt < maxRetries) {
+        messages.push({ role: 'user', content: LLM_RETRY_EMPTY_PROMPT })
+        continue
       }
+      return { ok: false, reason: 'LLM hit token limit' }
+    }
+
+    if (!content) {
       log(
         'warn',
         'enrich',
