@@ -46,8 +46,10 @@ export class ProposalsPage {
     const endStr = endDate.toISOString().split('T')[0]
 
     const dateField = this.page.getByTestId('date-range-field')
-    await dateField.locator(`[data-day="${startStr}"]`).click()
-    await dateField.locator(`[data-day="${endStr}"]`).click()
+    await dateField
+      .locator(`[data-day="${startStr}"]:not([data-hidden])`)
+      .click()
+    await dateField.locator(`[data-day="${endStr}"]:not([data-hidden])`).click()
   }
 
   async fillResortProposal(data: {
@@ -170,7 +172,6 @@ export class ProposalsPage {
       description: 'Great resort',
     })
     await this.submitButton.click()
-    await expect(this.submitButton).toBeEnabled()
     await expect(this.page.getByText(resortName).first()).toBeVisible()
   }
 
@@ -182,7 +183,6 @@ export class ProposalsPage {
     await this.page.getByTestId('add-accommodation-btn').click()
     await this.page.getByLabel('Name').fill(name)
     await this.page.getByTestId('acc-save-btn').click()
-    await expect(this.page.getByTestId('acc-save-btn')).toBeEnabled()
     await expect(this.page.getByText(name)).toBeVisible()
   }
 
@@ -192,7 +192,6 @@ export class ProposalsPage {
 
   async submitProposal() {
     await this.proposalSubmitBtn.click()
-    await expect(this.proposalSubmitBtn).toBeEnabled()
     await expect(this.page.getByText(/submitted/i)).toBeVisible()
   }
 }

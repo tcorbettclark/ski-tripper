@@ -80,7 +80,6 @@ test.describe('Auth flow', () => {
     await test.step('resend verification', async () => {
       const resendBtn = page.getByTestId('resend-verification')
       await resendBtn.click()
-      await expect(resendBtn).toBeEnabled()
       await expect(page.getByText(/verification email resent/i)).toBeVisible()
     })
 

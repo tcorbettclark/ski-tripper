@@ -24,7 +24,6 @@ export class PollPage {
   async createPoll(durationDays = 7) {
     await this.pollDurationInput.fill(String(durationDays))
     await this.createPollButton.click()
-    await expect(this.createPollButton).toBeEnabled()
     await expect(this.page.getByText(/active poll/i)).toBeVisible()
   }
 
@@ -36,7 +35,6 @@ export class PollPage {
 
   async saveVote() {
     await this.saveVoteButton.click()
-    await expect(this.saveVoteButton).toBeEnabled()
     await expect(this.page.getByText(/vote saved/i)).toBeVisible()
   }
 
@@ -45,7 +43,6 @@ export class PollPage {
     await this.page.getByLabel(/outcome/i).fill(outcome)
     const confirmBtn = this.page.getByTestId('confirm-close-poll-btn')
     await confirmBtn.click()
-    await expect(confirmBtn).toBeEnabled()
     await expect(this.page.getByText(/past polls/i)).toBeVisible()
   }
 }

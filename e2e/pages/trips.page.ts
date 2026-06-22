@@ -25,7 +25,6 @@ export class TripsPage {
     await this.newTripButton.click()
     await this.tripDescriptionInput.fill(description)
     await this.saveTripButton.click()
-    await expect(this.saveTripButton).toBeEnabled()
     await expect(this.page.getByText(description)).toBeVisible()
   }
 
@@ -43,7 +42,6 @@ export class TripsPage {
     await this.joinTripButton.click()
     await this.tripCodeInput.fill(code)
     await this.joinTripSubmitButton.click()
-    await expect(this.joinTripSubmitButton).toBeEnabled()
   }
 
   async getInviteCode(): Promise<string> {

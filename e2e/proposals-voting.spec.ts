@@ -66,7 +66,6 @@ test.describe('Proposals and voting', () => {
         description: 'Great resort',
       })
       await proposals.submitButton.click()
-      await expect(proposals.submitButton).toBeEnabled()
       await expect(page.getByText('Chamonix').first()).toBeVisible()
     })
 

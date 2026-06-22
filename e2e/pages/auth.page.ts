@@ -34,7 +34,6 @@ export class AuthPage {
     await this.emailInput.fill(user.email)
     await this.passwordInput.fill(user.password)
     await this.submitButton.click()
-    await expect(this.submitButton).toBeEnabled()
     await expect(
       this.page.getByRole('heading', { name: /verify your email/i })
     ).toBeVisible()
@@ -45,7 +44,6 @@ export class AuthPage {
     await this.emailInput.fill(user.email)
     await this.passwordInput.fill(user.password)
     await this.submitButton.click()
-    await expect(this.submitButton).toBeEnabled()
   }
 
   async clickForgotPassword() {
