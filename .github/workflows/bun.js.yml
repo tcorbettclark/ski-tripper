@@ -10,8 +10,6 @@ jobs:
   build:
     name: test-app
     runs-on: ubuntu-latest
-    env:
-      BUN_TEST: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
