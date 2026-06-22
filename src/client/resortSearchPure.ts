@@ -22,9 +22,22 @@ export const TIER_FUZZY = 0.05
 export const RATIO_CLOSE = 0.85
 export const RATIO_FUZZY = 0.5
 
-export const TROPHY_GOLD_THRESHOLD = 0.8
-export const TROPHY_SILVER_THRESHOLD = 0.65
-export const TROPHY_BRONZE_THRESHOLD = 0.5
+export const GOLD_RATIO = 0.95
+export const SILVER_RATIO = 0.85
+export const BRONZE_RATIO = 0.7
+export const MEDAL_FLOOR = 0.3
+
+export type TrophyGrade = 'gold' | 'silver' | 'bronze' | null
+
+export function trophyGrade(score: number, maxScore: number): TrophyGrade {
+  if (maxScore < MEDAL_FLOOR) return null
+  if (score < MEDAL_FLOOR) return null
+  const ratio = score / maxScore
+  if (ratio >= GOLD_RATIO) return 'gold'
+  if (ratio >= SILVER_RATIO) return 'silver'
+  if (ratio >= BRONZE_RATIO) return 'bronze'
+  return null
+}
 
 export function lexicalBoost(
   query: string,

@@ -21,11 +21,7 @@ import {
   onModelReady as _onModelReady,
   searchResorts as _searchResorts,
 } from './resortSearch'
-import {
-  TROPHY_BRONZE_THRESHOLD,
-  TROPHY_GOLD_THRESHOLD,
-  TROPHY_SILVER_THRESHOLD,
-} from './resortSearchPure'
+import { trophyGrade } from './resortSearchPure'
 import TagCloud from './TagCloud'
 import {
   borders,
@@ -408,6 +404,14 @@ export default function Resorts({
     maxTransferTime >= 0 &&
     maxTransferTime < maxTransferTimeFromData
 
+  const maxScore = useMemo(() => {
+    let max = 0
+    for (const r of filteredResorts) {
+      if (r.score != null && r.score > max) max = r.score
+    }
+    return max
+  }, [filteredResorts])
+
   if (resorts.length === 0) {
     return (
       <div style={resortsStyles.container}>
@@ -453,13 +457,6 @@ export default function Resorts({
     }
   }
 
-  function trophyIcon(score: number): 'gold' | 'silver' | 'bronze' | null {
-    if (score >= TROPHY_GOLD_THRESHOLD) return 'gold'
-    if (score >= TROPHY_SILVER_THRESHOLD) return 'silver'
-    if (score >= TROPHY_BRONZE_THRESHOLD) return 'bronze'
-    return null
-  }
-
   function trophyColorVariant(variant: 'gold' | 'silver' | 'bronze'): string {
     if (variant === 'gold') return colors.medalGold
     if (variant === 'silver') return colors.medalSilver
@@ -467,7 +464,7 @@ export default function Resorts({
   }
 
   function matchDotColor(score: number): string {
-    const trophy = trophyIcon(score)
+    const trophy = trophyGrade(score, maxScore)
     if (trophy) return trophyColorVariant(trophy)
     return mix('--color-accent', Math.min(score * 1.4, 1))
   }
@@ -785,12 +782,12 @@ export default function Resorts({
                       )}
                       {resort.resortName}
                       {resort.score != null &&
-                        trophyIcon(resort.score) != null && (
+                        trophyGrade(resort.score, maxScore) != null && (
                           <Trophy
                             size={14}
                             style={{
                               color: trophyColorVariant(
-                                trophyIcon(resort.score)!
+                                trophyGrade(resort.score, maxScore)!
                               ),
                               flexShrink: 0,
                             }}

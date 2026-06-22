@@ -2,17 +2,19 @@ import { describe, expect, it } from 'bun:test'
 import leven from 'leven'
 import type { ResortWithEmbedding } from '../shared/types.d'
 import {
+  BRONZE_RATIO,
   cosineSimilarity,
+  GOLD_RATIO,
   lexicalBoost,
+  MEDAL_FLOOR,
   RATIO_CLOSE,
   RATIO_FUZZY,
   relevanceScore,
+  SILVER_RATIO,
   TIER_CLOSE,
   TIER_EXACT,
   TIER_FUZZY,
-  TROPHY_BRONZE_THRESHOLD,
-  TROPHY_GOLD_THRESHOLD,
-  TROPHY_SILVER_THRESHOLD,
+  trophyGrade,
 } from './resortSearchPure'
 
 function makeResort(
@@ -238,17 +240,89 @@ describe('relevanceScore', () => {
   })
 })
 
-describe('trophy thresholds', () => {
-  it('TROPHY_GOLD_THRESHOLD is 0.8', () => {
-    expect(TROPHY_GOLD_THRESHOLD).toBe(0.8)
+describe('trophyGrade', () => {
+  it('returns gold when score within 5% of max', () => {
+    expect(trophyGrade(0.79, 0.82)).toBe('gold')
   })
 
-  it('TROPHY_SILVER_THRESHOLD is 0.65', () => {
-    expect(TROPHY_SILVER_THRESHOLD).toBe(0.65)
+  it('returns silver when score within 15% of max but not gold', () => {
+    expect(trophyGrade(0.72, 0.82)).toBe('silver')
   })
 
-  it('TROPHY_BRONZE_THRESHOLD is 0.5', () => {
-    expect(TROPHY_BRONZE_THRESHOLD).toBe(0.5)
+  it('returns bronze when score within 30% of max but not silver', () => {
+    expect(trophyGrade(0.6, 0.82)).toBe('bronze')
+  })
+
+  it('returns null when score well below max', () => {
+    expect(trophyGrade(0.4, 0.82)).toBeNull()
+  })
+
+  it('returns gold for exact max score', () => {
+    expect(trophyGrade(0.82, 0.82)).toBe('gold')
+  })
+
+  it('returns null when maxScore is below floor', () => {
+    expect(trophyGrade(0.28, 0.28)).toBeNull()
+  })
+
+  it('returns null when score is below floor even if ratio is high', () => {
+    expect(trophyGrade(0.29, 0.3)).toBeNull()
+  })
+
+  it('awards gold at exactly gold ratio boundary', () => {
+    const score = 0.82 * GOLD_RATIO
+    expect(trophyGrade(score, 0.82)).toBe('gold')
+  })
+
+  it('awards silver at exactly silver ratio boundary', () => {
+    const score = 0.82 * SILVER_RATIO
+    expect(trophyGrade(score, 0.82)).toBe('silver')
+  })
+
+  it('awards bronze at exactly bronze ratio boundary', () => {
+    const score = 0.82 * BRONZE_RATIO
+    expect(trophyGrade(score, 0.82)).toBe('bronze')
+  })
+
+  it('works with short-query scenario', () => {
+    expect(trophyGrade(0.55, 0.55)).toBe('gold')
+    expect(trophyGrade(0.5, 0.55)).toBe('silver')
+    expect(trophyGrade(0.42, 0.55)).toBe('bronze')
+    expect(trophyGrade(0.35, 0.55)).toBeNull()
+  })
+
+  it('works with detailed-query scenario', () => {
+    expect(trophyGrade(0.82, 0.82)).toBe('gold')
+    expect(trophyGrade(0.72, 0.82)).toBe('silver')
+    expect(trophyGrade(0.6, 0.82)).toBe('bronze')
+    expect(trophyGrade(0.5, 0.82)).toBeNull()
+  })
+
+  it('gives no medals for unrelated query with low max', () => {
+    expect(trophyGrade(0.18, 0.22)).toBeNull()
+    expect(trophyGrade(0.22, 0.22)).toBeNull()
+  })
+
+  it('floor prevents medals when max score is poor', () => {
+    expect(trophyGrade(MEDAL_FLOOR - 0.01, MEDAL_FLOOR - 0.01)).toBeNull()
+  })
+})
+
+describe('threshold constants', () => {
+  it('GOLD_RATIO is 0.95', () => {
+    expect(GOLD_RATIO).toBe(0.95)
+  })
+
+  it('SILVER_RATIO is 0.85', () => {
+    expect(SILVER_RATIO).toBe(0.85)
+  })
+
+  it('BRONZE_RATIO is 0.70', () => {
+    expect(BRONZE_RATIO).toBe(0.7)
+  })
+
+  it('MEDAL_FLOOR is 0.30', () => {
+    expect(MEDAL_FLOOR).toBe(0.3)
   })
 })
 
