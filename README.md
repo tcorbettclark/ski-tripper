@@ -4,42 +4,47 @@
 
 ## What is this?
 
-Ski Tripper is an application to help groups of friends find, discuss, and decide on a ski resort for a holiday, arriving at a concensus through one or more rounds of voting.
+Ski Tripper helps groups of friends agree on the perfect ski holiday without the endless WhatsApp debate.
 
-It takes a "resort-first" approach. The trip is the holder of an idea (e.g. "let's go skiing in 2027"). Anyone can create proposals for a trip by browsing a resort catalog, adding proposal-specific accommodations and dates, and submitting for a vote. The AI generated catalog means each proposal has structured data on the skiing experience at the resort (piste km, altitude range, transfer times to nearest international airport, difficulty levels, etc). Each proposal also has a begin and end date because the best dates may depend on notable annual events such as races. Each proposal also has multiple accommodations, allowing different members of the group to stay in different hotels or pensions etc.
+Instead of getting bogged down in flight times and hotel rooms on day one, Ski Tripper focuses on what actually matters: the mountain.
 
-Many holiday sites start with a search by date, departure airports, and rough location, before presenting a list of hotels to choose from. Useful in part, but less helpful if people are travelling from different places, may want to stay in different accommodation, and most importantly **does not really help the group find resorts based upon the on-mountain experience**. Of course, websites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), [Hotels](https://www.hotels.com) can and should all be used to find accommodations as part of the proposal drafting process.
+- The "Trip" is your master plan: Think of a Trip as your group's shared folder (e.g., "Ski Trip 2027"). It’s the placeholder where everyone inputs their preferences and votes on ideas.
+- Data-driven matchmaking: Everyone declares what they like (e.g., short airport transfers, high altitude, heavy on blues, off-piste). Our AI-powered catalog automatically scores resorts against your group's profile.
+- "Proposals" are the pitches: Anyone can build a concrete option (a "Proposal") inside the Trip. You pick a highly-rated resort, add dates that work around mountain events, and drop in a few accommodation choices so friends can split between hotels or cheaper apartments.
+- Structured voting: Once the options are locked in, the group votes in rounds until you systematically narrow it down to a winner.
+
+Why do it this way? Standard booking sites break down if your friends fly from different airports or have different budgets. Ski Tripper lets you use sites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) to scout lodging, but brings that data here to align your group's preferences and actually force a decision.
 
 ## How does it work?
 
-Low-friction onboarding:
-  - everyone signs up with their email
-  - each person sets their personal skiing preferences (skill level, on/off-piste, time split between slopes/eating/après/chill) so the group participants *and AI* can see the kind of trip you like
-  - one person (the nominated "coordinator") creates a "trip" and asks friends to join via a simple three-word code
+### 1. Low-Friction Onboarding
+- **Quick Sign-Up:** Everyone creates an account with just an email.
+- **Set Your Skier Profile:** Input your skill level, terrain preference (on/off-piste), and how you split your day between burning rubber on the slopes, long lunches, après, or chilling. This gives your friends—and the AI—an instant snapshot of what makes a perfect holiday for you.
+- **Gather the Crew:** The group "coordinator" creates a **Trip** container and shares a simple three-word invite code to bring everyone in.
 
-Browse thousands of resorts:
-  - use a fast, searchable, filterable database packed with detail: piste km, altitude range, snow reliability, transfer times, difficulty levels, AI generated descriptions, linked resorts,and more
-  - use the built-in AI assistant to generate query text from everyone's preferences
+### 2. Browse Thousands of Resorts
+- **Deep-Dive Data:** Explore a massive, filterable database packed with real stats: piste distance, altitude range, snow reliability, airport transfer times, and difficulty splits. 
+- **AI Preference Matcher:** Don't waste time arguing over filters. The built-in AI assistant analyzes everyone’s profile and automatically builds search queries to surface resorts that match the whole group's vibe.
 
-Propose to discuss and refine:
-  - create resort proposals with dates, descriptions, and accommodation options
-  - use the built-in AI assistant to describe suitability of each proposal against the likes and dislikes of all the participants
-  - discuss and add notes
-  - submit ready for a round of voting
+### 3. Pitch, Discuss, and Refine
+- **Build the "Proposal":** Anyone can draft a proposal combining a resort, specific dates, and various accommodation options. 
+- **AI Suitability Reviews:** The AI instantly scans the proposal and writes a quick brief on how well it fits—or clashes with—everyone's likes and dislikes (e.g., *"Great for Dave's love of off-piste, but transfer time is a bit long for Sarah"*).
+- **Hype it up:** Add notes, chat with the group, and refine the pitch until it’s ready for the chopping block.
 
-Weighted token voting, not just one pick:
-  - the trip coordinator creates a poll from submitted proposals
-  - everyone distributes their votes across proposals (e.g. 3 tokens on your favourite, 1 on your backup)
-  - each poll has an end date, but can be terminated early by the coordinator
-  - the coodinator decides the consequence of each poll (reject some and vote again, or just pick the winner if clear)
+### 4. Weighted Token Voting (No Simple Majorities)
+- **Launch the Poll:** When the pitches are locked in, the coordinator opens a voting round.
+- **Spread the Love:** Instead of picking just one winner, everyone gets a bundle of tokens to distribute (e.g., spend 3 tokens on your absolute favorite, 1 on a solid backup). 
+- **Flexible Timelines:** Polls run until a set deadline, though the coordinator can call it early if everyone has voted.
+- **Iterative Rounds:** The coordinator reviews the token spread and decides the next step—either chop the bottom options and vote again, or crown a clear winner.
 
-Guided "what next?" prompting:
-  - show each person what they could do next - submit their draft, comment on a proposal, vote before the poll closes, etc
+### 5. Smart "What Next?" Prompts
+- **Zero Momentum Loss:** Group trips usually die in the WhatsApp void. Ski Tripper keeps the engine running by showing every user exactly what their next move is the moment they open the app—whether that's finishing a draft, replying to a comment, or casting votes before the buzzer.
+
 
 ## Who created it?
 
 My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programmed all my life; have academic origins in engineering, computer science, and AI research; was a CTO in Life Sciences for 20 years; and am now semi-retired enjoying all sorts of interesting things. No surprise that I also love skiing.
-  
+
 ## Why did I build it?
 
 I built Ski Tripper for two reasons: to understand the practical state of AI today, and to help organise "Boys Ski Trips".
@@ -47,9 +52,10 @@ I built Ski Tripper for two reasons: to understand the practical state of AI tod
 AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense for the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
 
 Having organised a boys ski trip for a few years, I thought an application could
-* add a bit of structure to the process,
-* help cut down on some of the chaos, and 
-* generate new ideas for destinations by separating the role of coordinator from the role of proposer.
+
+- add a bit of structure to the process,
+- help cut down on some of the chaos, and
+- generate new ideas for destinations by separating the role of coordinator from the role of proposer.
 
 ## How is AI used?
 
@@ -78,14 +84,14 @@ Lightly configured for development using the [OpenCode](https://opencode.ai/) co
 
 Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some convenient aliases and hooks have been added to `.config/wt.toml`, resulting in the following workflow:
 
-| Task                                                    | Shell alias          | Command                                          |
-| ------------------------------------------------------- | -------------------- | ------------------------------------------------ |
-| New worktree with `.env` and packages installed         | `wtn <worktree>`     | `wt switch --create <worktree>`                  |
-| Remove a worktree and clean everything up               | `wtr <worktree>`     | `wt remove <worktree>`                           |
-| List all worktrees with their status                    | `wtl`                | `wt list`                                        |
-| Merge current worktree back to main                     | `wtm`                | `wt merge-and-continue`                          |
-| Sync main back to all worktrees                         | `wts`                | `wt sync-all-from-main`                          |
-| Push main (commits + annotated tags) to origin          | `wtp`                | `git push --follow-tags origin main`             |
+| Task                                            | Shell alias      | Command                              |
+| ----------------------------------------------- | ---------------- | ------------------------------------ |
+| New worktree with `.env` and packages installed | `wtn <worktree>` | `wt switch --create <worktree>`      |
+| Remove a worktree and clean everything up       | `wtr <worktree>` | `wt remove <worktree>`               |
+| List all worktrees with their status            | `wtl`            | `wt list`                            |
+| Merge current worktree back to main             | `wtm`            | `wt merge-and-continue`              |
+| Sync main back to all worktrees                 | `wts`            | `wt sync-all-from-main`              |
+| Push main (commits + annotated tags) to origin  | `wtp`            | `git push --follow-tags origin main` |
 
 Testing is done with unit testing, and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
 
@@ -95,11 +101,11 @@ Versioning follows [Semantic Versioning](https://semver.org/), best managed with
 
 The app runs fine on a single 1G [DigitalOcean droplet](https://www.digitalocean.com/products/droplets/) (Ubuntu 24.04) with three [systemd services](https://www.freedesktop.org/wiki/Software/systemd/):
 
-| Service | User | Description |
-|---------|------|-------------|
-| `caddy` | `caddy` | Reverse proxy and TLS termination (ports 80/443) |
-| `ski-tripper-pb` | `ski-tripper` | PocketBase (localhost:8090) |
-| `ski-tripper-api` | `ski-tripper` | Custom Bun API server (localhost:5173) |
+| Service           | User          | Description                                      |
+| ----------------- | ------------- | ------------------------------------------------ |
+| `caddy`           | `caddy`       | Reverse proxy and TLS termination (ports 80/443) |
+| `ski-tripper-pb`  | `ski-tripper` | PocketBase (localhost:8090)                      |
+| `ski-tripper-api` | `ski-tripper` | Custom Bun API server (localhost:5173)           |
 
 No Docker involved — everything runs natively on the host.
 
@@ -107,34 +113,34 @@ No Docker involved — everything runs natively on the host.
 
 Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
 
-| Sub-command | Description |
-|---------|-------------|
-| `create` | Create a droplet and reserved IP (idempotent) |
+| Sub-command | Description                                                             |
+| ----------- | ----------------------------------------------------------------------- |
+| `create`    | Create a droplet and reserved IP (idempotent)                           |
 | `configure` | Install dependencies and set up systemd services on an existing droplet |
-| `status` | Show service status, IP, and layout info |
-| `setup` | Create, configure, and deploy (full setup) |
-| `deploy` | Pull latest code, build, and restart services (default branch: main) |
-| `destroy` | Unassign IP and delete the droplet (preserves the reserved IP) |
+| `status`    | Show service status, IP, and layout info                                |
+| `setup`     | Create, configure, and deploy (full setup)                              |
+| `deploy`    | Pull latest code, build, and restart services (default branch: main)    |
+| `destroy`   | Unassign IP and delete the droplet (preserves the reserved IP)          |
 
 ### Server layout
 
-| Path | Description |
-|------|-------------|
-| `/home/ski-tripper/ski-tripper/` | Git repository |
-| `/opt/ski-tripper/` | Installed app (`static/`, `server/serve`, `pb_migrations/`, `.env`) |
-| `/var/lib/ski-tripper/pb_data/` | PocketBase data |
-| `/etc/caddy/Caddyfile` | Caddy configuration |
-| `/usr/local/bin/{bun,caddy,pocketbase}` | Binaries |
-| `/etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service` | Systemd units |
+| Path                                                                 | Description                                                         |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `/home/ski-tripper/ski-tripper/`                                     | Git repository                                                      |
+| `/opt/ski-tripper/`                                                  | Installed app (`static/`, `server/serve`, `pb_migrations/`, `.env`) |
+| `/var/lib/ski-tripper/pb_data/`                                      | PocketBase data                                                     |
+| `/etc/caddy/Caddyfile`                                               | Caddy configuration                                                 |
+| `/usr/local/bin/{bun,caddy,pocketbase}`                              | Binaries                                                            |
+| `/etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service` | Systemd units                                                       |
 
 ### Server logs
 
 SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`), then:
 
-| Service | Command |
-|---------|---------|
-| Caddy | `journalctl -u caddy` |
-| PocketBase | `journalctl -u ski-tripper-pb` |
+| Service    | Command                         |
+| ---------- | ------------------------------- |
+| Caddy      | `journalctl -u caddy`           |
+| PocketBase | `journalctl -u ski-tripper-pb`  |
 | API server | `journalctl -u ski-tripper-api` |
 
 ### Resort data
@@ -143,13 +149,13 @@ The resort catalogue is generated offline via a pipeline and uploaded to PocketB
 
 The tool, `bun run tools:resorts`, has six sub-commands: `seed`, `enrich`, `audit`, `encode`, `build`, and `upload`.
 
-| Stage | Input | Output | What happens |
-|-------|-------|--------|---------------|
-| **Seed** | OpenSkiMap CSVs (ski areas, lifts, runs) | `seeded.jsonl` | Download & cache CSVs; filter for operating downhill resorts with ≥5 km pistes and ≥1 non-surface lift; compute difficulty percentages from run data; map countries to 17 ski regions; generate slug IDs |
-| **Enrich** | `seeded.jsonl` + Exa web search + Ollama LLM | `enriched.jsonl` | For each resort, run 4 parallel Exa searches (authoritative ski sources, general, airports, linked resorts); feed results to an LLM to extract descriptions (terrain, off-piste, value, family, après-ski, lift system), airport/transfer, snow reliability, and season; a separate LLM audits for contradictions with seeded numeric fields and corrects them; URLs are cleaned and deduplicated |
-| **Audit** | `enriched.jsonl` | quality reports | Check for empty/low-quality fields, invalid values, orphans, and duplicates |
-| **Encode** | `enriched.jsonl` | `encoded.jsonl` | Concatenate name, country, region, and all enriched descriptions into search text; generate embeddings using `Xenova/multi-qa-MiniLM-L6-cos-v1` |
-| **Build** | `seeded.jsonl` + `enriched.jsonl` + `encoded.jsonl` | `all.jsonl` | Merge seeded and enriched data (enriched overrides numeric fields if corrected by audit); build a combined description; flatten into a single record per resort |
-| **Upload** | `all.jsonl` | PocketBase file | Upload the full JSONL as a single file attachment to PocketBase, replacing previous records. |
+| Stage      | Input                                               | Output           | What happens                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---------- | --------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Seed**   | OpenSkiMap CSVs (ski areas, lifts, runs)            | `seeded.jsonl`   | Download & cache CSVs; filter for operating downhill resorts with ≥5 km pistes and ≥1 non-surface lift; compute difficulty percentages from run data; map countries to 17 ski regions; generate slug IDs                                                                                                                                                                                          |
+| **Enrich** | `seeded.jsonl` + Exa web search + Ollama LLM        | `enriched.jsonl` | For each resort, run 4 parallel Exa searches (authoritative ski sources, general, airports, linked resorts); feed results to an LLM to extract descriptions (terrain, off-piste, value, family, après-ski, lift system), airport/transfer, snow reliability, and season; a separate LLM audits for contradictions with seeded numeric fields and corrects them; URLs are cleaned and deduplicated |
+| **Audit**  | `enriched.jsonl`                                    | quality reports  | Check for empty/low-quality fields, invalid values, orphans, and duplicates                                                                                                                                                                                                                                                                                                                       |
+| **Encode** | `enriched.jsonl`                                    | `encoded.jsonl`  | Concatenate name, country, region, and all enriched descriptions into search text; generate embeddings using `Xenova/multi-qa-MiniLM-L6-cos-v1`                                                                                                                                                                                                                                                   |
+| **Build**  | `seeded.jsonl` + `enriched.jsonl` + `encoded.jsonl` | `all.jsonl`      | Merge seeded and enriched data (enriched overrides numeric fields if corrected by audit); build a combined description; flatten into a single record per resort                                                                                                                                                                                                                                   |
+| **Upload** | `all.jsonl`                                         | PocketBase file  | Upload the full JSONL as a single file attachment to PocketBase, replacing previous records.                                                                                                                                                                                                                                                                                                      |
 
 On the client ikn the browser, the JSONL file is fetched from PocketBase and parsed line-by-line.
