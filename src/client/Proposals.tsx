@@ -142,7 +142,7 @@ export default function Proposals({
   >({})
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [proposalsLoading, setProposalsLoading] = useState(false)
+  const [_proposalsLoading, setProposalsLoading] = useState(false)
   const [proposalsError, setProposalsError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
   const mountedRef = useRef(true)
@@ -301,14 +301,13 @@ export default function Proposals({
         />
       )}
 
-      {proposalsLoading && <p style={styles.message}>Loading proposals…</p>}
       {proposalsError && (
         <p style={{ ...styles.message, color: colors.error }}>
           {proposalsError}
         </p>
       )}
 
-      {!proposalsLoading && !proposalsError && (
+      {!proposalsError && (
         <ProposalsGrid
           proposals={proposals}
           userId={user.id}
