@@ -39,6 +39,7 @@ export default function useSSEStream(
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const paramsKeyRef = useRef('')
   const fetchCountRef = useRef(0)
+  const doneReceivedRef = useRef(false)
 
   const [fetchCount, setFetchCount] = useState(0)
 
@@ -88,6 +89,7 @@ export default function useSSEStream(
     fetchCountRef.current = fetchCount
 
     setState({ ...INITIAL_STATE, status: 'generating' })
+    doneReceivedRef.current = false
     clearTimer()
 
     if (abortRef.current) {
@@ -136,6 +138,7 @@ export default function useSSEStream(
         const decoder = new TextDecoder()
         let buffer = ''
         let currentEvent = ''
+        let receivedContent = false
 
         function processLine(line: string): void {
           if (line.startsWith('event: ')) {
@@ -154,12 +157,14 @@ export default function useSSEStream(
                 }))
               } else if (currentEvent === 'content') {
                 resetTimeout()
+                receivedContent = true
                 setState((prev) => ({
                   ...prev,
                   status: 'generating',
                   content: (prev.content ?? '') + (parsed.text ?? ''),
                 }))
               } else if (currentEvent === 'done') {
+                doneReceivedRef.current = true
                 clearTimer()
                 setState({
                   status: parsed.status ?? 'complete',
@@ -169,6 +174,7 @@ export default function useSSEStream(
                   error: null,
                 })
               } else if (currentEvent === 'error') {
+                doneReceivedRef.current = true
                 clearTimer()
                 setState({
                   status: 'error',
@@ -204,6 +210,18 @@ export default function useSSEStream(
           for (const line of buffer.split('\n')) {
             processLine(line)
           }
+        }
+
+        if (mountedRef.current && !doneReceivedRef.current) {
+          setState({
+            status: 'error',
+            thinking: '',
+            content: '',
+            model: '',
+            error: receivedContent
+              ? 'Connection closed before response was complete.'
+              : 'Model produced no output. Please try again.',
+          })
         }
       })
       .catch((err) => {

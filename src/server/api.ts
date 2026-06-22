@@ -1,3 +1,4 @@
+import type { AbortableAsyncIterator, ChatResponse } from 'ollama'
 import { Ollama } from 'ollama'
 import type PocketBase from 'pocketbase'
 import { ClientResponseError } from 'pocketbase'
@@ -253,6 +254,7 @@ interface StreamLlmParams {
   systemPrompt: string
   userPrompt: string
   model: string
+  abortSignal?: AbortSignal
 }
 
 async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
@@ -267,6 +269,7 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
     systemPrompt,
     userPrompt,
     model,
+    abortSignal,
   } = params
 
   let cacheRows: LlmCacheRow[]
@@ -317,20 +320,55 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
     async start(controller) {
       let accumulatedThinking = ''
       let accumulatedContent = ''
+      let clientAborted = false
+      let llmStream: AbortableAsyncIterator<ChatResponse> | null = null
+
+      const onClientAbort = () => {
+        clientAborted = true
+        console.log(`[${label}] Client disconnected, aborting LLM stream`)
+        if (llmStream && 'abort' in llmStream) {
+          ;(llmStream as { abort: () => void }).abort()
+        }
+      }
+
+      if (abortSignal) {
+        if (abortSignal.aborted) {
+          console.log(
+            `[${label}] Client already disconnected, skipping LLM call`
+          )
+          controller.close()
+          return
+        }
+        abortSignal.addEventListener('abort', onClientAbort, { once: true })
+      }
 
       try {
-        const llmStream = await ollama.chat({
+        const chatStream = await ollama.chat({
           model,
           stream: true,
           think: true,
-          options: { num_predict: 8192 },
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
           ],
         })
+        llmStream = chatStream
 
-        for await (const chunk of llmStream) {
+        if (clientAborted) {
+          console.log(
+            `[${label}] Client disconnected before LLM stream started`
+          )
+          return
+        }
+
+        for await (const chunk of chatStream) {
+          if (clientAborted) {
+            console.log(
+              `[${label}] Aborting LLM stream due to client disconnect`
+            )
+            break
+          }
+
           const thinkPart = (
             chunk.message as unknown as Record<string, unknown>
           ).thinking
@@ -347,7 +385,23 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
           }
         }
 
+        if (clientAborted) {
+          console.log(`[${label}] Stream aborted, closing without caching`)
+          return
+        }
+
         const trimmedContent = (accumulatedContent || '').trim()
+
+        if (!trimmedContent) {
+          const message = accumulatedThinking
+            ? 'Model thought for too long and produced no visible result. Please try again.'
+            : 'Model produced no output. Please try again.'
+          console.error(
+            `[${label}] No content produced (thinking: ${accumulatedThinking.length} chars)`
+          )
+          controller.enqueue(sseEvent('error', { message }))
+          return
+        }
 
         console.log(`[${label}] LLM stream complete`)
 
@@ -390,9 +444,12 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
           err instanceof Error ? err.message : 'LLM generation failed'
         console.error(`[${label}] LLM error: ${errorMsg}`)
         controller.enqueue(sseEvent('error', { message: errorMsg }))
+      } finally {
+        if (abortSignal) {
+          abortSignal.removeEventListener('abort', onClientAbort)
+        }
+        controller.close()
       }
-
-      controller.close()
     },
   })
 
@@ -516,6 +573,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     systemPrompt,
     userPrompt,
     model: server_get_ollama_model_analysis(),
+    abortSignal: req.signal,
   })
 }
 
@@ -637,5 +695,6 @@ export async function handlePreferenceSearch(req: Request): Promise<Response> {
     systemPrompt,
     userPrompt,
     model: server_get_ollama_model_preference_search(),
+    abortSignal: req.signal,
   })
 }

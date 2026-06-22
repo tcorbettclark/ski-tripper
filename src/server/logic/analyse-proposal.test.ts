@@ -97,6 +97,9 @@ describe('analyse-proposal logic', () => {
     const prompt = buildSystemPrompt()
     expect(typeof prompt).toBe('string')
     expect(prompt.length).toBeGreaterThan(0)
+    expect(prompt).toContain('Think concisely')
+    expect(prompt).toContain('Do not second-guess')
+    expect(prompt).toContain('stop thinking and write')
   })
 
   it('buildUserPrompt includes proposal data', () => {
@@ -108,5 +111,6 @@ describe('analyse-proposal logic', () => {
     expect(prompt).toContain('Chamonix')
     expect(prompt).toContain('Bob')
     expect(prompt).toContain('Chalet Alice')
+    expect(prompt).toContain('Think briefly, then write your analysis.')
   })
 })

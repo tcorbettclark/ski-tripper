@@ -127,6 +127,9 @@ Rules:
 - Include accommodation fit — evaluate whether accommodation types match participant preferences
 - Check seasonal fit — mention if proposed dates fall outside the resort's reliable ski season (skiSeasonMonths)
 - Be specific and concrete, not generic
+- Think concisely: state each insight once, do not repeat or rephrase
+- Do not second-guess conclusions you have already reached
+- When you have enough information to assess each participant, stop thinking and write your analysis
 - Format your response exactly as shown below, with no additional text before or after
 
 ## Summary
@@ -197,6 +200,9 @@ export function buildUserPrompt(
       lines.push(`- Notes: ${preferences.notes}`)
     }
   }
+
+  lines.push('')
+  lines.push('Think briefly, then write your analysis. Do not repeat yourself.')
 
   return lines.join('\n')
 }

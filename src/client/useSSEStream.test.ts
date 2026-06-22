@@ -82,6 +82,12 @@ describe('useSSEStream', () => {
     const stream = createSSEStream([
       sseLine('thinking', { text: 'Hello ' }),
       sseLine('thinking', { text: 'World' }),
+      sseLine('done', {
+        status: 'complete',
+        thinking: 'Hello World',
+        content: 'result',
+        model: 'test',
+      }),
     ])
     globalThis.fetch = mock(() =>
       Promise.resolve(
@@ -99,13 +105,19 @@ describe('useSSEStream', () => {
     await act(() => new Promise((r) => setTimeout(r, 100)))
 
     expect(result.current.thinking).toBe('Hello World')
-    expect(result.current.status).toBe('generating')
+    expect(result.current.status).toBe('complete')
   })
 
   it('accumulates content events', async () => {
     const stream = createSSEStream([
       sseLine('content', { text: 'Part 1 ' }),
       sseLine('content', { text: 'Part 2' }),
+      sseLine('done', {
+        status: 'complete',
+        thinking: '',
+        content: 'Part 1 Part 2',
+        model: 'test',
+      }),
     ])
     globalThis.fetch = mock(() =>
       Promise.resolve(
@@ -123,7 +135,7 @@ describe('useSSEStream', () => {
     await act(() => new Promise((r) => setTimeout(r, 100)))
 
     expect(result.current.content).toBe('Part 1 Part 2')
-    expect(result.current.status).toBe('generating')
+    expect(result.current.status).toBe('complete')
   })
 
   it('handles done event', async () => {
@@ -414,5 +426,64 @@ describe('useSSEStream', () => {
     await act(() => new Promise((r) => setTimeout(r, 100)))
     expect(callCount).toBe(2)
     expect(result.current.content).toBe('second result')
+  })
+
+  it('detects stream ending without done event and no content', async () => {
+    const stream = createSSEStream([
+      sseLine('thinking', { text: 'Hmm let me think...' }),
+    ])
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      )
+    ) as unknown as typeof globalThis.fetch
+
+    const { result } = renderHook(() =>
+      useSSEStream({ type: 'analysis', tripId: 'trip-1' })
+    )
+
+    await act(() => new Promise((r) => setTimeout(r, 100)))
+
+    expect(result.current.status).toBe('error')
+    expect(result.current.error).toBe(
+      'Model produced no output. Please try again.'
+    )
+    expect(result.current.thinking).toBe('')
+    expect(result.current.content).toBe('')
+  })
+
+  it('detects stream ending without done event with partial content', async () => {
+    const encoder = new TextEncoder()
+    const contentChunk = encoder.encode(
+      `event: content\ndata: {"text":"## Analysis\\nSome partial"}\n\n`
+    )
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(contentChunk)
+        controller.close()
+      },
+    })
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        new Response(stream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        })
+      )
+    ) as unknown as typeof globalThis.fetch
+
+    const { result } = renderHook(() =>
+      useSSEStream({ type: 'analysis', tripId: 'trip-1' })
+    )
+
+    await act(() => new Promise((r) => setTimeout(r, 100)))
+
+    expect(result.current.status).toBe('error')
+    expect(result.current.error).toBe(
+      'Connection closed before response was complete.'
+    )
   })
 })
