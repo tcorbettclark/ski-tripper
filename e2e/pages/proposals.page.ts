@@ -176,10 +176,12 @@ export class ProposalsPage {
   }
 
   async addAccommodation(name: string) {
+    await expect(
+      this.page.getByRole('button', { name: /^accommodations/i }).first()
+    ).toBeVisible()
     const accTab = this.page
       .getByRole('button', { name: /^accommodations/i })
       .first()
-    await accTab.waitFor({ state: 'visible' })
     await accTab.click()
     const addBtn = this.page.getByTestId('add-accommodation-btn')
     await addBtn.waitFor({ state: 'visible' })

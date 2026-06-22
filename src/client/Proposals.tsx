@@ -154,19 +154,32 @@ export default function Proposals({
     }
   }, [])
 
+  const lastFetchedTripIdRef = useRef<string | null>(null)
+  const listProposalsRef = useRef(listProposals)
+  const listAccommodationsRef = useRef(listAccommodations)
+  const getCoordinatorParticipantRef = useRef(getCoordinatorParticipant)
+  const onAuthErrorRef = useRef(onAuthError)
+  listProposalsRef.current = listProposals
+  listAccommodationsRef.current = listAccommodations
+  getCoordinatorParticipantRef.current = getCoordinatorParticipant
+  onAuthErrorRef.current = onAuthError
+
   useEffect(() => {
     if (!tripId) {
       setProposals([])
       setIsCoordinator(false)
       setLoading(false)
+      lastFetchedTripIdRef.current = null
       return
     }
+    if (lastFetchedTripIdRef.current === tripId) return
+    lastFetchedTripIdRef.current = tripId
     setLoading(false)
     setProposalsLoading(true)
     setProposalsError('')
     Promise.all([
-      listProposals(tripId, user.id),
-      getCoordinatorParticipant(tripId),
+      listProposalsRef.current(tripId, user.id),
+      getCoordinatorParticipantRef.current(tripId),
     ])
       .then(([proposalsResult, coordResult]) => {
         if (!mountedRef.current) return null
@@ -180,8 +193,8 @@ export default function Proposals({
       .then((loadedProposals) => {
         if (!mountedRef.current || !loadedProposals) return
         const accommodationPromises = loadedProposals.map((p) =>
-          listAccommodations(p.id).catch((err) => {
-            onAuthError(err)
+          listAccommodationsRef.current(p.id).catch((err) => {
+            onAuthErrorRef.current(err)
             return []
           })
         )
@@ -207,14 +220,7 @@ export default function Proposals({
       .finally(() => {
         if (mountedRef.current) setProposalsLoading(false)
       })
-  }, [
-    tripId,
-    user.id,
-    listProposals,
-    listAccommodations,
-    getCoordinatorParticipant,
-    onAuthError,
-  ])
+  }, [tripId, user.id])
 
   const handleCreated = useCallback((proposal: unknown) => {
     setProposals((p) => [proposal as Proposal, ...p])

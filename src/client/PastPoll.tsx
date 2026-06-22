@@ -31,7 +31,6 @@ export default function PastPoll({
   }, [])
 
   useEffect(() => {
-    setLoading(true)
     setError('')
     listVotes(poll.id, userId)
       .then(async (result) => {
@@ -69,7 +68,7 @@ export default function PastPoll({
         </div>
       )}
       {error && <p style={formStyles.error}>{error}</p>}
-      {loading ? (
+      {loading && votes.length === 0 ? (
         <p style={styles.loading}>Loading…</p>
       ) : !error ? (
         <PollResults poll={poll} proposals={proposals} votes={votes} />

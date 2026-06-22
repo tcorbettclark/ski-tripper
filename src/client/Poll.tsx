@@ -84,7 +84,7 @@ export default function Poll({
     Record<string, Accommodation[]>
   >({})
   const [isCoordinator, setIsCoordinator] = useState(false)
-  const [pollsLoading, setPollsLoading] = useState(false)
+  const [_pollsLoading, setPollsLoading] = useState(false)
   const [pollsError, setPollsError] = useState('')
   const [creatingPoll, setCreatingPoll] = useState(false)
   const [createPollError, setCreatePollError] = useState<string | null>(null)
@@ -232,12 +232,11 @@ export default function Poll({
         <h2 style={styles.heading}>Voting</h2>
       </div>
 
-      {pollsLoading && <p style={styles.message}>Loading poll…</p>}
       {pollsError && (
         <p style={{ ...styles.message, color: colors.error }}>{pollsError}</p>
       )}
 
-      {!pollsLoading && !pollsError && tripId && (
+      {!pollsError && tripId && (
         <>
           {activePoll ? (
             <div style={styles.pollPanel}>

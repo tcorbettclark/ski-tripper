@@ -100,7 +100,7 @@ export default function Overview({
   >({})
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
-  const [participantsLoading, setParticipantsLoading] = useState(true)
+  const [_participantsLoading, setParticipantsLoading] = useState(true)
   const [participantsError, setParticipantsError] = useState('')
   const [userVotedInActivePoll, setUserVotedInActivePoll] = useState(false)
   const [codeCopied, setCodeCopied] = useState(false)
@@ -548,13 +548,10 @@ export default function Overview({
 
       <section style={overviewStyles.section}>
         <h3 style={overviewStyles.sectionHeading}>Our Preferences</h3>
-        {participantsLoading && (
-          <p style={overviewStyles.loading}>Loading...</p>
-        )}
         {participantsError && (
           <p style={formStyles.error}>{participantsError}</p>
         )}
-        {!participantsLoading && !participantsError && (
+        {!participantsError && (
           <div style={overviewStyles.card}>
             {participants.length === 0 ? (
               <p style={overviewStyles.empty}>No participants</p>

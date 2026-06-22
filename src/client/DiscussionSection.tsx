@@ -47,7 +47,6 @@ export default function DiscussionSection({
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setLoading(true)
     setError(null)
     listDiscussion(proposalId)
       .then((result) => setComments(result))
@@ -121,7 +120,9 @@ export default function DiscussionSection({
   return (
     <div style={sectionStyles.container}>
       <div ref={listRef} style={sectionStyles.commentList}>
-        {loading && <p style={sectionStyles.loading}>Loading…</p>}
+        {loading && comments.length === 0 && (
+          <p style={sectionStyles.loading}>Loading…</p>
+        )}
         {error && <p style={formStyles.error}>{error}</p>}
         {!loading && !error && comments.length === 0 && (
           <p style={sectionStyles.empty}>No comments yet.</p>

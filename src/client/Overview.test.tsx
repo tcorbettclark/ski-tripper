@@ -383,7 +383,7 @@ describe('Overview', () => {
     })
   })
 
-  it('shows loading state for participants while data loads', async () => {
+  it('renders preferences section immediately while data loads', async () => {
     const listTripParticipants = mock(
       () => new Promise<{ participants: Participant[] }>(() => {})
     )
@@ -400,9 +400,7 @@ describe('Overview', () => {
       })
     })
 
-    expect(screen.getAllByText(/Loading\.\.\./).length).toBeGreaterThanOrEqual(
-      1
-    )
+    expect(screen.getByText(/our preferences/i)).toBeDefined()
   })
 
   it('navigates to proposals tab when clicking submit drafts', async () => {

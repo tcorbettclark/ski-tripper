@@ -49,7 +49,6 @@ export default function DiscussionDialog({
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setLoading(true)
     setError(null)
     listDiscussion(proposalId)
       .then((result) => setComments(result))
@@ -149,7 +148,9 @@ export default function DiscussionDialog({
         </div>
 
         <div ref={listRef} style={styles.commentList}>
-          {loading && <p style={styles.loading}>Loading…</p>}
+          {loading && comments.length === 0 && (
+            <p style={styles.loading}>Loading…</p>
+          )}
           {error && <p style={formStyles.error}>{error}</p>}
           {!loading && !error && comments.length === 0 && (
             <p style={styles.empty}>No comments yet.</p>

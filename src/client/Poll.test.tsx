@@ -125,7 +125,7 @@ describe('Poll', () => {
   })
 
   describe('loading states', () => {
-    it('shows loading state while fetching data', async () => {
+    it('renders heading while fetching data', async () => {
       let resolvePolls: (value: { polls: [] }) => void
       const listPolls = mock(
         () =>
@@ -138,14 +138,10 @@ describe('Poll', () => {
         renderPoll({ listPolls })
       })
 
-      expect(screen.getByText(/Loading poll…/i))
+      expect(screen.getByRole('heading', { name: /voting/i }))
 
       await act(async () => {
         resolvePolls?.({ polls: [] })
-      })
-
-      await waitFor(() => {
-        expect(screen.queryByText(/Loading poll…/i)).toBeNull()
       })
     })
 
@@ -154,7 +150,7 @@ describe('Poll', () => {
         renderPoll()
       })
       await waitFor(() => {
-        expect(screen.queryByText(/Loading poll…/i)).toBeNull()
+        expect(screen.queryByText(/Loading…/i)).toBeNull()
       })
     })
   })
