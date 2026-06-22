@@ -14,11 +14,34 @@ __PUBLIC_DOMAIN__ {
 		reverse_proxy __SERVER_HOSTNAME__:__SERVER_PORT__
 	}
 
+	@spa {
+		not path *.html
+		not path *.txt
+		not path *.xml
+		not path *.json
+		not path *.css
+		not path *.js
+		not path *.ico
+		not path *.png
+		not path *.jpg
+		not path *.svg
+		not path *.webp
+		not path *.woff
+		not path *.woff2
+		not path *.map
+		not path */favicon*
+		not file
+	}
+
 	handle {
 		root * __STATIC_ROOT__
 		header Cache-Control "no-cache"
+
+		handle @spa {
+			rewrite * /index.html
+		}
+
 		file_server
-		try_files {path} /index.html
 	}
 }
 

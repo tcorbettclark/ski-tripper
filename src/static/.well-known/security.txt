@@ -1,0 +1,6 @@
+Contact: mailto:security@ski-tripper.com
+Preferred-Languages: en
+Canonical: https://www.ski-tripper.com/.well-known/security.txt
+
+# Security researchers: please report vulnerabilities to security@ski-tripper.com
+# We aim to respond within 48 hours and resolve within 90 days.
