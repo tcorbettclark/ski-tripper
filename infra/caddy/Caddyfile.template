@@ -23,8 +23,12 @@ __PUBLIC_DOMAIN__ {
 
 	header {
 		import security_headers
-		# Restrict resource loading to known origins; data: and blob: needed for app icons
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://cdn.jsdelivr.net; font-src 'self'; frame-ancestors 'none'"
+		# Restrict resource loading to known origins
+		# wasm-unsafe-eval: ONNX Runtime WebAssembly compilation
+		# blob: worker-src: ONNX Runtime Web Workers from blob URLs
+		# data: and blob: img-src: app icons
+		# connect-src includes HuggingFace and jsDelivr for search model weights and WASM files
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://cdn.jsdelivr.net; font-src 'self'; frame-ancestors 'none'"
 	}
 
 	# API endpoints — Bun server with SSE streaming for LLM responses
