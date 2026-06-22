@@ -8,38 +8,37 @@ Ski Tripper helps groups of friends agree on the perfect ski holiday without the
 
 Instead of getting bogged down in flight times and hotel rooms on day one, Ski Tripper focuses on what actually matters: the mountain.
 
-- The "Trip" is your master plan: Think of a Trip as your group's shared folder (e.g., "Ski Trip 2027"). It’s the placeholder where everyone inputs their preferences and votes on ideas.
+- The "Trip" is your master plan: Think of a Trip as your group's shared folder (e.g., "Ski Trip 2027"). It’s the placeholder where everyone gathers ideas and votes.
 - Data-driven matchmaking: Everyone declares what they like (e.g., short airport transfers, high altitude, heavy on blues, off-piste). Our AI-powered catalog automatically scores resorts against your group's profile.
 - "Proposals" are the pitches: Anyone can build a concrete option (a "Proposal") inside the Trip. You pick a highly-rated resort, add dates that work around mountain events, and drop in a few accommodation choices so friends can split between hotels or cheaper apartments.
 - Structured voting: Once the options are locked in, the group votes in rounds until you systematically narrow it down to a winner.
 
-Why do it this way? Standard booking sites break down if your friends fly from different airports or have different budgets. Ski Tripper lets you use sites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) to scout lodging, but brings that data here to align your group's preferences and actually force a decision.
+Why do it this way? Standard booking sites break down a bit if friends fly from different airports, have different budgets, go from different durations, etc. Ski Tripper lets you use sites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) to scout lodging, but brings that data here to align your group's preferences and actually force a decision.
 
 ## How does it work?
 
 ### 1. Low-Friction Onboarding
 - **Quick Sign-Up:** Everyone creates an account with just an email.
-- **Set Your Skier Profile:** Input your skill level, terrain preference (on/off-piste), and how you split your day between burning rubber on the slopes, long lunches, après, or chilling. This gives your friends—and the AI—an instant snapshot of what makes a perfect holiday for you.
+- **Set Your Skier Profile:** Input your skill level, terrain preference (on/off-piste), and how you split your day between burning rubber on the slopes, long lunches, après, or chilling. This shares with your friends (and the AI assistant) what makes a perfect holiday for you.
 - **Gather the Crew:** The group "coordinator" creates a **Trip** container and shares a simple three-word invite code to bring everyone in.
 
 ### 2. Browse Thousands of Resorts
-- **Deep-Dive Data:** Explore a massive, filterable database packed with real stats: piste distance, altitude range, snow reliability, airport transfer times, and difficulty splits. 
-- **AI Preference Matcher:** Don't waste time arguing over filters. The built-in AI assistant analyzes everyone’s profile and automatically builds search queries to surface resorts that match the whole group's vibe.
+- **Deep-Dive Data:** Explore a comprehensive, filterable database packed with real stats: piste distance, altitude range, snow reliability, airport transfer times, difficulty splits, and more.
+- **AI Preference Matcher:** Stuck with what to search for? The built-in AI assistant analyzes everyone’s profile and automatically builds search queries to surface resorts that match the whole group's vibe.
 
 ### 3. Pitch, Discuss, and Refine
 - **Build the "Proposal":** Anyone can draft a proposal combining a resort, specific dates, and various accommodation options. 
-- **AI Suitability Reviews:** The AI instantly scans the proposal and writes a quick brief on how well it fits—or clashes with—everyone's likes and dislikes (e.g., *"Great for Dave's love of off-piste, but transfer time is a bit long for Sarah"*).
+- **AI Suitability Reviews:** The AI scans the proposal and writes a quick brief on how well it fits with everyone's likes and dislikes (e.g., *"Great for Dave's love of off-piste, but transfer time is a bit long for Sarah"*).
 - **Hype it up:** Add notes, chat with the group, and refine the pitch until it’s ready for the chopping block.
 
 ### 4. Weighted Token Voting (No Simple Majorities)
 - **Launch the Poll:** When the pitches are locked in, the coordinator opens a voting round.
 - **Spread the Love:** Instead of picking just one winner, everyone gets a bundle of tokens to distribute (e.g., spend 3 tokens on your absolute favorite, 1 on a solid backup). 
 - **Flexible Timelines:** Polls run until a set deadline, though the coordinator can call it early if everyone has voted.
-- **Iterative Rounds:** The coordinator reviews the token spread and decides the next step—either chop the bottom options and vote again, or crown a clear winner.
+- **Iterative Rounds:** The coordinator reviews the token spread and decides the next step. Either chop the bottom options and vote again, or crown a clear winner.
 
 ### 5. Smart "What Next?" Prompts
-- **Zero Momentum Loss:** Group trips usually die in the WhatsApp void. Ski Tripper keeps the engine running by showing every user exactly what their next move is the moment they open the app—whether that's finishing a draft, replying to a comment, or casting votes before the buzzer.
-
+- **Stay on Track:** Group trips can die in the WhatsApp void ("What are the choices again?"). Ski Tripper keeps the engine running by showing every user exactly what their next move is the moment they open the app (finish that draft proposal, 2 days to vote, ...).
 
 ## Who created it?
 
@@ -59,7 +58,7 @@ Having organised a boys ski trip for a few years, I thought an application could
 
 ## How is AI used?
 
-1. To **build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [opencode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
+1. To **build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [OpenCode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with the help of [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
 2. To **create a rich catalogue of resorts with standard fields and descriptions**. This required seeding the list, enriching from qualified sources, assessing quality, and fixing inconsistencies in the result using an independent model.
 3. To **make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
 4. To **generate resort search text from participant preferences**, and so make it easier to home in on candidate resorts the group will enjoy.
@@ -157,5 +156,3 @@ The tool, `bun run tools:resorts`, has six sub-commands: `seed`, `enrich`, `audi
 | **Encode** | `enriched.jsonl`                                    | `encoded.jsonl`  | Concatenate name, country, region, and all enriched descriptions into search text; generate embeddings using `Xenova/multi-qa-MiniLM-L6-cos-v1`                                                                                                                                                                                                                                                   |
 | **Build**  | `seeded.jsonl` + `enriched.jsonl` + `encoded.jsonl` | `all.jsonl`      | Merge seeded and enriched data (enriched overrides numeric fields if corrected by audit); build a combined description; flatten into a single record per resort                                                                                                                                                                                                                                   |
 | **Upload** | `all.jsonl`                                         | PocketBase file  | Upload the full JSONL as a single file attachment to PocketBase, replacing previous records.                                                                                                                                                                                                                                                                                                      |
-
-On the client ikn the browser, the JSONL file is fetched from PocketBase and parsed line-by-line.
