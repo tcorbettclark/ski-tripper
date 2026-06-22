@@ -494,29 +494,8 @@ async function deploy() {
   success('Caddyfile copied')
 
   step('Creating PocketBase superuser')
-  const adminEmail =
-    await app`grep ^POCKETBASE_ADMIN_EMAIL= ${INSTALL_DIR}/.env | cut -d= -f2-`.text()
-  const adminPassword =
-    await app`grep ^POCKETBASE_ADMIN_PASSWORD= ${INSTALL_DIR}/.env | cut -d= -f2-`.text()
-  if (adminEmail.trim() && adminPassword.trim()) {
-    const createResult =
-      await app`/usr/local/bin/pocketbase --dir /var/lib/ski-tripper/pb_data superuser create ${adminEmail.trim()} ${adminPassword.trim()}`.nothrow()
-    const output = [createResult.stdout, createResult.stderr].join('\n')
-    if (
-      output.includes('created') ||
-      output.includes('already exists') ||
-      output.includes('must be unique')
-    ) {
-      success('PocketBase superuser ready')
-    } else {
-      warn(`PocketBase superuser creation returned: ${output.trim()}`)
-    }
-  } else {
-    warn(
-      'POCKETBASE_ADMIN_EMAIL or POCKETBASE_ADMIN_PASSWORD not set in .env.production'
-    )
-    warn('Create the superuser manually via the PocketBase admin UI')
-  }
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run infra/scripts/configure-pocketbase.ts --env-file ${INSTALL_DIR}/.env --create-superuser-only`
+  success('PocketBase superuser ready')
 
   step('Restarting services')
   await root`systemctl restart ski-tripper-pb`

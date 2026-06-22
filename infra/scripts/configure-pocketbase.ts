@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import JSON5 from 'json5'
@@ -10,22 +11,26 @@ const EMAIL_TEMPLATES_FILE = resolve(
   'infra/pocketbase/email-templates.json5'
 )
 
-function parseArgs(): string {
+function parseArgs(): { envFile: string; createSuperuserOnly: boolean } {
   const args = process.argv.slice(2)
   const envFileIdx = args.indexOf('--env-file')
   if (envFileIdx === -1 || envFileIdx === args.length - 1) {
     console.error(
-      `${RED}${BOLD}Usage:${RESET} bun run pocketbase:config --env-file <path>`
+      `${RED}${BOLD}Usage:${RESET} bun run pocketbase:config --env-file <path> [--create-superuser-only]`
     )
     console.error(
       `${RED}${BOLD}Error:${RESET} --env-file is required (e.g. --env-file .env or --env-file /opt/ski-tripper/.env)`
     )
     process.exit(1)
   }
-  return resolve(args[envFileIdx + 1])
+  return {
+    envFile: resolve(args[envFileIdx + 1]),
+    createSuperuserOnly: args.includes('--create-superuser-only'),
+  }
 }
 
-const ENV_FILE = parseArgs()
+const { envFile: ENV_FILE, createSuperuserOnly: CREATE_SUPERUSER_ONLY } =
+  parseArgs()
 
 const BOLD = '\x1b[1m'
 const GREEN = '\x1b[32m'
@@ -215,12 +220,62 @@ async function waitForPocketBase(
   process.exit(1)
 }
 
+function createSuperuser(env: Record<string, string>): void {
+  const dataDir = env.POCKETBASE_DATA_DIR || 'dev/pb_data'
+  const adminEmail = env.POCKETBASE_ADMIN_EMAIL
+  const adminPassword = env.POCKETBASE_ADMIN_PASSWORD
+
+  if (!adminEmail || !adminPassword) {
+    console.error(
+      `${RED}${BOLD}Error:${RESET} POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD must be set`
+    )
+    process.exit(1)
+  }
+
+  console.log(
+    `Creating PocketBase superuser (data dir: ${dataDir}, email: ${adminEmail})...`
+  )
+
+  const result = spawnSync('pocketbase', [
+    '--dir',
+    dataDir,
+    'superuser',
+    'create',
+    adminEmail,
+    adminPassword,
+  ])
+
+  const stdout = (result.stdout || '').toString().trim()
+  const stderr = (result.stderr || '').toString().trim()
+  const output = [stdout, stderr].filter(Boolean).join('\n')
+
+  if (
+    output.includes('created') ||
+    output.includes('already exists') ||
+    output.includes('must be unique')
+  ) {
+    console.log(`${GREEN}PocketBase superuser ready${RESET}`)
+  } else {
+    console.error(
+      `${YELLOW}${BOLD}Warning:${RESET} PocketBase superuser creation returned: ${output || '(no output)'}`
+    )
+    console.error(
+      `${YELLOW}You may need to create the superuser manually via the PocketBase admin UI.${RESET}`
+    )
+  }
+}
+
 async function main() {
   const env: Record<string, string> = {
     ...(Object.fromEntries(
       Object.entries(process.env).filter(([, v]) => v !== undefined)
     ) as Record<string, string>),
     ...loadEnv(),
+  }
+
+  if (CREATE_SUPERUSER_ONLY) {
+    createSuperuser(env)
+    return
   }
 
   if (!existsSync(SETTINGS_FILE)) {
@@ -240,21 +295,15 @@ async function main() {
   console.log(`Connecting to PocketBase at ${pbUrl}`)
   await waitForPocketBase(pbUrl)
 
-  const adminEmail = env.POCKETBASE_ADMIN_EMAIL
-  const adminPassword = env.POCKETBASE_ADMIN_PASSWORD
-  if (!adminEmail || !adminPassword) {
-    console.error(
-      `${RED}${BOLD}Error:${RESET} POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD must be set`
-    )
-    process.exit(1)
-  }
-
   console.log('Authenticating as superuser...')
   const pb = new PocketBase(pbUrl)
   try {
     await pb
       .collection('_superusers')
-      .authWithPassword(adminEmail, adminPassword)
+      .authWithPassword(
+        env.POCKETBASE_ADMIN_EMAIL!,
+        env.POCKETBASE_ADMIN_PASSWORD!
+      )
   } catch (err) {
     console.error(`${RED}${BOLD}Error:${RESET} Authentication failed: ${err}`)
     process.exit(1)
