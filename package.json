@@ -24,7 +24,7 @@
     "booking"
   ],
   "scripts": {
-    "dev": "bun run build:static && bun run build:caddy && concurrently --kill-others-on-fail --names client,server,pb,caddy,mailpit,pbconfig --prefix-colors blue,green,yellow,cyan,red,white 'bun run dev:client' 'bun run dev:server' 'bun run dev:pb' 'bun run dev:caddy' 'bun run dev:mailpit' 'bun run pocketbase:config'",
+    "dev": "bun run build:static && bun run build:caddy && bun run pocketbase:create-superuser && concurrently --kill-others-on-fail --names client,server,pb,caddy,mailpit,pbconfig --prefix-colors blue,green,yellow,cyan,red,white 'bun run dev:client' 'bun run dev:server' 'bun run dev:pb' 'bun run dev:caddy' 'bun run dev:mailpit' 'bun run pocketbase:config'",
     "dev:client": "bun build src/client/main.tsx --outdir dist/static --target browser --env 'PUBLIC_*' --watch --no-clear-screen",
     "dev:server": "bun --watch --no-clear-screen src/server/serve.ts",
     "dev:pb": "infra/scripts/env-run.sh .env 'pocketbase serve --http ${POCKETBASE_HOSTNAME}:${POCKETBASE_PORT} --migrationsDir src/pb_migrations --dir dev/pb_data --automigrate=0'",
@@ -35,7 +35,7 @@
     "build": "bun run build:client && bun run build:server && bun run build:static && bun run build:caddy",
     "build:client": "bun build src/client/main.tsx --outdir dist/static --target browser --env 'PUBLIC_*' --minify",
     "build:server": "bun build src/server/serve.ts --outfile dist/server/serve --compile --target bun && find . -maxdepth 1 -name '*.bun-build' -delete",
-    "build:static": "cp src/static/index.html dist/static/ && cp -r src/static/flags dist/static/flags && rsync -a --delete src/pb_migrations/ dist/pb_migrations/",
+    "build:static": "mkdir -p dist/static && cp src/static/index.html dist/static/ && cp -r src/static/flags dist/static/flags && rsync -a --delete src/pb_migrations/ dist/pb_migrations/",
     "build:caddy": "bun run infra/scripts/build-caddyfile.ts",
     "test": "bun test --max-concurrency 1",
     "test:e2e": "playwright test",
@@ -44,6 +44,7 @@
     "check": "bun tsc --noEmit && biome ci",
     "tools:resorts": "bun run tools/resorts.ts",
     "pocketbase:config": "bun run infra/scripts/configure-pocketbase.ts --env-file .env",
+    "pocketbase:create-superuser": "bun run infra/scripts/configure-pocketbase.ts --env-file .env --create-superuser-only",
     "infra:provision": "bun run infra/scripts/provision.ts",
     "infra:ssh": "doctl compute ssh ski-tripper --ssh-key-path ~/.ssh/id_ed25519"
   },
