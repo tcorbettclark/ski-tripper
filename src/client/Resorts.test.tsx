@@ -122,6 +122,7 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
     onAuthError: mock(() => {}),
     initSearchModel: mock(() => {}),
     getIsModelReady: () => true,
+    getIsModelFailed: () => false,
     onModelReady: (cb: () => void) => cb(),
     searchResorts: mockSearchResorts,
     ...overrides,
@@ -550,8 +551,22 @@ describe('Resorts', () => {
       <Resorts
         {...defaultProps()}
         getIsModelReady={() => false}
+        getIsModelFailed={() => false}
         onModelReady={() => {}}
       />
     )
+    expect(screen.getByPlaceholderText('Loading search model...')).toBeTruthy()
+  })
+
+  it('shows search unavailable when model fails to load', () => {
+    render(
+      <Resorts
+        {...defaultProps()}
+        getIsModelReady={() => false}
+        getIsModelFailed={() => true}
+        onModelReady={() => {}}
+      />
+    )
+    expect(screen.getByPlaceholderText('Search unavailable')).toBeTruthy()
   })
 })

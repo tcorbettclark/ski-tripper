@@ -24,7 +24,7 @@ __PUBLIC_DOMAIN__ {
 	header {
 		import security_headers
 		# Restrict resource loading to known origins; data: and blob: needed for app icons
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com; font-src 'self'; frame-ancestors 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://cdn.jsdelivr.net; font-src 'self'; frame-ancestors 'none'"
 	}
 
 	# API endpoints — Bun server with SSE streaming for LLM responses

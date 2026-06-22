@@ -42,7 +42,8 @@ const initPromise =
             return Array.from(output.data as Float32Array)
           }
           modelReady = true
-        } catch {
+        } catch (err) {
+          console.error('Failed to load search model:', err)
           modelFailed = true
         }
         notifyReady()
@@ -54,6 +55,10 @@ export function initSearchModel(): void {
 
 export function getIsModelReady(): boolean {
   return modelReady
+}
+
+export function getIsModelFailed(): boolean {
+  return modelFailed
 }
 
 export function onModelReady(callback: () => void): void {

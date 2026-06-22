@@ -15,6 +15,7 @@ import PisteBreakdown from './PisteBreakdown'
 import PreferenceSearchPopup from './PreferenceSearchPopup'
 import type { ScoredResort } from './resortSearch'
 import {
+  getIsModelFailed as _getIsModelFailed,
   getIsModelReady as _getIsModelReady,
   initSearchModel as _initSearchModel,
   onModelReady as _onModelReady,
@@ -56,6 +57,7 @@ interface ResortsProps {
   onAuthError?: (err: unknown) => void
   initSearchModel?: () => void
   getIsModelReady?: () => boolean
+  getIsModelFailed?: () => boolean
   onModelReady?: (callback: () => void) => void
   searchResorts?: (
     query: string,
@@ -67,6 +69,7 @@ const NOOP_AUTH_ERROR = () => {}
 
 const _defaultInitSearchModel = _initSearchModel
 const _defaultGetIsModelReady = _getIsModelReady
+const _defaultGetIsModelFailed = _getIsModelFailed
 const _defaultOnModelReady = _onModelReady
 const _defaultSearchResorts = _searchResorts
 
@@ -78,6 +81,7 @@ export default function Resorts({
   onAuthError = NOOP_AUTH_ERROR,
   initSearchModel: initSearch = _defaultInitSearchModel,
   getIsModelReady: isModelReady = _defaultGetIsModelReady,
+  getIsModelFailed: isModelFailed = _defaultGetIsModelFailed,
   onModelReady: onModelReadyCb = _defaultOnModelReady,
   searchResorts: searchResortsFn = _defaultSearchResorts,
 }: ResortsProps) {
@@ -93,13 +97,17 @@ export default function Resorts({
   const [selectedResort, setSelectedResort] =
     useState<ResortWithEmbedding | null>(null)
   const [modelReady, setModelReady] = useState(isModelReady())
+  const [modelFailed, setModelFailed] = useState(isModelFailed())
   const [searchResults, setSearchResults] = useState<ScoredResort[] | null>(
     null
   )
 
   useEffect(() => {
-    onModelReadyCb(() => setModelReady(isModelReady()))
-  }, [onModelReadyCb, isModelReady])
+    onModelReadyCb(() => {
+      setModelReady(isModelReady())
+      setModelFailed(isModelFailed())
+    })
+  }, [onModelReadyCb, isModelReady, isModelFailed])
 
   const maxTransferTimeFromData = useMemo(
     () =>
@@ -475,7 +483,11 @@ export default function Resorts({
           <div style={resortsStyles.searchInputWrapper}>
             <textarea
               placeholder={
-                modelReady ? 'Semantic search' : 'Loading search model...'
+                modelFailed
+                  ? 'Search unavailable'
+                  : modelReady
+                    ? 'Semantic search'
+                    : 'Loading search model...'
               }
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
