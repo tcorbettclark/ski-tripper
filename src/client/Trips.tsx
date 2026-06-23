@@ -89,6 +89,21 @@ export default function Trips({
           </button>
         </div>
       </div>
+      <div style={styles.helpText}>
+        <div style={styles.helpLine}>
+          Coordinating a trip? Press <strong>New Trip</strong> and share the
+          code with your friends.
+        </div>
+        <div style={styles.helpLine}>
+          Joining a trip? Ask your coordinator for the code and press{' '}
+          <strong>Join Trip</strong>.
+        </div>
+        {trips.length > 0 && (
+          <div style={styles.helpLine}>
+            Or select from one of your trips below.
+          </div>
+        )}
+      </div>
 
       {showCreateForm && (
         <CreateTripForm
@@ -163,5 +178,15 @@ const styles = {
     fontWeight: '600',
     cursor: 'pointer',
     letterSpacing: '0.02em',
+  },
+  helpText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: colors.textSecondary,
+    marginTop: '-20px',
+    marginBottom: '20px',
+  },
+  helpLine: {
+    marginBottom: '12px',
   },
 } as const
