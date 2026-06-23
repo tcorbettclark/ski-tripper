@@ -97,7 +97,7 @@ export default function PreferenceSearchModal({
         <div style={overlayStyles.panelHeader}>
           <div style={preferenceSearchModalStyles.headerLeft}>
             <Sparkles size={18} style={{ color: colors.accent }} />
-            <h3 style={overlayStyles.panelTitle}>AI assist</h3>
+            <h3 style={overlayStyles.panelTitle}>AI Assist</h3>
           </div>
           <button
             type="button"

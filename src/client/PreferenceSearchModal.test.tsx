@@ -65,7 +65,7 @@ describe('PreferenceSearchModal', () => {
       )
     })
 
-    expect(screen.getByText('AI assist')).toBeTruthy()
+    expect(screen.getByText('AI Assist')).toBeTruthy()
     expect(
       screen.getByText(
         "Generate resort search text from everyone's ski holiday preferences"

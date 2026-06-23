@@ -73,7 +73,7 @@ export default function PreferencesModal({
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div style={overlayStyles.panelHeader}>
-          <h3 style={overlayStyles.panelTitle}>My preferences</h3>
+          <h3 style={overlayStyles.panelTitle}>My Preferences</h3>
           <button
             type="button"
             onClick={onClose}
