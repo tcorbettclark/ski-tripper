@@ -93,11 +93,11 @@ describe('server_get_pocketbase_external_url', () => {
 
 describe('browser_get_api_url', () => {
   beforeEach(() => {
-    delete process.env.PUBLIC_DOMAIN
+    delete process.env.PUBLIC_EXTERNAL_URL
   })
 
-  it('returns https URL with endpoint', () => {
-    process.env.PUBLIC_DOMAIN = 'example.com'
+  it('returns URL with endpoint', () => {
+    process.env.PUBLIC_EXTERNAL_URL = 'https://example.com'
     expect(browser_get_api_url('/api/test')).toBe(
       'https://example.com/api/test'
     )
@@ -105,7 +105,7 @@ describe('browser_get_api_url', () => {
 
   it('throws for missing env var', () => {
     expect(() => browser_get_api_url('/api/test')).toThrow(
-      'Missing required env var PUBLIC_DOMAIN'
+      'Missing required env var PUBLIC_EXTERNAL_URL'
     )
   })
 })

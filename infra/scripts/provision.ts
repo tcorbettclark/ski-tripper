@@ -577,7 +577,7 @@ OVERRIDEOF"`
   await status()
 }
 
-async function status() {
+async function status(env?: Record<string, string>) {
   const ip = await getDropletIp()
   step('Checking service status')
   await $`ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${ip} sleep 3`.nothrow()
@@ -621,8 +621,8 @@ async function status() {
     console.log(logs)
   }
 
-  console.log(`\n  App:        https://ski-tripper.com`)
-  console.log(`  PocketBase: https://pb.ski-tripper.com`)
+  console.log(`\n  App:        ${env?.PUBLIC_EXTERNAL_URL ?? 'N/A'}`)
+  console.log(`  PocketBase: ${env?.POCKETBASE_EXTERNAL_URL ?? 'N/A'}`)
   console.log(`  IP:         ${ip}`)
   console.log(`\n  Layout:`)
   console.log(`    Repo:           /home/ski-tripper/ski-tripper/`)
@@ -736,7 +736,7 @@ async function provision() {
       await deploy()
       break
     case 'status':
-      await status()
+      await status(decryptEnvVars())
       break
     case 'setup':
       await requireDoctl()

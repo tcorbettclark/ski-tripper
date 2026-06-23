@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test'
 
-const BASE_URL = 'https://ski-tripper.localhost'
+const BASE_URL = process.env.PUBLIC_EXTERNAL_URL!
 
 export async function logout(page: Page): Promise<void> {
   await page.evaluate(() => localStorage.clear())

@@ -24,7 +24,7 @@ describe('useSSEStream', () => {
   let fetchMock: ReturnType<typeof mock>
 
   beforeEach(() => {
-    process.env.PUBLIC_DOMAIN = 'test-host'
+    process.env.PUBLIC_EXTERNAL_URL = 'https://test-host'
     fetchMock = mock(() =>
       Promise.resolve(
         new Response(createSSEStream([]), {

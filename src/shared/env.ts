@@ -35,9 +35,9 @@ export function server_get_pocketbase_external_url(): string {
 }
 
 export function browser_get_api_url(endpoint: string): string {
-  const value: string | undefined = process.env.PUBLIC_DOMAIN
-  if (!value) throw new Error('Missing required env var PUBLIC_DOMAIN')
-  return `https://${value}${endpoint}`
+  const value: string | undefined = process.env.PUBLIC_EXTERNAL_URL
+  if (!value) throw new Error('Missing required env var PUBLIC_EXTERNAL_URL')
+  return `${value}${endpoint}`
 }
 
 export function server_get_server_hostname(): string {

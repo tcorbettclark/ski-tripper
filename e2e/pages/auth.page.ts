@@ -1,7 +1,8 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { extractLink, waitForEmail } from '../helpers/mailpit'
 
-const BASE_URL = 'https://ski-tripper.localhost'
+const BASE_URL = process.env.PUBLIC_EXTERNAL_URL!
+const APP_URL = process.env.POCKETBASE_APP_URL!
 
 export class AuthPage {
   readonly page: Page
@@ -70,7 +71,7 @@ export class AuthPage {
   async verifyEmail(email: string) {
     const message = await waitForEmail(email, { subject: 'Verify' })
     const link = extractLink(message.HTML)
-    const localLink = link.replace('https://ski-tripper.localhost', BASE_URL)
+    const localLink = link.replace(APP_URL, BASE_URL)
     await this.page.goto(localLink)
     await this.page.waitForURL(`${BASE_URL}/`)
   }
@@ -86,7 +87,7 @@ export class AuthPage {
 
     const message = await waitForEmail(email, { subject: 'Reset' })
     const link = extractLink(message.HTML)
-    const localLink = link.replace('https://ski-tripper.localhost', BASE_URL)
+    const localLink = link.replace(APP_URL, BASE_URL)
     await this.page.goto(localLink)
     await expect(this.page.getByTestId('reset-password')).toBeVisible()
 

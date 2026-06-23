@@ -81,7 +81,7 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 
 | Task                                            | Shell alias      | Command                              |
 | ----------------------------------------------- | ---------------- | ------------------------------------ |
-| New worktree with `.env` and packages installed | `wtn <worktree>` | `wt switch --create <worktree>`      |
+| New worktree with packages installed         | `wtn <worktree>` | `wt switch --create <worktree>`      |
 | Remove a worktree and clean everything up       | `wtr <worktree>` | `wt remove <worktree>`               |
 | List all worktrees with their status            | `wtl`            | `wt list`                            |
 | Merge current worktree back to main             | `wtm`            | `wt merge-and-continue`              |
@@ -102,26 +102,34 @@ Three env files are committed:
 
 The `.env.keys` file (gitignored) holds the private decryption keys. Share it securely with teammates — without it, encrypted values cannot be decrypted.
 
-**Useful scripts:**
+**Dev scripts** use `env:dev` to inject variables via dotenvx:
+
+| Command                              | Description                                           |
+| ------------------------------------ | ----------------------------------------------------- |
+| `bun run dev`                        | Start the full dev environment                        |
+| `bun run dev:client`                 | Watch-build client with dev env vars inlined          |
+| `bun run dev:server`                 | Watch-run server with dev env vars                    |
+| `bun run dev:pb`                     | Run PocketBase with dev env vars                      |
+| `bun run dev:pb:config`              | Configure local PocketBase settings                   |
+| `bun run dev:pb:create-superuser`    | Create/upsert local PocketBase superuser              |
+| `bun run dev:caddy`                  | Run Caddy reverse proxy (with log wrapper)           |
+| `bun run test:e2e`                   | Run Playwright e2e tests against dev server           |
+
+**Build scripts** read env vars from `process.env` (no dotenvx wrapper) so they work in production where env vars are passed inline:
 
 | Command                    | Description                                        |
 | -------------------------- | -------------------------------------------------- |
-| `bun run env:encrypt`      | Encrypt the secret keys in `.env.dev` and `.env.prod` |
+| `bun run build`            | Build client, server, static files, and Caddyfile  |
+| `bun run build:client`     | Build client bundle (inlines `PUBLIC_*` env vars)  |
+| `bun run build:caddy`      | Generate Caddyfile from template and env vars       |
+
+**Env management:**
+
+| Command                    | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `bun run env:encrypt`      | Encrypt secrets in `.env.dev` and `.env.prod`      |
 | `bun run env:dev <cmd>`    | Run any command with dev env vars loaded            |
 | `bun run env:prod <cmd>`   | Run any command with prod env vars loaded           |
-
-Examples:
-
-```bash
-# Run PocketBase locally with dev env
-bun run env:dev pocketbase serve --http 127.0.0.1:8090
-
-# Configure PocketBase against production
-bun run env:prod bun run infra/scripts/configure-pocketbase.ts
-
-# Upload resort data to production
-bun run env:prod bun run tools/resorts.ts upload
-```
 
 After changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt:
 
