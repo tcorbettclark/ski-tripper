@@ -4,14 +4,16 @@
 
 ## What is this?
 
-Ski Tripper helps groups of friends find and agree on the perfect ski holiday without the "entertaining" chaos of a WhatsApp debate. Unlike many other booking sites, Ski Tripper starts with what really matters: the mountain.
+Ski Tripper helps your group find and agree on the perfect ski holiday without the "entertaining" chaos of a WhatsApp debate.
 
-- The "Trip" is your group's shared folder (e.g., "Ski Trip 2027"). It's the placeholder where everyone gathers ideas and votes.
-- Everyone declares what they like (e.g., short airport transfers, high altitude, great apres, off-piste). The AI-powered catalog is searchable against your group's profile.
-- Anyone can pitch ideas by generating a "Proposal" inside the Trip. You pick a highly-rated resort, add dates that work around mountain events, and drop in a few accommodation choices so friends can split between hotels or cheaper apartments.
-- Once a selection of promising options are locked in, the group votes in rounds until a winner is declared.
+Unlike standard booking sites that force you straight into fligths hotels, Ski Tripper starts with what really matters: the mountain.
 
-Why do it this way? Standard booking sites break down a bit when friends fly from different airports, have different budgets, go from different durations, or are simply trying to find and compare the sking experience and mountain facilities. Sites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) should still be used to scout for lodgings.
+* **The Trip**: This is your group's shared space (e.g., "Boys Ski 2027"). It's the central hub where everyone gathers ideas and votes.
+* **The Profile**: Everyone in your group declares their preferences (high altitude, great après-ski, off-piste terrain, etc). The AI-powered catalog then ranks options against your combined group profile.
+* **The Proposal**: Anyone can pitch a specific proposal inside the Trip. You pick a resort that fits the group, align dates around mountain events, and drop in lodging options so friends can choose between premium hotels or budget-friendly apartments.
+* **The Vote**: Once a selection of promising options is locked in, your group votes in rounds until a clear winner emerges.
+
+_(Note: You can still use platforms like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) to scout specific lodgings, but Ski Tripper is where your group actually aligns on the destination.)_
 
 ## How does it work?
 
