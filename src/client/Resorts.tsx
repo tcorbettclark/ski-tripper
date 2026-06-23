@@ -434,7 +434,7 @@ export default function Resorts({
                 id="min-piste-km-slider"
                 type="range"
                 min={0}
-                max={600}
+                max={250}
                 step={10}
                 value={minPisteKm}
                 onChange={(e) => setMinPisteKm(Number(e.target.value))}
@@ -442,27 +442,6 @@ export default function Resorts({
               />
               <span style={resortsStyles.sliderValue}>
                 {minPisteKm > 0 ? minPisteKm : 'Any'}
-              </span>
-            </div>
-            <div style={resortsStyles.sliderGroup}>
-              <label
-                htmlFor="min-peak-height-slider"
-                style={resortsStyles.sliderLabel}
-              >
-                Min Peak Alt
-              </label>
-              <input
-                id="min-peak-height-slider"
-                type="range"
-                min={0}
-                max={5000}
-                step={100}
-                value={minPeakAltitude}
-                onChange={(e) => setMinPeakHeight(Number(e.target.value))}
-                style={resortsStyles.slider}
-              />
-              <span style={resortsStyles.sliderValue}>
-                {minPeakAltitude > 0 ? `${minPeakAltitude}m` : 'Any'}
               </span>
             </div>
             <div style={resortsStyles.sliderGroup}>
@@ -476,7 +455,7 @@ export default function Resorts({
                 id="min-base-altitude-slider"
                 type="range"
                 min={0}
-                max={4000}
+                max={2500}
                 step={100}
                 value={minBaseAltitude}
                 onChange={(e) => setMinBaseAltitude(Number(e.target.value))}
@@ -484,6 +463,27 @@ export default function Resorts({
               />
               <span style={resortsStyles.sliderValue}>
                 {minBaseAltitude > 0 ? `${minBaseAltitude}m` : 'Any'}
+              </span>
+            </div>
+            <div style={resortsStyles.sliderGroup}>
+              <label
+                htmlFor="min-peak-height-slider"
+                style={resortsStyles.sliderLabel}
+              >
+                Min Peak Alt
+              </label>
+              <input
+                id="min-peak-height-slider"
+                type="range"
+                min={0}
+                max={3500}
+                step={100}
+                value={minPeakAltitude}
+                onChange={(e) => setMinPeakHeight(Number(e.target.value))}
+                style={resortsStyles.slider}
+              />
+              <span style={resortsStyles.sliderValue}>
+                {minPeakAltitude > 0 ? `${minPeakAltitude}m` : 'Any'}
               </span>
             </div>
             <div style={resortsStyles.sliderGroup}>
