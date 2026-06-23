@@ -69,8 +69,6 @@
     useLeftmostIP: false,
   },
 
-  maxUploadSize: 32, // MB — resorts JSONL is ~6MB, default is 5MB
-
   batch: {
     enabled: false,
     maxRequests: 50,
