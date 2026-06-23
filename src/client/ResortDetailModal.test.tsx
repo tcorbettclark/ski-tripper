@@ -260,6 +260,62 @@ describe('ResortDetailModal', () => {
     expect(flagImg).toBeTruthy()
   })
 
+  it('renders location subtitle line with region and country', async () => {
+    await act(async () => {
+      render(
+        <ResortDetailModal
+          resort={sampleResort}
+          tripId="trip-1"
+          user={user}
+          onClose={onCloseMock}
+        />
+      )
+    })
+
+    expect(screen.getByText('Alps, France')).toBeTruthy()
+  })
+
+  it('renders location subtitle with only country when no region', async () => {
+    const resortNoRegion: ResortWithEmbedding = {
+      ...sampleResort,
+      region: '',
+    }
+
+    await act(async () => {
+      render(
+        <ResortDetailModal
+          resort={resortNoRegion}
+          tripId="trip-1"
+          user={user}
+          onClose={onCloseMock}
+        />
+      )
+    })
+
+    expect(screen.getByText('France')).toBeTruthy()
+  })
+
+  it('does not render location subtitle when no country or region', async () => {
+    const resortNoLocation: ResortWithEmbedding = {
+      ...sampleResort,
+      country: '',
+      region: '',
+    }
+
+    await act(async () => {
+      render(
+        <ResortDetailModal
+          resort={resortNoLocation}
+          tripId="trip-1"
+          user={user}
+          onClose={onCloseMock}
+        />
+      )
+    })
+
+    expect(screen.queryByAltText('France')).toBeNull()
+  })
+
   it('renders Google Maps link when resort has coordinates', async () => {
     await act(async () => {
       render(

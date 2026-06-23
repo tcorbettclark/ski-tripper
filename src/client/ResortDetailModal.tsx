@@ -148,11 +148,12 @@ export default function ResortDetailModal({
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div style={overlayStyles.panelHeader}>
-          <h3 style={overlayStyles.panelTitle}>
-            {proposalSuccess ? (
-              title
-            ) : (
-              <>
+          <div>
+            <h3 style={overlayStyles.panelTitle}>
+              {proposalSuccess ? title : resort.resortName || '\u2014'}
+            </h3>
+            {!proposalSuccess && (resort.country || resort.region) && (
+              <div style={resortDetailModalStyles.locationLine}>
                 {(() => {
                   const flagUrl =
                     resort.country && getCountryFlagUrl(resort.country)
@@ -160,16 +161,12 @@ export default function ResortDetailModal({
                     <img
                       src={flagUrl}
                       alt={resort.country}
-                      style={resortDetailModalStyles.flag}
+                      style={resortDetailModalStyles.locationFlag}
                     />
                   ) : null
                 })()}
-                {resort.resortName || '\u2014'}
-                {resort.country
-                  ? ` in ${resort.region ? `${resort.region}, ` : ''}${resort.country}`
-                  : resort.region
-                    ? ` in ${resort.region}`
-                    : ''}
+                {resort.region ? `${resort.region}, ` : ''}
+                {resort.country}
                 {resort.latitude && resort.longitude && (
                   <a
                     href={`https://www.google.com/maps?q=${resort.latitude},${resort.longitude}`}
@@ -178,12 +175,12 @@ export default function ResortDetailModal({
                     style={resortDetailModalStyles.mapPinLink}
                     aria-label="Open in Google Maps"
                   >
-                    <MapPin size={16} />
+                    <MapPin size={14} />
                   </a>
                 )}
-              </>
+              </div>
             )}
-          </h3>
+          </div>
           <button
             type="button"
             onClick={handleCloseDetail}
@@ -460,10 +457,20 @@ function ProposalForm({
 }
 
 const resortDetailModalStyles = {
-  flag: {
+  locationLine: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: colors.textSecondary,
+    marginTop: '2px',
+  },
+  locationFlag: {
     display: 'inline-block',
-    width: '20px',
-    height: '14px',
+    width: '18px',
+    height: '13px',
+    verticalAlign: 'middle',
   },
   mapPinLink: {
     display: 'inline-flex',
