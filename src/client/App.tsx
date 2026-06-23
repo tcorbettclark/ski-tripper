@@ -6,7 +6,7 @@ import type {
   ResortWithEmbedding,
   Trip,
 } from '../shared/types.d'
-import AboutPopup from './AboutPopup'
+import AboutModal from './AboutModal'
 import AuthForm from './AuthForm'
 import {
   createPreferences as _createPreferences,
@@ -379,7 +379,7 @@ export default function App({
             confirmPasswordReset={confirmPasswordReset}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
-          <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
+          <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </>
       )
     }
@@ -399,7 +399,7 @@ export default function App({
             }}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
-          <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
+          <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </>
       )
     }
@@ -409,7 +409,7 @@ export default function App({
           {aboutButton}
           <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
-          <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
+          <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </>
       )
     }
@@ -428,7 +428,7 @@ export default function App({
           }
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
-        <AboutPopup open={aboutOpen} onClose={() => setAboutOpen(false)} />
+        <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       </>
     )
   }

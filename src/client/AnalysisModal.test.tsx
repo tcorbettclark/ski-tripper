@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import AnalysisPopup from './AnalysisPopup'
+import AnalysisModal from './AnalysisModal'
 import type { UseSSEStreamResult } from './useSSEStream'
 
 const onCloseMock = (() => {}) as () => void
@@ -22,7 +22,7 @@ const defaultStreamResult: UseSSEStreamResult = {
   error: null,
 }
 
-describe('AnalysisPopup', () => {
+describe('AnalysisModal', () => {
   beforeEach(() => {
     mockStreamResult = {
       ...defaultStreamResult,
@@ -32,7 +32,7 @@ describe('AnalysisPopup', () => {
   it('renders generate button in initial state', async () => {
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -49,7 +49,7 @@ describe('AnalysisPopup', () => {
   it('shows title and description', async () => {
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -77,7 +77,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -100,7 +100,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -125,7 +125,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -149,7 +149,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -172,7 +172,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -197,7 +197,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}
@@ -220,7 +220,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={handleClose}
@@ -250,7 +250,7 @@ describe('AnalysisPopup', () => {
 
     await act(async () => {
       render(
-        <AnalysisPopup
+        <AnalysisModal
           proposalId="prop-1"
           tripId="trip-1"
           onClose={onCloseMock}

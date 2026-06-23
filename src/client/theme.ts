@@ -285,6 +285,78 @@ export const detailStyles = {
   },
 } as const
 
+export const overlayStyles = {
+  overlay: {
+    position: 'fixed' as const,
+    inset: 0,
+    background: 'var(--color-overlay)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 300,
+  },
+  panel: {
+    background: colors.bgCard,
+    border: borders.card,
+    borderRadius: '12px',
+    width: '100%',
+    maxWidth: '560px',
+    maxHeight: '85vh',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    boxShadow: '0 24px 80px var(--color-shadow)',
+    margin: '16px',
+    overflow: 'hidden',
+  },
+  panelHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '20px 28px',
+    position: 'sticky' as const,
+    top: 0,
+    background: colors.bgCard,
+    borderBottom: borders.subtle,
+    zIndex: 1,
+    flexShrink: 0,
+  },
+  panelTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes['2xl'],
+    fontWeight: '600',
+    color: colors.textPrimary,
+    margin: 0,
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    color: colors.textSecondary,
+    cursor: 'pointer',
+    padding: '4px 8px',
+    lineHeight: 1,
+    borderRadius: '4px',
+  },
+  panelContent: {
+    flex: 1,
+    overflowY: 'auto' as const,
+    overflowX: 'hidden' as const,
+    padding: '20px 28px 28px',
+  },
+  panelFooter: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    padding: '16px 28px',
+    position: 'sticky' as const,
+    bottom: 0,
+    background: colors.bgCard,
+    borderTop: borders.subtle,
+    zIndex: 1,
+    flexShrink: 0,
+  },
+} as const
+
 export const fieldStyles = {
   default: {
     field: {

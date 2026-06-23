@@ -2,7 +2,7 @@ import { MapPin, Sparkles } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { getCountryFlagUrl } from '../shared/countries'
 import type { Accommodation, Discussion, Proposal } from '../shared/types.d'
-import AnalysisPopup from './AnalysisPopup'
+import AnalysisModal from './AnalysisModal'
 import {
   createAccommodation as _createAccommodation,
   deleteAccommodation as _deleteAccommodation,
@@ -131,7 +131,7 @@ export default function ProposalCard({
   }, [initialTab])
   const [discussionCount, setDiscussionCount] = useState(0)
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
-  const [showAnalysisPopup, setShowAnalysisPopup] = useState(false)
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false)
 
   const [submitting, setSubmitting] = useState(false)
   const [rejecting, setRejecting] = useState(false)
@@ -333,7 +333,7 @@ export default function ProposalCard({
           {!previewMode && (
             <button
               type="button"
-              onClick={() => setShowAnalysisPopup(true)}
+              onClick={() => setShowAnalysisModal(true)}
               style={styles.aiButton}
               aria-label="AI Analysis"
             >
@@ -663,11 +663,11 @@ export default function ProposalCard({
         )}
       </div>
 
-      {showAnalysisPopup && (
-        <AnalysisPopup
+      {showAnalysisModal && (
+        <AnalysisModal
           proposalId={proposal.id}
           tripId={proposal.trip}
-          onClose={() => setShowAnalysisPopup(false)}
+          onClose={() => setShowAnalysisModal(false)}
         />
       )}
 

@@ -47,6 +47,8 @@ interface PreferencesFormProps {
     data: Partial<Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>>
   ) => Promise<Preferences>
   updateName?: (name: string) => Promise<unknown>
+  formId?: string
+  hideActions?: boolean
 }
 
 export default function PreferencesForm({
@@ -59,6 +61,8 @@ export default function PreferencesForm({
   createPreferences = _createPreferences,
   updatePreferences = _updatePreferences,
   updateName: _updateName,
+  formId,
+  hideActions,
 }: PreferencesFormProps) {
   const initialSkiSnowboard = initial?.skiSnowboard ?? []
   const initialDifficulty = initial?.difficulty ?? []
@@ -208,7 +212,7 @@ export default function PreferencesForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} style={styles.form}>
+    <form id={formId} onSubmit={handleSubmit} style={styles.form}>
       {_updateName && (
         <div style={styles.group}>
           <label htmlFor="name" style={styles.groupLabel}>
@@ -312,29 +316,31 @@ export default function PreferencesForm({
 
       {error && <p style={formStyles.error}>{error}</p>}
 
-      <div style={styles.actions}>
-        <button
-          type="submit"
-          disabled={saving}
-          style={formStyles.saveButton}
-          data-testid="pref-save"
-        >
-          {saving
-            ? 'Saving…'
-            : initial
-              ? 'Update Preferences'
-              : 'Save Preferences'}
-        </button>
-        {onCancel && (
+      {!hideActions && (
+        <div style={styles.actions}>
           <button
-            type="button"
-            onClick={onCancel}
-            style={formStyles.cancelButton}
+            type="submit"
+            disabled={saving}
+            style={formStyles.saveButton}
+            data-testid="pref-save"
           >
-            Cancel
+            {saving
+              ? 'Saving…'
+              : initial
+                ? 'Update Preferences'
+                : 'Save Preferences'}
           </button>
-        )}
-      </div>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              style={formStyles.cancelButton}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
     </form>
   )
 }

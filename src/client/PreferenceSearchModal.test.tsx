@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import PreferenceSearchPopup from './PreferenceSearchPopup'
+import PreferenceSearchModal from './PreferenceSearchModal'
 import type { UseSSEStreamResult } from './useSSEStream'
 
 const onCloseMock = mock(() => {})
@@ -25,7 +25,7 @@ const defaultStreamResult: UseSSEStreamResult = {
   error: null,
 }
 
-describe('PreferenceSearchPopup', () => {
+describe('PreferenceSearchModal', () => {
   beforeEach(() => {
     mockStreamResult = {
       ...defaultStreamResult,
@@ -39,7 +39,7 @@ describe('PreferenceSearchPopup', () => {
   it('renders generate button in initial state', async () => {
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -56,7 +56,7 @@ describe('PreferenceSearchPopup', () => {
   it('shows title and description', async () => {
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -83,7 +83,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -105,7 +105,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -128,7 +128,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -154,7 +154,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -176,7 +176,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -199,7 +199,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -222,7 +222,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -240,7 +240,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -264,7 +264,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -283,7 +283,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -293,7 +293,7 @@ describe('PreferenceSearchPopup', () => {
     })
 
     const closeButtons = screen.getAllByRole('button')
-    const closeButton = closeButtons.find((b) =>
+    const closeButton = closeButtons.find((b: HTMLElement) =>
       b.getAttribute('aria-label')?.includes('Close')
     )
     if (closeButton) {
@@ -314,7 +314,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}
@@ -338,7 +338,7 @@ describe('PreferenceSearchPopup', () => {
 
     await act(async () => {
       render(
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId="trip-1"
           onClose={onCloseMock}
           onSearch={onSearchMock}

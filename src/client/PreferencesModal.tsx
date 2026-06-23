@@ -1,8 +1,10 @@
 import { X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Preferences } from '../shared/types.d'
 import PreferencesForm from './PreferencesForm'
-import { borders, colors, fontSizes, fonts } from './theme'
+import { formStyles, overlayStyles } from './theme'
+
+const FORM_ID = 'preferences-form'
 
 interface PreferencesModalProps {
   userId: string
@@ -39,100 +41,80 @@ export default function PreferencesModal({
     initial
   )
 
+  useEffect(() => {
+    if (!open) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
+
   if (!open) return null
+
+  const isExisting = !!(savedPreferences ?? initial)
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      style={styles.overlay}
-      onClick={onClose}
+      style={overlayStyles.overlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          onClose()
-        }
+        if (e.key === 'Escape') onClose()
       }}
     >
       <div
         role="document"
-        style={styles.panel}
+        style={{ ...overlayStyles.panel, maxWidth: '520px' }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <div style={styles.panelHeader}>
-          <h3 style={styles.panelTitle}>My preferences</h3>
+        <div style={overlayStyles.panelHeader}>
+          <h3 style={overlayStyles.panelTitle}>My preferences</h3>
           <button
             type="button"
             onClick={onClose}
-            style={styles.closeButton}
+            style={overlayStyles.closeButton}
             aria-label="Close"
           >
             <X size={16} />
           </button>
         </div>
-        <PreferencesForm
-          userId={userId}
-          userName={userName}
-          initial={savedPreferences ?? initial}
-          onSaved={(prefs) => {
-            setSavedPreferences(prefs)
-            onSaved(prefs)
-            onClose()
-          }}
-          onNameUpdated={onNameUpdated}
-          onCancel={onClose}
-          createPreferences={createPreferences}
-          updatePreferences={updatePreferences}
-          updateName={updateName}
-        />
+        <div style={overlayStyles.panelContent}>
+          <PreferencesForm
+            formId={FORM_ID}
+            hideActions
+            userId={userId}
+            userName={userName}
+            initial={savedPreferences ?? initial}
+            onSaved={(prefs) => {
+              setSavedPreferences(prefs)
+              onSaved(prefs)
+              onClose()
+            }}
+            onNameUpdated={onNameUpdated}
+            onCancel={onClose}
+            createPreferences={createPreferences}
+            updatePreferences={updatePreferences}
+            updateName={updateName}
+          />
+        </div>
+        <div style={overlayStyles.panelFooter}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={formStyles.cancelButton}
+          >
+            Cancel
+          </button>
+          <button type="submit" form={FORM_ID} style={formStyles.saveButton}>
+            {isExisting ? 'Update Preferences' : 'Save Preferences'}
+          </button>
+        </div>
       </div>
     </div>
   )
 }
-
-const styles = {
-  overlay: {
-    position: 'fixed' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'var(--color-overlay)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 200,
-  },
-  panel: {
-    background: colors.bgCard,
-    border: borders.card,
-    borderRadius: '12px',
-    padding: '28px',
-    width: '100%',
-    maxWidth: '520px',
-    maxHeight: '85vh',
-    overflowY: 'auto' as const,
-    boxShadow: '0 24px 80px var(--color-shadow)',
-  },
-  panelHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-  },
-  panelTitle: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes['2xl'],
-    fontWeight: '600',
-    color: colors.textPrimary,
-    margin: 0,
-  },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    color: colors.textSecondary,
-    cursor: 'pointer',
-    padding: '4px 8px',
-    lineHeight: 1,
-  },
-} as const

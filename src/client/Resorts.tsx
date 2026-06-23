@@ -1,4 +1,4 @@
-import { MapPin, Sparkles, Trophy } from 'lucide-react'
+import { Sparkles, Trophy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import {
@@ -8,11 +8,9 @@ import {
 } from '../shared/countries'
 import { COMMON_REGIONS, REGIONS } from '../shared/regions'
 import type { ResortWithEmbedding, User } from '../shared/types.d'
-import DateRangeField from './DateRangeField'
-import DetailField from './DetailField'
-import Paragraphs from './Paragraphs'
 import PisteBreakdown from './PisteBreakdown'
-import PreferenceSearchPopup from './PreferenceSearchPopup'
+import PreferenceSearchModal from './PreferenceSearchModal'
+import ResortDetailModal from './ResortDetailModal'
 import type { ScoredResort } from './resortSearch'
 import {
   getIsModelFailed as _getIsModelFailed,
@@ -23,27 +21,8 @@ import {
 } from './resortSearch'
 import { trophyGrade } from './resortSearchPure'
 import TagCloud from './TagCloud'
-import {
-  borders,
-  colors,
-  detailStyles,
-  fontSizes,
-  fonts,
-  formStyles,
-  mix,
-} from './theme'
-import {
-  ensureUrlScheme,
-  formatTransferTime,
-  getErrorMessage,
-  sanitizeUrl,
-} from './utils'
-
-const snowReliabilityLabels: Record<string, string> = {
-  high: 'High',
-  medium: 'Medium',
-  low: 'Low',
-}
+import { borders, colors, fontSizes, fonts, mix } from './theme'
+import { formatTransferTime } from './utils'
 
 interface ResortsProps {
   user: User
@@ -122,12 +101,6 @@ export default function Resorts({
     }
   }, [maxTransferTimeFromData, maxTransferTime])
 
-  const [showProposalForm, setShowProposalForm] = useState(false)
-  const [proposalError, setProposalError] = useState('')
-  const [proposalSaving, setProposalSaving] = useState(false)
-  const [proposalSuccess, setProposalSuccess] = useState(false)
-  const [proposalSuccessName, setProposalSuccessName] = useState('')
-  const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
   const [showPreferenceSearch, setShowPreferenceSearch] = useState(false)
 
   useEffect(() => {
@@ -299,77 +272,11 @@ export default function Resorts({
 
   const handleRowClick = useCallback((resort: ResortWithEmbedding) => {
     setSelectedResort(resort)
-    setShowProposalForm(false)
-    setProposalError('')
-    setProposalSuccess(false)
-    setProposalSuccessName('')
   }, [])
 
   const handleCloseDetail = useCallback(() => {
     setSelectedResort(null)
-    setShowProposalForm(false)
-    setProposalError('')
-    setProposalSuccess(false)
-    setProposalSuccessName('')
   }, [])
-
-  const handleProposeResort = useCallback(() => {
-    setShowProposalForm(true)
-    setProposalError('')
-    setProposalSuccess(false)
-    setProposalSuccessName('')
-  }, [])
-
-  const handleSubmitProposal = useCallback(
-    async (
-      e: React.FormEvent,
-      resort: ResortWithEmbedding,
-      startDate: string,
-      endDate: string,
-      description: string,
-      customResortName?: string
-    ) => {
-      e.preventDefault()
-      if (!tripId) return
-      setProposalSaving(true)
-      setProposalError('')
-      try {
-        const { createProposal } = await import('./backend')
-        await createProposal(tripId, user.id, user.name, {
-          description,
-          startDate,
-          endDate,
-          resortData: {
-            resortName: customResortName || resort.resortName,
-            country: resort.country,
-            region: resort.region,
-            summitAltitude: resort.summitAltitude,
-            baseAltitude: resort.baseAltitude,
-            nearestAirport: resort.nearestAirport,
-            transferTime: resort.transferTime,
-            pisteKm: resort.pisteKm,
-            beginnerPct: resort.beginnerPct,
-            intermediatePct: resort.intermediatePct,
-            advancedPct: resort.advancedPct,
-            liftCount: resort.liftCount,
-            snowReliability: resort.snowReliability,
-            skiSeasonMonths: resort.skiSeasonMonths,
-            websites: resort.websites,
-            latitude: resort.latitude,
-            longitude: resort.longitude,
-            linkedResortsDescription: resort.linkedResortsDescription,
-          },
-        })
-        setProposalSuccessName(customResortName || resort.resortName)
-        setProposalSuccess(true)
-      } catch (err: unknown) {
-        setProposalError(getErrorMessage(err))
-      } finally {
-        setProposalSaving(false)
-      }
-    },
-    [tripId, user.id, user.name]
-  )
 
   const clearLocationFilters = useCallback(() => {
     setCountryFilter(new Set())
@@ -820,349 +727,24 @@ export default function Resorts({
       </div>
 
       {selectedResort && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={resortsStyles.overlay}
-          onClick={handleCloseDetail}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') handleCloseDetail()
-          }}
-        >
-          <div
-            role="document"
-            style={resortsStyles.detailPopup}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            <div style={resortsStyles.detailHeader}>
-              <h3 style={detailStyles.title}>
-                {proposalSuccess ? (
-                  `Created proposal for ${proposalSuccessName}`
-                ) : (
-                  <>
-                    {(() => {
-                      const flagUrl =
-                        selectedResort.country &&
-                        getCountryFlagUrl(selectedResort.country)
-                      return flagUrl ? (
-                        <img
-                          src={flagUrl}
-                          alt={selectedResort.country}
-                          style={resortsStyles.flag}
-                        />
-                      ) : null
-                    })()}
-                    {selectedResort.resortName || '—'}
-                    {selectedResort.country
-                      ? ` in ${selectedResort.region ? `${selectedResort.region}, ` : ''}${selectedResort.country}`
-                      : selectedResort.region
-                        ? ` in ${selectedResort.region}`
-                        : ''}
-                    {selectedResort.latitude && selectedResort.longitude && (
-                      <a
-                        href={`https://www.google.com/maps?q=${selectedResort.latitude},${selectedResort.longitude}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={resortsStyles.mapPinLink}
-                        aria-label="Open in Google Maps"
-                      >
-                        <MapPin size={16} />
-                      </a>
-                    )}
-                  </>
-                )}
-              </h3>
-              <button
-                type="button"
-                onClick={handleCloseDetail}
-                style={resortsStyles.detailCloseButton}
-              >
-                ×
-              </button>
-            </div>
-
-            {!showProposalForm && !proposalSuccess && (
-              <>
-                <div style={resortsStyles.detailGrid}>
-                  <DetailField
-                    label="Altitude Range"
-                    value={
-                      selectedResort.baseAltitude &&
-                      selectedResort.summitAltitude
-                        ? `${selectedResort.baseAltitude}m – ${selectedResort.summitAltitude}m`
-                        : ''
-                    }
-                  />
-                  <DetailField
-                    label="Piste"
-                    value={
-                      selectedResort.pisteKm
-                        ? `${selectedResort.pisteKm} km`
-                        : ''
-                    }
-                  />
-                  <DetailField label="Piste Breakdown">
-                    <PisteBreakdown
-                      beginnerPct={selectedResort.beginnerPct}
-                      intermediatePct={selectedResort.intermediatePct}
-                      advancedPct={selectedResort.advancedPct}
-                    />
-                  </DetailField>
-                  <DetailField
-                    label="Lifts"
-                    value={
-                      selectedResort.liftCount
-                        ? String(selectedResort.liftCount)
-                        : ''
-                    }
-                  />
-                  <DetailField
-                    label="Snow Reliability"
-                    value={
-                      snowReliabilityLabels[selectedResort.snowReliability] ??
-                      selectedResort.snowReliability
-                    }
-                  />
-                  <DetailField
-                    label="Ski Season"
-                    value={selectedResort.skiSeasonMonths}
-                  />
-                  <DetailField
-                    label="Nearest Airport"
-                    value={selectedResort.nearestAirport}
-                  />
-                  <DetailField
-                    label="Transfer Time"
-                    value={formatTransferTime(selectedResort.transferTime)}
-                  />
-                  {selectedResort.websites &&
-                    selectedResort.websites.length > 0 && (
-                      <DetailField
-                        label="Websites"
-                        style={{ gridColumn: 'span 2' }}
-                      >
-                        <ul style={resortsStyles.websiteList}>
-                          {selectedResort.websites.map((url) => (
-                            <li key={url}>
-                              <a
-                                href={sanitizeUrl(ensureUrlScheme(url))}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  ...detailStyles.websiteLink,
-                                  textDecoration:
-                                    hoveredWebsite === url
-                                      ? 'underline'
-                                      : 'none',
-                                }}
-                                onMouseEnter={() => setHoveredWebsite(url)}
-                                onMouseLeave={() => setHoveredWebsite(null)}
-                              >
-                                {ensureUrlScheme(url).replace(
-                                  /^https?:\/\//,
-                                  ''
-                                )}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </DetailField>
-                    )}
-                </div>
-
-                {selectedResort.linkedResortsDescription && (
-                  <div style={resortsStyles.detailDescriptionSection}>
-                    <DetailField label="Linked Resorts">
-                      <Paragraphs
-                        text={selectedResort.linkedResortsDescription}
-                        style={detailStyles.descriptionText}
-                      />
-                    </DetailField>
-                  </div>
-                )}
-
-                {selectedResort.description && (
-                  <div style={resortsStyles.detailDescriptionSection}>
-                    <DetailField label="Description">
-                      <Paragraphs
-                        text={selectedResort.description}
-                        style={detailStyles.descriptionText}
-                      />
-                    </DetailField>
-                  </div>
-                )}
-              </>
-            )}
-
-            {!showProposalForm && !proposalSuccess && (
-              <button
-                type="button"
-                onClick={handleProposeResort}
-                style={resortsStyles.proposeButton}
-              >
-                Propose this resort
-              </button>
-            )}
-
-            {proposalSuccess && (
-              <div style={resortsStyles.successPopup}>
-                <div style={resortsStyles.successButtons}>
-                  <button
-                    type="button"
-                    onClick={handleCloseDetail}
-                    style={resortsStyles.successButtonSecondary}
-                  >
-                    Stay in resorts
-                  </button>
-                  {onNavigateToProposals && (
-                    <button
-                      type="button"
-                      onClick={onNavigateToProposals}
-                      style={resortsStyles.successButtonPrimary}
-                    >
-                      View in proposals
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {showProposalForm && !proposalSuccess && (
-              <ProposalForm
-                resort={selectedResort}
-                saving={proposalSaving}
-                error={proposalError}
-                onSubmit={handleSubmitProposal}
-                onCancel={() => {
-                  setShowProposalForm(false)
-                  setProposalError('')
-                }}
-                onAuthError={onAuthError}
-                tripId={tripId}
-                userId={user.id}
-              />
-            )}
-          </div>
-        </div>
+        <ResortDetailModal
+          resort={selectedResort}
+          tripId={tripId}
+          user={user}
+          onClose={handleCloseDetail}
+          onNavigateToProposals={onNavigateToProposals}
+          onAuthError={onAuthError}
+        />
       )}
 
       {showPreferenceSearch && (
-        <PreferenceSearchPopup
+        <PreferenceSearchModal
           tripId={tripId}
           onClose={() => setShowPreferenceSearch(false)}
           onSearch={(query) => setSearchQuery(query)}
         />
       )}
     </div>
-  )
-}
-
-interface ProposalFormProps {
-  resort: ResortWithEmbedding
-  saving: boolean
-  error: string
-  onSubmit: (
-    e: React.FormEvent,
-    resort: ResortWithEmbedding,
-    startDate: string,
-    endDate: string,
-    description: string,
-    customResortName?: string
-  ) => Promise<void>
-  onCancel: () => void
-  onAuthError?: (err: unknown) => void
-  tripId: string
-  userId: string
-}
-
-function ProposalForm({
-  resort,
-  saving,
-  error,
-  onSubmit,
-  onCancel,
-}: ProposalFormProps) {
-  const [resortName, setResortName] = useState(resort.resortName)
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [description, setDescription] = useState(resort.description || '')
-  const [dateError, setDateError] = useState('')
-
-  return (
-    <form
-      onSubmit={(e) => {
-        if (!startDate || !endDate) {
-          e.preventDefault()
-          setDateError('Please select both a start and end date')
-          return
-        }
-        setDateError('')
-        onSubmit(e, resort, startDate, endDate, description, resortName)
-      }}
-      style={resortsStyles.proposalForm}
-    >
-      <p style={resortsStyles.proposalFormSubtitle}>
-        {resort.country}
-        {resort.region ? `, ${resort.region}` : ''}
-      </p>
-      <div style={{ ...resortsStyles.proposalFormField, marginTop: '16px' }}>
-        <label
-          htmlFor="proposal-resort-name"
-          style={resortsStyles.proposalFormLabel}
-        >
-          Proposal name (e.g. the resort name)
-        </label>
-        <input
-          id="proposal-resort-name"
-          type="text"
-          value={resortName}
-          onChange={(e) => setResortName(e.target.value)}
-          required
-          style={resortsStyles.proposalFormInput}
-        />
-      </div>
-      <DateRangeField
-        startDate={startDate}
-        endDate={endDate}
-        onChange={(sd, ed) => {
-          setStartDate(sd)
-          setEndDate(ed)
-          if (sd && ed) setDateError('')
-        }}
-        error={dateError}
-      />
-      <div style={resortsStyles.proposalFormField}>
-        <label
-          htmlFor="proposal-description"
-          style={resortsStyles.proposalFormLabel}
-        >
-          Description
-        </label>
-        <textarea
-          id="proposal-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          style={resortsStyles.proposalFormTextarea}
-          placeholder="Describe the trip idea..."
-          rows={12}
-        />
-      </div>
-      {error && <p style={formStyles.error}>{error}</p>}
-      <div style={resortsStyles.proposalFormActions}>
-        <button type="submit" disabled={saving} style={formStyles.saveButton}>
-          {saving ? 'Creating draft...' : 'Create Draft Proposal'}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          style={formStyles.cancelButton}
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
   )
 }
 
@@ -1408,186 +990,10 @@ const resortsStyles = {
     textOverflow: 'ellipsis',
     maxWidth: '200px',
   },
-  overlay: {
-    position: 'fixed' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'var(--color-overlay)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 200,
-  },
-  detailPopup: {
-    background: colors.bgCard,
-    border: borders.card,
-    borderRadius: '12px',
-    padding: '28px',
-    maxWidth: '560px',
-    width: '100%',
-    maxHeight: '95vh',
-    overflowY: 'auto' as const,
-    margin: '16px',
-  },
-  detailHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '20px',
-  },
-  mapPinLink: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    color: colors.accent,
-    textDecoration: 'none',
-  },
-  detailCloseButton: {
-    background: 'none',
-    border: 'none',
-    color: colors.textSecondary,
-    fontSize: fontSizes.xl,
-    cursor: 'pointer',
-    padding: '4px 8px',
-    lineHeight: 1,
-  },
-  websiteList: {
-    listStyleType: 'disc' as const,
-    paddingLeft: '20px',
-    margin: 0,
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
-  },
-  detailGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '18px',
-    marginBottom: '16px',
-  },
   countryFlag: {
     display: 'inline-block',
     width: '22px',
     height: '15px',
     verticalAlign: 'middle',
-  },
-  flag: {
-    display: 'inline-block',
-    width: '20px',
-    height: '14px',
-  },
-  detailDescriptionSection: {
-    marginTop: '6px',
-    marginBottom: '16px',
-  },
-  proposeButton: {
-    padding: '12px 24px',
-    borderRadius: '8px',
-    border: 'none',
-    background: colors.accent,
-    color: colors.bgPrimary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    fontWeight: '600',
-    cursor: 'pointer',
-    width: '100%',
-  },
-  successPopup: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    gap: '20px',
-    padding: '24px 0',
-  },
-  successButtons: {
-    display: 'flex',
-    gap: '12px',
-  },
-  successButtonPrimary: {
-    padding: '10px 20px',
-    borderRadius: '8px',
-    border: 'none',
-    background: colors.accent,
-    color: colors.bgPrimary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  successButtonSecondary: {
-    padding: '10px 20px',
-    borderRadius: '8px',
-    border: `1px solid ${colors.accent}`,
-    background: 'transparent',
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    fontWeight: '600',
-    cursor: 'pointer',
-  },
-  proposalForm: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '14px',
-  },
-  proposalFormTitle: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes.lg,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    margin: 0,
-  },
-  proposalFormSubtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textSecondary,
-    margin: '-12px 0 0',
-  },
-  proposalFormRow: {
-    display: 'flex',
-    gap: '12px',
-  },
-  proposalFormField: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
-    flex: '1 1 auto',
-  },
-  proposalFormLabel: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    letterSpacing: '0.04em',
-    textTransform: 'uppercase' as const,
-  },
-  proposalFormInput: {
-    padding: '10px 14px',
-    borderRadius: '7px',
-    border: borders.card,
-    background: colors.bgCard,
-    color: colors.textPrimary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    outline: 'none',
-  },
-  proposalFormTextarea: {
-    padding: '10px 14px',
-    borderRadius: '7px',
-    border: borders.card,
-    background: colors.bgCard,
-    color: colors.textPrimary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    outline: 'none',
-    resize: 'vertical' as const,
-  },
-  proposalFormActions: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end' as const,
-    gap: '12px',
-    marginTop: '8px',
   },
 } as const

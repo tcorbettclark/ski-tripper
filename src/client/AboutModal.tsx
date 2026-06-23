@@ -1,22 +1,22 @@
 import { X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import StyledMarkdown from './StyledMarkdown'
-import { borders, colors, fontSizes, fonts } from './theme'
+import { colors, fontSizes, fonts, overlayStyles } from './theme'
 
 const README_URL =
   'https://raw.githubusercontent.com/tcorbettclark/ski-tripper/main/README.md'
 
-interface AboutPopupProps {
+interface AboutModalProps {
   open: boolean
   onClose: () => void
   readmeUrl?: string
 }
 
-export default function AboutPopup({
+export default function AboutModal({
   open,
   onClose,
   readmeUrl = README_URL,
-}: AboutPopupProps) {
+}: AboutModalProps) {
   const [content, setContent] = useState<string | null>(null)
   const [error, setError] = useState('')
 
@@ -30,11 +30,22 @@ export default function AboutPopup({
         return res.text()
       })
       .then((text) => {
-        const trimmed = text.replace(/^.*?(#\s*Ski\s+Tripper)/s, '$1')
-        setContent(trimmed)
+        const afterFirstHeading = text
+          .replace(/^.*?#\s*Ski\s+Tripper[^\n]*\n*/s, '')
+          .trimStart()
+        setContent(afterFirstHeading)
       })
       .catch((err) => setError(err.message))
   }, [open, readmeUrl])
+
+  useEffect(() => {
+    if (!open) return
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [open, onClose])
 
   if (!open) return null
 
@@ -42,80 +53,48 @@ export default function AboutPopup({
     <div
       role="dialog"
       aria-modal="true"
-      style={aboutStyles.overlay}
-      onClick={onClose}
+      style={overlayStyles.overlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
       onKeyDown={(e) => {
         if (e.key === 'Escape') onClose()
       }}
     >
       <div
         role="document"
-        style={aboutStyles.panel}
+        style={{ ...overlayStyles.panel, maxWidth: '640px' }}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
       >
-        <div style={aboutStyles.header}>
-          <div />
+        <div style={overlayStyles.panelHeader}>
+          <h3 style={overlayStyles.panelTitle}>About</h3>
           <button
             type="button"
             onClick={onClose}
-            style={aboutStyles.closeButton}
+            style={overlayStyles.closeButton}
             aria-label="Close"
           >
             <X size={16} />
           </button>
         </div>
-        {error && <p style={aboutStyles.error}>{error}</p>}
-        {!content && !error && <p style={aboutStyles.loading}>Loading…</p>}
-        {content && (
-          <div style={aboutStyles.content}>
-            <StyledMarkdown>{content}</StyledMarkdown>
-          </div>
-        )}
+        <div style={overlayStyles.panelContent}>
+          {error && <p style={aboutModalStyles.error}>{error}</p>}
+          {!content && !error && (
+            <p style={aboutModalStyles.loading}>Loading…</p>
+          )}
+          {content && (
+            <div style={aboutModalStyles.content}>
+              <StyledMarkdown>{content}</StyledMarkdown>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-export const aboutStyles = {
-  overlay: {
-    position: 'fixed' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'var(--color-overlay)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 300,
-  },
-  panel: {
-    background: colors.bgCard,
-    border: borders.card,
-    borderRadius: '12px',
-    padding: '28px',
-    maxWidth: '640px',
-    width: '100%',
-    maxHeight: '85vh',
-    overflowY: 'auto' as const,
-    boxShadow: '0 24px 80px var(--color-shadow)',
-    margin: '16px',
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginBottom: '8px',
-  },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    color: colors.textSecondary,
-    cursor: 'pointer',
-    padding: '4px 8px',
-    lineHeight: 1,
-  },
+const aboutModalStyles = {
   content: {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
