@@ -10,7 +10,7 @@ Unlike booking sites that start with flights and hotels, Ski Tripper starts with
 
 * **The Trip**: This is your group's shared space (e.g., "Boys Ski 2027"). It's the central hub where everyone gathers ideas and votes.
 * **The Profile**: Everyone in your group declares their preferences (high altitude, great après, off-piste terrain, etc). The AI-powered catalog then ranks options against your combined group profile.
-* **The Proposal**: Anyone can pitch a specific proposal inside the Trip. You pick a resort that fits the group, align dates around mountain events, and drop in lodging options so friends can choose between premium hotels or budget-friendly apartments.
+* **The Proposal**: Anyone can pitch a specific proposal for the Trip. You pick a resort that fits the group, align dates around mountain events, and drop in lodging options so friends can choose between premium hotels or budget-friendly apartments.
 * **The Decision**: Once a selection of promising options is locked in, your group votes in rounds until a clear winner emerges.
 
 _(Ski Tripper doesn't book any flights or hotels. Platforms like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) are still good to help scout specific lodgings. But Ski Tripper is where your group discovers and agrees on great ski destinations!)_
@@ -19,12 +19,12 @@ _(Ski Tripper doesn't book any flights or hotels. Platforms like [Heidi](https:/
 
 ### 1. Low-Friction Onboarding
 - **Quick Sign-Up:** Everyone creates an account with just an email.
-- **Set Your Skier Profile:** Input your skill level, terrain preference (on/off-piste), and how you split your day between burning rubber on the slopes, long lunches, après, or chilling. This shares with your friends (and the AI assistant) what makes a perfect holiday for you.
-- **Gather the Crew:** The group "coordinator" creates a **Trip** container and shares a simple three-word invite code to bring everyone in.
+- **Set Your Skier Profile:** Input your skill level, terrain preference (on/off-piste), and how you split your day between leg-burning slope time, long lunches, après, or chilling in the spa. This shares with your friends (and the AI assistant) what makes a perfect holiday for you.
+- **Gather the Crew:** The group "coordinator" creates a **Trip** space and shares a simple three-word invite code to bring everyone in.
 
 ### 2. Browse Thousands of Resorts
-- **Deep-Dive Data:** Explore a comprehensive, filterable database packed with real stats: piste distance, altitude range, snow reliability, airport transfer times, difficulty splits, and more.
-- **AI Preference Matcher:** Stuck with what to search for? The built-in AI assistant analyzes everyone’s profile and automatically builds search queries to surface resorts that match the whole group's vibe.
+- **Deep-Dive Data:** Explore a comprehensive and filterable database, packed with real stats: piste distance, altitude range, snow reliability, airport transfer times, difficulty splits, and more.
+- **AI Preference Matcher:** Stuck with what to search for? The built-in AI assistant analyzes everyone’s profile and automatically builds search queries to surface resorts matching the group vibe.
 
 ### 3. Pitch, Discuss, and Refine
 - **Build the "Proposal":** Anyone can draft a proposal combining a resort, specific dates, and various accommodation options. 
@@ -55,7 +55,7 @@ Having helped lead the organisation of a boys ski trip for a few years, I though
 ## How is AI used?
 
 1. To **build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [OpenCode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with the help of [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
-2. To **create a rich catalogue of resorts with standard fields and descriptions**. This required seeding the list, enriching from qualified sources, assessing quality, and fixing inconsistencies in the result using an independent model.
+2. To **create a rich catalogue of resorts with standardised fields and descriptions**. This involved a pipeline starting with seeding a list, enriching from qualified sources, assessing quality, and fixing inconsistencies using an independent model.
 3. To **make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
 4. To **generate resort search text from participant preferences**, and so make it easier to home in on candidate resorts the group will enjoy.
 5. To **assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
