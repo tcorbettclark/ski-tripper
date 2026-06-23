@@ -95,6 +95,8 @@ function decryptEnvVars(): Record<string, string> {
       const val = line.slice(eq + 1)
       env[key] = val
     }
+    console.log('  PUBLIC_DOMAIN from dotenvx:', env.PUBLIC_DOMAIN)
+    console.log('  POCKETBASE_HOSTNAME from dotenvx:', env.POCKETBASE_HOSTNAME)
     success(`Decrypted ${Object.keys(env).length} environment variables`)
     return env
   } catch (err) {
