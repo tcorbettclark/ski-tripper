@@ -632,7 +632,18 @@ export default function Resorts({
                         gap: '6px',
                       }}
                     >
-                      {resort.score != null && (
+                      {resort.score != null &&
+                      trophyGrade(resort.score, maxScore) != null ? (
+                        <Trophy
+                          size={14}
+                          style={{
+                            color: trophyColorVariant(
+                              trophyGrade(resort.score, maxScore)!
+                            ),
+                            flexShrink: 0,
+                          }}
+                        />
+                      ) : resort.score != null ? (
                         <span
                           style={{
                             display: 'inline-block',
@@ -645,20 +656,8 @@ export default function Resorts({
                             flexShrink: 0,
                           }}
                         />
-                      )}
+                      ) : null}
                       {resort.resortName}
-                      {resort.score != null &&
-                        trophyGrade(resort.score, maxScore) != null && (
-                          <Trophy
-                            size={14}
-                            style={{
-                              color: trophyColorVariant(
-                                trophyGrade(resort.score, maxScore)!
-                              ),
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
                     </span>
                   ) : col.key === 'country' &&
                     resort.country &&
