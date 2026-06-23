@@ -21,7 +21,7 @@ import PollResults from './PollResults'
 import PollVoting from './PollVoting'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
-import { formatDate, getErrorMessage } from './utils'
+import { formatCountdown, formatDate, getErrorMessage } from './utils'
 
 interface PollComponentProps {
   user: User
@@ -93,6 +93,7 @@ export default function Poll({
   const [closePollError, setClosePollError] = useState<string | null>(null)
   const [outcomeText, setOutcomeText] = useState('')
   const [showOutcomeForm, setShowOutcomeForm] = useState(false)
+  const [countdown, setCountdown] = useState<string | null>(null)
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -101,6 +102,20 @@ export default function Poll({
       mountedRef.current = false
     }
   }, [])
+
+  useEffect(() => {
+    if (!activePoll) {
+      setCountdown(null)
+      return
+    }
+    function tick() {
+      if (!mountedRef.current || !activePoll) return
+      setCountdown(formatCountdown(activePoll.endDate))
+    }
+    tick()
+    const interval = setInterval(tick, 15000)
+    return () => clearInterval(interval)
+  }, [activePoll])
 
   useEffect(() => {
     if (!tripId) {
@@ -240,14 +255,20 @@ export default function Poll({
         <>
           {activePoll ? (
             <div style={styles.pollPanel}>
-              <div style={styles.pollHeader}>
-                <div>
+              <div style={styles.heroBanner}>
+                <div style={styles.heroContent}>
                   <span style={styles.pollStatus}>Active Poll · OPEN</span>
                   <p style={styles.pollDates}>
                     {formatDate(activePoll.startDate)} –{' '}
                     {formatDate(activePoll.endDate)}
                   </p>
                 </div>
+                {countdown && (
+                  <div style={styles.countdownBadge}>
+                    <span style={styles.countdownIcon}>⏱</span>
+                    <span style={styles.countdownText}>{countdown}</span>
+                  </div>
+                )}
                 {isCoordinator && !showOutcomeForm && (
                   <button
                     type="button"
@@ -421,11 +442,40 @@ const styles = {
     marginBottom: '24px',
     boxShadow: '0 2px 12px var(--color-shadow)',
   },
-  pollHeader: {
+  heroBanner: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
+    padding: '16px 20px',
+    borderRadius: '10px',
+    background: `linear-gradient(135deg, ${mix('--color-accent', 0.08)}, ${mix('--color-accent', 0.02)})`,
+    borderLeft: `4px solid ${colors.accent}`,
+  },
+  heroContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+  },
+  countdownBadge: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 14px',
+    borderRadius: '8px',
+    background: mix('--color-accent', 0.15),
+    border: `1px solid ${mix('--color-accent', 0.25)}`,
+  },
+  countdownIcon: {
+    fontSize: fontSizes.md,
+    lineHeight: '1',
+  },
+  countdownText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    color: colors.accent,
+    letterSpacing: '0.02em',
   },
   pollStatus: {
     fontFamily: fonts.body,

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { getCountryFlagUrl } from '../shared/countries'
 import type { Accommodation, Poll, Proposal, Vote } from '../shared/types.d'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
@@ -116,6 +117,11 @@ export default function PollVoting({
     }
   }
 
+  const footerTokens = []
+  for (let i = 0; i < maxTokens; i++) {
+    footerTokens.push({ full: i >= totalUsed, slot: i })
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.proposals}>
@@ -139,9 +145,19 @@ export default function PollVoting({
       </div>
 
       <div style={styles.footer}>
-        <span style={styles.footerText}>
-          {totalUsed} of {maxTokens} votes placed
-        </span>
+        <div style={styles.tokenBar}>
+          {footerTokens.map((t) => (
+            <span
+              key={`f-${t.slot}`}
+              style={t.full ? styles.tokenBarFull : styles.tokenBarEmpty}
+            >
+              🍺
+            </span>
+          ))}
+          <span style={styles.footerText}>
+            {remaining} of {maxTokens} votes remaining
+          </span>
+        </div>
         <button
           type="button"
           data-testid="save-vote-btn"
@@ -183,6 +199,8 @@ function ProposalRow({
 
   if (!proposal) return null
 
+  const flagUrl = proposal.country && getCountryFlagUrl(proposal.country)
+
   function handleMouseEnter(e: React.MouseEvent) {
     const x = e.clientX
     const y = e.clientY
@@ -209,6 +227,11 @@ function ProposalRow({
     setShowPopup(false)
   }
 
+  const tokens = []
+  for (let i = 0; i < count; i++) {
+    tokens.push(i)
+  }
+
   return (
     <div style={styles.proposalCard}>
       <div style={styles.infoButtonWrap}>
@@ -222,7 +245,17 @@ function ProposalRow({
         >
           ⓘ
         </button>
+        {flagUrl && (
+          <img src={flagUrl} alt={proposal.country} style={styles.flag} />
+        )}
         <span style={styles.proposalName}>{name}</span>
+      </div>
+      <div style={styles.tokenRow} data-testid={`count-${proposal.id}`}>
+        {tokens.map((i) => (
+          <span key={`p-${i}`} style={styles.tokenFilled}>
+            🍺
+          </span>
+        ))}
       </div>
       <div style={styles.stepper}>
         <button
@@ -238,7 +271,7 @@ function ProposalRow({
           −
         </button>
         <span
-          data-testid={`count-${proposal.id}`}
+          data-testid={`count-text-${proposal.id}`}
           style={count > 0 ? styles.count : styles.countZero}
         >
           {count}
@@ -323,13 +356,29 @@ const styles = {
     background: colors.bgCard,
     border: borders.card,
     borderRadius: '10px',
-    display: 'flex',
-    justifyContent: 'space-between',
+    display: 'grid',
+    gridTemplateColumns: 'auto 1fr auto',
     alignItems: 'center',
+    gap: '8px',
     boxShadow: '0 2px 12px var(--color-shadow)',
   },
-  proposalName: { fontSize: fontSizes.base, color: colors.textData },
-  infoButtonWrap: { display: 'flex', alignItems: 'center', gap: '4px' },
+  proposalName: {
+    fontSize: fontSizes.base,
+    color: colors.textData,
+    whiteSpace: 'nowrap' as const,
+  },
+  flag: {
+    display: 'inline-block',
+    width: '18px',
+    height: '13px',
+    objectFit: 'contain' as const,
+    verticalAlign: 'middle',
+  },
+  infoButtonWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  },
   infoButton: {
     background: 'none',
     border: 'none',
@@ -339,6 +388,16 @@ const styles = {
     padding: '4px',
     opacity: 0.6,
     transition: 'opacity 0.15s',
+  },
+  tokenRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '2px',
+  },
+  tokenFilled: {
+    fontSize: fontSizes.base,
+    lineHeight: '1',
   },
   stepper: { display: 'flex', alignItems: 'center', gap: '10px' },
   stepperButton: {
@@ -381,7 +440,27 @@ const styles = {
     paddingTop: '14px',
     borderTop: borders.subtle,
   },
-  footerText: { fontSize: fontSizes.sm, color: colors.textSecondary },
+  tokenBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '3px',
+    flexWrap: 'wrap' as const,
+  },
+  tokenBarFull: {
+    fontSize: fontSizes.md,
+    lineHeight: '1',
+  },
+  tokenBarEmpty: {
+    fontSize: fontSizes.md,
+    lineHeight: '1',
+    opacity: 0.5,
+    filter: 'grayscale(0.5)',
+  },
+  footerText: {
+    fontSize: fontSizes.sm,
+    color: colors.textSecondary,
+    marginLeft: '8px',
+  },
   saveButton: {
     padding: '7px 20px',
     borderRadius: '6px',

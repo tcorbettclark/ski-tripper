@@ -143,17 +143,17 @@ describe('PollVoting', () => {
 
   it('initialises all counts to 0 with no myVote', () => {
     renderPollVoting()
-    expect(screen.getByTestId('count-p-1').textContent).toBe('0')
-    expect(screen.getByTestId('count-p-2').textContent).toBe('0')
-    expect(screen.getByTestId('count-p-3').textContent).toBe('0')
+    expect(screen.getByTestId('count-text-p-1').textContent).toBe('0')
+    expect(screen.getByTestId('count-text-p-2').textContent).toBe('0')
+    expect(screen.getByTestId('count-text-p-3').textContent).toBe('0')
   })
 
   it('initialises from myVote', () => {
     const myVote = { proposalIds: ['p-1', 'p-3'], tokenCounts: [2, 1] }
     renderPollVoting({ myVote })
-    expect(screen.getByTestId('count-p-1').textContent).toBe('2')
-    expect(screen.getByTestId('count-p-2').textContent).toBe('0')
-    expect(screen.getByTestId('count-p-3').textContent).toBe('1')
+    expect(screen.getByTestId('count-text-p-1').textContent).toBe('2')
+    expect(screen.getByTestId('count-text-p-2').textContent).toBe('0')
+    expect(screen.getByTestId('count-text-p-3').textContent).toBe('1')
   })
 
   it('+ increments count', async () => {
@@ -162,7 +162,7 @@ describe('PollVoting', () => {
     await user.click(
       screen.getByRole('button', { name: /add vote to Chamonix/i })
     )
-    expect(screen.getByTestId('count-p-1').textContent).toBe('1')
+    expect(screen.getByTestId('count-text-p-1').textContent).toBe('1')
   })
 
   it('− decrements count', async () => {
@@ -172,7 +172,7 @@ describe('PollVoting', () => {
     await user.click(
       screen.getByRole('button', { name: /remove vote from Chamonix/i })
     )
-    expect(screen.getByTestId('count-p-1').textContent).toBe('0')
+    expect(screen.getByTestId('count-text-p-1').textContent).toBe('0')
   })
 
   it('+ disabled when no tokens remaining', async () => {
@@ -450,9 +450,9 @@ describe('PollVoting', () => {
       tokenCounts: [2, 1],
     }
     rerender(<PollVoting {...defaultProps} myVote={myVote} />)
-    expect(screen.getByTestId('count-p-1').textContent).toBe('2')
-    expect(screen.getByTestId('count-p-2').textContent).toBe('0')
-    expect(screen.getByTestId('count-p-3').textContent).toBe('1')
+    expect(screen.getByTestId('count-text-p-1').textContent).toBe('2')
+    expect(screen.getByTestId('count-text-p-2').textContent).toBe('0')
+    expect(screen.getByTestId('count-text-p-3').textContent).toBe('1')
     expect(
       (screen.getByRole('button', { name: /save vote/i }) as HTMLButtonElement)
         .disabled
