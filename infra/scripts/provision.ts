@@ -84,7 +84,7 @@ function decryptEnvVars(): Record<string, string> {
 
   try {
     const output = execSync(
-      `${dotenvxCmd} run -f .env.common -f .env.prod -- env`,
+      `${dotenvxCmd} run --overload -f .env.common -f .env.prod -- env`,
       { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 30000 }
     )
     const env: Record<string, string> = {}
@@ -95,8 +95,6 @@ function decryptEnvVars(): Record<string, string> {
       const val = line.slice(eq + 1)
       env[key] = val
     }
-    console.log('  PUBLIC_DOMAIN from dotenvx:', env.PUBLIC_DOMAIN)
-    console.log('  POCKETBASE_HOSTNAME from dotenvx:', env.POCKETBASE_HOSTNAME)
     success(`Decrypted ${Object.keys(env).length} environment variables`)
     return env
   } catch (err) {
@@ -512,7 +510,6 @@ async function deploy() {
     if (!env[k]) fail(`Missing required env var for build: ${k}`)
     buildEnv[k] = env[k]
   }
-  console.log('  Build env:', JSON.stringify(buildEnv))
   await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`.env(buildEnv)
   const caddyDomains =
     await app`grep -E '^[a-z]' ${REPO_DIR}/dist/Caddyfile`.text()
