@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
@@ -13,6 +14,8 @@ function getDefaultPrivateKey(): string | undefined {
 }
 
 const SSH_KEY = getDefaultPrivateKey()
+
+const PROJECT_ROOT = resolve(import.meta.dir, '../..')
 
 configure({ timeout: 600000 })
 
@@ -36,7 +39,6 @@ const CADDY_VERSION = '2.11.4'
 const REPO_DIR = '/home/ski-tripper/ski-tripper'
 const INSTALL_DIR = '/opt/ski-tripper'
 const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
-const ENV_PRODUCTION_PATH = resolve(import.meta.dir, '../../.env.production')
 
 function step(msg: string) {
   console.log(`\n▸ ${msg}`)
@@ -50,7 +52,7 @@ function warn(msg: string) {
   console.log(`  ⚠ ${msg}`)
 }
 
-function fail(msg: string) {
+function fail(msg: string): never {
   console.error(`  ✗ ${msg}`)
   process.exit(1)
 }
@@ -64,10 +66,40 @@ async function requireDoctl() {
   }
 }
 
-function requireEnvProduction() {
-  if (!existsSync(ENV_PRODUCTION_PATH)) {
+function decryptEnvVars(): Record<string, string> {
+  const envFiles = [
+    resolve(PROJECT_ROOT, '.env.common'),
+    resolve(PROJECT_ROOT, '.env.prod'),
+  ]
+  for (const f of envFiles) {
+    if (!existsSync(f)) {
+      fail(
+        `Env file not found: ${f}\n  Ensure .env.common and .env.prod exist and are committed.`
+      )
+    }
+  }
+
+  step('Decrypting production environment variables')
+  const dotenvxCmd = resolve(PROJECT_ROOT, 'node_modules', '.bin', 'dotenvx')
+
+  try {
+    const output = execSync(
+      `${dotenvxCmd} run -f .env.common -f .env.prod -- env`,
+      { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 30000 }
+    )
+    const env: Record<string, string> = {}
+    for (const line of output.split('\n')) {
+      const eq = line.indexOf('=')
+      if (eq === -1) continue
+      const key = line.slice(0, eq)
+      const val = line.slice(eq + 1)
+      env[key] = val
+    }
+    success(`Decrypted ${Object.keys(env).length} environment variables`)
+    return env
+  } catch (err) {
     fail(
-      `.env.production not found at ${ENV_PRODUCTION_PATH}\n  Copy .env.example to .env.production and fill in production values.`
+      `Failed to decrypt environment variables: ${err}\n  Ensure DOTENV_PRIVATE_KEY_PROD is set in .env.keys`
     )
   }
 }
@@ -412,7 +444,6 @@ User=ski-tripper
 Group=ski-tripper
 ExecStart=/opt/ski-tripper/server/serve
 WorkingDirectory=/opt/ski-tripper
-EnvironmentFile=/opt/ski-tripper/.env
 StateDirectory=ski-tripper
 Restart=on-failure
 RestartSec=5s
@@ -431,7 +462,7 @@ EOF"`
 }
 
 async function deploy() {
-  requireEnvProduction()
+  const env = decryptEnvVars()
   const branchOrTag = process.argv[3] || 'main'
   const ip = await getDropletIp()
   step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
@@ -449,10 +480,6 @@ async function deploy() {
     privateKey: SSH_KEY,
   }).timeout(300000)
 
-  step('Uploading .env.production')
-  await app.uploadFile(ENV_PRODUCTION_PATH, `${INSTALL_DIR}/.env`)
-  success('.env.production uploaded')
-
   step('Fetching and checking out latest code')
   await app`cd ${REPO_DIR} && git fetch --all`
   const isTag = await app`cd ${REPO_DIR} && git tag -l ${branchOrTag}`.text()
@@ -469,7 +496,14 @@ async function deploy() {
   success('Dependencies installed')
 
   step('Building application')
-  await app`${REPO_DIR}/infra/scripts/env-run.sh ${INSTALL_DIR}/.env 'cd ${REPO_DIR} && /usr/local/bin/bun run build'`
+  const buildEnvVars = [
+    'PUBLIC_DOMAIN',
+    'PUBLIC_POCKETBASE_DOMAIN',
+    'STATIC_ROOT',
+  ]
+    .map((k) => `${k}=${env[k]}`)
+    .join(' ')
+  await app`cd ${REPO_DIR} && ${buildEnvVars} /usr/local/bin/bun run build`
   success('Build complete')
 
   step('Stopping services')
@@ -495,8 +529,25 @@ async function deploy() {
   success('Caddyfile copied')
 
   step('Creating PocketBase superuser')
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun run infra/scripts/configure-pocketbase.ts --env-file ${INSTALL_DIR}/.env --create-superuser-only`
+  const adminEmail = env.POCKETBASE_ADMIN_EMAIL
+  const adminPassword = env.POCKETBASE_ADMIN_PASSWORD
+  const pbDataDir = env.POCKETBASE_DATA_DIR || '/var/lib/ski-tripper/pb_data'
+  await root`/usr/local/bin/pocketbase --dir ${pbDataDir} superuser upsert ${adminEmail} ${adminPassword}`
   success('PocketBase superuser ready')
+
+  step('Writing systemd environment override')
+  const overrideDir = '/etc/systemd/system/ski-tripper-api.service.d'
+  await root`mkdir -p ${overrideDir}`
+  const overrideLines = ['[Service]']
+  for (const [key, value] of Object.entries(env)) {
+    overrideLines.push(`Environment="${key}=${value}"`)
+  }
+  const overrideContent = overrideLines.join('\n')
+  await root`bash -c "cat > ${overrideDir}/override.conf << 'OVERRIDEOF'
+${overrideContent}
+OVERRIDEOF"`
+  await root`systemctl daemon-reload`
+  success('Systemd override written')
 
   step('Restarting services')
   await root`systemctl restart ski-tripper-pb`
@@ -505,11 +556,19 @@ async function deploy() {
   success('Services restarted')
 
   step('Configuring PocketBase settings')
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun run infra/scripts/configure-pocketbase.ts --env-file ${INSTALL_DIR}/.env`
+  execSync('bun run env:prod bun run infra/scripts/configure-pocketbase.ts', {
+    cwd: PROJECT_ROOT,
+    stdio: 'inherit',
+    timeout: 120000,
+  })
   success('PocketBase settings configured')
 
   step('Uploading resort data')
-  await app`${REPO_DIR}/infra/scripts/env-run.sh ${INSTALL_DIR}/.env 'cd ${REPO_DIR} && /usr/local/bin/bun run tools/resorts.ts upload'`
+  execSync('bun run env:prod bun run tools/resorts.ts upload', {
+    cwd: PROJECT_ROOT,
+    stdio: 'inherit',
+    timeout: 300000,
+  })
   success('Resort data uploaded')
 
   await status()
@@ -565,13 +624,16 @@ async function status() {
   console.log(`\n  Layout:`)
   console.log(`    Repo:           /home/ski-tripper/ski-tripper/`)
   console.log(
-    `    Installed app:  /opt/ski-tripper/  (static/, server/serve, pb_migrations/, .env)`
+    `    Installed app:  /opt/ski-tripper/  (static/, server/serve, pb_migrations/)`
   )
   console.log(`    App data:       /var/lib/ski-tripper/pb_data/`)
   console.log(`    Caddyfile:      /etc/caddy/Caddyfile`)
   console.log(`    Binaries:       /usr/local/bin/{bun,caddy,pocketbase}`)
   console.log(
     `    Systemd:        /etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service`
+  )
+  console.log(
+    `    Env override:   /etc/systemd/system/ski-tripper-api.service.d/override.conf`
   )
   console.log(`\n  Useful logs (SSH with: doctl compute ssh ski-tripper):`)
   console.log(`    Caddy:       journalctl -u caddy`)
@@ -638,7 +700,9 @@ Requirements:
   doctl           Required for create/destroy. Install: https://docs.digitalocean.com/reference/doctl/
                   Authenticate with: doctl auth init (stores DO API token)
   SSH access      Required for configure/deploy. The droplet is created with your DO SSH keys.
-  .env.production Required for deploy. Copy .env.example to .env.production and fill in secrets.
+  .env.common     Required for deploy. Contains shared env vars.
+  .env.prod       Required for deploy. Contains production env vars (secrets encrypted).
+  .env.keys       Required for deploy. Contains private keys to decrypt .env.prod.
   bun             Required to run this script.
 
 Examples:

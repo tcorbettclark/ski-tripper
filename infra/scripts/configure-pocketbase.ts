@@ -1,4 +1,3 @@
-import { spawnSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import JSON5 from 'json5'
@@ -11,26 +10,16 @@ const EMAIL_TEMPLATES_FILE = resolve(
   'infra/pocketbase/email-templates.json5'
 )
 
-function parseArgs(): { envFile: string; createSuperuserOnly: boolean } {
-  const args = process.argv.slice(2)
-  const envFileIdx = args.indexOf('--env-file')
-  if (envFileIdx === -1 || envFileIdx === args.length - 1) {
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
     console.error(
-      `${RED}${BOLD}Usage:${RESET} bun run pocketbase:config --env-file <path> [--create-superuser-only]`
-    )
-    console.error(
-      `${RED}${BOLD}Error:${RESET} --env-file is required (e.g. --env-file .env or --env-file /opt/ski-tripper/.env)`
+      `${RED}${BOLD}Error:${RESET} Required env var ${name} is not set`
     )
     process.exit(1)
   }
-  return {
-    envFile: resolve(args[envFileIdx + 1]),
-    createSuperuserOnly: args.includes('--create-superuser-only'),
-  }
+  return value
 }
-
-const { envFile: ENV_FILE, createSuperuserOnly: CREATE_SUPERUSER_ONLY } =
-  parseArgs()
 
 const BOLD = '\x1b[1m'
 const GREEN = '\x1b[32m'
@@ -58,22 +47,6 @@ const SENSITIVE_KEYS = new Set([
   's3.secret',
   'backups.s3.secret',
 ])
-
-function loadEnv(): Record<string, string> {
-  if (!existsSync(ENV_FILE)) return {}
-  const content = readFileSync(ENV_FILE, 'utf-8')
-  const env: Record<string, string> = {}
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const eq = trimmed.indexOf('=')
-    if (eq === -1) continue
-    const key = trimmed.slice(0, eq).trim()
-    const val = trimmed.slice(eq + 1).trim()
-    env[key] = val
-  }
-  return env
-}
 
 function setNestedValue(
   obj: Record<string, unknown>,
@@ -131,7 +104,7 @@ function interpolateSettings(
     for (const v of missing) {
       console.error(`  ${YELLOW}${v}${RESET}`)
     }
-    console.error(`\nSet them in ${ENV_FILE} and try again.`)
+    console.error('\nSet them and try again.')
     process.exit(1)
   }
 
@@ -171,8 +144,6 @@ function deepDiff(
     } else if (JSON.stringify(desiredVal) !== JSON.stringify(currentVal)) {
       changes[fullPath] = { old: currentVal, new: desiredVal }
     } else if (SENSITIVE_KEYS.has(fullPath) && currentVal === undefined) {
-      // PocketBase masks secret fields in GET responses (returns undefined).
-      // Always include them in the patch since we can't tell if they match.
       changes[fullPath] = { old: currentVal, new: desiredVal }
     }
   }
@@ -220,64 +191,10 @@ async function waitForPocketBase(
   process.exit(1)
 }
 
-function createSuperuser(env: Record<string, string>): void {
-  const dataDir = env.POCKETBASE_DATA_DIR || 'dev/pb_data'
-  const adminEmail = env.POCKETBASE_ADMIN_EMAIL
-  const adminPassword = env.POCKETBASE_ADMIN_PASSWORD
-
-  if (!adminEmail || !adminPassword) {
-    console.error(
-      `${RED}${BOLD}Error:${RESET} POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD must be set`
-    )
-    process.exit(1)
-  }
-
-  console.log(
-    `Upserting PocketBase superuser (data dir: ${dataDir}, email: ${adminEmail})...`
-  )
-
-  const result = spawnSync('pocketbase', [
-    '--dir',
-    dataDir,
-    'superuser',
-    'upsert',
-    adminEmail,
-    adminPassword,
-  ])
-
-  const stdout = (result.stdout || '').toString().trim()
-  const stderr = (result.stderr || '').toString().trim()
-  const output = [stdout, stderr].filter(Boolean).join('\n')
-
-  if (
-    output.includes('created') ||
-    output.includes('updated') ||
-    output.includes('already exists') ||
-    output.includes('must be unique')
-  ) {
-    console.log(`${GREEN}PocketBase superuser ready${RESET}`)
-  } else {
-    console.error(
-      `${YELLOW}${BOLD}Warning:${RESET} PocketBase superuser upsert returned: ${output || '(no output)'}`
-    )
-    console.error(
-      `${YELLOW}You may need to create the superuser manually via the PocketBase admin UI.${RESET}`
-    )
-  }
-}
-
 async function main() {
-  const env: Record<string, string> = {
-    ...(Object.fromEntries(
-      Object.entries(process.env).filter(([, v]) => v !== undefined)
-    ) as Record<string, string>),
-    ...loadEnv(),
-  }
-
-  if (CREATE_SUPERUSER_ONLY) {
-    createSuperuser(env)
-    return
-  }
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([, v]) => v !== undefined)
+  ) as Record<string, string>
 
   if (!existsSync(SETTINGS_FILE)) {
     console.error(`${RED}${BOLD}Error:${RESET} ${SETTINGS_FILE} not found`)
@@ -289,9 +206,7 @@ async function main() {
   ) as Record<string, unknown>
   const desiredSettings = interpolateSettings(rawSettings, env)
 
-  const hostname = env.POCKETBASE_HOSTNAME || '127.0.0.1'
-  const port = env.POCKETBASE_PORT || '8090'
-  const pbUrl = `http://${hostname}:${port}`
+  const pbUrl = requireEnv('POCKETBASE_EXTERNAL_URL')
 
   console.log(`Connecting to PocketBase at ${pbUrl}`)
   await waitForPocketBase(pbUrl)
@@ -302,8 +217,8 @@ async function main() {
     await pb
       .collection('_superusers')
       .authWithPassword(
-        env.POCKETBASE_ADMIN_EMAIL!,
-        env.POCKETBASE_ADMIN_PASSWORD!
+        requireEnv('POCKETBASE_ADMIN_EMAIL'),
+        requireEnv('POCKETBASE_ADMIN_PASSWORD')
       )
   } catch (err) {
     console.error(`${RED}${BOLD}Error:${RESET} Authentication failed: ${err}`)
@@ -342,7 +257,6 @@ async function main() {
     `\n${GREEN}${BOLD}Done${RESET} — ${changeCount} setting(s) updated successfully`
   )
 
-  // Apply email templates
   if (existsSync(EMAIL_TEMPLATES_FILE)) {
     await applyEmailTemplates(pb)
   } else {

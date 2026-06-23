@@ -1,11 +1,9 @@
- .DS_Store
+.DS_Store
 /e2e/test-results/
 /e2e/playwright-report/
 .*.bun-build
 .env
-.env.*.local
-.env.local
-.env.production
+.env.keys
 node_modules/
 dist/
 dev/

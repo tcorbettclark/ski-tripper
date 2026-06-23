@@ -88,6 +88,49 @@ Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some c
 | Sync main back to all worktrees                 | `wts`            | `wt sync-all-from-main`              |
 | Push main (commits + annotated tags) to origin  | `wtp`            | `git push --follow-tags origin main` |
 
+### Environment variables
+
+Environment variables are managed with [dotenvx](https://dotenvx.com/), which provides public-key encryption for secrets committed to the repository.
+
+Three env files are committed:
+
+| File            | Purpose                                               | Encrypted keys                                                    |
+| --------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
+| `.env.common`   | Keys identical in dev and prod (no secrets)           | None                                                              |
+| `.env.dev`      | Dev-specific values and secrets                       | `POCKETBASE_ADMIN_PASSWORD`, `EXA_API_KEY`, `OLLAMA_API_KEY`     |
+| `.env.prod`     | Prod-specific values and secrets                      | `POCKETBASE_ADMIN_PASSWORD`, `POCKETBASE_SMTP_PASSWORD`, `EXA_API_KEY`, `OLLAMA_API_KEY` |
+
+The `.env.keys` file (gitignored) holds the private decryption keys. Share it securely with teammates — without it, encrypted values cannot be decrypted.
+
+**Useful scripts:**
+
+| Command                    | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `bun run env:encrypt`      | Encrypt the secret keys in `.env.dev` and `.env.prod` |
+| `bun run env:dev <cmd>`    | Run any command with dev env vars loaded            |
+| `bun run env:prod <cmd>`   | Run any command with prod env vars loaded           |
+
+Examples:
+
+```bash
+# Run PocketBase locally with dev env
+bun run env:dev pocketbase serve --http 127.0.0.1:8090
+
+# Configure PocketBase against production
+bun run env:prod bun run infra/scripts/configure-pocketbase.ts
+
+# Upload resort data to production
+bun run env:prod bun run tools/resorts.ts upload
+```
+
+After changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt:
+
+```bash
+bun run env:encrypt
+```
+
+After cloning the repo, copy `.env.keys` from a teammate and run `bun install` — no manual `.env` file creation needed.
+
 Testing is done with unit testing, and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
 
 Versioning follows [Semantic Versioning](https://semver.org/), best managed with `bun pm version patch|minor|major` to clock the version in the source and create an annotated tag. The `wtp` alias then pushes commits and tags to GitHub ready for provisioning.
@@ -122,7 +165,7 @@ Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec
 | Path                                                                 | Description                                                         |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | `/home/ski-tripper/ski-tripper/`                                     | Git repository                                                      |
-| `/opt/ski-tripper/`                                                  | Installed app (`static/`, `server/serve`, `pb_migrations/`, `.env`) |
+| `/opt/ski-tripper/`                                                  | Installed app (`static/`, `server/serve`, `pb_migrations/`)         |
 | `/var/lib/ski-tripper/pb_data/`                                      | PocketBase data                                                     |
 | `/etc/caddy/Caddyfile`                                               | Caddy configuration                                                 |
 | `/usr/local/bin/{bun,caddy,pocketbase}`                              | Binaries                                                            |

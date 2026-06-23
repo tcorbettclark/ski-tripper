@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'bun:test'
 import {
   browser_get_api_url,
   browser_get_pocketbase_url,
+  server_get_pocketbase_external_url,
   server_get_pocketbase_hostname,
   server_get_pocketbase_port,
   server_get_server_port,
@@ -69,6 +70,23 @@ describe('browser_get_pocketbase_url', () => {
   it('throws for missing env var', () => {
     expect(() => browser_get_pocketbase_url()).toThrow(
       'Missing required env var PUBLIC_POCKETBASE_DOMAIN'
+    )
+  })
+})
+
+describe('server_get_pocketbase_external_url', () => {
+  beforeEach(() => {
+    delete process.env.POCKETBASE_EXTERNAL_URL
+  })
+
+  it('returns URL when set', () => {
+    process.env.POCKETBASE_EXTERNAL_URL = 'https://pb.example.com'
+    expect(server_get_pocketbase_external_url()).toBe('https://pb.example.com')
+  })
+
+  it('throws for missing env var', () => {
+    expect(() => server_get_pocketbase_external_url()).toThrow(
+      'Required env var not set: POCKETBASE_EXTERNAL_URL'
     )
   })
 })

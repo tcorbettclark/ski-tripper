@@ -30,8 +30,8 @@ export function server_get_pocketbase_admin_password(): string {
   return serverRequire('POCKETBASE_ADMIN_PASSWORD')
 }
 
-export function server_get_public_pocketbase_url(): string {
-  return `https://${serverRequire('PUBLIC_POCKETBASE_DOMAIN')}`
+export function server_get_pocketbase_external_url(): string {
+  return serverRequire('POCKETBASE_EXTERNAL_URL')
 }
 
 export function browser_get_api_url(endpoint: string): string {
