@@ -496,14 +496,21 @@ async function deploy() {
   success('Dependencies installed')
 
   step('Building application')
-  const buildEnvVars = [
+  const buildEnvKeys = [
     'PUBLIC_DOMAIN',
     'PUBLIC_POCKETBASE_DOMAIN',
     'STATIC_ROOT',
+    'SERVER_HOSTNAME',
+    'SERVER_PORT',
+    'POCKETBASE_HOSTNAME',
+    'POCKETBASE_PORT',
   ]
-    .map((k) => `${k}=${env[k]}`)
-    .join(' ')
-  await app`cd ${REPO_DIR} && ${buildEnvVars} /usr/local/bin/bun run build`
+  const buildEnv: Record<string, string> = {}
+  for (const k of buildEnvKeys) {
+    if (!env[k]) fail(`Missing required env var for build: ${k}`)
+    buildEnv[k] = env[k]
+  }
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`.env(buildEnv)
   success('Build complete')
 
   step('Stopping services')
@@ -554,6 +561,22 @@ OVERRIDEOF"`
   await root`systemctl restart ski-tripper-api`
   await root`systemctl restart caddy`.nothrow()
   success('Services restarted')
+
+  step('Waiting for PocketBase to become healthy')
+  const pbExtUrl = env.POCKETBASE_EXTERNAL_URL
+  for (let i = 0; i < 60; i++) {
+    try {
+      const res = await fetch(`${pbExtUrl}/api/health`)
+      if (res.ok) {
+        success('PocketBase is healthy')
+        break
+      }
+    } catch {
+      // not ready yet
+    }
+    if (i === 59) fail('PocketBase did not become healthy after 60 attempts')
+    await new Promise((r) => setTimeout(r, 2000))
+  }
 
   step('Configuring PocketBase settings')
   execSync(
