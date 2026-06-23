@@ -4,16 +4,14 @@
 
 ## What is this?
 
-Ski Tripper helps groups of friends agree on the perfect ski holiday without the endless WhatsApp debate.
+Ski Tripper helps groups of friends find and agree on the perfect ski holiday without the "entertaining" chaos of a WhatsApp debate. Unlike many other booking sites, Ski Tripper starts with what really matters: the mountain.
 
-Instead of getting bogged down in flight times and hotel rooms on day one, Ski Tripper focuses on what actually matters: the mountain.
+- The "Trip" is your group's shared folder (e.g., "Ski Trip 2027"). It's the placeholder where everyone gathers ideas and votes.
+- Everyone declares what they like (e.g., short airport transfers, high altitude, great apres, off-piste). The AI-powered catalog is searchable against your group's profile.
+- Anyone can pitch ideas by generating a "Proposal" inside the Trip. You pick a highly-rated resort, add dates that work around mountain events, and drop in a few accommodation choices so friends can split between hotels or cheaper apartments.
+- Once a selection of promising options are locked in, the group votes in rounds until a winner is declared.
 
-- The "Trip" is your master plan: Think of a Trip as your group's shared folder (e.g., "Ski Trip 2027"). It’s the placeholder where everyone gathers ideas and votes.
-- Data-driven matchmaking: Everyone declares what they like (e.g., short airport transfers, high altitude, heavy on blues, off-piste). The AI-powered catalog automatically scores resorts against your group's profile.
-- "Proposals" are the pitches: Anyone can build a concrete option (a "Proposal") inside the Trip. You pick a highly-rated resort, add dates that work around mountain events, and drop in a few accommodation choices so friends can split between hotels or cheaper apartments.
-- Structured voting: Once the options are locked in, the group votes in rounds until you systematically narrow it down to a winner.
-
-Why do it this way? Standard booking sites break down a bit if friends fly from different airports, have different budgets, go from different durations, etc. Ski Tripper lets you use sites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) to scout lodging, but brings that data here to align your group's preferences and actually force a decision.
+Why do it this way? Standard booking sites break down a bit when friends fly from different airports, have different budgets, go from different durations, or are simply trying to find and compare the sking experience and mountain facilities. Sites like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) should still be used to scout for lodgings.
 
 ## How does it work?
 
