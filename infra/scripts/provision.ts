@@ -505,16 +505,13 @@ async function deploy() {
     'POCKETBASE_HOSTNAME',
     'POCKETBASE_PORT',
   ]
-  const buildEnvLines: string[] = []
+  const buildEnv: Record<string, string> = {}
   for (const k of buildEnvKeys) {
     if (!env[k]) fail(`Missing required env var for build: ${k}`)
-    buildEnvLines.push(`export ${k}=${env[k]}`)
+    buildEnv[k] = env[k]
   }
-  const buildEnvScript = buildEnvLines.join('\n')
-  await app`cat > ${REPO_DIR}/.buildenv << 'ENVEOF'
-${buildEnvScript}
-ENVEOF`
-  await app`source ${REPO_DIR}/.buildenv && cd ${REPO_DIR} && /usr/local/bin/bun run build`
+  console.log('  Build env:', JSON.stringify(buildEnv))
+  await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`.env(buildEnv)
   const caddyDomains =
     await app`grep -E '^[a-z]' ${REPO_DIR}/dist/Caddyfile`.text()
   if (caddyDomains.includes('localhost')) {
@@ -522,7 +519,6 @@ ENVEOF`
       `Caddyfile contains localhost domains (build env vars not applied?):\n${caddyDomains}`
     )
   }
-  await app`rm -f ${REPO_DIR}/.buildenv`
   success('Build complete')
 
   step('Stopping services')
