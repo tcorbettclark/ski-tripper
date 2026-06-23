@@ -192,6 +192,15 @@ async function waitForPocketBase(
 }
 
 async function main() {
+  const args = process.argv.slice(2)
+  const useExternal = args.includes('--external')
+  if (useExternal && args.includes('--internal')) {
+    console.error(
+      `${RED}${BOLD}Error:${RESET} --internal and --external are mutually exclusive`
+    )
+    process.exit(1)
+  }
+
   const env = Object.fromEntries(
     Object.entries(process.env).filter(([, v]) => v !== undefined)
   ) as Record<string, string>
@@ -206,9 +215,13 @@ async function main() {
   ) as Record<string, unknown>
   const desiredSettings = interpolateSettings(rawSettings, env)
 
-  const pbUrl = requireEnv('POCKETBASE_EXTERNAL_URL')
+  const pbUrl = useExternal
+    ? requireEnv('POCKETBASE_EXTERNAL_URL')
+    : `http://${requireEnv('POCKETBASE_HOSTNAME')}:${requireEnv('POCKETBASE_PORT')}`
 
-  console.log(`Connecting to PocketBase at ${pbUrl}`)
+  console.log(
+    `Connecting to PocketBase at ${pbUrl} (${useExternal ? 'external' : 'internal'})`
+  )
   await waitForPocketBase(pbUrl)
 
   console.log('Authenticating as superuser...')

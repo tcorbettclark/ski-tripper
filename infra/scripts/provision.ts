@@ -556,11 +556,14 @@ OVERRIDEOF"`
   success('Services restarted')
 
   step('Configuring PocketBase settings')
-  execSync('bun run env:prod bun run infra/scripts/configure-pocketbase.ts', {
-    cwd: PROJECT_ROOT,
-    stdio: 'inherit',
-    timeout: 120000,
-  })
+  execSync(
+    'bun run env:prod bun run infra/scripts/configure-pocketbase.ts --external',
+    {
+      cwd: PROJECT_ROOT,
+      stdio: 'inherit',
+      timeout: 120000,
+    }
+  )
   success('PocketBase settings configured')
 
   step('Uploading resort data')
