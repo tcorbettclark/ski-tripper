@@ -125,6 +125,8 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
     getIsModelFailed: () => false,
     onModelReady: (cb: () => void) => cb(),
     searchResorts: mockSearchResorts,
+    searchDebounceMs: 0,
+    sliderDebounceMs: 0,
     ...overrides,
   }
 }

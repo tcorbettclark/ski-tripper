@@ -22,6 +22,7 @@ import {
 import { trophyGrade } from './resortSearchPure'
 import TagCloud from './TagCloud'
 import { borders, colors, fontSizes, fonts, mix } from './theme'
+import { useDebouncedValue } from './useDebouncedValue'
 import { formatTransferTime } from './utils'
 
 interface ResortsProps {
@@ -38,6 +39,8 @@ interface ResortsProps {
     query: string,
     resorts: ResortWithEmbedding[]
   ) => Promise<ScoredResort[]>
+  searchDebounceMs?: number
+  sliderDebounceMs?: number
 }
 
 const NOOP_AUTH_ERROR = () => {}
@@ -59,6 +62,8 @@ export default function Resorts({
   getIsModelFailed: isModelFailed = _defaultGetIsModelFailed,
   onModelReady: onModelReadyCb = _defaultOnModelReady,
   searchResorts: searchResortsFn = _defaultSearchResorts,
+  searchDebounceMs = 300,
+  sliderDebounceMs = 150,
 }: ResortsProps) {
   initSearch()
   const [searchQuery, setSearchQuery] = useState('')
@@ -75,6 +80,21 @@ export default function Resorts({
   const [modelFailed, setModelFailed] = useState(isModelFailed())
   const [searchResults, setSearchResults] = useState<ScoredResort[] | null>(
     null
+  )
+
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, searchDebounceMs)
+  const debouncedMinPisteKm = useDebouncedValue(minPisteKm, sliderDebounceMs)
+  const debouncedMinPeakAltitude = useDebouncedValue(
+    minPeakAltitude,
+    sliderDebounceMs
+  )
+  const debouncedMinBaseAltitude = useDebouncedValue(
+    minBaseAltitude,
+    sliderDebounceMs
+  )
+  const debouncedMaxTransferTime = useDebouncedValue(
+    maxTransferTime,
+    sliderDebounceMs
   )
 
   useEffect(() => {
@@ -104,7 +124,7 @@ export default function Resorts({
   const [showPreferenceSearch, setShowPreferenceSearch] = useState(false)
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
+    if (!debouncedSearchQuery.trim()) {
       setSearchResults(null)
       return
     }
@@ -112,14 +132,14 @@ export default function Resorts({
       setSearchResults(null)
       return
     }
-    searchResortsFn(searchQuery, resorts)
+    searchResortsFn(debouncedSearchQuery, resorts)
       .then((results) => {
         setSearchResults(results)
       })
       .catch(() => {
         setSearchResults(null)
       })
-  }, [searchQuery, modelReady, resorts, searchResortsFn])
+  }, [debouncedSearchQuery, modelReady, resorts, searchResortsFn])
 
   const toggleCountry = useCallback((country: string) => {
     setCountryFilter((prev) => {
@@ -178,25 +198,28 @@ export default function Resorts({
       result = result.filter((r) => regionFilter.has(r.region))
     }
 
-    if (minPisteKm > 0) {
-      result = result.filter((r) => r.pisteKm >= minPisteKm)
+    if (debouncedMinPisteKm > 0) {
+      result = result.filter((r) => r.pisteKm >= debouncedMinPisteKm)
     }
 
-    if (minPeakAltitude > 0) {
-      result = result.filter((r) => r.summitAltitude >= minPeakAltitude)
+    if (debouncedMinPeakAltitude > 0) {
+      result = result.filter(
+        (r) => r.summitAltitude >= debouncedMinPeakAltitude
+      )
     }
 
-    if (minBaseAltitude > 0) {
-      result = result.filter((r) => r.baseAltitude >= minBaseAltitude)
+    if (debouncedMinBaseAltitude > 0) {
+      result = result.filter((r) => r.baseAltitude >= debouncedMinBaseAltitude)
     }
 
     if (
-      maxTransferTime >= 0 &&
+      debouncedMaxTransferTime >= 0 &&
       maxTransferTimeFromData > 0 &&
-      maxTransferTime < maxTransferTimeFromData
+      debouncedMaxTransferTime < maxTransferTimeFromData
     ) {
       result = result.filter(
-        (r) => r.transferTime != null && r.transferTime <= maxTransferTime
+        (r) =>
+          r.transferTime != null && r.transferTime <= debouncedMaxTransferTime
       )
     }
 
@@ -220,10 +243,10 @@ export default function Resorts({
     searchResults,
     countryFilter,
     regionFilter,
-    minPisteKm,
-    minPeakAltitude,
-    minBaseAltitude,
-    maxTransferTime,
+    debouncedMinPisteKm,
+    debouncedMinPeakAltitude,
+    debouncedMinBaseAltitude,
+    debouncedMaxTransferTime,
     maxTransferTimeFromData,
     pisteProfiles,
   ])
