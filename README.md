@@ -6,7 +6,7 @@
 
 Ski Tripper helps your group find and agree on the perfect ski holiday without the "entertaining" chaos of a WhatsApp debate.
 
-Unlike standard booking sites that force you straight into fligths hotels, Ski Tripper starts with what really matters: the mountain.
+Unlike standard booking sites that force you straight into flighs and hotels, Ski Tripper starts with what really matters: the mountain.
 
 * **The Trip**: This is your group's shared space (e.g., "Boys Ski 2027"). It's the central hub where everyone gathers ideas and votes.
 * **The Profile**: Everyone in your group declares their preferences (high altitude, great après-ski, off-piste terrain, etc). The AI-powered catalog then ranks options against your combined group profile.
