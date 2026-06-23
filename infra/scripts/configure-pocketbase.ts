@@ -42,15 +42,15 @@ const OVERRIDES: Record<
   string,
   { env: string; type: 'string' | 'number' | 'boolean' }
 > = {
-  'smtp.host': { env: 'SMTP_HOST', type: 'string' },
-  'smtp.port': { env: 'SMTP_PORT', type: 'number' },
-  'smtp.username': { env: 'SMTP_USERNAME', type: 'string' },
-  'smtp.password': { env: 'SMTP_PASSWORD', type: 'string' },
-  'smtp.localName': { env: 'SMTP_LOCAL_NAME', type: 'string' },
-  'smtp.tls': { env: 'SMTP_TLS', type: 'boolean' },
-  'meta.appURL': { env: 'APP_URL', type: 'string' },
-  'meta.senderAddress': { env: 'SENDER_ADDRESS', type: 'string' },
-  'meta.hideControls': { env: 'HIDE_CONTROLS', type: 'boolean' },
+  'smtp.host': { env: 'POCKETBASE_SMTP_HOST', type: 'string' },
+  'smtp.port': { env: 'POCKETBASE_SMTP_PORT', type: 'number' },
+  'smtp.username': { env: 'POCKETBASE_SMTP_USERNAME', type: 'string' },
+  'smtp.password': { env: 'POCKETBASE_SMTP_PASSWORD', type: 'string' },
+  'smtp.localName': { env: 'POCKETBASE_SMTP_LOCAL_NAME', type: 'string' },
+  'smtp.tls': { env: 'POCKETBASE_SMTP_TLS', type: 'boolean' },
+  'meta.appURL': { env: 'POCKETBASE_APP_URL', type: 'string' },
+  'meta.senderAddress': { env: 'POCKETBASE_SENDER_ADDRESS', type: 'string' },
+  'meta.hideControls': { env: 'POCKETBASE_HIDE_CONTROLS', type: 'boolean' },
 }
 
 const SENSITIVE_KEYS = new Set([

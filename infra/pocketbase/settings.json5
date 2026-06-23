@@ -1,9 +1,9 @@
 {
   // PocketBase settings — single source of truth for dev and prod.
   //
-  // Environment-specific values use "${ENV_VAR}" placeholders resolved by
-  // `bun run pocketbase:config`. All 8 override vars must be set in .env
-  // (dev) and .env.production (prod). See .env.example for descriptions.
+// Environment-specific values use "${ENV_VAR}" placeholders resolved by
+// `bun run pocketbase:config`. All 9 override vars must be set in .env
+// (dev) and .env.production (prod). See .env.example for descriptions.
   //
   // Dev:  Mailpit on localhost:1025 (no auth, no TLS)
   // Prod: Resend on smtp.resend.com (port 2465, implicit TLS)
@@ -11,21 +11,21 @@
 
   smtp: {
     enabled: true,
-    host: "${SMTP_HOST}",
-    port: "${SMTP_PORT}",
-    username: "${SMTP_USERNAME}",
-    password: "${SMTP_PASSWORD}",
+    host: "${POCKETBASE_SMTP_HOST}",
+    port: "${POCKETBASE_SMTP_PORT}",
+    username: "${POCKETBASE_SMTP_USERNAME}",
+    password: "${POCKETBASE_SMTP_PASSWORD}",
     authMethod: "PLAIN",
-    tls: "${SMTP_TLS}",
-    localName: "${SMTP_LOCAL_NAME}",
+    tls: "${POCKETBASE_SMTP_TLS}",
+    localName: "${POCKETBASE_SMTP_LOCAL_NAME}",
   },
 
   meta: {
     appName: "Ski Tripper",
-    appURL: "${APP_URL}",
+    appURL: "${POCKETBASE_APP_URL}",
     senderName: "Ski Tripper",
-    senderAddress: "${SENDER_ADDRESS}",
-    hideControls: "${HIDE_CONTROLS}",
+    senderAddress: "${POCKETBASE_SENDER_ADDRESS}",
+    hideControls: "${POCKETBASE_HIDE_CONTROLS}",
     accentColor: "#1055c9",
   },
 
