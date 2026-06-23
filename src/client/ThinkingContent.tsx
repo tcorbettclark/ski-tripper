@@ -28,15 +28,19 @@ export default function ThinkingContent({
   const handleScroll = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 20
-    userScrolledUpRef.current = !atBottom
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100
+    if (atBottom) {
+      userScrolledUpRef.current = false
+    } else {
+      userScrolledUpRef.current = true
+    }
   }, [])
 
   useEffect(() => {
     if (!isGenerating || collapsed) return
     const el = scrollRef.current
     if (!el || userScrolledUpRef.current) return
-    void thinking.length
+    void thinking
     el.scrollTop = el.scrollHeight
   }, [isGenerating, collapsed, thinking])
 
