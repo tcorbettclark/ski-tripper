@@ -1,4 +1,4 @@
-import { Sparkles, Trophy } from 'lucide-react'
+import { ArrowDown, ArrowUp, Sparkles, Trophy } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TableVirtuoso } from 'react-virtuoso'
 import {
@@ -24,6 +24,16 @@ import TagCloud from './TagCloud'
 import { borders, colors, fontSizes, fonts, mix } from './theme'
 import { useDebouncedValue } from './useDebouncedValue'
 import { formatTransferTime } from './utils'
+
+type SortField =
+  | 'resortName'
+  | 'country'
+  | 'region'
+  | 'pisteKm'
+  | 'score'
+  | null
+
+type SortDirection = 'asc' | 'desc'
 
 interface ResortsProps {
   user: User
@@ -81,6 +91,17 @@ export default function Resorts({
   const [searchResults, setSearchResults] = useState<ScoredResort[] | null>(
     null
   )
+  const [sortField, setSortField] = useState<SortField>(null)
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+
+  const isSearching = searchResults != null
+
+  useEffect(() => {
+    if (isSearching) {
+      setSortField('score')
+      setSortDirection('desc')
+    }
+  }, [isSearching])
 
   const debouncedSearchQuery = useDebouncedValue(searchQuery, searchDebounceMs)
   const debouncedMinPisteKm = useDebouncedValue(minPisteKm, sliderDebounceMs)
@@ -237,10 +258,36 @@ export default function Resorts({
       })
     }
 
+    const activeSortField = sortField ?? (isSearching ? 'score' : null)
+
+    if (activeSortField) {
+      const dir = sortDirection === 'asc' ? 1 : -1
+      result = [...result].sort((a, b) => {
+        switch (activeSortField) {
+          case 'score': {
+            const aScore = a.score ?? 0
+            const bScore = b.score ?? 0
+            return (aScore - bScore) * dir
+          }
+          case 'resortName':
+            return a.resortName.localeCompare(b.resortName) * dir
+          case 'country':
+            return a.country.localeCompare(b.country) * dir
+          case 'region':
+            return a.region.localeCompare(b.region) * dir
+          case 'pisteKm':
+            return (a.pisteKm - b.pisteKm) * dir
+          default:
+            return 0
+        }
+      })
+    }
+
     return result
   }, [
     resorts,
     searchResults,
+    isSearching,
     countryFilter,
     regionFilter,
     debouncedMinPisteKm,
@@ -249,6 +296,8 @@ export default function Resorts({
     debouncedMaxTransferTime,
     maxTransferTimeFromData,
     pisteProfiles,
+    sortField,
+    sortDirection,
   ])
 
   const handleRowClick = useCallback((resort: ResortWithEmbedding) => {
@@ -313,16 +362,67 @@ export default function Resorts({
   }
 
   const columns = [
-    { key: 'resortName', label: 'Resort Name', width: '24%' },
-    { key: 'country', label: 'Country', width: '12%' },
-    { key: 'region', label: 'Region', width: '14%' },
-    { key: 'pisteBreakdown', label: 'Piste', width: '12%' },
-    { key: 'pisteKm', label: 'Piste Km', width: '10%' },
-    { key: 'altitudeRange', label: 'Peak Height', width: '14%' },
-    { key: 'skiSeasonMonths', label: 'Season', width: '14%' },
-  ] as const
+    {
+      key: 'score' as const,
+      label: '',
+      icon: <Sparkles size={12} />,
+      sortable: true,
+      width: '36px',
+    },
+    {
+      key: 'resortName' as const,
+      label: 'Resort Name',
+      icon: null,
+      sortable: true,
+      width: '24%',
+    },
+    {
+      key: 'country' as const,
+      label: 'Country',
+      icon: null,
+      sortable: true,
+      width: '12%',
+    },
+    {
+      key: 'region' as const,
+      label: 'Region',
+      icon: null,
+      sortable: true,
+      width: '14%',
+    },
+    {
+      key: 'pisteBreakdown' as const,
+      label: 'Piste',
+      icon: null,
+      sortable: false,
+      width: '12%',
+    },
+    {
+      key: 'pisteKm' as const,
+      label: 'Piste Km',
+      icon: null,
+      sortable: true,
+      width: '10%',
+    },
+    {
+      key: 'altitudeRange' as const,
+      label: 'Peak Height',
+      icon: null,
+      sortable: false,
+      width: '14%',
+    },
+    {
+      key: 'skiSeasonMonths' as const,
+      label: 'Season',
+      icon: null,
+      sortable: false,
+      width: '14%',
+    },
+  ]
 
-  function getCellValue(resort: ResortWithEmbedding, key: string): string {
+  const activeSortField = sortField ?? (isSearching ? 'score' : null)
+
+  function getCellValue(resort: ScoredResort, key: string): string {
     switch (key) {
       case 'resortName':
         return resort.resortName
@@ -341,6 +441,8 @@ export default function Resorts({
         return ''
       case 'skiSeasonMonths':
         return resort.skiSeasonMonths
+      case 'score':
+        return ''
       default:
         return ''
     }
@@ -624,9 +726,56 @@ export default function Resorts({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  style={{ ...resortsStyles.th, width: col.width }}
+                  style={{
+                    ...resortsStyles.th,
+                    ...(col.sortable ? resortsStyles.sortableTh : {}),
+                    width: col.width,
+                  }}
+                  onClick={
+                    col.sortable
+                      ? () => {
+                          if (sortField === col.key) {
+                            setSortDirection((d) =>
+                              d === 'asc' ? 'desc' : 'asc'
+                            )
+                          } else {
+                            setSortField(col.key as SortField)
+                            setSortDirection(
+                              col.key === 'score' ? 'desc' : 'asc'
+                            )
+                          }
+                        }
+                      : undefined
+                  }
                 >
-                  {col.label}
+                  {col.icon ?? col.label}
+                  {col.sortable && (
+                    <span style={resortsStyles.sortArrows}>
+                      <span
+                        style={{
+                          ...resortsStyles.sortArrow,
+                          ...(activeSortField === col.key &&
+                          sortDirection === 'asc'
+                            ? resortsStyles.sortArrowActive
+                            : resortsStyles.sortArrowInactive),
+                        }}
+                      >
+                        <ArrowUp size={10} />
+                      </span>
+                      <span
+                        style={{
+                          ...resortsStyles.sortArrow,
+                          marginTop: '-4px',
+                          ...(activeSortField === col.key &&
+                          sortDirection === 'desc'
+                            ? resortsStyles.sortArrowActive
+                            : resortsStyles.sortArrowInactive),
+                        }}
+                      >
+                        <ArrowDown size={10} />
+                      </span>
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>
@@ -647,41 +796,34 @@ export default function Resorts({
                   }}
                   tabIndex={col.key === 'resortName' ? 0 : -1}
                 >
-                  {col.key === 'resortName' ? (
-                    <span
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      {resort.score != null &&
-                      trophyGrade(resort.score, maxScore) != null ? (
-                        <Trophy
-                          size={14}
-                          style={{
-                            color: trophyColorVariant(
-                              trophyGrade(resort.score, maxScore)!
-                            ),
-                            flexShrink: 0,
-                          }}
-                        />
-                      ) : resort.score != null ? (
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            width: `${6 + resort.score * 10}px`,
-                            height: `${6 + resort.score * 10}px`,
-                            minWidth: '6px',
-                            minHeight: '6px',
-                            borderRadius: '50%',
-                            background: matchDotColor(resort.score),
-                            flexShrink: 0,
-                          }}
-                        />
-                      ) : null}
-                      {resort.resortName}
-                    </span>
+                  {col.key === 'score' ? (
+                    resort.score != null &&
+                    trophyGrade(resort.score, maxScore) != null ? (
+                      <Trophy
+                        size={14}
+                        style={{
+                          color: trophyColorVariant(
+                            trophyGrade(resort.score, maxScore)!
+                          ),
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : resort.score != null ? (
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: `${6 + resort.score * 10}px`,
+                          height: `${6 + resort.score * 10}px`,
+                          minWidth: '6px',
+                          minHeight: '6px',
+                          borderRadius: '50%',
+                          background: matchDotColor(resort.score),
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : null
+                  ) : col.key === 'resortName' ? (
+                    resort.resortName
                   ) : col.key === 'country' &&
                     resort.country &&
                     getCountryFlagUrl(resort.country) ? (
@@ -960,6 +1102,27 @@ const resortsStyles = {
     top: 0,
     zIndex: 1,
     background: colors.bgCard,
+  },
+  sortableTh: {
+    cursor: 'pointer',
+    userSelect: 'none' as const,
+  },
+  sortArrows: {
+    display: 'inline-flex',
+    flexDirection: 'column' as const,
+    marginLeft: '2px',
+    verticalAlign: 'middle',
+    lineHeight: 0,
+  },
+  sortArrow: {
+    lineHeight: 0,
+    display: 'block',
+  },
+  sortArrowActive: {
+    opacity: 1,
+  },
+  sortArrowInactive: {
+    opacity: 0.25,
   },
   td: {
     padding: '10px 16px',

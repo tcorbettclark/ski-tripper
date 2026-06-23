@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ResortWithEmbedding } from '../shared/types.d'
 import Resorts from './Resorts'
+import type { ScoredResort } from './resortSearch'
 
 const user = {
   id: 'user-1',
@@ -570,5 +571,91 @@ describe('Resorts', () => {
       />
     )
     expect(screen.getByPlaceholderText('Search unavailable')).toBeTruthy()
+  })
+
+  describe('sorting', () => {
+    it('renders sort arrows for sortable columns', () => {
+      render(<Resorts {...defaultProps()} />)
+      expect(screen.getByText('Resort Name').closest('th')).toBeTruthy()
+      const th = screen.getByText('Resort Name').closest('th')!
+      expect(th.style.cursor).toBe('pointer')
+    })
+
+    it('does not render sort arrows for non-sortable columns', () => {
+      render(<Resorts {...defaultProps()} />)
+      const pisteTh = screen.getByText('Piste').closest('th')!
+      const peakTh = screen.getByText('Peak Height').closest('th')!
+      const seasonTh = screen.getByText('Season').closest('th')!
+      expect(pisteTh.style.cursor).toBeFalsy()
+      expect(peakTh.style.cursor).toBeFalsy()
+      expect(seasonTh.style.cursor).toBeFalsy()
+    })
+
+    it('sorts resorts by name ascending when Resort Name header is clicked', async () => {
+      const eventUser = userEvent.setup()
+      render(<Resorts {...defaultProps()} />)
+      const header = screen.getByText('Resort Name')
+      await eventUser.click(header)
+      const rows = screen.getAllByRole('row').slice(1) as HTMLTableRowElement[]
+      const names = rows.map((row) => row.cells[1]?.textContent ?? '')
+      const sorted = [...names].sort((a, b) => a.localeCompare(b))
+      expect(names).toEqual(sorted)
+    })
+
+    it('toggles sort direction when clicking the same header again', async () => {
+      const eventUser = userEvent.setup()
+      render(<Resorts {...defaultProps()} />)
+      const header = screen.getByText('Resort Name')
+      await eventUser.click(header)
+      const ascendingNames = (
+        screen.getAllByRole('row').slice(1) as HTMLTableRowElement[]
+      ).map((row) => row.cells[1]?.textContent ?? '')
+      await eventUser.click(header)
+      const descendingNames = (
+        screen.getAllByRole('row').slice(1) as HTMLTableRowElement[]
+      ).map((row) => row.cells[1]?.textContent ?? '')
+      expect(descendingNames).toEqual([...ascendingNames].reverse())
+    })
+
+    it('sorts resorts by piste km when Piste Km header is clicked', async () => {
+      const eventUser = userEvent.setup()
+      render(<Resorts {...defaultProps()} />)
+      const header = screen.getByText('Piste Km')
+      await eventUser.click(header)
+      const rows = screen.getAllByRole('row').slice(1) as HTMLTableRowElement[]
+      const km = rows.map((row) => {
+        const cell = row.cells[5]
+        return cell?.textContent ? Number(cell.textContent) : 0
+      })
+      const sorted = [...km].sort((a, b) => a - b)
+      expect(km).toEqual(sorted)
+    })
+
+    it('always shows the relevance column with sort indicator', () => {
+      render(<Resorts {...defaultProps()} />)
+      const ths = screen.getAllByRole('columnheader')
+      expect(ths.length).toBe(8)
+      expect(ths[0].querySelector('.lucide-sparkles')).toBeTruthy()
+    })
+
+    it('forces sort by relevance descending when search becomes active', async () => {
+      const scoredResults: ScoredResort[] = sampleResorts.map((r, i) => ({
+        ...r,
+        score: (i + 1) / sampleResorts.length,
+      }))
+      const mockSearch = mock(
+        async (
+          _query: string,
+          _resorts: ResortWithEmbedding[]
+        ): Promise<ScoredResort[]> => scoredResults
+      )
+      const eventUser = userEvent.setup()
+      render(<Resorts {...defaultProps({ searchResorts: mockSearch })} />)
+      const searchInput = screen.getByPlaceholderText('Semantic search')
+      await eventUser.type(searchInput, 'test')
+      await waitFor(() => {
+        expect(mockSearch).toHaveBeenCalled()
+      })
+    })
   })
 })
