@@ -22,10 +22,10 @@ export const TIER_FUZZY = 0.05
 export const RATIO_CLOSE = 0.85
 export const RATIO_FUZZY = 0.5
 
-export const GOLD_RATIO = 0.95
-export const SILVER_RATIO = 0.85
-export const BRONZE_RATIO = 0.7
-export const MEDAL_FLOOR = 0.3
+export const GOLD_RATIO = 0.98
+export const SILVER_RATIO = 0.95
+export const BRONZE_RATIO = 0.9
+export const MEDAL_FLOOR = 0.6
 
 export type TrophyGrade = 'gold' | 'silver' | 'bronze' | null
 

@@ -241,20 +241,20 @@ describe('relevanceScore', () => {
 })
 
 describe('trophyGrade', () => {
-  it('returns gold when score within 5% of max', () => {
-    expect(trophyGrade(0.79, 0.82)).toBe('gold')
+  it('returns gold when score within 2% of max', () => {
+    expect(trophyGrade(0.81, 0.82)).toBe('gold')
   })
 
-  it('returns silver when score within 15% of max but not gold', () => {
-    expect(trophyGrade(0.72, 0.82)).toBe('silver')
+  it('returns silver when score within 5% of max but not gold', () => {
+    expect(trophyGrade(0.79, 0.82)).toBe('silver')
   })
 
-  it('returns bronze when score within 30% of max but not silver', () => {
-    expect(trophyGrade(0.6, 0.82)).toBe('bronze')
+  it('returns bronze when score within 10% of max but not silver', () => {
+    expect(trophyGrade(0.75, 0.82)).toBe('bronze')
   })
 
   it('returns null when score well below max', () => {
-    expect(trophyGrade(0.4, 0.82)).toBeNull()
+    expect(trophyGrade(0.6, 0.82)).toBeNull()
   })
 
   it('returns gold for exact max score', () => {
@@ -262,11 +262,11 @@ describe('trophyGrade', () => {
   })
 
   it('returns null when maxScore is below floor', () => {
-    expect(trophyGrade(0.28, 0.28)).toBeNull()
+    expect(trophyGrade(0.58, 0.58)).toBeNull()
   })
 
   it('returns null when score is below floor even if ratio is high', () => {
-    expect(trophyGrade(0.29, 0.3)).toBeNull()
+    expect(trophyGrade(0.59, 0.6)).toBeNull()
   })
 
   it('awards gold at exactly gold ratio boundary', () => {
@@ -285,22 +285,22 @@ describe('trophyGrade', () => {
   })
 
   it('works with short-query scenario', () => {
-    expect(trophyGrade(0.55, 0.55)).toBe('gold')
-    expect(trophyGrade(0.5, 0.55)).toBe('silver')
-    expect(trophyGrade(0.42, 0.55)).toBe('bronze')
-    expect(trophyGrade(0.35, 0.55)).toBeNull()
+    expect(trophyGrade(0.7, 0.7)).toBe('gold')
+    expect(trophyGrade(0.67, 0.7)).toBe('silver')
+    expect(trophyGrade(0.63, 0.7)).toBe('bronze')
+    expect(trophyGrade(0.5, 0.7)).toBeNull()
   })
 
   it('works with detailed-query scenario', () => {
     expect(trophyGrade(0.82, 0.82)).toBe('gold')
-    expect(trophyGrade(0.72, 0.82)).toBe('silver')
-    expect(trophyGrade(0.6, 0.82)).toBe('bronze')
-    expect(trophyGrade(0.5, 0.82)).toBeNull()
+    expect(trophyGrade(0.79, 0.82)).toBe('silver')
+    expect(trophyGrade(0.75, 0.82)).toBe('bronze')
+    expect(trophyGrade(0.6, 0.82)).toBeNull()
   })
 
   it('gives no medals for unrelated query with low max', () => {
-    expect(trophyGrade(0.18, 0.22)).toBeNull()
-    expect(trophyGrade(0.22, 0.22)).toBeNull()
+    expect(trophyGrade(0.45, 0.5)).toBeNull()
+    expect(trophyGrade(0.5, 0.5)).toBeNull()
   })
 
   it('floor prevents medals when max score is poor', () => {
@@ -309,20 +309,20 @@ describe('trophyGrade', () => {
 })
 
 describe('threshold constants', () => {
-  it('GOLD_RATIO is 0.95', () => {
-    expect(GOLD_RATIO).toBe(0.95)
+  it('GOLD_RATIO is 0.98', () => {
+    expect(GOLD_RATIO).toBe(0.98)
   })
 
-  it('SILVER_RATIO is 0.85', () => {
-    expect(SILVER_RATIO).toBe(0.85)
+  it('SILVER_RATIO is 0.95', () => {
+    expect(SILVER_RATIO).toBe(0.95)
   })
 
-  it('BRONZE_RATIO is 0.70', () => {
-    expect(BRONZE_RATIO).toBe(0.7)
+  it('BRONZE_RATIO is 0.90', () => {
+    expect(BRONZE_RATIO).toBe(0.9)
   })
 
-  it('MEDAL_FLOOR is 0.30', () => {
-    expect(MEDAL_FLOOR).toBe(0.3)
+  it('MEDAL_FLOOR is 0.60', () => {
+    expect(MEDAL_FLOOR).toBe(0.6)
   })
 })
 
