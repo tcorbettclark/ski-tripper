@@ -511,6 +511,13 @@ async function deploy() {
     buildEnv[k] = env[k]
   }
   await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`.env(buildEnv)
+  const caddyDomains =
+    await app`grep -E '^[a-z]' ${REPO_DIR}/dist/Caddyfile`.text()
+  if (caddyDomains.includes('localhost')) {
+    fail(
+      `Caddyfile contains localhost domains (build env vars not applied?):\n${caddyDomains}`
+    )
+  }
   success('Build complete')
 
   step('Stopping services')
