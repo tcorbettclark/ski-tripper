@@ -112,52 +112,14 @@ export default function Resorts({
       setSearchResults(null)
       return
     }
-    const filteredByDropdowns = resorts.filter((r) => {
-      if (countryFilter.size > 0 && !countryFilter.has(r.country)) return false
-      if (regionFilter.size > 0 && !regionFilter.has(r.region)) return false
-      if (minPisteKm > 0 && r.pisteKm < minPisteKm) return false
-      if (minPeakAltitude > 0 && r.summitAltitude < minPeakAltitude)
-        return false
-      if (minBaseAltitude > 0 && r.baseAltitude < minBaseAltitude) return false
-      if (
-        maxTransferTime >= 0 &&
-        maxTransferTime < maxTransferTimeFromData &&
-        (r.transferTime == null || r.transferTime > maxTransferTime)
-      )
-        return false
-      if (pisteProfiles.size > 0) {
-        let sum = 0
-        if (pisteProfiles.has('beginner')) sum += r.beginnerPct
-        if (pisteProfiles.has('intermediate')) sum += r.intermediatePct
-        if (pisteProfiles.has('advanced')) sum += r.advancedPct
-        if (!pisteProfiles.has('beginner') && sum <= r.beginnerPct) return false
-        if (!pisteProfiles.has('intermediate') && sum <= r.intermediatePct)
-          return false
-        if (!pisteProfiles.has('advanced') && sum <= r.advancedPct) return false
-      }
-      return true
-    })
-    searchResortsFn(searchQuery, filteredByDropdowns)
+    searchResortsFn(searchQuery, resorts)
       .then((results) => {
         setSearchResults(results)
       })
       .catch(() => {
         setSearchResults(null)
       })
-  }, [
-    searchQuery,
-    modelReady,
-    resorts,
-    countryFilter,
-    regionFilter,
-    minPisteKm,
-    minPeakAltitude,
-    minBaseAltitude,
-    maxTransferTime,
-    maxTransferTimeFromData,
-    pisteProfiles,
-    searchResortsFn,
-  ])
+  }, [searchQuery, modelReady, resorts, searchResortsFn])
 
   const toggleCountry = useCallback((country: string) => {
     setCountryFilter((prev) => {
@@ -206,11 +168,7 @@ export default function Resorts({
   }, [])
 
   const filteredResorts: ScoredResort[] = useMemo(() => {
-    if (searchResults !== null) {
-      return searchResults
-    }
-
-    let result: ScoredResort[] = resorts
+    let result: ScoredResort[] = searchResults ?? resorts
 
     if (countryFilter.size > 0) {
       result = result.filter((r) => countryFilter.has(r.country))
@@ -313,11 +271,12 @@ export default function Resorts({
 
   const maxScore = useMemo(() => {
     let max = 0
-    for (const r of filteredResorts) {
+    const source = searchResults ?? []
+    for (const r of source) {
       if (r.score != null && r.score > max) max = r.score
     }
     return max
-  }, [filteredResorts])
+  }, [searchResults])
 
   if (resorts.length === 0) {
     return (
