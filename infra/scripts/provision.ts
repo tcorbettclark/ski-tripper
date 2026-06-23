@@ -79,6 +79,18 @@ function decryptEnvVars(): Record<string, string> {
     }
   }
 
+  const envKeys = new Set<string>()
+  for (const f of envFiles) {
+    const content = readFileSync(f, 'utf-8')
+    for (const line of content.split('\n')) {
+      const trimmed = line.trimStart()
+      if (trimmed.startsWith('#') || trimmed === '') continue
+      const eq = trimmed.indexOf('=')
+      if (eq === -1) continue
+      envKeys.add(trimmed.slice(0, eq))
+    }
+  }
+
   step('Decrypting production environment variables')
   const dotenvxCmd = resolve(PROJECT_ROOT, 'node_modules', '.bin', 'dotenvx')
 
@@ -93,7 +105,9 @@ function decryptEnvVars(): Record<string, string> {
       if (eq === -1) continue
       const key = line.slice(0, eq)
       const val = line.slice(eq + 1)
-      env[key] = val
+      if (envKeys.has(key)) {
+        env[key] = val
+      }
     }
     success(`Decrypted ${Object.keys(env).length} environment variables`)
     return env
@@ -557,9 +571,8 @@ async function deploy() {
     overrideLines.push(`Environment="${key}=${value}"`)
   }
   const overrideContent = overrideLines.join('\n')
-  await root`bash -c "cat > ${overrideDir}/override.conf << 'OVERRIDEOF'
-${overrideContent}
-OVERRIDEOF"`
+  const overrideB64 = Buffer.from(overrideContent).toString('base64')
+  await root`bash -c "echo ${overrideB64} | base64 -d > ${overrideDir}/override.conf"`
   await root`systemctl daemon-reload`
   success('Systemd override written')
 
