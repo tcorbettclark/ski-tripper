@@ -604,7 +604,7 @@ OVERRIDEOF"`
   })
   success('Resort data uploaded')
 
-  await status()
+  await status(env)
 }
 
 async function status(env?: Record<string, string>) {
