@@ -98,7 +98,7 @@ describe('Trips', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/or select one of your trips below/i))
+      expect(screen.getByText(/or select from one of your trips below/i))
     })
   })
 
@@ -109,7 +109,9 @@ describe('Trips', () => {
     await waitFor(() => {
       expect(screen.getByText(/coordinating a trip/i))
     })
-    expect(screen.queryByText(/or select one of your trips below/i)).toBeNull()
+    expect(
+      screen.queryByText(/or select from one of your trips below/i)
+    ).toBeNull()
   })
 
   it('renders a row for each trip', async () => {
