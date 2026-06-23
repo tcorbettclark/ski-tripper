@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Accommodation, Poll, Proposal, Vote } from '../shared/types.d'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
@@ -32,11 +32,18 @@ export default function PollVoting({
   onVoteSaved,
   upsertVote = _upsertVote,
 }: PollVotingProps) {
-  const proposalMap = Object.fromEntries(proposals.map((p) => [p.id, p]))
-  const sortedProposalIds = [...poll.proposalIds].sort((a, b) =>
-    (proposalMap[a]?.resortName || '').localeCompare(
-      proposalMap[b]?.resortName || ''
-    )
+  const proposalMap = useMemo(
+    () => Object.fromEntries(proposals.map((p) => [p.id, p])),
+    [proposals]
+  )
+  const sortedProposalIds = useMemo(
+    () =>
+      [...poll.proposalIds].sort((a, b) =>
+        (proposalMap[a]?.resortName || '').localeCompare(
+          proposalMap[b]?.resortName || ''
+        )
+      ),
+    [poll.proposalIds, proposalMap]
   )
 
   const [allocations, setAllocations] = useState<Record<string, number>>(() => {
@@ -51,6 +58,17 @@ export default function PollVoting({
     }
     return init
   })
+  useEffect(() => {
+    if (!myVote) return
+    setAllocations((prev) => {
+      const next: Record<string, number> = {}
+      sortedProposalIds.forEach((id) => {
+        next[id] =
+          myVote.tokenCounts[myVote.proposalIds.indexOf(id)] ?? prev[id] ?? 0
+      })
+      return next
+    })
+  }, [myVote, sortedProposalIds])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 

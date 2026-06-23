@@ -1,6 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { Vote } from '../shared/types.d'
 import PollVoting from './PollVoting'
 
 const poll = {
@@ -118,17 +119,18 @@ const proposals = [
   },
 ]
 
+const defaultProps = {
+  poll,
+  proposals,
+  myVote: null as Vote | null,
+  userId: 'user-1',
+  userName: 'Test User',
+  onVoteSaved: mock(() => {}),
+  upsertVote: mock(() => Promise.resolve({ id: 'v-new' })),
+}
+
 function renderPollVoting(props = {}) {
-  const defaults = {
-    poll,
-    proposals,
-    myVote: null,
-    userId: 'user-1',
-    userName: 'Test User',
-    onVoteSaved: mock(() => {}),
-    upsertVote: mock(() => Promise.resolve({ id: 'v-new' })),
-  }
-  return render(<PollVoting {...defaults} {...props} />)
+  return render(<PollVoting {...defaultProps} {...props} />)
 }
 
 describe('PollVoting', () => {
@@ -420,5 +422,40 @@ describe('PollVoting', () => {
     await user.click(screen.getByRole('button', { name: /save vote/i }))
     await screen.findByText('Save failed')
     expect(onVoteSaved).not.toHaveBeenCalled()
+  })
+
+  it('Save button disabled when myVote matches current allocations on initial render', () => {
+    const myVote = { proposalIds: ['p-1', 'p-3'], tokenCounts: [2, 1] }
+    renderPollVoting({ myVote })
+    expect(
+      (screen.getByRole('button', { name: /save vote/i }) as HTMLButtonElement)
+        .disabled
+    ).toBe(true)
+  })
+
+  it('Save button disabled when myVote arrives after initial render', async () => {
+    const { rerender } = renderPollVoting()
+    expect(
+      (screen.getByRole('button', { name: /save vote/i }) as HTMLButtonElement)
+        .disabled
+    ).toBe(false)
+    const myVote: Vote = {
+      id: 'v-1',
+      created: '2024-01-01T00:00:00Z',
+      updated: '2024-01-01T00:00:00Z',
+      poll: 'poll-1',
+      voter: 'user-1',
+      voterUserName: 'Test User',
+      proposalIds: ['p-1', 'p-3'],
+      tokenCounts: [2, 1],
+    }
+    rerender(<PollVoting {...defaultProps} myVote={myVote} />)
+    expect(screen.getByTestId('count-p-1').textContent).toBe('2')
+    expect(screen.getByTestId('count-p-2').textContent).toBe('0')
+    expect(screen.getByTestId('count-p-3').textContent).toBe('1')
+    expect(
+      (screen.getByRole('button', { name: /save vote/i }) as HTMLButtonElement)
+        .disabled
+    ).toBe(true)
   })
 })
