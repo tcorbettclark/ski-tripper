@@ -114,6 +114,8 @@ The `.env.keys` file (gitignored) holds the private decryption keys.
 
 After changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt with `bun run env:encrypt`.
 
+A githook, installed with `dotenvx ext precommit --install`, helps to avoid committing plaintext secrets.
+
 Tip: Put the `.env.keys` in fish universal variables to make them available across worktrees.
 
 ### Development build
