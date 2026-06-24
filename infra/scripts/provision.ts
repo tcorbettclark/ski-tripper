@@ -572,9 +572,11 @@ async function deploy() {
   await root`cp ${REPO_DIR}/infra/caddy/block-pb-admin.caddy /etc/caddy/pb-includes/block-pb-admin.caddy`
   await root`chown -R caddy:caddy /etc/caddy/pb-includes`
   // Reset to prod mode in case debug mode was left enabled
-  if (
-    await root`test -f /etc/caddy/pb-includes/block-pb-admin.caddy.disabled`.nothrow()
-  ) {
+  const disabledExists =
+    (
+      await root`test -f /etc/caddy/pb-includes/block-pb-admin.caddy.disabled`.nothrow()
+    ).exitCode === 0
+  if (disabledExists) {
     await root`mv /etc/caddy/pb-includes/block-pb-admin.caddy.disabled /etc/caddy/pb-includes/block-pb-admin.caddy`
     success('Reset from debug mode to prod mode')
   }
