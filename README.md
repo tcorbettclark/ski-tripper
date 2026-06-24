@@ -56,8 +56,8 @@ Having helped lead the organisation of a boys ski trip for a few years, I though
 
 1. To **build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [OpenCode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with the help of [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
 2. To **create a rich catalogue of resorts with standardised fields and descriptions**. This involved a pipeline starting with seeding a list, enriching from qualified sources, assessing quality, and fixing inconsistencies using an independent model.
-3. To **make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then use the same model in the client browser to quickly find similar resorts.
-4. To **generate resort search text from participant preferences**, and so make it easier to home in on candidate resorts the group will enjoy.
+3. To **make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then the same model is used again in the client browser to quickly find similar resorts.
+4. To **generate resort search text from participant preferences**. An LLM is fed everyone's preferences and asked to generate search text to run against the embedding model (previous), and so make it easier to home in on candidate resorts the group will enjoy.
 5. To **assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
 6. To **automate the testing of the applicaton UI** by performing user interactions using a headless browser, looking for bugs and increasing confidence that the application behaves in a reasonable way.
 
@@ -131,7 +131,6 @@ Tip: Put the `.env.keys` in fish universal variables to make them available acro
 | `bun run dev:pb:config`              | Configure local PocketBase settings                   |
 | `bun run dev:pb:create-superuser`    | Create/upsert local PocketBase superuser              |
 | `bun run dev:caddy`                  | Run Caddy reverse proxy (with log wrapper)            |
-| `bun run test:e2e`                   | Run Playwright e2e tests against dev server           |
 
 **Build scripts** read env vars from `process.env` (no dotenvx wrapper) so they work in production where env vars are passed inline:
 
@@ -143,11 +142,13 @@ Tip: Put the `.env.keys` in fish universal variables to make them available acro
 
 ### Testing
 
-Usual collection of unit tests: `bun run test`.
+Type checking: `bun run check`. To fix type errors: `bun run check:fix`.
 
-Exploratory tests use [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/): `bun run test:e2e`. These need the dev server to be running (`bun run dev`).
+Usual collection of unit tests: `bun run test`. These are standalone and do not require the dev server to be running.
 
-Lastly, a smoke test, `bun run test:smoke`, verifies the app is installed correctly in production. It contains both automatic and manual checks.
+Exploratory tests use [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/). Invoke with: `bun run test:e2e`. These need the dev server to be running (`bun run dev`).
+
+A smoke test, `bun run test:smoke`, verifies the app is installed correctly in production. It contains both automatic and manual checks.
 
 ### Versioning
 
