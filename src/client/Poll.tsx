@@ -244,7 +244,7 @@ export default function Poll({
       }}
     >
       <div style={styles.toolbar}>
-        <h2 style={styles.heading}>Voting</h2>
+        <h1 style={styles.heading}>Voting</h1>
       </div>
 
       {pollsError && (
@@ -330,7 +330,7 @@ export default function Poll({
                 upsertVote={upsertVote}
               />
               <div style={styles.activeVotesSection}>
-                <h4 style={styles.activeVotesHeading}>Votes so far</h4>
+                <h2 style={styles.activeVotesHeading}>Votes so far</h2>
                 <PollResults
                   poll={activePoll}
                   proposals={proposals}
@@ -379,7 +379,7 @@ export default function Poll({
 
           {pastPolls.length > 0 && (
             <div style={styles.pastSection}>
-              <h3 style={styles.pastHeading}>Past Polls</h3>
+              <h2 style={styles.pastHeading}>Past Polls</h2>
               {pastPolls.map((poll) => (
                 <PastPoll
                   key={poll.id}

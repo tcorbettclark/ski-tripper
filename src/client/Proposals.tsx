@@ -281,7 +281,7 @@ export default function Proposals({
       }}
     >
       <div style={styles.toolbar}>
-        <h2 style={styles.heading}>Proposals</h2>
+        <h1 style={styles.heading}>Proposals</h1>
         {tripId && (
           <div style={styles.buttons}>
             <button

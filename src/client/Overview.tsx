@@ -476,7 +476,7 @@ export default function Overview({
       }}
     >
       <div style={overviewStyles.toolbar}>
-        <h2 style={overviewStyles.heading}>
+        <h1 style={overviewStyles.heading}>
           {trip.description || '—'}
           {isCoordinator && !editingDescription && (
             <button
@@ -489,7 +489,7 @@ export default function Overview({
               <Pencil size={16} />
             </button>
           )}
-        </h2>
+        </h1>
       </div>
 
       {editingDescription && (
@@ -547,7 +547,7 @@ export default function Overview({
       )}
 
       <section style={overviewStyles.section}>
-        <h3 style={overviewStyles.sectionHeading}>Our Preferences</h3>
+        <h2 style={overviewStyles.sectionHeading}>Our Preferences</h2>
         {participantsError && (
           <p style={formStyles.error}>{participantsError}</p>
         )}
