@@ -21,7 +21,7 @@ import {
 } from './resortSearch'
 import { trophyGrade } from './resortSearchPure'
 import TagCloud from './TagCloud'
-import { borders, colors, fontSizes, fonts, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix, srOnly } from './theme'
 import { useDebouncedValue } from './useDebouncedValue'
 import { formatTransferTime } from './utils'
 
@@ -364,7 +364,7 @@ export default function Resorts({
   const columns = [
     {
       key: 'score' as const,
-      label: '',
+      label: 'Score',
       icon: <Sparkles size={12} />,
       sortable: true,
       width: '36px',
@@ -748,7 +748,14 @@ export default function Resorts({
                       : undefined
                   }
                 >
-                  {col.icon ?? col.label}
+                  {col.icon ? (
+                    <>
+                      <span style={srOnly}>{col.label}</span>
+                      {col.icon}
+                    </>
+                  ) : (
+                    col.label
+                  )}
                   {col.sortable && (
                     <span style={resortsStyles.sortArrows}>
                       <span

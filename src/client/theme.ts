@@ -357,6 +357,18 @@ export const overlayStyles = {
   },
 } as const
 
+export const srOnly = {
+  position: 'absolute' as const,
+  width: '1px',
+  height: '1px',
+  padding: 0,
+  margin: '-1px' as const,
+  overflow: 'hidden' as const,
+  clip: 'rect(0, 0, 0, 0)' as const,
+  whiteSpace: 'nowrap' as const,
+  borderWidth: 0,
+} as const
+
 export const fieldStyles = {
   default: {
     field: {
