@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test'
+import { clickNavTab } from '../helpers/navigation'
 
 export class ProposalsPage {
   readonly page: Page
@@ -8,7 +9,6 @@ export class ProposalsPage {
   readonly proposalSubmitBtn: Locator
   readonly proposalDeleteBtn: Locator
   readonly newProposalBtn: Locator
-  readonly proposalsTab: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -18,11 +18,10 @@ export class ProposalsPage {
     this.proposalSubmitBtn = page.getByTestId('proposal-submit-btn')
     this.proposalDeleteBtn = page.getByTestId('proposal-delete')
     this.newProposalBtn = page.getByTestId('new-proposal-btn')
-    this.proposalsTab = page.getByTestId('nav-tab-proposals')
   }
 
   async goToProposalsTab() {
-    await this.proposalsTab.click()
+    await clickNavTab(this.page, 'proposals')
   }
 
   async clickNewProposal() {

@@ -1,4 +1,5 @@
 import { test } from '@playwright/test'
+import { clickNavTab } from './helpers/navigation'
 import { screenshot } from './helpers/screenshot'
 import {
   deleteAllEmails,
@@ -84,7 +85,7 @@ test.describe('Error states and edge cases', () => {
   test('empty state: no proposals', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Empty proposals trip')
-    await page.getByTestId('nav-tab-proposals').click()
+    await clickNavTab(page, 'proposals')
 
     await screenshot(page, 'error-states', 'no-proposals', proj)
   })
@@ -92,7 +93,7 @@ test.describe('Error states and edge cases', () => {
   test('empty state: no open poll', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Empty poll trip')
-    await page.getByTestId('nav-tab-poll').click()
+    await clickNavTab(page, 'poll')
 
     await screenshot(page, 'error-states', 'no-poll', proj)
   })
@@ -102,13 +103,13 @@ test.describe('Error states and edge cases', () => {
     await setupUserWithTrip(page, 'Error boundary trip')
 
     await test.step('tabs still work after potential errors', async () => {
-      await page.getByTestId('nav-tab-resorts').click()
+      await clickNavTab(page, 'resorts')
       await page.waitForTimeout(500)
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await page.waitForTimeout(500)
-      await page.getByTestId('nav-tab-poll').click()
+      await clickNavTab(page, 'poll')
       await page.waitForTimeout(500)
-      await page.getByTestId('nav-tab-overview').click()
+      await clickNavTab(page, 'overview')
       await page.waitForTimeout(500)
       await screenshot(page, 'error-states', 'boundary-recovery', proj)
     })
@@ -123,12 +124,12 @@ test.describe('Error states and edge cases', () => {
         route.abort('internetdisconnected')
       )
 
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await page.waitForTimeout(1000)
 
       await page.unroute('**/api/collections/**')
 
-      await page.getByTestId('nav-tab-overview').click()
+      await clickNavTab(page, 'overview')
       await page.waitForTimeout(1000)
       await screenshot(page, 'error-states', 'network-recovered', proj)
     })
@@ -145,7 +146,7 @@ test.describe('Error states and edge cases', () => {
       })
     )
 
-    await page.getByTestId('nav-tab-resorts').click()
+    await clickNavTab(page, 'resorts')
     await page.waitForTimeout(2000)
 
     const onLoginPage = await page
@@ -168,7 +169,7 @@ test.describe('Error states and edge cases', () => {
       route.fulfill({ status: 200, body: '' })
     )
 
-    await page.getByTestId('nav-tab-resorts').click()
+    await clickNavTab(page, 'resorts')
     await page.waitForTimeout(1000)
     await screenshot(page, 'error-states', 'no-resorts', proj)
   })

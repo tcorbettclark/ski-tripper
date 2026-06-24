@@ -260,9 +260,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
     : mix('--color-textSecondary', 0.15)
   const iconBg = isActive ? mix(colorToken, 0.25) : mix(colorToken, 0.08)
   const iconColor = isActive ? `var(${colorToken})` : mix(colorToken, 0.4)
-  const textColor = isActive
-    ? colors.textPrimary
-    : mix('--color-textSecondary', 0.6)
+  const textColor = isActive ? colors.textPrimary : colors.textSecondary
   const bgColor = isActive
     ? mix(colorToken, 0.12)
     : mix('--color-textSecondary', 0.04)
@@ -410,7 +408,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
                 color:
                   action.variant === 'primary'
                     ? `var(${colorToken})`
-                    : mix('--color-textSecondary', 0.7),
+                    : colors.textSecondary,
                 cursor: 'pointer',
                 lineHeight: '1.3',
                 transition: 'border-color 0.15s, background 0.15s',

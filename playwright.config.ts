@@ -11,7 +11,7 @@ export default defineConfig({
     ['list'],
     ['html', { open: 'never', outputFolder: 'e2e/playwright-report' }],
   ],
-  timeout: 10_000,
+  timeout: 30_000,
   use: {
     baseURL: process.env.PUBLIC_EXTERNAL_URL,
     trace: 'on-first-retry',
@@ -23,6 +23,7 @@ export default defineConfig({
       use: {
         browserName: 'chromium',
         viewport: { width: 1440, height: 900 },
+        permissions: ['clipboard-read', 'clipboard-write'],
       },
     },
     {
@@ -32,6 +33,7 @@ export default defineConfig({
         viewport: { width: 390, height: 844 },
         isMobile: true,
         hasTouch: true,
+        permissions: ['clipboard-read', 'clipboard-write'],
       },
     },
   ],

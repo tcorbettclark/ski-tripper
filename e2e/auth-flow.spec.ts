@@ -26,7 +26,16 @@ test.describe('Auth flow', () => {
     })
 
     await test.step('logout and assert auth form', async () => {
-      await page.evaluate(() => localStorage.clear())
+      await page.evaluate(() => {
+        localStorage.clear()
+        const pb = (
+          window as unknown as Record<
+            string,
+            { authStore: { clear: () => void } }
+          >
+        ).__pocketbase__
+        if (pb) pb.authStore.clear()
+      })
       await auth.goto()
       await expect(auth.emailInput).toBeVisible()
     })
@@ -53,7 +62,16 @@ test.describe('Auth flow', () => {
     })
 
     await test.step('logout', async () => {
-      await page.evaluate(() => localStorage.clear())
+      await page.evaluate(() => {
+        localStorage.clear()
+        const pb = (
+          window as unknown as Record<
+            string,
+            { authStore: { clear: () => void } }
+          >
+        ).__pocketbase__
+        if (pb) pb.authStore.clear()
+      })
       await auth.goto()
       await expect(auth.emailInput).toBeVisible()
     })

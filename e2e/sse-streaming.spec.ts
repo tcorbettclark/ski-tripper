@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { clickNavTab } from './helpers/navigation'
 import { screenshot } from './helpers/screenshot'
 import {
   deleteAllEmails,
@@ -47,7 +48,7 @@ test.describe('SSE streaming (LLM responses)', () => {
     const proj = projectName()
     await setupUserWithSubmittedProposal(page, 'Search trip', 'SearchResort')
 
-    await page.getByTestId('nav-tab-resorts').click()
+    await clickNavTab(page, 'resorts')
     await page.waitForTimeout(1000)
 
     const sparkleBtn = page.getByRole('button', { name: /ai|sparkle|search/i })
@@ -96,7 +97,7 @@ test.describe('SSE streaming (LLM responses)', () => {
     if (await analyseBtn.isVisible()) {
       await analyseBtn.click()
       await page.waitForTimeout(500)
-      await page.getByTestId('nav-tab-overview').click()
+      await clickNavTab(page, 'overview')
       await page.waitForTimeout(1000)
 
       const consoleErrors: string[] = []
@@ -104,7 +105,7 @@ test.describe('SSE streaming (LLM responses)', () => {
         if (msg.type() === 'error') consoleErrors.push(msg.text())
       })
 
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await page.waitForTimeout(500)
 
       const uncaughtErrors = consoleErrors.filter(

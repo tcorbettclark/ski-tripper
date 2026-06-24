@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { clickNavTab } from './helpers/navigation'
 import { isMobile, screenshot } from './helpers/screenshot'
 import {
   deleteAllEmails,
@@ -113,14 +114,14 @@ test.describe('Responsive layout and visual', () => {
   test('resorts tab renders without overflow', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Resorts trip')
-    await page.getByTestId('nav-tab-resorts').click()
+    await clickNavTab(page, 'resorts')
     await screenshot(page, 'resorts-tab', 'visible', proj)
   })
 
   test('proposals tab renders without overflow', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Proposals trip')
-    await page.getByTestId('nav-tab-proposals').click()
+    await clickNavTab(page, 'proposals')
     await expect(page.getByTestId('new-proposal-btn')).toBeVisible()
     await screenshot(page, 'proposals-tab', 'visible', proj)
   })
@@ -128,7 +129,7 @@ test.describe('Responsive layout and visual', () => {
   test('voting tab renders without overflow', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Voting trip')
-    await page.getByTestId('nav-tab-poll').click()
+    await clickNavTab(page, 'poll')
     await screenshot(page, 'voting-tab', 'visible', proj)
   })
 
@@ -166,20 +167,20 @@ test.describe('Responsive layout and visual', () => {
       {
         name: 'resorts',
         action: async () => {
-          await page.getByTestId('nav-tab-resorts').click()
+          await clickNavTab(page, 'resorts')
           await page.waitForTimeout(1000)
         },
       },
       {
         name: 'proposals',
         action: async () => {
-          await page.getByTestId('nav-tab-proposals').click()
+          await clickNavTab(page, 'proposals')
         },
       },
       {
         name: 'poll',
         action: async () => {
-          await page.getByTestId('nav-tab-poll').click()
+          await clickNavTab(page, 'poll')
         },
       },
     ]
@@ -212,15 +213,15 @@ test.describe('Responsive layout and visual', () => {
     })
 
     await test.step('clicking each tab switches content', async () => {
-      await page.getByTestId('nav-tab-resorts').click()
+      await clickNavTab(page, 'resorts')
       await page.waitForTimeout(300)
       await screenshot(page, 'desktop-tabs', 'resorts', proj)
 
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await page.waitForTimeout(300)
       await screenshot(page, 'desktop-tabs', 'proposals', proj)
 
-      await page.getByTestId('nav-tab-poll').click()
+      await clickNavTab(page, 'poll')
       await page.waitForTimeout(300)
       await screenshot(page, 'desktop-tabs', 'poll', proj)
     })

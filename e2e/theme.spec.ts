@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { assertNoContrastViolations } from './helpers/axe'
+import { clickNavTab } from './helpers/navigation'
 import { screenshot } from './helpers/screenshot'
 import { deleteAllEmails, setupUserWithTrip } from './helpers/setup'
 
@@ -167,13 +168,13 @@ test.describe('Theme', () => {
     })
 
     await test.step('resorts tab contrast check', async () => {
-      await page.getByTestId('nav-tab-resorts').click()
+      await clickNavTab(page, 'resorts')
       await page.waitForTimeout(500)
       await assertNoContrastViolations(page)
     })
 
     await test.step('proposals tab contrast check', async () => {
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await assertNoContrastViolations(page)
     })
 
@@ -199,19 +200,19 @@ test.describe('Theme', () => {
     })
 
     await test.step('resorts tab dark mode', async () => {
-      await page.getByTestId('nav-tab-resorts').click()
+      await clickNavTab(page, 'resorts')
       await page.waitForTimeout(1000)
       await screenshot(page, 'dark-theme', 'resorts', proj)
       await assertNoContrastViolations(page)
     })
 
     await test.step('proposals tab dark mode', async () => {
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await screenshot(page, 'dark-theme', 'proposals', proj)
     })
 
     await test.step('poll tab dark mode', async () => {
-      await page.getByTestId('nav-tab-poll').click()
+      await clickNavTab(page, 'poll')
       await screenshot(page, 'dark-theme', 'poll', proj)
     })
   })

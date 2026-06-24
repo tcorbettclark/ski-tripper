@@ -3,14 +3,14 @@
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --color-accent: #0284c7;
+  --color-accent: #076fa3;
   --color-bgPrimary: #eef4fd;
   --color-bgCard: #ffffff;
   --color-bgInput: #e8f0fa;
   --color-textPrimary: #0f172a;
-  --color-textSecondary: #64748b;
+  --color-textSecondary: #576880;
   --color-textData: #334155;
-  --color-error: #dc2626;
+  --color-error: #c42b2b;
   --color-overlay: rgba(0, 0, 0, 0.4);
   --color-shadow: rgba(0, 0, 0, 0.15);
   --color-pisteBeginner: #3a78c0;
@@ -44,12 +44,12 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --color-accent: #3bbde8;
+  --color-accent: #4fc3f7;
   --color-bgPrimary: #07111f;
   --color-bgCard: #0d1e30;
   --color-bgInput: #060f1b;
   --color-textPrimary: #edf6fc;
-  --color-textSecondary: #6a94ae;
+  --color-textSecondary: #94b3c8;
   --color-textData: #b0cedf;
   --color-error: #ff6b6b;
   --color-overlay: rgba(4, 12, 24, 0.85);

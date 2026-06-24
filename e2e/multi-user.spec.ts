@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { clickNavTab } from './helpers/navigation'
 import { screenshot } from './helpers/screenshot'
 import { deleteAllEmails, signupVerifyAndLogin } from './helpers/setup'
 import { PollPage } from './pages/poll.page'
@@ -50,6 +51,7 @@ test.describe('Multi-user scenarios', () => {
           accommodations: ['Chalet'],
         })
         const trips1 = new TripsPage(page1)
+        await clickNavTab(page1, 'overview')
         const code = await trips1.getInviteCode()
 
         const trips2 = new TripsPage(page2)
@@ -86,6 +88,7 @@ test.describe('Multi-user scenarios', () => {
       await proposals1.addAccommodation('Hotel Perm')
       await proposals1.submitProposal()
 
+      await clickNavTab(page1, 'overview')
       const code = await trips1.getInviteCode()
 
       await signupVerifyAndLogin(page2)
@@ -113,7 +116,8 @@ test.describe('Multi-user scenarios', () => {
 
       await test.step('participant can vote', async () => {
         await page2
-          .getByText('Permissions trip')
+          .getByRole('heading', { name: /Permissions trip/i })
+          .first()
           .click()
           .catch(() => {})
         const poll2 = new PollPage(page2)
@@ -157,6 +161,7 @@ test.describe('Multi-user scenarios', () => {
       await proposals1.addAccommodation('Hotel Vote')
       await proposals1.submitProposal()
 
+      await clickNavTab(page1, 'overview')
       const code = await trips1.getInviteCode()
 
       await signupVerifyAndLogin(page2)
@@ -182,7 +187,8 @@ test.describe('Multi-user scenarios', () => {
       await test.step('user 2 votes', async () => {
         const poll2 = new PollPage(page2)
         await page2
-          .getByText('Voting trip')
+          .getByRole('heading', { name: /Voting trip/i })
+          .first()
           .click()
           .catch(() => {})
         await poll2.clickVotingTab()

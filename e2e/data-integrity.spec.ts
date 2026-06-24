@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { clickNavTab } from './helpers/navigation'
 import { screenshot } from './helpers/screenshot'
 import {
   deleteAllEmails,
@@ -47,6 +48,7 @@ test.describe('Data integrity', () => {
     await setupUserWithTrip(page, 'Invalid code trip')
 
     await test.step('joining with invalid code shows error', async () => {
+      await page.getByRole('button', { name: /my trips/i }).click()
       await page.getByTestId('join-trip-btn').click()
       await page.getByTestId('trip-code').fill('invalid-code-xyz')
       await page.getByTestId('trip-join').click()
@@ -118,7 +120,7 @@ test.describe('Data integrity', () => {
     await setupUserWithTrip(page, 'Poll constraints trip')
 
     await test.step('cannot create poll without submitted proposals', async () => {
-      await page.getByTestId('nav-tab-poll').click()
+      await clickNavTab(page, 'poll')
       const createPollBtn = page.getByTestId('create-poll-btn')
       if (await createPollBtn.isVisible()) {
         expect(await createPollBtn.isDisabled()).toBe(true)

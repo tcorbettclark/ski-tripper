@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test'
+import { clickNavTab } from '../helpers/navigation'
 
 export class PollPage {
   readonly page: Page
@@ -6,7 +7,6 @@ export class PollPage {
   readonly createPollButton: Locator
   readonly closePollButton: Locator
   readonly saveVoteButton: Locator
-  readonly votingTab: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -14,11 +14,10 @@ export class PollPage {
     this.createPollButton = page.getByTestId('create-poll-btn')
     this.closePollButton = page.getByTestId('close-poll-btn')
     this.saveVoteButton = page.getByTestId('save-vote-btn')
-    this.votingTab = page.getByTestId('nav-tab-poll')
   }
 
   async clickVotingTab() {
-    await this.votingTab.click()
+    await clickNavTab(this.page, 'poll')
   }
 
   async createPoll(durationDays = 7) {

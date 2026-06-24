@@ -3,6 +3,7 @@ import {
   assertNoAccessibilityViolations,
   assertNoContrastViolations,
 } from './helpers/axe'
+import { clickNavTab } from './helpers/navigation'
 import { screenshot } from './helpers/screenshot'
 import { deleteAllEmails, setupUserWithTrip } from './helpers/setup'
 
@@ -130,18 +131,18 @@ test.describe('Accessibility', () => {
     })
 
     await test.step('resorts accessibility', async () => {
-      await page.getByTestId('nav-tab-resorts').click()
+      await clickNavTab(page, 'resorts')
       await page.waitForTimeout(1000)
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
 
     await test.step('proposals accessibility', async () => {
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
 
     await test.step('poll accessibility', async () => {
-      await page.getByTestId('nav-tab-poll').click()
+      await clickNavTab(page, 'poll')
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
 
@@ -156,14 +157,14 @@ test.describe('Accessibility', () => {
     await setupUserWithTrip(page, 'Contrast trip')
     await assertNoContrastViolations(page)
 
-    await page.getByTestId('nav-tab-resorts').click()
+    await clickNavTab(page, 'resorts')
     await page.waitForTimeout(500)
     await assertNoContrastViolations(page)
 
-    await page.getByTestId('nav-tab-proposals').click()
+    await clickNavTab(page, 'proposals')
     await assertNoContrastViolations(page)
 
-    await page.getByTestId('nav-tab-poll').click()
+    await clickNavTab(page, 'poll')
     await assertNoContrastViolations(page)
 
     await screenshot(page, 'a11y', 'contrast-checks', proj)
@@ -182,13 +183,13 @@ test.describe('Accessibility', () => {
     })
 
     await test.step('tab order matches visual order', async () => {
-      await page.getByTestId('nav-tab-overview').click()
+      await clickNavTab(page, 'overview')
       await page.waitForTimeout(300)
-      await page.getByTestId('nav-tab-resorts').click()
+      await clickNavTab(page, 'resorts')
       await page.waitForTimeout(300)
-      await page.getByTestId('nav-tab-proposals').click()
+      await clickNavTab(page, 'proposals')
       await page.waitForTimeout(300)
-      await page.getByTestId('nav-tab-poll').click()
+      await clickNavTab(page, 'poll')
       await page.waitForTimeout(300)
       await screenshot(page, 'a11y', 'tab-roles', proj)
     })
@@ -197,7 +198,7 @@ test.describe('Accessibility', () => {
   test('resort table rows are focusable', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'A11y table trip')
-    await page.getByTestId('nav-tab-resorts').click()
+    await clickNavTab(page, 'resorts')
     await page.waitForTimeout(2000)
 
     await test.step('table has appropriate ARIA', async () => {
@@ -252,10 +253,10 @@ test.describe('Accessibility', () => {
     await setupUserWithTrip(page, 'Dark contrast trip')
 
     await assertNoContrastViolations(page)
-    await page.getByTestId('nav-tab-resorts').click()
+    await clickNavTab(page, 'resorts')
     await page.waitForTimeout(500)
     await assertNoContrastViolations(page)
-    await page.getByTestId('nav-tab-proposals').click()
+    await clickNavTab(page, 'proposals')
     await assertNoContrastViolations(page)
 
     await screenshot(page, 'a11y', 'dark-contrast-checks', proj)

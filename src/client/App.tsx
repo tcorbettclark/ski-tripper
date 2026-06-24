@@ -367,7 +367,7 @@ export default function App({
     )
     if (resetPasswordToken) {
       return (
-        <>
+        <main>
           {aboutButton}
           <ResetPasswordForm
             token={resetPasswordToken}
@@ -380,12 +380,12 @@ export default function App({
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
-        </>
+        </main>
       )
     }
     if (emailChangeToken) {
       return (
-        <>
+        <main>
           {aboutButton}
           <ConfirmEmailChangeScreen
             token={emailChangeToken}
@@ -400,21 +400,21 @@ export default function App({
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
-        </>
+        </main>
       )
     }
     if (page === 'forgotPassword') {
       return (
-        <>
+        <main>
           {aboutButton}
           <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
-        </>
+        </main>
       )
     }
     return (
-      <>
+      <main>
         {aboutButton}
         <AuthForm
           mode={page as 'login' | 'signup'}
@@ -429,19 +429,21 @@ export default function App({
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
-      </>
+      </main>
     )
   }
 
   if (!user.emailVerification) {
     return (
-      <EmailVerifyScreen
-        email={user.email}
-        onBackToLogin={handleLogout}
-        requestVerification={(email: string) =>
-          getPb().collection('users').requestVerification(email)
-        }
-      />
+      <main>
+        <EmailVerifyScreen
+          email={user.email}
+          onBackToLogin={handleLogout}
+          requestVerification={(email: string) =>
+            getPb().collection('users').requestVerification(email)
+          }
+        />
+      </main>
     )
   }
 
@@ -449,7 +451,7 @@ export default function App({
 
   if (!preferences) {
     return (
-      <div
+      <main
         style={{
           fontFamily: fonts.body,
           background: colors.bgPrimary,
@@ -503,12 +505,12 @@ export default function App({
             createPreferences={createPreferences}
           />
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div
+    <main
       style={{
         fontFamily: fonts.body,
         background: colors.bgPrimary,
@@ -630,6 +632,6 @@ export default function App({
         updateName={updateName}
       />
       <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
-    </div>
+    </main>
   )
 }

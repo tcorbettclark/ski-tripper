@@ -29,7 +29,10 @@ export class TripsPage {
   }
 
   async navigateToTrip(description: string) {
-    await this.page.getByText(description).click()
+    await this.page
+      .getByRole('heading', { name: new RegExp(description, 'i') })
+      .first()
+      .click()
     await expect(this.inviteCode).toBeVisible()
   }
 

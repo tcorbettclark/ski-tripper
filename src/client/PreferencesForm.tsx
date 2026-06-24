@@ -196,9 +196,7 @@ export default function PreferencesForm({
                 <span
                   style={{
                     ...styles.checkboxText,
-                    color: checked
-                      ? colors.textPrimary
-                      : mix('--color-textSecondary', 0.6),
+                    color: checked ? colors.textPrimary : colors.textSecondary,
                   }}
                 >
                   {opt}

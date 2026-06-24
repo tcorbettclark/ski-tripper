@@ -114,14 +114,12 @@ const footerStyles = {
   link: {
     color: colors.accent,
     textDecoration: 'none',
-    opacity: 0.7,
   },
   iconLink: {
     color: colors.accent,
     textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
-    opacity: 0.7,
   },
   warning: {
     background: colors.error,
@@ -134,7 +132,6 @@ const footerStyles = {
     display: 'inline-flex',
     alignItems: 'center',
     gap: '5px',
-    opacity: 0.85,
   },
   separator: {
     color: colors.textSecondary,
