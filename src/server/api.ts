@@ -6,7 +6,7 @@ import {
   server_get_ollama_api_key,
   server_get_ollama_model_analysis,
   server_get_ollama_model_preference_search,
-} from '../shared/env'
+} from './env'
 import {
   type Accommodation,
   buildSystemPrompt as buildAnalysisSystemPrompt,

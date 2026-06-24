@@ -8,7 +8,7 @@ import type { JSONSchema } from 'zod/v4/core'
 import {
   server_get_exa_api_key,
   server_get_ollama_api_key,
-} from '../../src/shared/env'
+} from '../../src/server/env'
 
 export const OLLAMA_HOST = 'https://ollama.com'
 

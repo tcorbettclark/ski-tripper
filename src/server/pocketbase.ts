@@ -4,7 +4,7 @@ import {
   server_get_pocketbase_admin_password,
   server_get_pocketbase_hostname,
   server_get_pocketbase_port,
-} from '../shared/env'
+} from './env'
 
 let adminClient: PocketBase | null = null
 

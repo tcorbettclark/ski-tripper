@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { act, renderHook } from '@testing-library/react'
-import { browser_get_api_url } from '../shared/env'
+import { browser_get_api_url } from './env'
 import useSSEStream from './useSSEStream'
 
 function createSSEStream(events: string[]): ReadableStream<Uint8Array> {

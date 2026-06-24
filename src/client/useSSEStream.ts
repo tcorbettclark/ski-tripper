@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { browser_get_api_url } from '../shared/env'
 import type { LlmStreamStatus } from '../shared/types.d'
 import { getPb } from './backend'
+import { browser_get_api_url } from './env'
 
 const TIMEOUT_MS = 120_000
 

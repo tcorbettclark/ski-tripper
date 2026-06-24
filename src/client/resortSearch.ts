@@ -1,3 +1,4 @@
+import { browser_get_is_test } from './env'
 import {
   cosineSimilarity,
   lexicalBoost,
@@ -22,32 +23,31 @@ function notifyReady(): void {
   readyListeners.length = 0
 }
 
-const initPromise =
-  typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
-    ? (async () => {
-        modelFailed = true
-        notifyReady()
-      })()
-    : (async () => {
-        try {
-          const { pipeline } = await import('@huggingface/transformers')
-          const extractor = await pipeline('feature-extraction', MODEL_ID, {
-            dtype: 'uint8',
+const initPromise = browser_get_is_test()
+  ? (async () => {
+      modelFailed = true
+      notifyReady()
+    })()
+  : (async () => {
+      try {
+        const { pipeline } = await import('@huggingface/transformers')
+        const extractor = await pipeline('feature-extraction', MODEL_ID, {
+          dtype: 'uint8',
+        })
+        embedder = async (text: string): Promise<number[]> => {
+          const output = await extractor(text, {
+            pooling: 'mean',
+            normalize: true,
           })
-          embedder = async (text: string): Promise<number[]> => {
-            const output = await extractor(text, {
-              pooling: 'mean',
-              normalize: true,
-            })
-            return Array.from(output.data as Float32Array)
-          }
-          modelReady = true
-        } catch (err) {
-          console.error('Failed to load search model:', err)
-          modelFailed = true
+          return Array.from(output.data as Float32Array)
         }
-        notifyReady()
-      })()
+        modelReady = true
+      } catch (err) {
+        console.error('Failed to load search model:', err)
+        modelFailed = true
+      }
+      notifyReady()
+    })()
 
 export function initSearchModel(): void {
   initPromise.catch(() => {})

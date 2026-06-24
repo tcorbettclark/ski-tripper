@@ -14,7 +14,7 @@ import {
   server_get_pocketbase_admin_email,
   server_get_pocketbase_admin_password,
   server_get_pocketbase_external_url,
-} from '../src/shared/env'
+} from '../src/server/env'
 import {
   type AuditIssue,
   auditEnrichedData,

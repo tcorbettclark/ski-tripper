@@ -1,8 +1,5 @@
-import {
-  server_get_server_hostname,
-  server_get_server_port,
-} from '../shared/env'
 import { handleAnalyseProposal, handlePreferenceSearch } from './api'
+import { server_get_server_hostname, server_get_server_port } from './env'
 
 function main() {
   const hostname = server_get_server_hostname()

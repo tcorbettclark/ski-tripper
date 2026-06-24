@@ -1,5 +1,4 @@
 import PocketBase from 'pocketbase'
-import { browser_get_pocketbase_url } from '../shared/env'
 import type {
   Accommodation,
   Discussion,
@@ -11,6 +10,7 @@ import type {
   Trip,
   Vote,
 } from '../shared/types.d'
+import { browser_get_pocketbase_url } from './env'
 import { dayjs, ensureUrlScheme, isValidUrl, randomThreeWords } from './utils'
 
 let _pb: PocketBase | undefined
