@@ -8,9 +8,9 @@ import { $, configure, dispose } from '@xec-sh/core'
 const DROPLET_NAME = 'ski-tripper'
 
 const PB_INCLUDES_DIR = '/etc/caddy/pb-includes'
-const SNIPPET_FILE = 'block-pb-admin.caddy'
-const SNIPPET_PATH = `${PB_INCLUDES_DIR}/${SNIPPET_FILE}`
-const DISABLED_PATH = `${PB_INCLUDES_DIR}/${SNIPPET_FILE}.disabled`
+const BLOCK_ADMIN_FILE = 'block-pb-admin.caddy'
+const BLOCK_ADMIN_PATH = `${PB_INCLUDES_DIR}/${BLOCK_ADMIN_FILE}`
+const BLOCK_ADMIN_DISABLED_PATH = `${PB_INCLUDES_DIR}/${BLOCK_ADMIN_FILE}.disabled`
 
 const GREEN = '\x1b[32m'
 const RED = '\x1b[31m'
@@ -54,10 +54,10 @@ function printHelp() {
   console.log(`Usage: bun run infra:mode <command>
 
 Commands:
-  debug   Enable PocketBase admin UI (renames ${SNIPPET_FILE} to .disabled, reloads Caddy)
-  prod    Block PocketBase admin UI (renames ${SNIPPET_FILE} back, reloads Caddy)
+  debug   Enable PocketBase admin UI (renames ${BLOCK_ADMIN_FILE} to .disabled, reloads Caddy)
+  prod    Block PocketBase admin UI (renames ${BLOCK_ADMIN_FILE} back, reloads Caddy)
 
-The admin UI is blocked in production by ${SNIPPET_PATH}, a Caddy include file
+The admin UI is blocked in production by ${BLOCK_ADMIN_PATH}, a Caddy include file
 that returns 403 for /_/* requests on the PocketBase domain. This script toggles
 that file by renaming it with a .disabled suffix.
 
@@ -71,9 +71,9 @@ async function modeDebug() {
   const root = await ssh(ip)
 
   const disabledExists =
-    (await root`test -f ${DISABLED_PATH}`.nothrow()).exitCode === 0
+    (await root`test -f ${BLOCK_ADMIN_DISABLED_PATH}`.nothrow()).exitCode === 0
   const enabledExists =
-    (await root`test -f ${SNIPPET_PATH}`.nothrow()).exitCode === 0
+    (await root`test -f ${BLOCK_ADMIN_PATH}`.nothrow()).exitCode === 0
 
   if (disabledExists && !enabledExists) {
     console.log(
@@ -83,16 +83,16 @@ async function modeDebug() {
   }
 
   if (enabledExists) {
-    await root`mv ${SNIPPET_PATH} ${DISABLED_PATH}`
+    await root`mv ${BLOCK_ADMIN_PATH} ${BLOCK_ADMIN_DISABLED_PATH}`
     console.log(
-      `${GREEN}Renamed ${SNIPPET_FILE} → ${SNIPPET_FILE}.disabled${RESET}`
+      `${GREEN}Renamed ${BLOCK_ADMIN_FILE} → ${BLOCK_ADMIN_FILE}.disabled${RESET}`
     )
   } else {
     console.log(
-      `${YELLOW}Warning: Neither ${SNIPPET_PATH} nor ${DISABLED_PATH} found. Creating disabled placeholder.${RESET}`
+      `${YELLOW}Warning: Neither ${BLOCK_ADMIN_PATH} nor ${BLOCK_ADMIN_DISABLED_PATH} found. Creating disabled placeholder.${RESET}`
     )
     await root`mkdir -p ${PB_INCLUDES_DIR}`
-    await root`touch ${DISABLED_PATH}`
+    await root`touch ${BLOCK_ADMIN_DISABLED_PATH}`
   }
 
   await root`systemctl reload caddy`
@@ -111,9 +111,9 @@ async function modeProd() {
   const root = await ssh(ip)
 
   const enabledExists =
-    (await root`test -f ${SNIPPET_PATH}`.nothrow()).exitCode === 0
+    (await root`test -f ${BLOCK_ADMIN_PATH}`.nothrow()).exitCode === 0
   const disabledExists =
-    (await root`test -f ${DISABLED_PATH}`.nothrow()).exitCode === 0
+    (await root`test -f ${BLOCK_ADMIN_DISABLED_PATH}`.nothrow()).exitCode === 0
 
   if (enabledExists && !disabledExists) {
     console.log(`${GREEN}Already in prod mode — admin UI is blocked${RESET}`)
@@ -121,13 +121,13 @@ async function modeProd() {
   }
 
   if (disabledExists) {
-    await root`mv ${DISABLED_PATH} ${SNIPPET_PATH}`
+    await root`mv ${BLOCK_ADMIN_DISABLED_PATH} ${BLOCK_ADMIN_PATH}`
     console.log(
-      `${GREEN}Renamed ${SNIPPET_FILE}.disabled → ${SNIPPET_FILE}${RESET}`
+      `${GREEN}Renamed ${BLOCK_ADMIN_FILE}.disabled → ${BLOCK_ADMIN_FILE}${RESET}`
     )
   } else if (!enabledExists) {
     console.log(
-      `${RED}${BOLD}Error:${RESET} No file found at ${SNIPPET_PATH} or ${DISABLED_PATH}`
+      `${RED}${BOLD}Error:${RESET} No file found at ${BLOCK_ADMIN_PATH} or ${BLOCK_ADMIN_DISABLED_PATH}`
     )
     console.log(
       `  Run ${BOLD}bun run infra:provision deploy${RESET} to deploy the snippet first.`
