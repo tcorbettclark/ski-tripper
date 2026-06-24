@@ -505,9 +505,9 @@ async function main() {
     description: string,
     instructions: string
   ): Promise<void> {
-    console.log(`${ANSI_BOLD}${description}${ANSI_RESET}`)
-    console.log(`  ${instructions}\n`)
-    const confirmed = await askYesNo('Does this work as expected?')
+    const confirmed = await askYesNo(
+      `${ANSI_BOLD}${description}${ANSI_RESET}\n  ${instructions}`
+    )
     if (confirmed) {
       manualPassed.push(description)
       console.log(`  ${PASS} ${description}\n`)
