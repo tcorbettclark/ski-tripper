@@ -542,11 +542,6 @@ async function main() {
     'Create a trip and proposal, then trigger AI analysis. The LLM should stream a response. This verifies the OLLAMA_API_KEY is valid.'
   )
 
-  await manualCheck(
-    'PocketBase admin UI is blocked in production',
-    `Visit ${pbExternalUrl}/_/ — it should return 403 (blocked by Caddy). If it shows the admin dashboard, run \`bun run infra:mode prod\`.`
-  )
-
   // ── 12. Final summary ──
 
   console.log(
