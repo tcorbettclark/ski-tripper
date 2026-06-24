@@ -523,13 +523,8 @@ async function main() {
   )
 
   await manualCheck(
-    'PocketBase signup/login works',
-    `Try to create an account or log in at ${appUrl}. The authentication flow should work end-to-end.`
-  )
-
-  await manualCheck(
-    'Email verification arrives',
-    'If you sign up, check that a verification email arrives (or would arrive — SMTP configured via Resend in prod).'
+    'Auth + SMTP works (signup, verification email, login)',
+    `Sign up at ${appUrl} — a verification email should arrive (SMTP via Resend). Then verify and log in.`
   )
 
   await manualCheck(
