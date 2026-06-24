@@ -267,6 +267,17 @@ async function configureDroplet() {
   await root`dpkg-reconfigure -plow unattended-upgrades`
   success('Unattended upgrades configured')
 
+  step('Configuring journald log rotation')
+  await root`bash -c "cat > /etc/systemd/journald.conf << 'EOF'
+[Journal]
+Storage=persistent
+SystemMaxUse=100M
+SystemMaxFileSize=10M
+MaxRetentionSec=14day
+EOF"`
+  await root`systemctl restart systemd-journald`
+  success('Journald log rotation configured')
+
   const swapCheck = await root`swapon --show --noheadings`.nothrow().text()
   if (!swapCheck.includes('/swapfile')) {
     step('Setting up swap')
