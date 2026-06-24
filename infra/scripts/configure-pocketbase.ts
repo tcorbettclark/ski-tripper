@@ -39,7 +39,6 @@ const OVERRIDES: Record<
   'smtp.tls': { env: 'POCKETBASE_SMTP_TLS', type: 'boolean' },
   'meta.appURL': { env: 'POCKETBASE_APP_URL', type: 'string' },
   'meta.senderAddress': { env: 'POCKETBASE_SENDER_ADDRESS', type: 'string' },
-  'meta.hideControls': { env: 'POCKETBASE_HIDE_CONTROLS', type: 'boolean' },
 }
 
 const SENSITIVE_KEYS = new Set([

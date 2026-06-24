@@ -567,6 +567,19 @@ async function deploy() {
   await root`chown caddy:caddy /etc/caddy/Caddyfile`
   success('Caddyfile copied')
 
+  step('Deploying Caddy PB include to block admin UI')
+  await root`mkdir -p /etc/caddy/pb-includes`
+  await root`cp ${REPO_DIR}/infra/caddy/block-pb-admin.caddy /etc/caddy/pb-includes/block-pb-admin.caddy`
+  await root`chown -R caddy:caddy /etc/caddy/pb-includes`
+  // Reset to prod mode in case debug mode was left enabled
+  if (
+    await root`test -f /etc/caddy/pb-includes/block-pb-admin.caddy.disabled`.nothrow()
+  ) {
+    await root`mv /etc/caddy/pb-includes/block-pb-admin.caddy.disabled /etc/caddy/pb-includes/block-pb-admin.caddy`
+    success('Reset from debug mode to prod mode')
+  }
+  success('Caddy PB include deployed (admin UI blocked)')
+
   step('Creating PocketBase superuser')
   const adminEmail = env.POCKETBASE_ADMIN_EMAIL
   const adminPassword = env.POCKETBASE_ADMIN_PASSWORD

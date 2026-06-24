@@ -89,6 +89,9 @@ __PUBLIC_POCKETBASE_DOMAIN__ {
 		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:; font-src 'self'; frame-ancestors 'none'"
 	}
 
+	# Include optional config fragments (e.g. block-pb-admin.caddy to block admin UI)
+	import /etc/caddy/pb-includes/*.caddy
+
 	reverse_proxy __POCKETBASE_HOSTNAME__:__POCKETBASE_PORT__ {
 		# PocketBase docs recommend 360s for long-running operations (backups, etc.)
 		transport http {

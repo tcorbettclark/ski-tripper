@@ -129,12 +129,15 @@ async function main() {
   })
 
   await check('HTTPS responds on PocketBase domain', async () => {
-    const res = await fetchWithTimeout(pbExternalUrl)
-    if (!res.ok && res.status !== 200) {
-      fail(`HTTPS responds on PocketBase domain`, `Status ${res.status}`)
-      return
+    try {
+      const res = await fetchWithTimeout(pbExternalUrl)
+      pass(`HTTPS responds on PocketBase domain (status ${res.status})`)
+    } catch (err) {
+      fail(
+        'HTTPS responds on PocketBase domain',
+        err instanceof Error ? err.message : String(err)
+      )
     }
-    pass('HTTPS responds on PocketBase domain')
   })
 
   // ── 2. WWW redirect ──
@@ -396,16 +399,16 @@ async function main() {
     pass('PocketBase health check passes')
   })
 
-  await check('PocketBase admin UI is hidden', async () => {
+  await check('PocketBase admin UI is blocked (returns 403)', async () => {
     const res = await fetchWithTimeout(`${pbExternalUrl}/_/`)
-    if (res.status === 200) {
+    if (res.status !== 403) {
       fail(
-        'PocketBase admin UI is hidden',
-        'Admin UI is accessible (expected 403/404)'
+        'PocketBase admin UI is blocked (returns 403)',
+        `Expected 403, got ${res.status}`
       )
       return
     }
-    pass(`PocketBase admin UI is hidden (status ${res.status})`)
+    pass('PocketBase admin UI is blocked (returns 403)')
   })
 
   // ── 9. API server ──
@@ -540,8 +543,8 @@ async function main() {
   )
 
   await manualCheck(
-    'PocketBase admin UI is inaccessible in production',
-    `Visit ${pbExternalUrl}/_/ — it should return an error (403/404), not show the admin dashboard.`
+    'PocketBase admin UI is blocked in production',
+    `Visit ${pbExternalUrl}/_/ — it should return 403 (blocked by Caddy). If it shows the admin dashboard, run \`bun run infra:mode prod\`.`
   )
 
   // ── 12. Final summary ──

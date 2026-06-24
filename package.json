@@ -49,6 +49,7 @@
     "check:fix": "bun tsc --noEmit && biome check --write",
     "preversion": "bun run check && bun run test",
     "infra:provision": "bun run infra/scripts/provision.ts",
+    "infra:mode": "bun run infra/scripts/mode.ts",
     "infra:ssh": "doctl compute ssh ski-tripper --ssh-key-path ~/.ssh/id_ed25519",
     "tools:resorts": "bun run tools/resorts.ts"
   },

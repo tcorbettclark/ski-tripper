@@ -25,7 +25,6 @@
     appURL: "${POCKETBASE_APP_URL}",
     senderName: "Ski Tripper",
     senderAddress: "${POCKETBASE_SENDER_ADDRESS}",
-    hideControls: "${POCKETBASE_HIDE_CONTROLS}",
     accentColor: "#1055c9",
   },
 
