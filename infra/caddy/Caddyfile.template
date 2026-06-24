@@ -15,6 +15,10 @@
 	-Server
 }
 
+www.__PUBLIC_DOMAIN__ {
+	redir https://__PUBLIC_DOMAIN__{uri} permanent
+}
+
 __PUBLIC_DOMAIN__ {
 	log
 
