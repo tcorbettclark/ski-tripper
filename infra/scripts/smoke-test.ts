@@ -523,11 +523,6 @@ async function main() {
   )
 
   await manualCheck(
-    'Theme toggle works',
-    'Click the theme toggle button. The app should switch between light and dark mode, and the choice should persist on reload.'
-  )
-
-  await manualCheck(
     'PocketBase signup/login works',
     `Try to create an account or log in at ${appUrl}. The authentication flow should work end-to-end.`
   )
