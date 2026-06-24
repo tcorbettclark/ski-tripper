@@ -140,7 +140,6 @@ async function getReservedIp(): Promise<string | undefined> {
 async function getDropletIp(): Promise<string> {
   const reservedIp = await getReservedIp()
   if (reservedIp) {
-    success(`Using reserved IP: ${reservedIp}`)
     return reservedIp
   }
   const result =
@@ -515,6 +514,8 @@ async function deploy() {
 
   const env = decryptEnvVars()
   const ip = await getDropletIp()
+  const reservedIp = await getReservedIp()
+  if (reservedIp) success(`Using reserved IP: ${reservedIp}`)
   step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
 
   await scanHostKey(ip)
@@ -686,11 +687,11 @@ async function deploy() {
     }
   }
 
-  await status(env)
+  await status(env, ip)
 }
 
-async function status(env?: Record<string, string>) {
-  const ip = await getDropletIp()
+async function status(env?: Record<string, string>, existingIp?: string) {
+  const ip = existingIp ?? (await getDropletIp())
   step('Checking service status')
   await $`ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${ip} sleep 3`.nothrow()
 
