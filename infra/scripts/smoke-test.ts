@@ -1,0 +1,578 @@
+#!/usr/bin/env bun
+
+const ANSI_RESET = '\x1b[0m'
+const ANSI_BOLD = '\x1b[1m'
+const ANSI_CYAN = '\x1b[36m'
+const ANSI_GREEN = '\x1b[32m'
+const ANSI_RED = '\x1b[31m'
+
+const PASS = `${ANSI_GREEN}PASS${ANSI_RESET}`
+const FAIL = `${ANSI_RED}FAIL${ANSI_RESET}`
+
+let passed = 0
+let failed = 0
+
+function section(title: string) {
+  console.log(`\n${ANSI_BOLD}${ANSI_CYAN}━━ ${title} ━━${ANSI_RESET}`)
+}
+
+function pass(msg: string) {
+  passed++
+  console.log(`  ${PASS} ${msg}`)
+}
+
+function fail(msg: string, detail?: string) {
+  failed++
+  console.log(`  ${FAIL} ${msg}`)
+  if (detail) console.log(`        ${ANSI_RED}${detail}${ANSI_RESET}`)
+}
+
+async function fetchWithTimeout(
+  url: string,
+  opts: RequestInit & { timeout?: number } = {}
+): Promise<Response> {
+  const { timeout = 15000, ...rest } = opts
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeout)
+  try {
+    return await fetch(url, { ...rest, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function check(label: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn()
+  } catch (err) {
+    fail(label, err instanceof Error ? err.message : String(err))
+  }
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name]
+  if (!value) {
+    console.error(
+      `${ANSI_RED}${ANSI_BOLD}Error:${ANSI_RESET} Required env var ${name} is not set`
+    )
+    console.error(
+      `\nRun with: ${ANSI_BOLD}bun run env:prod bun run tools/smoke-test.ts${ANSI_RESET}`
+    )
+    process.exit(1)
+  }
+  return value
+}
+
+async function askYesNo(question: string): Promise<boolean> {
+  process.stdout.write(`${ANSI_BOLD}${question}${ANSI_RESET} [y/N] `)
+
+  return new Promise((resolve) => {
+    process.stdin.setRawMode(true)
+    process.stdin.resume()
+    process.stdin.once('data', (data) => {
+      process.stdin.setRawMode(false)
+      process.stdin.pause()
+      const answer = data.toString().trim().toLowerCase()
+      console.log()
+      resolve(answer === 'y' || answer === 'yes')
+    })
+  })
+}
+
+async function main() {
+  const domain = requireEnv('PUBLIC_DOMAIN')
+  const pbExternalUrl = requireEnv('POCKETBASE_EXTERNAL_URL')
+  const appUrl = requireEnv('PUBLIC_EXTERNAL_URL')
+
+  console.log(
+    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_BOLD}${ANSI_CYAN}  Ski Tripper — Production Smoke Test${ANSI_RESET}`
+  )
+  console.log(
+    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+  )
+  console.log(`  App:         ${appUrl}`)
+  console.log(`  PocketBase:  ${pbExternalUrl}`)
+
+  // ── 1. TLS / HTTPS ──
+
+  section('1. TLS / HTTPS')
+
+  await check('HTTPS responds on app domain', async () => {
+    const res = await fetchWithTimeout(appUrl)
+    if (!res.ok && res.status !== 200) {
+      fail(`HTTPS responds on app domain`, `Status ${res.status}`)
+      return
+    }
+    if (!res.url.startsWith('https://')) {
+      fail(
+        `HTTPS responds on app domain`,
+        `Redirected to non-HTTPS: ${res.url}`
+      )
+      return
+    }
+    pass('HTTPS responds on app domain')
+  })
+
+  await check('TLS certificate is valid', async () => {
+    try {
+      await fetchWithTimeout(appUrl)
+      pass(`TLS certificate is valid (no certificate error)`)
+    } catch (err) {
+      fail(
+        'TLS certificate is valid',
+        err instanceof Error ? err.message : String(err)
+      )
+    }
+  })
+
+  await check('HTTPS responds on PocketBase domain', async () => {
+    const res = await fetchWithTimeout(pbExternalUrl)
+    if (!res.ok && res.status !== 200) {
+      fail(`HTTPS responds on PocketBase domain`, `Status ${res.status}`)
+      return
+    }
+    pass('HTTPS responds on PocketBase domain')
+  })
+
+  // ── 2. WWW redirect ──
+
+  section('2. WWW redirect')
+
+  await check('www redirects to bare domain (301)', async () => {
+    const wwwUrl = appUrl.replace('://', '://www.')
+    const res = await fetchWithTimeout(wwwUrl, { redirect: 'manual' })
+    if (res.status !== 301) {
+      fail(
+        `www redirects to bare domain (301)`,
+        `Expected 301, got ${res.status}`
+      )
+      return
+    }
+    const location = res.headers.get('location') || ''
+    if (!location.includes(domain) || location.includes('www.')) {
+      fail(
+        'www redirects to bare domain (301)',
+        `Redirect location is ${location}, expected ${appUrl}`
+      )
+      return
+    }
+    pass('www redirects to bare domain (301)')
+  })
+
+  // ── 3. HTML / SPA ──
+
+  section('3. HTML / SPA')
+
+  await check('GET / returns 200 with HTML', async () => {
+    const res = await fetchWithTimeout(appUrl)
+    if (res.status !== 200) {
+      fail('GET / returns 200 with HTML', `Status ${res.status}`)
+      return
+    }
+    const text = await res.text()
+    if (!text.includes('<div id="root">')) {
+      fail(
+        'GET / returns 200 with HTML',
+        'Response does not contain <div id="root">'
+      )
+      return
+    }
+    pass('GET / returns 200 with HTML')
+  })
+
+  await check('SPA route /verify returns 200 with HTML', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/verify`)
+    if (res.status !== 200) {
+      fail('SPA route /verify returns 200 with HTML', `Status ${res.status}`)
+      return
+    }
+    const text = await res.text()
+    if (!text.includes('<div id="root">')) {
+      fail(
+        'SPA route /verify returns 200 with HTML',
+        'Response does not contain <div id="root">'
+      )
+      return
+    }
+    pass('SPA route /verify returns 200 with HTML')
+  })
+
+  await check('SPA route /reset-password returns 200 with HTML', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/reset-password`)
+    if (res.status !== 200) {
+      fail(
+        'SPA route /reset-password returns 200 with HTML',
+        `Status ${res.status}`
+      )
+      return
+    }
+    const text = await res.text()
+    if (!text.includes('<div id="root">')) {
+      fail(
+        'SPA route /reset-password returns 200 with HTML',
+        'Response does not contain <div id="root">'
+      )
+      return
+    }
+    pass('SPA route /reset-password returns 200 with HTML')
+  })
+
+  // ── 4. Static assets ──
+
+  section('4. Static assets')
+
+  await check('main.js bundle loads', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/main.js`)
+    if (res.status !== 200) {
+      fail('main.js bundle loads', `Status ${res.status}`)
+      return
+    }
+    const contentType = res.headers.get('content-type') || ''
+    if (
+      !contentType.includes('javascript') &&
+      !contentType.includes('octet-stream')
+    ) {
+      fail(
+        'main.js bundle loads',
+        `Content-Type is ${contentType}, expected application/javascript`
+      )
+      return
+    }
+    pass('main.js bundle loads')
+  })
+
+  await check('main.css bundle loads', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/main.css`)
+    if (res.status !== 200) {
+      fail('main.css bundle loads', `Status ${res.status}`)
+      return
+    }
+    pass('main.css bundle loads')
+  })
+
+  await check('robots.txt loads', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/robots.txt`)
+    if (res.status !== 200) {
+      fail('robots.txt loads', `Status ${res.status}`)
+      return
+    }
+    const text = await res.text()
+    if (!text.includes('User-agent')) {
+      fail('robots.txt loads', 'Content does not look like a robots.txt')
+      return
+    }
+    pass('robots.txt loads')
+  })
+
+  await check('.well-known/security.txt loads', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/.well-known/security.txt`)
+    if (res.status !== 200) {
+      fail('.well-known/security.txt loads', `Status ${res.status}`)
+      return
+    }
+    const text = await res.text()
+    if (!text.includes('security@ski-tripper.com')) {
+      fail(
+        '.well-known/security.txt loads',
+        'Content does not contain expected contact email'
+      )
+      return
+    }
+    pass('.well-known/security.txt loads')
+  })
+
+  await check('Flag image loads (fr.png)', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/flags/fr.png`)
+    if (res.status !== 200) {
+      fail('Flag image loads (fr.png)', `Status ${res.status}`)
+      return
+    }
+    const contentType = res.headers.get('content-type') || ''
+    if (
+      !contentType.includes('image/png') &&
+      !contentType.includes('octet-stream')
+    ) {
+      fail(
+        'Flag image loads (fr.png)',
+        `Content-Type is ${contentType}, expected image/png`
+      )
+      return
+    }
+    pass('Flag image loads (fr.png)')
+  })
+
+  // ── 5. Custom 404 ──
+
+  section('5. Custom 404')
+
+  await check('Non-existent path returns custom 404 page', async () => {
+    const res = await fetchWithTimeout(
+      `${appUrl}/this-page-does-not-exist-xyzzy`
+    )
+    if (res.status !== 404) {
+      fail(
+        'Non-existent path returns custom 404 page',
+        `Expected 404, got ${res.status}`
+      )
+      return
+    }
+    const text = await res.text()
+    if (!text.includes("doesn't exist") && !text.includes('404')) {
+      fail(
+        'Non-existent path returns custom 404 page',
+        "Response doesn't look like custom 404 page"
+      )
+      return
+    }
+    pass('Non-existent path returns custom 404 page')
+  })
+
+  // ── 6. Security headers ──
+
+  section('6. Security headers')
+
+  const securityHeaders: Record<string, string> = {
+    'strict-transport-security': 'max-age=',
+    'x-content-type-options': 'nosniff',
+    'x-frame-options': 'DENY',
+    'referrer-policy': 'strict-origin-when-cross-origin',
+    'content-security-policy': "default-src 'self'",
+    'x-xss-protection': '0',
+  }
+
+  let headersRes: Response
+  try {
+    headersRes = await fetchWithTimeout(appUrl)
+  } catch (err) {
+    fail('Fetch page for security header check', String(err))
+    headersRes = null as unknown as Response
+  }
+
+  if (headersRes) {
+    for (const [header, expected] of Object.entries(securityHeaders)) {
+      const value = headersRes.headers.get(header)
+      if (!value) {
+        fail(`${header} header is present`, 'Header is missing')
+      } else if (!value.toLowerCase().includes(expected.toLowerCase())) {
+        fail(
+          `${header} header contains expected value`,
+          `Got "${value}", expected to contain "${expected}"`
+        )
+      } else {
+        pass(`${header}: ${value.split(';')[0]}…`)
+      }
+    }
+  }
+
+  // ── 7. Compression ──
+
+  section('7. Compression')
+
+  await check('HTML responses are compressed', async () => {
+    const res = await fetchWithTimeout(appUrl, {
+      headers: { 'Accept-Encoding': 'gzip, zstd' },
+    })
+    const encoding = res.headers.get('content-encoding')
+    if (!encoding) {
+      fail('HTML responses are compressed', 'No Content-Encoding header')
+      return
+    }
+    pass(`HTML responses are compressed (${encoding})`)
+  })
+
+  // ── 8. PocketBase ──
+
+  section('8. PocketBase')
+
+  await check('PocketBase health check passes', async () => {
+    const res = await fetchWithTimeout(`${pbExternalUrl}/api/health`)
+    if (res.status !== 200) {
+      fail('PocketBase health check passes', `Status ${res.status}`)
+      return
+    }
+    pass('PocketBase health check passes')
+  })
+
+  await check('PocketBase admin UI is hidden', async () => {
+    const res = await fetchWithTimeout(`${pbExternalUrl}/_/`)
+    if (res.status === 200) {
+      fail(
+        'PocketBase admin UI is hidden',
+        'Admin UI is accessible (expected 403/404)'
+      )
+      return
+    }
+    pass(`PocketBase admin UI is hidden (status ${res.status})`)
+  })
+
+  // ── 9. API server ──
+
+  section('9. API server')
+
+  await check('API returns 404 for unknown endpoint', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/api/nonexistent`)
+    if (res.status !== 404) {
+      fail('API returns 404 for unknown endpoint', `Status ${res.status}`)
+      return
+    }
+    pass('API returns 404 for unknown endpoint')
+  })
+
+  await check('API requires auth for analyse-proposal', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/api/analyse-proposal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ proposalId: 'test', tripId: 'test' }),
+    })
+    if (res.status !== 401) {
+      fail(
+        'API requires auth for analyse-proposal',
+        `Expected 401, got ${res.status}`
+      )
+      return
+    }
+    pass('API requires auth for analyse-proposal (401)')
+  })
+
+  await check('API requires auth for preference-search', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/api/preference-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tripId: 'test' }),
+    })
+    if (res.status !== 401) {
+      fail(
+        'API requires auth for preference-search',
+        `Expected 401, got ${res.status}`
+      )
+      return
+    }
+    pass('API requires auth for preference-search (401)')
+  })
+
+  await check('API rejects GET on POST-only endpoints', async () => {
+    const res = await fetchWithTimeout(`${appUrl}/api/analyse-proposal`)
+    if (res.status !== 405) {
+      fail(
+        'API rejects GET on POST-only endpoints',
+        `Expected 405, got ${res.status}`
+      )
+      return
+    }
+    pass('API rejects GET on POST-only endpoints (405)')
+  })
+
+  // ── 10. Summary ──
+
+  console.log(
+    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+  )
+  console.log(`${ANSI_BOLD}${ANSI_CYAN}  Automated Test Summary${ANSI_RESET}`)
+  console.log(
+    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+  )
+  console.log(
+    `  ${ANSI_GREEN}${passed} passed${ANSI_RESET}, ${ANSI_RED}${failed} failed${ANSI_RESET}`
+  )
+
+  if (failed > 0) {
+    console.log(
+      `\n${ANSI_RED}${ANSI_BOLD}Fix the failures above before continuing with manual tests.${ANSI_RESET}\n`
+    )
+    process.exit(1)
+  }
+
+  // ── 11. Manual checks ──
+
+  console.log(
+    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+  )
+  console.log(`${ANSI_BOLD}${ANSI_CYAN}  Manual Checks${ANSI_RESET}`)
+  console.log(
+    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}\n`
+  )
+
+  const manualPassed: string[] = []
+  const manualFailed: string[] = []
+
+  async function manualCheck(
+    description: string,
+    instructions: string
+  ): Promise<void> {
+    console.log(`${ANSI_BOLD}${description}${ANSI_RESET}`)
+    console.log(`  ${instructions}\n`)
+    const confirmed = await askYesNo('Does this work as expected?')
+    if (confirmed) {
+      manualPassed.push(description)
+      console.log(`  ${PASS} ${description}\n`)
+    } else {
+      manualFailed.push(description)
+      console.log(`  ${FAIL} ${description}\n`)
+    }
+  }
+
+  await manualCheck(
+    'App loads in browser',
+    `Open ${appUrl} in a browser. The Ski Tripper app should render with the correct theme.`
+  )
+
+  await manualCheck(
+    'Theme toggle works',
+    'Click the theme toggle button. The app should switch between light and dark mode, and the choice should persist on reload.'
+  )
+
+  await manualCheck(
+    'PocketBase signup/login works',
+    `Try to create an account or log in at ${appUrl}. The authentication flow should work end-to-end.`
+  )
+
+  await manualCheck(
+    'Email verification arrives',
+    'If you sign up, check that a verification email arrives (or would arrive — SMTP configured via Resend in prod).'
+  )
+
+  await manualCheck(
+    'AI analysis works (Ollama API key)',
+    'Create a trip and proposal, then trigger AI analysis. The LLM should stream a response. This verifies the OLLAMA_API_KEY is valid.'
+  )
+
+  await manualCheck(
+    'PocketBase admin UI is inaccessible in production',
+    `Visit ${pbExternalUrl}/_/ — it should return an error (403/404), not show the admin dashboard.`
+  )
+
+  // ── 12. Final summary ──
+
+  console.log(
+    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+  )
+  console.log(`${ANSI_BOLD}${ANSI_CYAN}  Final Summary${ANSI_RESET}`)
+  console.log(
+    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+  )
+  console.log(
+    `  Automated: ${ANSI_GREEN}${passed} passed${ANSI_RESET}, ${ANSI_RED}${failed} failed${ANSI_RESET}`
+  )
+  console.log(
+    `  Manual:    ${ANSI_GREEN}${manualPassed.length} passed${ANSI_RESET}, ${ANSI_RED}${manualFailed.length} failed${ANSI_RESET}`
+  )
+
+  if (failed > 0 || manualFailed.length > 0) {
+    console.log(
+      `\n${ANSI_RED}${ANSI_BOLD}Some checks failed. Review the output above.${ANSI_RESET}\n`
+    )
+    process.exit(1)
+  }
+
+  console.log(
+    `\n${ANSI_GREEN}${ANSI_BOLD}All checks passed! Production is healthy.${ANSI_RESET}\n`
+  )
+}
+
+main().catch((err) => {
+  console.error(`${ANSI_RED}Fatal error:${ANSI_RESET}`, err)
+  process.exit(1)
+})

@@ -24,9 +24,9 @@
     "booking"
   ],
   "scripts": {
-    "env:encrypt": "dotenvx encrypt -f .env.dev -k POCKETBASE_ADMIN_PASSWORD -k EXA_API_KEY -k OLLAMA_API_KEY && dotenvx encrypt -f .env.prod -k POCKETBASE_ADMIN_PASSWORD -k POCKETBASE_SMTP_PASSWORD -k OLLAMA_API_KEY",
     "env:dev": "dotenvx run --overload -f .env.common -f .env.dev --",
     "env:prod": "dotenvx run --overload -f .env.common -f .env.prod --",
+    "env:encrypt": "dotenvx encrypt -f .env.dev -k POCKETBASE_ADMIN_PASSWORD -k EXA_API_KEY -k OLLAMA_API_KEY && dotenvx encrypt -f .env.prod -k POCKETBASE_ADMIN_PASSWORD -k POCKETBASE_SMTP_PASSWORD -k OLLAMA_API_KEY",
     "dev": "bun run build:static && bun run env:dev bun run build:caddy && bun run dev:pb:create-superuser && concurrently --kill-others-on-fail --names client,server,pb,caddy,mailpit,pbconfig --prefix-colors blue,green,yellow,cyan,red,white 'bun run dev:client' 'bun run dev:server' 'bun run dev:pb' 'bun run dev:caddy' 'bun run dev:mailpit' 'bun run dev:pb:config'",
     "dev:client": "bun run env:dev bun build src/client/main.tsx --outdir dist/static --target browser --env 'PUBLIC_*' --watch --no-clear-screen",
     "dev:server": "bun run env:dev bun --watch --no-clear-screen src/server/serve.ts",
@@ -44,12 +44,13 @@
     "build:caddy": "bun run infra/scripts/build-caddyfile.ts",
     "test": "bun test --max-concurrency 1",
     "test:e2e": "bun run env:dev playwright test",
-    "preversion": "bun run check && bun run test",
-    "check:fix": "bun tsc --noEmit && biome check --write",
+    "test:smoke": "bun run env:prod bun run infra/scripts/smoke-test.ts",
     "check": "bun tsc --noEmit && biome ci",
-    "tools:resorts": "bun run tools/resorts.ts",
+    "check:fix": "bun tsc --noEmit && biome check --write",
+    "preversion": "bun run check && bun run test",
     "infra:provision": "bun run infra/scripts/provision.ts",
-    "infra:ssh": "doctl compute ssh ski-tripper --ssh-key-path ~/.ssh/id_ed25519"
+    "infra:ssh": "doctl compute ssh ski-tripper --ssh-key-path ~/.ssh/id_ed25519",
+    "tools:resorts": "bun run tools/resorts.ts"
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
