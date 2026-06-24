@@ -24,7 +24,7 @@
     "booking"
   ],
   "scripts": {
-    "env:encrypt": "dotenvx encrypt -f .env.dev -k POCKETBASE_ADMIN_PASSWORD -k EXA_API_KEY -k OLLAMA_API_KEY && dotenvx encrypt -f .env.prod -k POCKETBASE_ADMIN_PASSWORD -k POCKETBASE_SMTP_PASSWORD -k EXA_API_KEY -k OLLAMA_API_KEY",
+    "env:encrypt": "dotenvx encrypt -f .env.dev -k POCKETBASE_ADMIN_PASSWORD -k EXA_API_KEY -k OLLAMA_API_KEY && dotenvx encrypt -f .env.prod -k POCKETBASE_ADMIN_PASSWORD -k POCKETBASE_SMTP_PASSWORD -k OLLAMA_API_KEY",
     "env:dev": "dotenvx run --overload -f .env.common -f .env.dev --",
     "env:prod": "dotenvx run --overload -f .env.common -f .env.prod --",
     "dev": "bun run build:static && bun run env:dev bun run build:caddy && bun run dev:pb:create-superuser && concurrently --kill-others-on-fail --names client,server,pb,caddy,mailpit,pbconfig --prefix-colors blue,green,yellow,cyan,red,white 'bun run dev:client' 'bun run dev:server' 'bun run dev:pb' 'bun run dev:caddy' 'bun run dev:mailpit' 'bun run dev:pb:config'",

@@ -98,7 +98,7 @@ Three env files are committed:
 | --------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
 | `.env.common`   | Keys identical in dev and prod (no secrets)           | None                                                              |
 | `.env.dev`      | Dev-specific values and secrets                       | `POCKETBASE_ADMIN_PASSWORD`, `EXA_API_KEY`, `OLLAMA_API_KEY`     |
-| `.env.prod`     | Prod-specific values and secrets                      | `POCKETBASE_ADMIN_PASSWORD`, `POCKETBASE_SMTP_PASSWORD`, `EXA_API_KEY`, `OLLAMA_API_KEY` |
+| `.env.prod`     | Prod-specific values and secrets                      | `POCKETBASE_ADMIN_PASSWORD`, `POCKETBASE_SMTP_PASSWORD`, `OLLAMA_API_KEY` |
 
 The `.env.keys` file (gitignored) holds the private decryption keys. Share it securely with teammates — without it, encrypted values cannot be decrypted.
 
