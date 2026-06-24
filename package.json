@@ -43,7 +43,7 @@
     "build:static": "mkdir -p dist/static && cp src/static/index.html src/static/robots.txt src/static/404.html dist/static/ && cp -r src/static/flags dist/static/flags && mkdir -p dist/static/.well-known && cp src/static/.well-known/security.txt dist/static/.well-known/ && rsync -a --delete src/pb_migrations/ dist/pb_migrations/",
     "build:caddy": "bun run infra/scripts/build-caddyfile.ts",
     "test": "bun test --max-concurrency 1",
-    "test:e2e": "bun run env:dev playwright test",
+    "test:e2e": "rm -rf e2e/test-results e2e/playwright-report && bun run env:dev playwright test",
     "test:smoke": "bun run env:prod bun run infra/scripts/smoke-test.ts",
     "check": "bun tsc --noEmit && biome ci",
     "check:fix": "bun tsc --noEmit && biome check --write",
