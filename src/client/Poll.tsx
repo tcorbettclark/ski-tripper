@@ -474,7 +474,7 @@ const styles = {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     fontWeight: '600',
-    color: colors.accent,
+    color: colors.textPrimary,
     letterSpacing: '0.02em',
   },
   pollStatus: {

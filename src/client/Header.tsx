@@ -497,7 +497,7 @@ const headerStyles = {
     borderRadius: '6px',
     border: 'none',
     background: mix('--color-accent', 0.15),
-    color: colors.accent,
+    color: colors.textPrimary,
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     fontWeight: '700',
