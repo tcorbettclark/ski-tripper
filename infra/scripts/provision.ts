@@ -489,6 +489,7 @@ EOF"`
 async function deploy() {
   const env = decryptEnvVars()
   const branchOrTag = process.argv[3] || 'main'
+  const skipResortsUpload = process.argv.includes('--skip-resorts-upload')
   const ip = await getDropletIp()
   step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
 
@@ -635,13 +636,17 @@ async function deploy() {
   )
   success('PocketBase settings configured')
 
-  step('Uploading resort data')
-  execSync('bun run env:prod bun run tools/resorts.ts upload', {
-    cwd: PROJECT_ROOT,
-    stdio: 'inherit',
-    timeout: 300000,
-  })
-  success('Resort data uploaded')
+  if (skipResortsUpload) {
+    console.log('  Skipping resort data upload (--skip-resorts-upload)')
+  } else {
+    step('Uploading resort data')
+    execSync('bun run env:prod bun run tools/resorts.ts upload', {
+      cwd: PROJECT_ROOT,
+      stdio: 'inherit',
+      timeout: 300000,
+    })
+    success('Resort data uploaded')
+  }
 
   await status(env)
 }
@@ -766,7 +771,8 @@ Commands:
 
 Options:
   --help                 Show this help message
-  --forget-reserved-ip   Also delete the reserved IP (use with destroy)
+  --forget-reserved-ip       Also delete the reserved IP (use with destroy)
+  --skip-resorts-upload      Skip resort data upload during deploy
 
 Requirements:
   doctl           Required for create/destroy. Install: https://docs.digitalocean.com/reference/doctl/
