@@ -114,7 +114,7 @@ The `.env.keys` file (gitignored) holds the private decryption keys.
 
 After changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt with `bun run env:encrypt`.
 
-A githook, installed with `dotenvx ext precommit --install`, helps to avoid committing plaintext secrets.
+A githook, configured with [lefthook](https://github.com/evilmartians/lefthook), helps to avoid accidentally committing plaintext secrets.
 
 Tip: Put the `.env.keys` in fish universal variables to make them available across worktrees.
 
@@ -146,6 +146,8 @@ Tip: Put the `.env.keys` in fish universal variables to make them available acro
 Usual collection of unit tests: `bun run test`.
 
 Exploratory tests use [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/): `bun run test:e2e`. These need the dev server to be running (`bun run dev`).
+
+Lastly, a smoke test, `bun run test:smoke`, verifies the app is installed correctly in production. It contains both automatic and manual checks.
 
 ### Versioning
 
