@@ -46,7 +46,7 @@ My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programme
 
 ## Why did I build it?
 
-I built Ski Tripper for two reasons: to understand the practical state of AI today, and to help organise "Boys Ski Trips".
+I built Ski Tripper for two reasons: to better understand the practical state of AI today, and to help organise "Boys Ski Trips".
 
 AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense for the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
 
