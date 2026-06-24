@@ -6,7 +6,7 @@
 
 Ski Tripper helps a ski group find and agree on the perfect ski holiday without the "entertaining" chaos of a WhatsApp debate.
 
-Unlike booking sites that start with flights and hotels, Ski Tripper starts with what really matters: the mountain.
+Unlike booking sites that start with flights and hotels, Ski Tripper starts with what really matters: the mountain experience and resort vibe.
 
 * **The Trip**: This is your group's shared space (e.g., "Boys Ski 2027"). It's the central hub where everyone gathers ideas and votes.
 * **The Profile**: Everyone in your group declares their preferences (high altitude, great après, off-piste terrain, etc). The AI-powered catalog then ranks options against your combined group profile.
@@ -73,15 +73,17 @@ The rest of this document provides a brief overview of the technical stack, arch
 - [Caddy](https://caddyserver.com/) for reverse proxy and SSL termination.
 - A bun/typescript server to run the backend LLM functions using a cloud LLM provider.
 
-### Development
+### Coding Agent
 
-Lightly configured for development using the [OpenCode](https://opencode.ai/) coding agent.
+Lightly configured for development using the [OpenCode](https://opencode.ai/) coding agent. I run it inside [Zed](https://zed.dev/).
+
+### Worktree Management
 
 Use the [WorkTrunk](https://worktrunk.dev/) tool to manage git worktrees. Some convenient aliases and hooks have been added to `.config/wt.toml`, resulting in the following workflow:
 
 | Task                                            | Shell alias      | Command                              |
 | ----------------------------------------------- | ---------------- | ------------------------------------ |
-| New worktree with packages installed         | `wtn <worktree>` | `wt switch --create <worktree>`      |
+| New worktree with packages installed            | `wtn <worktree>` | `wt switch --create <worktree>`      |
 | Remove a worktree and clean everything up       | `wtr <worktree>` | `wt remove <worktree>`               |
 | List all worktrees with their status            | `wtl`            | `wt list`                            |
 | Merge current worktree back to main             | `wtm`            | `wt merge-and-continue`              |
@@ -97,10 +99,12 @@ Three env files are committed:
 | File            | Purpose                                               | Encrypted keys                                                    |
 | --------------- | ----------------------------------------------------- | ----------------------------------------------------------------- |
 | `.env.common`   | Keys identical in dev and prod (no secrets)           | None                                                              |
-| `.env.dev`      | Dev-specific values and secrets                       | `POCKETBASE_ADMIN_PASSWORD`, `EXA_API_KEY`, `OLLAMA_API_KEY`     |
+| `.env.dev`      | Dev-specific values and secrets                       | `POCKETBASE_ADMIN_PASSWORD`, `EXA_API_KEY`, `OLLAMA_API_KEY`      |
 | `.env.prod`     | Prod-specific values and secrets                      | `POCKETBASE_ADMIN_PASSWORD`, `POCKETBASE_SMTP_PASSWORD`, `OLLAMA_API_KEY` |
 
 The `.env.keys` file (gitignored) holds the private decryption keys. Share it securely with teammates — without it, encrypted values cannot be decrypted.
+
+### Development build
 
 **Dev scripts** use `env:dev` to inject variables via dotenvx:
 
@@ -112,7 +116,7 @@ The `.env.keys` file (gitignored) holds the private decryption keys. Share it se
 | `bun run dev:pb`                     | Run PocketBase with dev env vars                      |
 | `bun run dev:pb:config`              | Configure local PocketBase settings                   |
 | `bun run dev:pb:create-superuser`    | Create/upsert local PocketBase superuser              |
-| `bun run dev:caddy`                  | Run Caddy reverse proxy (with log wrapper)           |
+| `bun run dev:caddy`                  | Run Caddy reverse proxy (with log wrapper)            |
 | `bun run test:e2e`                   | Run Playwright e2e tests against dev server           |
 
 **Build scripts** read env vars from `process.env` (no dotenvx wrapper) so they work in production where env vars are passed inline:
@@ -121,25 +125,27 @@ The `.env.keys` file (gitignored) holds the private decryption keys. Share it se
 | -------------------------- | -------------------------------------------------- |
 | `bun run build`            | Build client, server, static files, and Caddyfile  |
 | `bun run build:client`     | Build client bundle (inlines `PUBLIC_*` env vars)  |
-| `bun run build:caddy`      | Generate Caddyfile from template and env vars       |
+| `bun run build:caddy`      | Generate Caddyfile from template and env vars      |
 
 **Env management:**
 
 | Command                    | Description                                        |
 | -------------------------- | -------------------------------------------------- |
 | `bun run env:encrypt`      | Encrypt secrets in `.env.dev` and `.env.prod`      |
-| `bun run env:dev <cmd>`    | Run any command with dev env vars loaded            |
-| `bun run env:prod <cmd>`   | Run any command with prod env vars loaded           |
+| `bun run env:dev <cmd>`    | Run any command with dev env vars loaded           |
+| `bun run env:prod <cmd>`   | Run any command with prod env vars loaded          |
 
-After changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt:
+So after changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt with `bun run env:encrypt`.
 
-```bash
-bun run env:encrypt
-```
+It is handy to put the `.env.keys` into fish universal variables so they are available across worktrees.
 
-After cloning the repo, copy `.env.keys` from a teammate and run `bun install` — no manual `.env` file creation needed.
+### Testing
 
-Testing is done with unit testing, and [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/) for exploratory testing.
+Usual collection of unit tests: `bun run test`
+
+Exploratory tests [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/): `bun run test:e2e`, which requires the dev server to be running (`bun run dev`).
+
+### Versionin
 
 Versioning follows [Semantic Versioning](https://semver.org/), best managed with `bun pm version patch|minor|major` to clock the version in the source and create an annotated tag. The `wtp` alias then pushes commits and tags to GitHub ready for provisioning.
 
@@ -157,7 +163,7 @@ No Docker involved — everything runs natively on the host.
 
 ### Provisioning
 
-Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
+Provisioning is automated (`bun run infra:provision`) and idempotent. Run from the dev box. It uses [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
 
 | Sub-command | Description                                                             |
 | ----------- | ----------------------------------------------------------------------- |
@@ -168,7 +174,7 @@ Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec
 | `deploy`    | Pull latest code, build, and restart services (default branch: main)    |
 | `destroy`   | Unassign IP and delete the droplet (preserves the reserved IP)          |
 
-### Server layout
+### Server file layout
 
 | Path                                                                 | Description                                                         |
 | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -180,6 +186,8 @@ Provisioning is automated (`bun run infra:provision`) and idempotent, using [xec
 | `/etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service` | Systemd units                                                       |
 
 ### Server logs
+
+Logs from the 3 services (Caddy, PocketBase, and API server) go to `journalctl`.
 
 SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`), then:
 
