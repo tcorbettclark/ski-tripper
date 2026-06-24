@@ -30,10 +30,10 @@ export default function AboutModal({
         return res.text()
       })
       .then((text) => {
-        const afterFirstHeading = text
-          .replace(/^.*?#\s*Ski\s+Tripper[^\n]*\n*/s, '')
-          .trimStart()
-        setContent(afterFirstHeading)
+        const firstHeadingIndex = text.search(/^# /m)
+        const content =
+          firstHeadingIndex >= 0 ? text.slice(firstHeadingIndex) : text
+        setContent(content)
       })
       .catch((err) => setError(err.message))
   }, [open, readmeUrl])

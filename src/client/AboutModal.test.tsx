@@ -120,13 +120,13 @@ describe('AboutModal', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith(testUrl)
   })
 
-  it('trims content before and including the first h1 heading', async () => {
+  it('trims content before the first h1 heading but includes the heading', async () => {
     const badgeAndTitle = `[![CI](badge.svg)](url)\n\n# Ski Tripper\n\n## Overview\n\nSome content.`
     mockFetchResponse(badgeAndTitle)
     await act(async () => {
       render(<AboutModal open={true} onClose={() => {}} readmeUrl={testUrl} />)
     })
-    expect(screen.queryByText('Ski Tripper')).toBeNull()
+    expect(screen.getByText('Ski Tripper')).toBeTruthy()
     expect(screen.getByText('Overview')).toBeTruthy()
     expect(screen.getByText('Some content.')).toBeTruthy()
   })
