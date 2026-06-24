@@ -54,12 +54,12 @@ function printHelp() {
   console.log(`Usage: bun run infra:mode <command>
 
 Commands:
-  debug   Enable PocketBase admin UI (renames snippet to .disabled, reloads Caddy)
-  prod    Block PocketBase admin UI (renames snippet back, reloads Caddy)
+  debug   Enable PocketBase admin UI (renames ${SNIPPET_FILE} to .disabled, reloads Caddy)
+  prod    Block PocketBase admin UI (renames ${SNIPPET_FILE} back, reloads Caddy)
 
-The admin UI is blocked in production by a Caddy include file that returns 403
-for /_/* requests on the PocketBase domain. This script toggles that file by
-renaming it with a .disabled suffix.
+The admin UI is blocked in production by ${SNIPPET_PATH}, a Caddy include file
+that returns 403 for /_/* requests on the PocketBase domain. This script toggles
+that file by renaming it with a .disabled suffix.
 
 After toggling, Caddy is reloaded (not restarted) for zero-downtime config
 changes. Deploying with infra:provision always resets to prod mode.`)
@@ -89,7 +89,7 @@ async function modeDebug() {
     )
   } else {
     console.log(
-      `${YELLOW}Warning: Neither enabled nor disabled snippet found. Creating disabled placeholder.${RESET}`
+      `${YELLOW}Warning: Neither ${SNIPPET_PATH} nor ${DISABLED_PATH} found. Creating disabled placeholder.${RESET}`
     )
     await root`mkdir -p ${PB_INCLUDES_DIR}`
     await root`touch ${DISABLED_PATH}`
@@ -127,7 +127,7 @@ async function modeProd() {
     )
   } else if (!enabledExists) {
     console.log(
-      `${RED}${BOLD}Error:${RESET} No snippet file found at ${SNIPPET_PATH} or ${DISABLED_PATH}`
+      `${RED}${BOLD}Error:${RESET} No file found at ${SNIPPET_PATH} or ${DISABLED_PATH}`
     )
     console.log(
       `  Run ${BOLD}bun run infra:provision deploy${RESET} to deploy the snippet first.`
