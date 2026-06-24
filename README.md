@@ -102,7 +102,19 @@ Three env files are committed:
 | `.env.dev`      | Dev-specific values and secrets                       | `POCKETBASE_ADMIN_PASSWORD`, `EXA_API_KEY`, `OLLAMA_API_KEY`      |
 | `.env.prod`     | Prod-specific values and secrets                      | `POCKETBASE_ADMIN_PASSWORD`, `POCKETBASE_SMTP_PASSWORD`, `OLLAMA_API_KEY` |
 
-The `.env.keys` file (gitignored) holds the private decryption keys. Share it securely with teammates — without it, encrypted values cannot be decrypted.
+The `.env.keys` file (gitignored) holds the private decryption keys.
+
+**Env management:**
+
+| Command                    | Description                                        |
+| -------------------------- | -------------------------------------------------- |
+| `bun run env:encrypt`      | Encrypt secrets in `.env.dev` and `.env.prod`      |
+| `bun run env:dev <cmd>`    | Run any command with dev env vars loaded           |
+| `bun run env:prod <cmd>`   | Run any command with prod env vars loaded          |
+
+After changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt with `bun run env:encrypt`.
+
+Tip: Put the `.env.keys` in fish universal variables to make them available across worktrees.
 
 ### Development build
 
@@ -127,25 +139,13 @@ The `.env.keys` file (gitignored) holds the private decryption keys. Share it se
 | `bun run build:client`     | Build client bundle (inlines `PUBLIC_*` env vars)  |
 | `bun run build:caddy`      | Generate Caddyfile from template and env vars      |
 
-**Env management:**
-
-| Command                    | Description                                        |
-| -------------------------- | -------------------------------------------------- |
-| `bun run env:encrypt`      | Encrypt secrets in `.env.dev` and `.env.prod`      |
-| `bun run env:dev <cmd>`    | Run any command with dev env vars loaded           |
-| `bun run env:prod <cmd>`   | Run any command with prod env vars loaded          |
-
-So after changing plaintext values in `.env.dev` or `.env.prod`, re-encrypt with `bun run env:encrypt`.
-
-It is handy to put the `.env.keys` into fish universal variables so they are available across worktrees.
-
 ### Testing
 
-Usual collection of unit tests: `bun run test`
+Usual collection of unit tests: `bun run test`.
 
-Exploratory tests [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/): `bun run test:e2e`, which requires the dev server to be running (`bun run dev`).
+Exploratory tests use [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/): `bun run test:e2e`. These need the dev server to be running (`bun run dev`).
 
-### Versionin
+### Versioning
 
 Versioning follows [Semantic Versioning](https://semver.org/), best managed with `bun pm version patch|minor|major` to clock the version in the source and create an annotated tag. The `wtp` alias then pushes commits and tags to GitHub ready for provisioning.
 
