@@ -555,11 +555,12 @@ async function deploy() {
 
   step('Stopping services')
   await root`systemctl stop ski-tripper-api`.nothrow()
+  await root`bash -c 'while systemctl is-active --quiet ski-tripper-api; do sleep 0.5; done'`.nothrow()
   success('Services stopped')
 
   step('Installing artefacts')
   await root`mkdir -p ${INSTALL_DIR}/server`
-  await root`cp ${REPO_DIR}/dist/server/serve ${INSTALL_DIR}/server/serve`
+  await root`mv ${REPO_DIR}/dist/server/serve ${INSTALL_DIR}/server/serve`
   await root`rsync -a --delete ${REPO_DIR}/dist/static/ ${INSTALL_DIR}/static/`
   await root`rsync -a --delete ${REPO_DIR}/dist/pb_migrations/ ${INSTALL_DIR}/pb_migrations/`
   await root`chown -R ski-tripper:ski-tripper ${INSTALL_DIR}`
