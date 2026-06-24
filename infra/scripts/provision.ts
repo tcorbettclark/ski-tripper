@@ -487,9 +487,33 @@ EOF"`
 }
 
 async function deploy() {
+  const args = process.argv.slice(3)
+  if (args.includes('--help') || args.includes('-h')) {
+    printDeployHelp()
+    process.exit(0)
+  }
+
+  const versionIdx = args.indexOf('--version')
+  const skipResortsUpload = args.includes('--skip-resorts-upload')
+  const unknownArgs = args.filter(
+    (a) =>
+      a !== '--skip-resorts-upload' &&
+      a !== '--version' &&
+      (versionIdx === -1 || a !== args[versionIdx + 1])
+  )
+  if (unknownArgs.length > 0) {
+    console.error(`Unknown arguments: ${unknownArgs.join(', ')}`)
+    printDeployHelp()
+    process.exit(1)
+  }
+
+  const branchOrTag = versionIdx !== -1 ? args[versionIdx + 1] : 'main'
+  if (versionIdx !== -1 && !branchOrTag) {
+    console.error('--version requires a value (e.g. --version v1.2.3)')
+    process.exit(1)
+  }
+
   const env = decryptEnvVars()
-  const branchOrTag = process.argv[3] || 'main'
-  const skipResortsUpload = process.argv.includes('--skip-resorts-upload')
   const ip = await getDropletIp()
   step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
 
@@ -764,15 +788,14 @@ function printHelp() {
 Commands:
   create      Create a droplet and reserved IP (idempotent)
   configure   Install dependencies and set up systemd services on an existing droplet
-  deploy      Pull latest code, build, and restart services [default branch: main]
+  deploy      Pull latest code, build, and restart services
   status      Show service status, IP, and layout info
   setup       Create, configure, and deploy (full setup)
   destroy     Unassign IP and delete the droplet (preserves the reserved IP)
 
 Options:
-  --help                 Show this help message
-  --forget-reserved-ip       Also delete the reserved IP (use with destroy)
-  --skip-resorts-upload      Skip resort data upload during deploy
+  --help                     Show this help message
+  --forget-reserved-ip      Also delete the reserved IP (use with destroy)
 
 Requirements:
   doctl           Required for create/destroy. Install: https://docs.digitalocean.com/reference/doctl/
@@ -786,9 +809,23 @@ Requirements:
 Examples:
   bun run infra:provision setup                          Full setup from scratch
   bun run infra:provision deploy                         Deploy current main branch
-  bun run infra:provision deploy v1.2.3                  Deploy a specific tag
+  bun run infra:provision deploy --version v1.2.3        Deploy a specific tag
   bun run infra:provision destroy                        Tear down droplet (preserves reserved IP)
   bun run infra:provision destroy --forget-reserved-ip   Also delete the reserved IP`)
+}
+
+function printDeployHelp() {
+  console.log(`Usage: bun run infra:provision deploy [options]
+
+Options:
+  --version <tag>            Deploy a specific tag (default: main)
+  --skip-resorts-upload      Skip resort data upload
+  --help                     Show this help message
+
+Examples:
+  bun run infra:provision deploy                         Deploy current main branch
+  bun run infra:provision deploy --version v1.2.3        Deploy a specific tag
+  bun run infra:provision deploy --skip-resorts-upload   Deploy without uploading resort data`)
 }
 
 async function provision() {
