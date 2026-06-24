@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import JSON5 from 'json5'
 import PocketBase from 'pocketbase'
+import { BOLD, fail, GREEN, RED, RESET, success, warn, YELLOW } from './lib/log'
 
 const PROJECT_ROOT = resolve(import.meta.dir, '../..')
 const SETTINGS_FILE = resolve(PROJECT_ROOT, 'infra/pocketbase/settings.json5')
@@ -13,19 +14,10 @@ const EMAIL_TEMPLATES_FILE = resolve(
 function requireEnv(name: string): string {
   const value = process.env[name]
   if (!value) {
-    console.error(
-      `${RED}${BOLD}Error:${RESET} Required env var ${name} is not set`
-    )
-    process.exit(1)
+    fail(`Required env var ${name} is not set`)
   }
   return value
 }
-
-const BOLD = '\x1b[1m'
-const GREEN = '\x1b[32m'
-const YELLOW = '\x1b[33m'
-const RED = '\x1b[31m'
-const RESET = '\x1b[0m'
 
 const OVERRIDES: Record<
   string,
@@ -81,10 +73,7 @@ function interpolateSettings(
       case 'number':
         resolved = Number(value)
         if (Number.isNaN(resolved)) {
-          console.error(
-            `${RED}${BOLD}Error:${RESET} ${envVar}="${value}" is not a valid number`
-          )
-          process.exit(1)
+          fail(`${envVar}="${value}" is not a valid number`)
         }
         break
       case 'boolean':
@@ -98,7 +87,7 @@ function interpolateSettings(
 
   if (missing.length > 0) {
     console.error(
-      `${RED}${BOLD}Error:${RESET} Missing required environment variables:`
+      `\n${RED}${BOLD}Missing required environment variables:${RESET}`
     )
     for (const v of missing) {
       console.error(`  ${YELLOW}${v}${RESET}`)
@@ -169,9 +158,7 @@ async function waitForPocketBase(
     try {
       const res = await fetch(`${url}/api/health`)
       if (res.ok) {
-        console.log(
-          `${GREEN}PocketBase is healthy${RESET} (attempt ${i}/${maxAttempts})`
-        )
+        success(`PocketBase is healthy (attempt ${i}/${maxAttempts})`)
         return
       }
     } catch {
@@ -184,20 +171,14 @@ async function waitForPocketBase(
       await new Promise((r) => setTimeout(r, delayMs))
     }
   }
-  console.error(
-    `${RED}${BOLD}Error:${RESET} PocketBase did not become healthy after ${maxAttempts} attempts`
-  )
-  process.exit(1)
+  fail(`PocketBase did not become healthy after ${maxAttempts} attempts`)
 }
 
 async function main() {
   const args = process.argv.slice(2)
   const useExternal = args.includes('--external')
   if (useExternal && args.includes('--internal')) {
-    console.error(
-      `${RED}${BOLD}Error:${RESET} --internal and --external are mutually exclusive`
-    )
-    process.exit(1)
+    fail('--internal and --external are mutually exclusive')
   }
 
   const env = Object.fromEntries(
@@ -205,8 +186,7 @@ async function main() {
   ) as Record<string, string>
 
   if (!existsSync(SETTINGS_FILE)) {
-    console.error(`${RED}${BOLD}Error:${RESET} ${SETTINGS_FILE} not found`)
-    process.exit(1)
+    fail(`${SETTINGS_FILE} not found`)
   }
 
   const rawSettings = JSON5.parse(
@@ -233,8 +213,7 @@ async function main() {
         requireEnv('POCKETBASE_ADMIN_PASSWORD')
       )
   } catch (err) {
-    console.error(`${RED}${BOLD}Error:${RESET} Authentication failed: ${err}`)
-    process.exit(1)
+    fail(`Authentication failed: ${err}`)
   }
 
   console.log('Fetching current settings...')
@@ -246,9 +225,7 @@ async function main() {
   const changeCount = Object.keys(changes).length
 
   if (changeCount === 0) {
-    console.log(
-      `${GREEN}No changes needed — settings are already up to date${RESET}`
-    )
+    success('No changes needed — settings are already up to date')
     return
   }
 
@@ -272,9 +249,7 @@ async function main() {
   if (existsSync(EMAIL_TEMPLATES_FILE)) {
     await applyEmailTemplates(pb)
   } else {
-    console.log(
-      `\n${YELLOW}Skipping email templates${RESET} — ${EMAIL_TEMPLATES_FILE} not found`
-    )
+    warn(`Skipping email templates — ${EMAIL_TEMPLATES_FILE} not found`)
   }
 }
 
@@ -342,9 +317,7 @@ async function applyEmailTemplates(pb: PocketBase): Promise<void> {
   }
 
   if (totalChanges === 0) {
-    console.log(
-      `${GREEN}No changes needed — email templates are already up to date${RESET}`
-    )
+    success('No changes needed — email templates are already up to date')
   } else {
     console.log(
       `\n${GREEN}${BOLD}Done${RESET} — ${totalChanges} email template(s) updated successfully`
@@ -353,6 +326,5 @@ async function applyEmailTemplates(pb: PocketBase): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error(`${RED}${BOLD}Error:${RESET} ${err}`)
-  process.exit(1)
+  fail(String(err))
 })

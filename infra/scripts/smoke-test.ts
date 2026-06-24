@@ -1,20 +1,12 @@
 #!/usr/bin/env bun
 
-const ANSI_RESET = '\x1b[0m'
-const ANSI_BOLD = '\x1b[1m'
-const ANSI_CYAN = '\x1b[36m'
-const ANSI_GREEN = '\x1b[32m'
-const ANSI_RED = '\x1b[31m'
+import { BOLD, CYAN, GREEN, RED, RESET, section } from './lib/log'
 
-const PASS = `${ANSI_GREEN}PASS${ANSI_RESET}`
-const FAIL = `${ANSI_RED}FAIL${ANSI_RESET}`
+const PASS = `${GREEN}PASS${RESET}`
+const FAIL = `${RED}FAIL${RESET}`
 
 let passed = 0
 let failed = 0
-
-function section(title: string) {
-  console.log(`\n${ANSI_BOLD}${ANSI_CYAN}━━ ${title} ━━${ANSI_RESET}`)
-}
 
 function pass(msg: string) {
   passed++
@@ -24,7 +16,7 @@ function pass(msg: string) {
 function fail(msg: string, detail?: string) {
   failed++
   console.log(`  ${FAIL} ${msg}`)
-  if (detail) console.log(`        ${ANSI_RED}${detail}${ANSI_RESET}`)
+  if (detail) console.log(`        ${RED}${detail}${RESET}`)
 }
 
 async function fetchWithTimeout(
@@ -53,10 +45,10 @@ function requireEnv(name: string): string {
   const value = process.env[name]
   if (!value) {
     console.error(
-      `${ANSI_RED}${ANSI_BOLD}Error:${ANSI_RESET} Required env var ${name} is not set`
+      `${RED}${BOLD}Error:${RESET} Required env var ${name} is not set`
     )
     console.error(
-      `\nRun with: ${ANSI_BOLD}bun run env:prod bun run tools/smoke-test.ts${ANSI_RESET}`
+      `\nRun with: ${BOLD}bun run env:prod bun run tools/smoke-test.ts${RESET}`
     )
     process.exit(1)
   }
@@ -64,7 +56,7 @@ function requireEnv(name: string): string {
 }
 
 async function askYesNo(question: string): Promise<boolean> {
-  process.stdout.write(`${ANSI_BOLD}${question}${ANSI_RESET} [y/N] `)
+  process.stdout.write(`${BOLD}${question}${RESET} [y/N] `)
 
   return new Promise((resolve) => {
     process.stdin.setRawMode(true)
@@ -85,13 +77,11 @@ async function main() {
   const appUrl = requireEnv('PUBLIC_EXTERNAL_URL')
 
   console.log(
-    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
   )
+  console.log(`${BOLD}${CYAN}  Ski Tripper — Production Smoke Test${RESET}`)
   console.log(
-    `${ANSI_BOLD}${ANSI_CYAN}  Ski Tripper — Production Smoke Test${ANSI_RESET}`
-  )
-  console.log(
-    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
   )
   console.log(`  App:         ${appUrl}`)
   console.log(`  PocketBase:  ${pbExternalUrl}`)
@@ -471,19 +461,19 @@ async function main() {
   // ── 10. Summary ──
 
   console.log(
-    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
   )
-  console.log(`${ANSI_BOLD}${ANSI_CYAN}  Automated Test Summary${ANSI_RESET}`)
+  console.log(`${BOLD}${CYAN}  Automated Test Summary${RESET}`)
   console.log(
-    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
   )
   console.log(
-    `  ${ANSI_GREEN}${passed} passed${ANSI_RESET}, ${ANSI_RED}${failed} failed${ANSI_RESET}`
+    `  ${GREEN}${passed} passed${RESET}, ${RED}${failed} failed${RESET}`
   )
 
   if (failed > 0) {
     console.log(
-      `\n${ANSI_RED}${ANSI_BOLD}Fix the failures above before continuing with manual tests.${ANSI_RESET}\n`
+      `\n${RED}${BOLD}Fix the failures above before continuing with manual tests.${RESET}\n`
     )
     process.exit(1)
   }
@@ -491,11 +481,11 @@ async function main() {
   // ── 11. Manual checks ──
 
   console.log(
-    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
   )
-  console.log(`${ANSI_BOLD}${ANSI_CYAN}  Manual Checks${ANSI_RESET}`)
+  console.log(`${BOLD}${CYAN}  Manual Checks${RESET}`)
   console.log(
-    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}\n`
+    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}\n`
   )
 
   const manualPassed: string[] = []
@@ -506,7 +496,7 @@ async function main() {
     instructions: string
   ): Promise<void> {
     const confirmed = await askYesNo(
-      `${ANSI_BOLD}${description}${ANSI_RESET}\n  ${instructions}`
+      `${BOLD}${description}${RESET}\n  ${instructions}`
     )
     if (confirmed) {
       manualPassed.push(description)
@@ -535,32 +525,32 @@ async function main() {
   // ── 12. Final summary ──
 
   console.log(
-    `\n${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
+    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
   )
-  console.log(`${ANSI_BOLD}${ANSI_CYAN}  Final Summary${ANSI_RESET}`)
+  console.log(`${BOLD}${CYAN}  Final Summary${RESET}`)
   console.log(
-    `${ANSI_BOLD}${ANSI_CYAN}══════════════════════════════════════════════════════${ANSI_RESET}`
-  )
-  console.log(
-    `  Automated: ${ANSI_GREEN}${passed} passed${ANSI_RESET}, ${ANSI_RED}${failed} failed${ANSI_RESET}`
+    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
   )
   console.log(
-    `  Manual:    ${ANSI_GREEN}${manualPassed.length} passed${ANSI_RESET}, ${ANSI_RED}${manualFailed.length} failed${ANSI_RESET}`
+    `  Automated: ${GREEN}${passed} passed${RESET}, ${RED}${failed} failed${RESET}`
+  )
+  console.log(
+    `  Manual:    ${GREEN}${manualPassed.length} passed${RESET}, ${RED}${manualFailed.length} failed${RESET}`
   )
 
   if (failed > 0 || manualFailed.length > 0) {
     console.log(
-      `\n${ANSI_RED}${ANSI_BOLD}Some checks failed. Review the output above.${ANSI_RESET}\n`
+      `\n${RED}${BOLD}Some checks failed. Review the output above.${RESET}\n`
     )
     process.exit(1)
   }
 
   console.log(
-    `\n${ANSI_GREEN}${ANSI_BOLD}All checks passed! Production is healthy.${ANSI_RESET}\n`
+    `\n${GREEN}${BOLD}All checks passed! Production is healthy.${RESET}\n`
   )
 }
 
 main().catch((err) => {
-  console.error(`${ANSI_RED}Fatal error:${ANSI_RESET}`, err)
+  console.error(`${RED}Fatal error:${RESET}`, err)
   process.exit(1)
 })

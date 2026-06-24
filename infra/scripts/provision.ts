@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 import { $, configure, dispose } from '@xec-sh/core'
+import { fail, step, success, warn } from './lib/log'
 
 function getDefaultPrivateKey(): string | undefined {
   const keyPath = resolve(homedir(), '.ssh', 'id_rsa')
@@ -39,23 +40,6 @@ const CADDY_VERSION = '2.11.4'
 const REPO_DIR = '/home/ski-tripper/ski-tripper'
 const INSTALL_DIR = '/opt/ski-tripper'
 const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
-
-function step(msg: string) {
-  console.log(`\n▸ ${msg}`)
-}
-
-function success(msg: string) {
-  console.log(`  ✓ ${msg}`)
-}
-
-function warn(msg: string) {
-  console.log(`  ⚠ ${msg}`)
-}
-
-function fail(msg: string): never {
-  console.error(`  ✗ ${msg}`)
-  process.exit(1)
-}
 
 async function requireDoctl() {
   const result = await $`doctl version`.nothrow().text()
