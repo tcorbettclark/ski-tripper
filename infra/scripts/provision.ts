@@ -665,6 +665,7 @@ async function deploy() {
   }
 
   if (skipResortsUpload) {
+    step('Uploading resort data')
     console.log('  Skipping resort data upload (--skip-resorts-upload)')
   } else {
     step('Uploading resort data')
