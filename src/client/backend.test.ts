@@ -640,6 +640,56 @@ describe('getProposal', () => {
     })
     expect(getProposal('prop-1', 'user-1', client)).rejects.toThrow('Not found')
   })
+
+  it('normalises null numeric fields to 0', async () => {
+    const client = createMockClient({
+      proposals: {
+        getOne: mock(() =>
+          Promise.resolve({
+            id: 'prop-1',
+            trip: 'trip-1',
+            proposer: 'user-1',
+            proposer_name: 'Alice',
+            state: 'draft',
+            description: '',
+            resort_name: 'Flat Resort',
+            start_date: '2024-12-01',
+            end_date: '2024-12-08',
+            nearest_airport: 'LYS',
+            transfer_time: 60,
+            country: 'France',
+            region: 'Alps',
+            summit_altitude: null,
+            base_altitude: null,
+            piste_km: null,
+            beginner_pct: null,
+            intermediate_pct: null,
+            advanced_pct: null,
+            lift_count: null,
+            snow_reliability: 'medium',
+            ski_season_months: 'Dec-Apr',
+            websites: [],
+            latitude: '45.0',
+            longitude: '7.0',
+            linked_resorts_description: '',
+          })
+        ),
+      },
+      participants: {
+        getFullList: mock(() =>
+          Promise.resolve([{ id: 'p-1', user: 'user-1', trip: 'trip-1' }])
+        ),
+      },
+    })
+    const result = await getProposal('prop-1', 'user-1', client)
+    expect(result.summitAltitude).toBe(0)
+    expect(result.baseAltitude).toBe(0)
+    expect(result.pisteKm).toBe(0)
+    expect(result.beginnerPct).toBe(0)
+    expect(result.intermediatePct).toBe(0)
+    expect(result.advancedPct).toBe(0)
+    expect(result.liftCount).toBe(0)
+  })
 })
 
 describe('updateProposal', () => {

@@ -418,6 +418,58 @@ describe('CreateProposalForm', () => {
       expect(countrySelect.value).toBe('')
     })
 
+    it('auto-fills zero piste percentages as "0" not empty string', () => {
+      const noBlackRunsResort: ResortWithEmbedding = {
+        id: 'flat-resort-alps-france',
+        resortName: 'Flat Resort',
+        country: 'France',
+        region: 'Alps',
+        description: 'No black runs here',
+        latitude: '45.0',
+        longitude: '7.0',
+        summitAltitude: 2000,
+        baseAltitude: 1500,
+        nearestAirport: 'Lyon Airport',
+        transferTime: 60,
+        pisteKm: 100,
+        beginnerPct: 40,
+        intermediatePct: 60,
+        advancedPct: 0,
+        liftCount: 20,
+        snowReliability: 'medium',
+        skiSeasonMonths: 'Dec-Mar',
+        websites: ['https://flat-resort.com'],
+        linkedResortsDescription: '',
+        embedding: [0.1, 0.2],
+      }
+      const { container } = renderForm({
+        resorts: [noBlackRunsResort],
+      })
+      typeInResortInput(container, 'Flat')
+
+      const suggestion = container.querySelector(
+        '[data-testid="resort-suggestion-flat-resort-alps-france"]'
+      ) as HTMLElement
+      fireEvent.mouseDown(suggestion)
+
+      const beginnerInput = container.querySelector(
+        '[name="beginnerPct"]'
+      ) as HTMLInputElement
+      const intermediateInput = container.querySelector(
+        '[name="intermediatePct"]'
+      ) as HTMLInputElement
+      const advancedInput = container.querySelector(
+        '[name="advancedPct"]'
+      ) as HTMLInputElement
+      const liftCountInput = container.querySelector(
+        '[name="liftCount"]'
+      ) as HTMLInputElement
+      expect(beginnerInput.value).toBe('40')
+      expect(intermediateInput.value).toBe('60')
+      expect(advancedInput.value).toBe('0')
+      expect(liftCountInput.value).toBe('20')
+    })
+
     it('filters suggestions by country and region', () => {
       const { container } = renderForm({ resorts: sampleResorts })
       typeInResortInput(container, 'Canada')
