@@ -99,18 +99,19 @@ function resortToFormFields(
     resortName: resort.resortName,
     country: resort.country,
     region: resort.region,
-    summitAltitude: resort.summitAltitude ? String(resort.summitAltitude) : '',
-    baseAltitude: resort.baseAltitude ? String(resort.baseAltitude) : '',
+    summitAltitude:
+      resort.summitAltitude != null ? String(resort.summitAltitude) : '',
+    baseAltitude:
+      resort.baseAltitude != null ? String(resort.baseAltitude) : '',
     nearestAirport: resort.nearestAirport,
     transferTime:
       resort.transferTime != null ? String(resort.transferTime) : '',
-    pisteKm: resort.pisteKm ? String(resort.pisteKm) : '',
-    beginnerPct: resort.beginnerPct ? String(resort.beginnerPct) : '',
-    intermediatePct: resort.intermediatePct
-      ? String(resort.intermediatePct)
-      : '',
-    advancedPct: resort.advancedPct ? String(resort.advancedPct) : '',
-    liftCount: resort.liftCount ? String(resort.liftCount) : '',
+    pisteKm: resort.pisteKm != null ? String(resort.pisteKm) : '',
+    beginnerPct: resort.beginnerPct != null ? String(resort.beginnerPct) : '',
+    intermediatePct:
+      resort.intermediatePct != null ? String(resort.intermediatePct) : '',
+    advancedPct: resort.advancedPct != null ? String(resort.advancedPct) : '',
+    liftCount: resort.liftCount != null ? String(resort.liftCount) : '',
     snowReliability: resort.snowReliability || '',
     skiSeasonMonths: resort.skiSeasonMonths,
     websites: resort.websites ? resort.websites.join(', ') : '',

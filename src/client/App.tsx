@@ -192,7 +192,19 @@ export default function App({
           .trim()
           .split('\n')
           .filter(Boolean)
-          .map((line) => JSON.parse(line) as ResortWithEmbedding)
+          .map((line) => {
+            const r = JSON.parse(line) as ResortWithEmbedding
+            return {
+              ...r,
+              beginnerPct: r.beginnerPct ?? 0,
+              intermediatePct: r.intermediatePct ?? 0,
+              advancedPct: r.advancedPct ?? 0,
+              pisteKm: r.pisteKm ?? 0,
+              liftCount: r.liftCount ?? 0,
+              summitAltitude: r.summitAltitude ?? 0,
+              baseAltitude: r.baseAltitude ?? 0,
+            }
+          })
         setResorts(parsed)
       })
       .catch(() => setResorts([]))
