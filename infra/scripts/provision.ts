@@ -650,26 +650,39 @@ async function deploy() {
   }
 
   step('Configuring PocketBase settings')
-  execSync(
-    'bun run env:prod bun run infra/scripts/configure-pocketbase.ts --external',
-    {
-      cwd: PROJECT_ROOT,
-      stdio: 'inherit',
-      timeout: 120000,
-    }
-  )
-  success('PocketBase settings configured')
+  try {
+    execSync(
+      'bun run env:prod bun run infra/scripts/configure-pocketbase.ts --external',
+      { cwd: PROJECT_ROOT, stdio: 'pipe', timeout: 120000, encoding: 'utf-8' }
+    )
+    success('PocketBase settings configured')
+  } catch (err: unknown) {
+    const output =
+      err instanceof Error && 'stdout' in err && 'stderr' in err
+        ? `${(err as { stdout: string }).stdout}\n${(err as { stderr: string }).stderr}`
+        : String(err)
+    fail(`PocketBase settings failed:\n${output}`)
+  }
 
   if (skipResortsUpload) {
     console.log('  Skipping resort data upload (--skip-resorts-upload)')
   } else {
     step('Uploading resort data')
-    execSync('bun run env:prod bun run tools/resorts.ts upload', {
-      cwd: PROJECT_ROOT,
-      stdio: 'inherit',
-      timeout: 300000,
-    })
-    success('Resort data uploaded')
+    try {
+      execSync('bun run env:prod bun run tools/resorts.ts upload', {
+        cwd: PROJECT_ROOT,
+        stdio: 'pipe',
+        timeout: 300000,
+        encoding: 'utf-8',
+      })
+      success('Resort data uploaded')
+    } catch (err: unknown) {
+      const output =
+        err instanceof Error && 'stdout' in err && 'stderr' in err
+          ? `${(err as { stdout: string }).stdout}\n${(err as { stderr: string }).stderr}`
+          : String(err)
+      fail(`Resort data upload failed:\n${output}`)
+    }
   }
 
   await status(env)
