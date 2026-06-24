@@ -13,7 +13,7 @@ export default defineConfig({
   ],
   timeout: 10_000,
   use: {
-    baseURL: process.env.PUBLIC_EXTERNAL_URL || 'https://ski-tripper.localhost',
+    baseURL: process.env.PUBLIC_EXTERNAL_URL,
     trace: 'on-first-retry',
   },
   projects: [
