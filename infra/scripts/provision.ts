@@ -514,8 +514,6 @@ async function deploy() {
 
   const env = decryptEnvVars()
   const ip = await getDropletIp()
-  const reservedIp = await getReservedIp()
-  if (reservedIp) success(`Using reserved IP: ${reservedIp}`)
   step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
 
   await scanHostKey(ip)
