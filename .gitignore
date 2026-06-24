@@ -4,6 +4,8 @@
 .*.bun-build
 .env
 .env.keys
+.env.local
+.env.*.local
 node_modules/
 dist/
 dev/
