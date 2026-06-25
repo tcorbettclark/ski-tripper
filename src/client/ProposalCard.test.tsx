@@ -30,6 +30,12 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
   }
 }
 
+async function renderCard(props: Record<string, unknown> = {}) {
+  await act(async () => {
+    render(<ProposalCard {...defaultProps(props)} />)
+  })
+}
+
 const baseProposal: Proposal = {
   id: 'proposal-1',
   created: '2024-01-01T00:00:00Z',
@@ -62,15 +68,15 @@ const baseProposal: Proposal = {
 }
 
 describe('ProposalCard', () => {
-  it('renders all proposal fields', () => {
-    render(<ProposalCard {...defaultProps()} />)
+  it('renders all proposal fields', async () => {
+    await renderCard()
 
     expect(screen.getByText(/Test Resort/)).toBeDefined()
     expect(screen.getByText(/Being drafted by John Doe/)).toBeDefined()
   })
 
-  it('displays new resort fields', () => {
-    render(<ProposalCard {...defaultProps()} />)
+  it('displays new resort fields', async () => {
+    await renderCard()
 
     expect(screen.getByText(/Alps/)).toBeDefined()
     expect(screen.getByText('600 km')).toBeDefined()
@@ -83,124 +89,108 @@ describe('ProposalCard', () => {
     ).toBeDefined()
   })
 
-  it('displays altitude range from summitAltitude and baseAltitude', () => {
-    render(<ProposalCard {...defaultProps()} />)
+  it('displays altitude range from summitAltitude and baseAltitude', async () => {
+    await renderCard()
 
     expect(screen.getByText('1500m – 3000m')).toBeDefined()
   })
 
-  it('displays website link when websites is non-empty', () => {
-    render(<ProposalCard {...defaultProps()} />)
+  it('displays website link when websites is non-empty', async () => {
+    await renderCard()
 
     const link = screen.getByText('example.com')
     expect(link).toBeDefined()
     expect(link.closest('a')!.getAttribute('href')).toBe('https://example.com/')
   })
 
-  it('hides website link when websites is empty', () => {
+  it('hides website link when websites is empty', async () => {
     const noWebsiteProposal = { ...baseProposal, websites: [] }
-    render(<ProposalCard {...defaultProps({ proposal: noWebsiteProposal })} />)
+    await renderCard({ proposal: noWebsiteProposal })
 
     expect(screen.queryByText(/↗/)).toBeNull()
   })
 
-  it('shows edit and submit buttons for owner + DRAFT', () => {
-    render(<ProposalCard {...defaultProps()} />)
+  it('shows edit and submit buttons for owner + DRAFT', async () => {
+    await renderCard()
 
     expect(screen.getByRole('button', { name: 'Edit proposal' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'Submit' })).toBeDefined()
   })
 
-  it('hides edit/submit for non-owner', () => {
-    render(<ProposalCard {...defaultProps({ userId: 'user-2' })} />)
+  it('hides edit/submit for non-owner', async () => {
+    await renderCard({ userId: 'user-2' })
 
     expect(screen.queryByRole('button', { name: 'Edit proposal' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Submit' })).toBeNull()
   })
 
-  it('shows reject button for coordinator + SUBMITTED', () => {
+  it('shows reject button for coordinator + SUBMITTED', async () => {
     const submittedProposal = { ...baseProposal, state: 'SUBMITTED' as const }
-    render(
-      <ProposalCard
-        {...defaultProps({
-          proposal: submittedProposal,
-          userId: 'user-2',
-          isCoordinator: true,
-          onRejected: () => {},
-        })}
-      />
-    )
+    await renderCard({
+      proposal: submittedProposal,
+      userId: 'user-2',
+      isCoordinator: true,
+      onRejected: () => {},
+    })
 
     expect(screen.getByRole('button', { name: 'Reject' })).toBeDefined()
   })
 
   it('shows delete confirmation dialog', async () => {
     const user = userEvent.setup()
-    render(<ProposalCard {...defaultProps()} />)
+    await renderCard()
 
     await user.click(screen.getByRole('button', { name: 'Delete' }))
     expect(screen.getByText('Delete Proposal?')).toBeDefined()
   })
 
-  it('shows revert-to-draft button for coordinator + REJECTED', () => {
+  it('shows revert-to-draft button for coordinator + REJECTED', async () => {
     const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
-    render(
-      <ProposalCard
-        {...defaultProps({
-          proposal: rejectedProposal,
-          userId: 'user-2',
-          isCoordinator: true,
-          onRejected: () => {},
-          onRevertedToDraft: () => {},
-        })}
-      />
-    )
+    await renderCard({
+      proposal: rejectedProposal,
+      userId: 'user-2',
+      isCoordinator: true,
+      onRejected: () => {},
+      onRevertedToDraft: () => {},
+    })
 
     expect(
       screen.getByRole('button', { name: 'Move back to Draft' })
     ).toBeDefined()
   })
 
-  it('does not show revert-to-draft button for non-coordinator + REJECTED', () => {
+  it('does not show revert-to-draft button for non-coordinator + REJECTED', async () => {
     const rejectedProposal = { ...baseProposal, state: 'REJECTED' as const }
-    render(
-      <ProposalCard
-        {...defaultProps({
-          proposal: rejectedProposal,
-          userId: 'user-2',
-          isCoordinator: false,
-        })}
-      />
-    )
+    await renderCard({
+      proposal: rejectedProposal,
+      userId: 'user-2',
+      isCoordinator: false,
+    })
 
     expect(
       screen.queryByRole('button', { name: 'Move back to Draft' })
     ).toBeNull()
   })
 
-  it('displays flag image for supported countries', () => {
+  it('displays flag image for supported countries', async () => {
     const franceProposal = { ...baseProposal, country: 'France' }
-    render(<ProposalCard {...defaultProps({ proposal: franceProposal })} />)
+    await renderCard({ proposal: franceProposal })
 
     const flagImg = screen.getByRole('img', { name: 'France' })
     expect(flagImg).toBeDefined()
     expect(flagImg.getAttribute('src')).toBe('/flags/fr.png')
   })
 
-  it('does not display flag for unsupported countries', () => {
+  it('does not display flag for unsupported countries', async () => {
     const unknownProposal = { ...baseProposal, country: 'Unknown Land' }
-    render(<ProposalCard {...defaultProps({ proposal: unknownProposal })} />)
+    await renderCard({ proposal: unknownProposal })
 
     expect(screen.queryByRole('img', { name: 'Unknown Land' })).toBeNull()
   })
 
-  it('displays flag in preview mode', () => {
+  it('displays flag in preview mode', async () => {
     const japanProposal = { ...baseProposal, country: 'Japan' }
-    render(
-      <ProposalCard
-        {...defaultProps({ proposal: japanProposal, previewMode: true })}
-      />
-    )
+    await renderCard({ proposal: japanProposal, previewMode: true })
 
     const flagImg = screen.getByRole('img', { name: 'Japan' })
     expect(flagImg).toBeDefined()
@@ -209,7 +199,7 @@ describe('ProposalCard', () => {
 
   it('shows popup when submitting with no accommodations', async () => {
     const user = userEvent.setup()
-    render(<ProposalCard {...defaultProps()} />)
+    await renderCard()
 
     await user.click(screen.getByRole('button', { name: 'Submit' }))
     expect(screen.getByText('No Accommodations')).toBeDefined()
@@ -221,7 +211,6 @@ describe('ProposalCard', () => {
   it('shows error when submitProposal rejects', async () => {
     const failingSubmit = mock(() => Promise.reject(new Error('Submit failed')))
     const onSubmitted = mock()
-    const user = userEvent.setup()
     const accommodations = [
       {
         id: 'acc-1',
@@ -234,11 +223,12 @@ describe('ProposalCard', () => {
         description: '',
       },
     ]
+    const user = userEvent.setup()
     render(
       <ProposalCard
         {...defaultProps({
           onSubmitted,
-          accommodations,
+          listAccommodations: mock(() => Promise.resolve(accommodations)),
           submitProposal: failingSubmit,
         })}
       />
@@ -329,16 +319,7 @@ describe('ProposalCard', () => {
     ]
     const listDiscussion = mock(async () => [...comments])
 
-    await act(async () => {
-      render(
-        <ProposalCard
-          {...defaultProps({
-            userName: 'Alice',
-            listDiscussion,
-          })}
-        />
-      )
-    })
+    await renderCard({ userName: 'Alice', listDiscussion })
 
     await screen.findByRole('button', { name: /Discussion/i })
     expect(screen.getByText(/\(1\)/)).toBeDefined()
@@ -359,7 +340,13 @@ describe('ProposalCard', () => {
       },
     ]
 
-    render(<ProposalCard {...defaultProps({ accommodations })} />)
+    render(
+      <ProposalCard
+        {...defaultProps({
+          listAccommodations: mock(() => Promise.resolve(accommodations)),
+        })}
+      />
+    )
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
@@ -369,7 +356,7 @@ describe('ProposalCard', () => {
 
   it('shows add accommodation button for owner of DRAFT', async () => {
     const user = userEvent.setup()
-    render(<ProposalCard {...defaultProps()} />)
+    await renderCard()
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
@@ -380,7 +367,7 @@ describe('ProposalCard', () => {
 
   it('hides add accommodation button for non-owner', async () => {
     const user = userEvent.setup()
-    render(<ProposalCard {...defaultProps({ userId: 'user-2' })} />)
+    await renderCard({ userId: 'user-2' })
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
@@ -392,7 +379,7 @@ describe('ProposalCard', () => {
   it('hides add accommodation button for SUBMITTED proposal', async () => {
     const user = userEvent.setup()
     const submittedProposal = { ...baseProposal, state: 'SUBMITTED' as const }
-    render(<ProposalCard {...defaultProps({ proposal: submittedProposal })} />)
+    await renderCard({ proposal: submittedProposal })
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
@@ -416,9 +403,15 @@ describe('ProposalCard', () => {
       },
     ]
 
-    render(<ProposalCard {...defaultProps({ accommodations })} />)
+    render(
+      <ProposalCard
+        {...defaultProps({
+          listAccommodations: mock(() => Promise.resolve(accommodations)),
+        })}
+      />
+    )
 
-    expect(screen.getByText(/\(1\)/)).toBeDefined()
+    expect(await screen.findByText(/\(1\)/)).toBeDefined()
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
@@ -440,7 +433,13 @@ describe('ProposalCard', () => {
     ]
     const user = userEvent.setup()
 
-    render(<ProposalCard {...defaultProps({ accommodations })} />)
+    render(
+      <ProposalCard
+        {...defaultProps({
+          listAccommodations: mock(() => Promise.resolve(accommodations)),
+        })}
+      />
+    )
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
@@ -466,7 +465,12 @@ describe('ProposalCard', () => {
     const user = userEvent.setup()
 
     render(
-      <ProposalCard {...defaultProps({ userId: 'user-2', accommodations })} />
+      <ProposalCard
+        {...defaultProps({
+          userId: 'user-2',
+          listAccommodations: mock(() => Promise.resolve(accommodations)),
+        })}
+      />
     )
 
     await user.click(screen.getByRole('button', { name: /Accommodations/ }))
@@ -479,7 +483,6 @@ describe('ProposalCard', () => {
 
   it('creates accommodation inline', async () => {
     const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
-    const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
 
@@ -487,7 +490,6 @@ describe('ProposalCard', () => {
       <ProposalCard
         {...defaultProps({
           createAccommodation,
-          onAccommodationsChanged,
           listAccommodations,
         })}
       />
@@ -509,12 +511,11 @@ describe('ProposalCard', () => {
       'user-1',
       expect.objectContaining({ name: 'New Hotel' })
     )
-    expect(onAccommodationsChanged).toHaveBeenCalledWith('proposal-1')
+    expect(listAccommodations).toHaveBeenCalledWith('proposal-1')
   })
 
   it('prepends https:// to accommodation URL when scheme is missing', async () => {
     const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
-    const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
 
@@ -522,7 +523,6 @@ describe('ProposalCard', () => {
       <ProposalCard
         {...defaultProps({
           createAccommodation,
-          onAccommodationsChanged,
           listAccommodations,
         })}
       />
@@ -546,7 +546,6 @@ describe('ProposalCard', () => {
 
   it('does not modify accommodation URL that already has https://', async () => {
     const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
-    const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
 
@@ -554,7 +553,6 @@ describe('ProposalCard', () => {
       <ProposalCard
         {...defaultProps({
           createAccommodation,
-          onAccommodationsChanged,
           listAccommodations,
         })}
       />
@@ -578,7 +576,6 @@ describe('ProposalCard', () => {
 
   it('does not modify accommodation URL that already has http://', async () => {
     const createAccommodation = mock(() => Promise.resolve({ id: 'acc-new' }))
-    const onAccommodationsChanged = mock()
     const listAccommodations = mock(() => Promise.resolve([]))
     const user = userEvent.setup()
 
@@ -586,7 +583,6 @@ describe('ProposalCard', () => {
       <ProposalCard
         {...defaultProps({
           createAccommodation,
-          onAccommodationsChanged,
           listAccommodations,
         })}
       />
@@ -629,7 +625,7 @@ describe('ProposalCard', () => {
       render(
         <ProposalCard
           {...defaultProps({
-            accommodations,
+            listAccommodations: mock(() => Promise.resolve(accommodations)),
             deleteAccommodation,
           })}
         />
@@ -649,8 +645,8 @@ describe('ProposalCard', () => {
     await screen.findByText('delete failed')
   })
 
-  it('defaults to proposal tab showing proposal details', () => {
-    render(<ProposalCard {...defaultProps()} />)
+  it('defaults to proposal tab showing proposal details', async () => {
+    await renderCard()
 
     expect(screen.getByText('600 km')).toBeDefined()
     expect(screen.getByRole('button', { name: 'Proposal' })).toBeDefined()
@@ -659,16 +655,7 @@ describe('ProposalCard', () => {
   it('switches to discussion tab and shows discussion section', async () => {
     const listDiscussion = mock(async () => [])
 
-    await act(async () => {
-      render(
-        <ProposalCard
-          {...defaultProps({
-            userName: 'Alice',
-            listDiscussion,
-          })}
-        />
-      )
-    })
+    await renderCard({ userName: 'Alice', listDiscussion })
 
     const user = userEvent.setup()
     await user.click(screen.getByRole('button', { name: /Discussion/ }))
@@ -677,16 +664,7 @@ describe('ProposalCard', () => {
   })
 
   it('opens accommodations tab when initialTab is accommodations', async () => {
-    const listDiscussion = mock(async () => [])
-
-    render(
-      <ProposalCard
-        {...defaultProps({
-          initialTab: 'accommodations',
-          listDiscussion,
-        })}
-      />
-    )
+    await renderCard({ initialTab: 'accommodations' })
 
     expect(screen.getByText('No accommodations yet.')).toBeDefined()
   })
@@ -694,16 +672,10 @@ describe('ProposalCard', () => {
   it('opens discussion tab when initialTab is discussion', async () => {
     const listDiscussion = mock(async () => [])
 
-    await act(async () => {
-      render(
-        <ProposalCard
-          {...defaultProps({
-            userName: 'Alice',
-            initialTab: 'discussion',
-            listDiscussion,
-          })}
-        />
-      )
+    await renderCard({
+      userName: 'Alice',
+      initialTab: 'discussion',
+      listDiscussion,
     })
 
     expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()

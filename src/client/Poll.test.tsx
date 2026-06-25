@@ -696,7 +696,6 @@ describe('Poll', () => {
             closePoll={fresh.closePoll as any}
             upsertVote={fresh.upsertVote as any}
             getCoordinatorParticipant={fresh.getCoordinatorParticipant as any}
-            listAccommodations={fresh.listAccommodations as any}
           />
         )
       })

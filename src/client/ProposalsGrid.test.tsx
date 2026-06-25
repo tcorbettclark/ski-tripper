@@ -1,5 +1,5 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Proposal } from '../shared/types.d'
 import ProposalsGrid from './ProposalsGrid'
@@ -100,20 +100,26 @@ function defaultProps(overrides: Record<string, unknown> = {}) {
   }
 }
 
+async function renderGrid(props: Record<string, unknown> = {}) {
+  await act(async () => {
+    render(<ProposalsGrid {...defaultProps(props)} />)
+  })
+}
+
 describe('ProposalsGrid', () => {
-  it('renders proposals filtered by default status', () => {
-    render(<ProposalsGrid {...defaultProps()} />)
+  it('renders proposals filtered by default status', async () => {
+    await renderGrid()
 
     expect(screen.getByText(/Z Resort/)).toBeDefined()
     expect(screen.queryByText(/A Resort/)).toBeNull()
   })
 
-  it('sorts proposals alphabetically by resort name', () => {
+  it('sorts proposals alphabetically by resort name', async () => {
     const allDrafts: Proposal[] = proposals.map((p) => ({
       ...p,
       state: 'DRAFT' as const,
     }))
-    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+    await renderGrid({ proposals: allDrafts })
 
     const resortNames = screen.getAllByText(/Resort/)
     expect(resortNames.length).toBe(2)
@@ -123,7 +129,7 @@ describe('ProposalsGrid', () => {
 
   it('filters by DRAFT status', async () => {
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps()} />)
+    await renderGrid()
 
     await user.click(screen.getByRole('button', { name: /^DRAFT/ }))
     expect(screen.getByText(/Z Resort/)).toBeDefined()
@@ -132,26 +138,21 @@ describe('ProposalsGrid', () => {
 
   it('filters by SUBMITTED status', async () => {
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps()} />)
+    await renderGrid()
 
     await user.click(screen.getByRole('button', { name: /^SUBMITTED/ }))
     expect(screen.getByText(/A Resort/)).toBeDefined()
     expect(screen.queryByText(/Z Resort/)).toBeNull()
   })
 
-  it('shows empty message when no proposals', () => {
-    render(
-      <ProposalsGrid
-        {...defaultProps({ proposals: [] })}
-        emptyMessage="No proposals yet."
-      />
-    )
+  it('shows empty message when no proposals', async () => {
+    await renderGrid({ proposals: [], emptyMessage: 'No proposals yet.' })
 
     expect(screen.getByText('No proposals yet.')).toBeDefined()
   })
 
-  it('shows plain counts when not searching', () => {
-    render(<ProposalsGrid {...defaultProps()} />)
+  it('shows plain counts when not searching', async () => {
+    await renderGrid()
 
     expect(screen.getByRole('button', { name: 'DRAFT (1)' })).toBeDefined()
     expect(screen.getByRole('button', { name: 'SUBMITTED (1)' })).toBeDefined()
@@ -160,7 +161,7 @@ describe('ProposalsGrid', () => {
 
   it('shows filtered/total counts when searching', async () => {
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps()} />)
+    await renderGrid()
 
     const searchInput = screen.getByPlaceholderText('Search proposals…')
     await user.type(searchInput, 'Z')
@@ -174,7 +175,7 @@ describe('ProposalsGrid', () => {
 
   it('reverts to plain counts when search is cleared', async () => {
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps()} />)
+    await renderGrid()
 
     const searchInput = screen.getByPlaceholderText('Search proposals…')
     await user.type(searchInput, 'Z')
@@ -186,7 +187,7 @@ describe('ProposalsGrid', () => {
 
   it('shows search results empty state', async () => {
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps()} />)
+    await renderGrid()
 
     const searchInput = screen.getByPlaceholderText('Search proposals…')
     await user.type(searchInput, 'nonexistent')
@@ -198,22 +199,22 @@ describe('ProposalsGrid', () => {
     ).toBeDefined()
   })
 
-  it('uses controlled statusFilter prop when provided', () => {
-    render(<ProposalsGrid {...defaultProps({ statusFilter: 'SUBMITTED' })} />)
+  it('uses controlled statusFilter prop when provided', async () => {
+    await renderGrid({ statusFilter: 'SUBMITTED' })
 
     expect(screen.getByText(/A Resort/)).toBeDefined()
     expect(screen.queryByText(/Z Resort/)).toBeNull()
   })
 
-  it('falls back to internal DRAFT default when statusFilter is not provided', () => {
-    render(<ProposalsGrid {...defaultProps()} />)
+  it('falls back to internal DRAFT default when statusFilter is not provided', async () => {
+    await renderGrid()
 
     expect(screen.getByText(/Z Resort/)).toBeDefined()
     expect(screen.queryByText(/A Resort/)).toBeNull()
   })
 
-  it('renders the My proposals toggle', () => {
-    render(<ProposalsGrid {...defaultProps()} />)
+  it('renders the My proposals toggle', async () => {
+    await renderGrid()
 
     expect(screen.getByRole('switch', { name: 'My proposals' })).toBeDefined()
   })
@@ -224,7 +225,7 @@ describe('ProposalsGrid', () => {
       state: 'DRAFT' as const,
     }))
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+    await renderGrid({ proposals: allDrafts })
 
     expect(screen.getByText(/Z Resort/)).toBeDefined()
     expect(screen.getByText(/A Resort/)).toBeDefined()
@@ -241,7 +242,7 @@ describe('ProposalsGrid', () => {
       state: 'DRAFT' as const,
     }))
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+    await renderGrid({ proposals: allDrafts })
 
     await user.click(screen.getByRole('switch', { name: 'My proposals' }))
     expect(screen.queryByText(/A Resort/)).toBeNull()
@@ -256,7 +257,7 @@ describe('ProposalsGrid', () => {
       state: 'DRAFT' as const,
     }))
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+    await renderGrid({ proposals: allDrafts })
 
     await user.click(screen.getByRole('switch', { name: 'My proposals' }))
 
@@ -269,7 +270,7 @@ describe('ProposalsGrid', () => {
 
   it('combines My proposals filter with status tabs', async () => {
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps()} />)
+    await renderGrid()
 
     await user.click(screen.getByRole('switch', { name: 'My proposals' }))
     expect(screen.getByText(/Z Resort/)).toBeDefined()
@@ -285,7 +286,7 @@ describe('ProposalsGrid', () => {
       state: 'DRAFT' as const,
     }))
     const user = userEvent.setup()
-    render(<ProposalsGrid {...defaultProps({ proposals: allDrafts })} />)
+    await renderGrid({ proposals: allDrafts })
 
     expect(screen.getByRole('button', { name: 'DRAFT (2)' })).toBeDefined()
 
