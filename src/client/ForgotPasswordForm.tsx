@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
-import { authStyles, colors, fontSizes, formStyles } from './theme'
+import { authStyles, colors, fontSizes, fonts, formStyles } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
@@ -123,14 +123,14 @@ export default function ForgotPasswordForm({
 
 const forgotStyles = {
   message: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: fontSizes.base,
     color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0 0 8px 0',
   } as const,
   email: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: fontSizes.md,
     color: colors.textPrimary,
     fontWeight: '600',

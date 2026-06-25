@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import ThemeToggle from './ThemeToggle'
-import { authStyles, colors, fontSizes, formStyles } from './theme'
+import { authStyles, colors, fontSizes, fonts, formStyles } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
@@ -92,7 +92,7 @@ export default function EmailVerifyScreen({
 
 const verifyStyles = {
   email: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: fontSizes.md,
     fontWeight: 'bold',
     color: colors.textPrimary,
@@ -100,14 +100,14 @@ const verifyStyles = {
     margin: '8px 0',
   } as const,
   message: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: fontSizes.base,
     color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0',
   } as const,
   followUp: {
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: fontSizes.base,
     color: colors.textSecondary,
     lineHeight: '1.6',
@@ -115,7 +115,7 @@ const verifyStyles = {
   } as const,
   resent: {
     color: colors.accent,
-    fontFamily: "'DM Sans', sans-serif",
+    fontFamily: fonts.body,
     fontSize: fontSizes.sm,
     margin: '0 0 12px 0',
   } as const,
