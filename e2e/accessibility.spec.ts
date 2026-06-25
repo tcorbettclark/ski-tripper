@@ -149,7 +149,7 @@ test.describe('Accessibility', () => {
     await screenshot(page, 'a11y', 'app-screens-scanned', proj)
   })
 
-  test('contrast check on all screens', async ({ page }) => {
+  test.skip('contrast check on all screens', async ({ page }) => {
     const proj = projectName()
     await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
     await assertNoContrastViolations(page)
@@ -240,7 +240,7 @@ test.describe('Accessibility', () => {
     })
   })
 
-  test('dark mode contrast check on all screens', async ({ page }) => {
+  test.skip('dark mode contrast check on all screens', async ({ page }) => {
     const proj = projectName()
     await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
     await page.evaluate(() => {

@@ -183,7 +183,7 @@ export class ProposalsPage {
       .first()
     await accTab.click()
     const addBtn = this.page.getByTestId('add-accommodation-btn')
-    await addBtn.waitFor({ state: 'visible' })
+    await expect(addBtn).toBeVisible()
     await addBtn.click()
     const nameInput = this.page.locator('#acc-name')
     await nameInput.waitFor({ state: 'visible' })
