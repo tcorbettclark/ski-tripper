@@ -137,9 +137,6 @@ export default function Proposals({
 }: ProposalsProps) {
   const isSmall = useIsSmallScreen()
   const [proposals, setProposals] = useState<Proposal[]>([])
-  const [accommodations, setAccommodations] = useState<
-    Record<string, Accommodation[]>
-  >({})
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [_proposalsLoading, setProposalsLoading] = useState(false)
@@ -156,11 +153,9 @@ export default function Proposals({
 
   const lastFetchedTripIdRef = useRef<string | null>(null)
   const listProposalsRef = useRef(listProposals)
-  const listAccommodationsRef = useRef(listAccommodations)
   const getCoordinatorParticipantRef = useRef(getCoordinatorParticipant)
   const onAuthErrorRef = useRef(onAuthError)
   listProposalsRef.current = listProposals
-  listAccommodationsRef.current = listAccommodations
   getCoordinatorParticipantRef.current = getCoordinatorParticipant
   onAuthErrorRef.current = onAuthError
 
@@ -188,31 +183,6 @@ export default function Proposals({
           coordResult.participants.length > 0 &&
             coordResult.participants[0].user === user.id
         )
-        return proposalsResult.proposals
-      })
-      .then((loadedProposals) => {
-        if (!mountedRef.current || !loadedProposals) return
-        const accommodationPromises = loadedProposals.map((p) =>
-          listAccommodationsRef.current(p.id).catch((err) => {
-            onAuthErrorRef.current(err)
-            return []
-          })
-        )
-        return Promise.all(accommodationPromises).then(
-          (accommodationResults) => ({
-            loadedProposals,
-            accommodationResults,
-          })
-        )
-      })
-      .then((result) => {
-        if (!mountedRef.current || !result) return
-        const { loadedProposals, accommodationResults } = result
-        const accMap: Record<string, Accommodation[]> = {}
-        accommodationResults.forEach((accs, i) => {
-          accMap[loadedProposals[i].id] = accs
-        })
-        setAccommodations(accMap)
       })
       .catch((err) => {
         if (mountedRef.current) setProposalsError(getErrorMessage(err))
@@ -226,19 +196,10 @@ export default function Proposals({
     setProposals((p) => [proposal as Proposal, ...p])
   }, [])
 
-  const handleUpdated = useCallback(
-    (updated: unknown) => {
-      const u = updated as Proposal
-      setProposals((p) => p.map((prop) => (prop.id === u.id ? u : prop)))
-      listAccommodations(u.id)
-        .then((accs) => {
-          if (!mountedRef.current) return
-          setAccommodations((prev) => ({ ...prev, [u.id]: accs }))
-        })
-        .catch(onAuthError)
-    },
-    [listAccommodations, onAuthError]
-  )
+  const handleUpdated = useCallback((updated: unknown) => {
+    const u = updated as Proposal
+    setProposals((p) => p.map((prop) => (prop.id === u.id ? u : prop)))
+  }, [])
 
   const handleDeleted = useCallback((id: string) => {
     setProposals((p) => p.filter((prop) => prop.id !== id))
@@ -258,18 +219,6 @@ export default function Proposals({
     const u = updated as Proposal
     setProposals((p) => p.map((prop) => (prop.id === u.id ? u : prop)))
   }, [])
-
-  const handleAccommodationsChanged = useCallback(
-    (proposalId: string) => {
-      listAccommodations(proposalId)
-        .then((accs) => {
-          if (!mountedRef.current) return
-          setAccommodations((prev) => ({ ...prev, [proposalId]: accs }))
-        })
-        .catch(onAuthError)
-    },
-    [listAccommodations, onAuthError]
-  )
 
   if (loading) return <p style={styles.message}>Loading…</p>
 
@@ -319,7 +268,6 @@ export default function Proposals({
           userId={user.id}
           userName={user.name || ''}
           isCoordinator={isCoordinator}
-          accommodations={accommodations}
           statusFilter={statusFilter}
           onStatusFilterChange={onStatusFilterChange}
           proposalDetail={proposalDetail}
@@ -328,7 +276,6 @@ export default function Proposals({
           onSubmitted={handleSubmitted}
           onRejected={handleRejected}
           onRevertedToDraft={handleRevertedToDraft}
-          onAccommodationsChanged={handleAccommodationsChanged}
           emptyMessage="No proposals yet. Create one above."
           updateProposal={updateProposal}
           deleteProposal={deleteProposal}

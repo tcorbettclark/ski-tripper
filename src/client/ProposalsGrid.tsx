@@ -22,7 +22,6 @@ interface ProposalsGridProps {
   userId: string
   userName?: string
   isCoordinator?: boolean
-  accommodations?: Record<string, Accommodation[]>
   /** Controlled status filter — allows parent (e.g. App) to preselect a tab when navigating here. When provided, the internal toggle is synced to this value. */
   statusFilter?: StatusFilter
   /** Called when the user clicks a status tab — lets the parent stay in sync when statusFilter is controlled. */
@@ -37,7 +36,6 @@ interface ProposalsGridProps {
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
   onRevertedToDraft?: (proposal: unknown) => void
-  onAccommodationsChanged?: (proposalId: string) => void
   emptyMessage?: string
   updateProposal?: (
     proposalId: string,
@@ -76,7 +74,6 @@ export default function ProposalsGrid({
   userId,
   userName = '',
   isCoordinator = false,
-  accommodations = {},
   statusFilter: controlledStatusFilter,
   onStatusFilterChange,
   proposalDetail,
@@ -85,7 +82,6 @@ export default function ProposalsGrid({
   onSubmitted,
   onRejected = () => {},
   onRevertedToDraft = () => {},
-  onAccommodationsChanged,
   emptyMessage = 'No proposals yet. Create one above.',
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
@@ -255,7 +251,6 @@ export default function ProposalsGrid({
               userId={userId}
               userName={userName}
               isCoordinator={isCoordinator}
-              accommodations={accommodations[proposal.id] || []}
               initialTab={
                 proposalDetail?.proposalId === proposal.id
                   ? proposalDetail.subTab
@@ -266,7 +261,6 @@ export default function ProposalsGrid({
               onSubmitted={onSubmitted}
               onRejected={onRejected}
               onRevertedToDraft={onRevertedToDraft}
-              onAccommodationsChanged={onAccommodationsChanged}
               updateProposal={updateProposal}
               deleteProposal={deleteProposal}
               submitProposal={submitProposal}

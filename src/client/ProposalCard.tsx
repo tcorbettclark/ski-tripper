@@ -50,13 +50,11 @@ interface ProposalCardProps {
   isCoordinator?: boolean
   previewMode?: boolean
   initialTab?: 'proposal' | 'accommodations' | 'discussion'
-  accommodations?: Accommodation[]
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
   onRejected?: (proposal: unknown) => void
   onRevertedToDraft?: (proposal: unknown) => void
-  onAccommodationsChanged?: (proposalId: string) => void
   updateProposal?: (
     proposalId: string,
     userId: string,
@@ -97,13 +95,11 @@ export default function ProposalCard({
   isCoordinator = false,
   previewMode = false,
   initialTab,
-  accommodations = [],
   onUpdated,
   onDeleted,
   onSubmitted,
   onRejected = () => {},
   onRevertedToDraft = () => {},
-  onAccommodationsChanged,
   updateProposal = _updateProposal,
   deleteProposal = _deleteProposal,
   submitProposal = _submitProposal,
@@ -121,6 +117,7 @@ export default function ProposalCard({
   const [activeTab, setActiveTab] = useState<
     'proposal' | 'accommodations' | 'discussion'
   >(initialTab ?? 'proposal')
+  const [accommodations, setAccommodations] = useState<Accommodation[]>([])
   const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -129,6 +126,16 @@ export default function ProposalCard({
       cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }, [initialTab])
+
+  useEffect(() => {
+    listAccommodations(proposal.id).then(setAccommodations).catch(onAuthError)
+  }, [proposal.id, listAccommodations, onAuthError])
+
+  useEffect(() => {
+    if (activeTab === 'accommodations') {
+      listAccommodations(proposal.id).then(setAccommodations).catch(onAuthError)
+    }
+  }, [activeTab, proposal.id, listAccommodations, onAuthError])
   const [discussionCount, setDiscussionCount] = useState(0)
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
   const [showAnalysisModal, setShowAnalysisModal] = useState(false)
@@ -238,8 +245,7 @@ export default function ProposalCard({
   }
 
   function handleAccommodationsChanged() {
-    onAccommodationsChanged?.(proposal.id)
-    listAccommodations(proposal.id).catch(onAuthError)
+    listAccommodations(proposal.id).then(setAccommodations).catch(onAuthError)
   }
 
   async function handleAddAccommodation(data: {

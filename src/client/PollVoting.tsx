@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getCountryFlagUrl } from '../shared/countries'
-import type { Accommodation, Poll, Proposal, Vote } from '../shared/types.d'
+import type { Poll, Proposal, Vote } from '../shared/types.d'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
@@ -9,7 +9,6 @@ import { getErrorMessage } from './utils'
 interface PollVotingProps {
   poll: Poll
   proposals: Proposal[]
-  accommodations?: Record<string, Accommodation[]>
   myVote: Vote | null
   userId: string
   userName: string
@@ -26,7 +25,6 @@ interface PollVotingProps {
 export default function PollVoting({
   poll,
   proposals,
-  accommodations = {},
   myVote,
   userId,
   userName,
@@ -136,7 +134,6 @@ export default function PollVoting({
               name={name}
               count={count}
               remaining={remaining}
-              accommodations={accommodations[proposalId] || []}
               onAdd={handleAdd}
               onRemove={handleRemove}
             />
@@ -181,7 +178,6 @@ function ProposalRow({
   name,
   count,
   remaining,
-  accommodations,
   onAdd,
   onRemove,
 }: {
@@ -189,7 +185,6 @@ function ProposalRow({
   name: string
   count: number
   remaining: number
-  accommodations: Accommodation[]
   onAdd: (id: string) => void
   onRemove: (id: string) => void
 }) {
@@ -331,7 +326,6 @@ function ProposalRow({
               proposal={proposal}
               userId=""
               previewMode
-              accommodations={accommodations}
               onUpdated={() => {}}
               onDeleted={() => {}}
               onSubmitted={() => {}}

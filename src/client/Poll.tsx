@@ -1,16 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type {
-  Accommodation,
-  Poll as PollType,
-  Proposal,
-  User,
-  Vote,
-} from '../shared/types.d'
+import type { Poll as PollType, Proposal, User, Vote } from '../shared/types.d'
 import {
   closePoll as _closePoll,
   createPoll as _createPoll,
   getCoordinatorParticipant as _getCoordinatorParticipant,
-  listAccommodations as _listAccommodations,
   listPolls as _listPolls,
   listProposals as _listProposals,
   listVotes as _listVotes,
@@ -55,7 +48,6 @@ interface PollComponentProps {
   getCoordinatorParticipant?: (
     tripId: string
   ) => Promise<{ participants: Array<{ user: string }> }>
-  listAccommodations?: (proposalId: string) => Promise<Accommodation[]>
 }
 
 const noopAuthError = () => {}
@@ -64,7 +56,7 @@ export default function Poll({
   user,
   tripId,
   onActivePollChange,
-  onAuthError = noopAuthError,
+  onAuthError: _onAuthError = noopAuthError,
   listPolls = _listPolls,
   listProposals = _listProposals,
   listVotes = _listVotes,
@@ -72,7 +64,6 @@ export default function Poll({
   closePoll = _closePoll,
   upsertVote = _upsertVote,
   getCoordinatorParticipant = _getCoordinatorParticipant,
-  listAccommodations = _listAccommodations,
 }: PollComponentProps) {
   const isSmall = useIsSmallScreen()
   const [loading, setLoading] = useState(true)
@@ -80,9 +71,6 @@ export default function Poll({
   const [pastPolls, setPastPolls] = useState<PollType[]>([])
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [votes, setVotes] = useState<Vote[]>([])
-  const [accommodations, setAccommodations] = useState<
-    Record<string, Accommodation[]>
-  >({})
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [_pollsLoading, setPollsLoading] = useState(false)
   const [pollsError, setPollsError] = useState('')
@@ -143,20 +131,6 @@ export default function Poll({
             coordResult.participants[0].user === user.id
         )
         setProposals(proposalsResult.proposals)
-        const accMap: Record<string, Accommodation[]> = {}
-        const accResults = await Promise.all(
-          proposalsResult.proposals.map((p) =>
-            listAccommodations(p.id).catch((err) => {
-              onAuthError(err)
-              return []
-            })
-          )
-        )
-        if (!mountedRef.current) return
-        proposalsResult.proposals.forEach((p, i) => {
-          accMap[p.id] = accResults[i]
-        })
-        setAccommodations(accMap)
         const open = pollsResult.polls.find((p) => p.state === 'OPEN') || null
         const past = pollsResult.polls.filter((p) => p.state === 'CLOSED')
         setActivePoll(open)
@@ -180,9 +154,7 @@ export default function Poll({
     listProposals,
     listPolls,
     listVotes,
-    listAccommodations,
     onActivePollChange,
-    onAuthError,
   ])
 
   const handleVoteSaved = useCallback((vote: unknown) => {
@@ -322,7 +294,6 @@ export default function Poll({
               <PollVoting
                 poll={activePoll}
                 proposals={proposals}
-                accommodations={accommodations}
                 myVote={myVote}
                 userId={user.id}
                 userName={user.name}
