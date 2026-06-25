@@ -92,18 +92,15 @@ function typeInResortInput(container: HTMLElement, value: string) {
 }
 
 async function selectDateRange(container: HTMLElement) {
-  const dayCells = container.querySelectorAll('[data-day]')
-  const enabledDays = Array.from(dayCells).filter(
-    (cell) => !cell.hasAttribute('data-disabled')
+  const enabledButtons = Array.from(
+    container.querySelectorAll('[data-day]:not([data-disabled]) button')
   )
-  if (enabledDays.length < 2) return
-  const startCell = enabledDays[0]
-  const endCell = enabledDays[6]
+  if (enabledButtons.length < 2) return
   await act(async () => {
-    fireEvent.click(startCell.querySelector('button')!)
+    fireEvent.click(enabledButtons[0])
   })
   await act(async () => {
-    fireEvent.click(endCell.querySelector('button')!)
+    fireEvent.click(enabledButtons[6])
   })
 }
 
