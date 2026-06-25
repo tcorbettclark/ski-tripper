@@ -33,7 +33,7 @@ __PUBLIC_DOMAIN__ {
 		# unsafe-inline script-src: inline theme detection script in index.html
 		# data: and blob: img-src: app icons
 		# connect-src includes HuggingFace, Xet/CAS bridge (model weights), and jsDelivr (WASM files)
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://*.xethub.hf.co https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://*.xethub.hf.co https://*.cdn.hf.co https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'"
 	}
 
 	# API endpoints — Bun server with SSE streaming for LLM responses
