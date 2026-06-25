@@ -8,7 +8,7 @@
 .env.*.local
 node_modules/
 dist/
-dev/
+dev/pb_data/
 tools/data/resorts/ski_areas.csv
 tools/data/resorts/lifts.csv
 tools/data/resorts/runs.csv

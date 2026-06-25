@@ -1,43 +1,15 @@
 import { X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
+import { aboutContent } from './about-content'
 import StyledMarkdown from './StyledMarkdown'
 import { colors, fontSizes, fonts, overlayStyles } from './theme'
-
-const README_URL =
-  'https://raw.githubusercontent.com/tcorbettclark/ski-tripper/main/README.md'
 
 interface AboutModalProps {
   open: boolean
   onClose: () => void
-  readmeUrl?: string
 }
 
-export default function AboutModal({
-  open,
-  onClose,
-  readmeUrl = README_URL,
-}: AboutModalProps) {
-  const [content, setContent] = useState<string | null>(null)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (!open) return
-    setContent(null)
-    setError('')
-    fetch(readmeUrl)
-      .then((res) => {
-        if (!res.ok) throw new Error(`Failed to load README (${res.status})`)
-        return res.text()
-      })
-      .then((text) => {
-        const firstHeadingIndex = text.search(/^# /m)
-        const content =
-          firstHeadingIndex >= 0 ? text.slice(firstHeadingIndex) : text
-        setContent(content)
-      })
-      .catch((err) => setError(err.message))
-  }, [open, readmeUrl])
-
+export default function AboutModal({ open, onClose }: AboutModalProps) {
   useEffect(() => {
     if (!open) return
     function handleKeyDown(e: KeyboardEvent) {
@@ -47,13 +19,15 @@ export default function AboutModal({
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [open, onClose])
 
-  if (!open) return null
-
   return (
     <div
       role="dialog"
       aria-modal="true"
-      style={overlayStyles.overlay}
+      aria-hidden={!open}
+      style={{
+        ...overlayStyles.overlay,
+        display: open ? 'flex' : 'none',
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose()
       }}
@@ -79,15 +53,9 @@ export default function AboutModal({
           </button>
         </div>
         <div style={overlayStyles.panelContent}>
-          {error && <p style={aboutModalStyles.error}>{error}</p>}
-          {!content && !error && (
-            <p style={aboutModalStyles.loading}>Loading…</p>
-          )}
-          {content && (
-            <div style={aboutModalStyles.content}>
-              <StyledMarkdown>{content}</StyledMarkdown>
-            </div>
-          )}
+          <div style={aboutModalStyles.content}>
+            <StyledMarkdown>{aboutContent}</StyledMarkdown>
+          </div>
         </div>
       </div>
     </div>
@@ -100,16 +68,5 @@ const aboutModalStyles = {
     fontSize: fontSizes.base,
     color: colors.textData,
     lineHeight: '1.7',
-  },
-  loading: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colors.textSecondary,
-    textAlign: 'center' as const,
-  },
-  error: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.base,
-    color: colors.error,
   },
 } as const
