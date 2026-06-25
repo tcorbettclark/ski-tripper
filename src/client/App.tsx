@@ -28,6 +28,7 @@ import ErrorBoundary from './ErrorBoundary'
 import Footer from './Footer'
 import ForgotPasswordForm from './ForgotPasswordForm'
 import Header from './Header'
+import LandingSeoContent from './LandingSeoContent'
 import Overview from './Overview'
 import Poll from './Poll'
 import PreferencesForm from './PreferencesForm'
@@ -441,6 +442,7 @@ export default function App({
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+        <LandingSeoContent />
       </main>
     )
   }
