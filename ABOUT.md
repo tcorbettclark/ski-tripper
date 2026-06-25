@@ -59,4 +59,4 @@ Having helped lead the organisation of a boys ski trip for a few years, I though
 5. To **assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
 6. To **automate the testing of the applicaton UI** by performing user interactions using a headless browser, looking for bugs and increasing confidence that the application behaves in a reasonable way.
 
-For technical details, see the project's [GitHub repository](https://github.com/ski-tripper/ski-tripper).
+For technical details, see the project's [GitHub repository](https://github.com/tcorbettclark/ski-tripper).
