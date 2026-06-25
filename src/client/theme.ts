@@ -53,7 +53,7 @@ export const fontSizes = {
 
 export const fonts = {
   body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
-  display: "Georgia, 'Times New Roman', serif",
+  display: "Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif",
   mono: 'monospace',
 }
 
