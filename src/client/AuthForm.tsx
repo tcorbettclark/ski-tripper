@@ -130,9 +130,9 @@ export default function AuthForm({
         {sessionExpiredMessage && (
           <p style={formStyles.error}>{sessionExpiredMessage}</p>
         )}
-        <h1 style={authStyles.title}>
+        <h2 style={authStyles.title}>
           {isSignup ? 'Create Account' : 'Sign In'}
-        </h1>
+        </h2>
         <form onSubmit={handleSubmit} style={authStyles.form}>
           {isSignup && (
             <Field
