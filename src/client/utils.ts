@@ -18,6 +18,14 @@ export function isValidUrl(url: string | undefined): boolean {
   return sanitizeUrl(url) !== 'about:blank'
 }
 
+export function randomPassword(length = 32): string {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
+  const values = new Uint32Array(length)
+  crypto.getRandomValues(values)
+  return Array.from(values, (v) => chars[v % chars.length]).join('')
+}
+
 export function randomThreeWords(): string {
   const ints = new Uint32Array(3)
   crypto.getRandomValues(ints)

@@ -10,12 +10,6 @@ const verifiedUser: User = {
   email: 'test@example.com',
   emailVerification: true,
 }
-const unverifiedUser: User = {
-  id: 'user-2',
-  name: 'Unverified User',
-  email: 'unverified@example.com',
-  emailVerification: false,
-}
 const noop = () => {}
 
 function renderAuthForm(props = {}) {
@@ -23,6 +17,7 @@ function renderAuthForm(props = {}) {
     <AuthForm
       mode="login"
       onSuccess={noop}
+      onOtpRequested={noop}
       onSwitchMode={noop}
       authWithPassword={() => Promise.resolve(verifiedUser)}
       {...props}
@@ -66,30 +61,6 @@ describe('AuthForm', () => {
       await waitFor(() => {
         expect(mockAuth).toHaveBeenCalledWith('alice@example.com', 'secret123')
         expect(handleSuccess).toHaveBeenCalledWith(verifiedUser)
-      })
-    })
-
-    it('calls onSuccess with unverified user when user is unverified on login', async () => {
-      const user = userEvent.setup()
-      const handleSuccess = mock(() => {})
-      const { container } = renderAuthForm({
-        mode: 'login',
-        authWithPassword: () => Promise.resolve(unverifiedUser),
-        onSuccess: handleSuccess,
-      })
-
-      await user.type(
-        container.querySelector('[type="email"]')!,
-        'unverified@example.com'
-      )
-      await user.type(
-        container.querySelector('[type="password"]')!,
-        'secret123'
-      )
-      await user.click(screen.getByRole('button', { name: /^sign in$/i }))
-
-      await waitFor(() => {
-        expect(handleSuccess).toHaveBeenCalledWith(unverifiedUser)
       })
     })
 
@@ -196,25 +167,23 @@ describe('AuthForm', () => {
       expect(screen.getByRole('heading', { name: /create account/i }))
     })
 
-    it('renders name, email, and password fields', () => {
+    it('renders name and email fields but not password', () => {
       const { container } = renderAuthForm({ mode: 'signup' })
       expect(container.querySelector('[type="text"]'))
       expect(container.querySelector('[type="email"]'))
-      expect(container.querySelector('[type="password"]'))
+      expect(container.querySelector('[type="password"]')).toBeNull()
     })
 
-    it('calls createUser, authWithPassword, and requestVerification when unverified after signup', async () => {
+    it('calls createUser, requestOtp, and onOtpRequested on signup', async () => {
       const user = userEvent.setup()
       const mockCreateUser = mock(() => Promise.resolve())
-      const mockAuth = mock(() => Promise.resolve(unverifiedUser))
-      const mockRequestVerification = mock(() => Promise.resolve())
-      const handleSuccess = mock(() => {})
+      const mockRequestOtp = mock(() => Promise.resolve({ otpId: 'otp-abc' }))
+      const handleOtpRequested = mock(() => {})
       const { container } = renderAuthForm({
         mode: 'signup',
         createUser: mockCreateUser,
-        authWithPassword: mockAuth,
-        requestVerification: mockRequestVerification,
-        onSuccess: handleSuccess,
+        requestOtp: mockRequestOtp,
+        onOtpRequested: handleOtpRequested,
       })
 
       await user.type(container.querySelector('[type="text"]')!, 'Alice')
@@ -222,57 +191,15 @@ describe('AuthForm', () => {
         container.querySelector('[type="email"]')!,
         'alice@example.com'
       )
-      await user.type(
-        container.querySelector('[type="password"]')!,
-        'password123'
-      )
       await user.click(screen.getByRole('button', { name: /sign up$/i }))
 
       await waitFor(() => {
-        expect(mockCreateUser).toHaveBeenCalledWith(
-          'alice@example.com',
-          'password123',
-          'Alice'
-        )
-        expect(mockAuth).toHaveBeenCalledWith(
-          'alice@example.com',
-          'password123'
-        )
-        expect(mockRequestVerification).toHaveBeenCalledWith(
+        expect(mockCreateUser).toHaveBeenCalled()
+        expect(mockRequestOtp).toHaveBeenCalledWith('alice@example.com')
+        expect(handleOtpRequested).toHaveBeenCalledWith(
+          'otp-abc',
           'alice@example.com'
         )
-        expect(handleSuccess).toHaveBeenCalledWith(unverifiedUser)
-      })
-    })
-
-    it('calls onSuccess without requestVerification when user is already verified after signup', async () => {
-      const user = userEvent.setup()
-      const mockCreateUser = mock(() => Promise.resolve())
-      const mockAuth = mock(() => Promise.resolve(verifiedUser))
-      const mockRequestVerification = mock(() => Promise.resolve())
-      const handleSuccess = mock(() => {})
-      const { container } = renderAuthForm({
-        mode: 'signup',
-        createUser: mockCreateUser,
-        authWithPassword: mockAuth,
-        requestVerification: mockRequestVerification,
-        onSuccess: handleSuccess,
-      })
-
-      await user.type(container.querySelector('[type="text"]')!, 'Alice')
-      await user.type(
-        container.querySelector('[type="email"]')!,
-        'alice@example.com'
-      )
-      await user.type(
-        container.querySelector('[type="password"]')!,
-        'password123'
-      )
-      await user.click(screen.getByRole('button', { name: /sign up$/i }))
-
-      await waitFor(() => {
-        expect(mockRequestVerification).not.toHaveBeenCalled()
-        expect(handleSuccess).toHaveBeenCalledWith(verifiedUser)
       })
     })
 
@@ -287,10 +214,6 @@ describe('AuthForm', () => {
       await user.type(
         container.querySelector('[type="email"]')!,
         'alice@example.com'
-      )
-      await user.type(
-        container.querySelector('[type="password"]')!,
-        'password123'
       )
       await user.click(screen.getByRole('button', { name: /sign up$/i }))
 

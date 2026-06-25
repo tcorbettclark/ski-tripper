@@ -8,27 +8,28 @@ import { getErrorMessage } from './utils'
 
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void
-  requestPasswordReset?: (email: string) => Promise<unknown>
+  onOtpRequested: (otpId: string, email: string) => void
+  requestOtp?: (email: string) => Promise<{ otpId: string }>
 }
 
 export default function ForgotPasswordForm({
   onBackToLogin,
-  requestPasswordReset = (email) =>
-    getPb().collection('users').requestPasswordReset(email),
+  onOtpRequested,
+  requestOtp = (email) =>
+    getPb().collection('users').requestOTP(email) as Promise<{ otpId: string }>,
 }: ForgotPasswordFormProps) {
   const isSmall = useIsSmallScreen()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
     setLoading(true)
     try {
-      await requestPasswordReset(email)
-      setSent(true)
+      const result = await requestOtp(email)
+      onOtpRequested(result.otpId, email)
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
@@ -55,67 +56,42 @@ export default function ForgotPasswordForm({
         }}
       >
         <h1 style={authStyles.title}>Reset password</h1>
-        {sent ? (
-          <>
-            <p style={forgotStyles.message}>We sent a password reset link to</p>
-            <p style={forgotStyles.email}>{email}</p>
-            <p style={forgotStyles.message}>
-              Check your inbox and follow the link to set a new password.
-            </p>
-            <button
-              type="button"
-              onClick={onBackToLogin}
-              style={{
-                ...formStyles.primaryButton,
-                opacity: 1,
-                marginLeft: 'auto',
-                marginRight: 'auto',
-                display: 'block',
-              }}
-            >
-              Back to sign in
-            </button>
-          </>
-        ) : (
-          <>
-            <p style={forgotStyles.message}>
-              Enter your email and we&apos;ll send you a link to reset your
-              password.
-            </p>
-            <form onSubmit={handleSubmit} style={authStyles.form}>
-              <Field
-                label="Email"
-                name="email"
-                data-testid="forgot-email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                variant="auth"
-              />
-              {error && <p style={formStyles.error}>{error}</p>}
-              <button
-                type="submit"
-                data-testid="send-reset-link"
-                disabled={loading}
-                style={formStyles.primaryButton}
-              >
-                {loading ? 'Sending…' : 'Send reset link'}
-              </button>
-            </form>
-            <p style={authStyles.switchText}>
-              <button
-                type="button"
-                onClick={onBackToLogin}
-                style={authStyles.switchLink}
-              >
-                Back to sign in
-              </button>
-            </p>
-          </>
-        )}
+        <p style={forgotStyles.message}>
+          Enter your email and we&apos;ll send you a verification code to reset
+          your password.
+        </p>
+        <form onSubmit={handleSubmit} style={authStyles.form}>
+          <Field
+            label="Email"
+            name="email"
+            data-testid="forgot-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder="you@example.com"
+            variant="auth"
+          />
+          {error && <p style={formStyles.error}>{error}</p>}
+          <button
+            type="submit"
+            data-testid="send-otp"
+            disabled={loading}
+            style={formStyles.primaryButton}
+          >
+            {loading ? 'Sending…' : 'Send verification code'}
+          </button>
+        </form>
+        <p style={authStyles.switchText}>
+          <button
+            type="button"
+            onClick={onBackToLogin}
+            style={authStyles.switchLink}
+          >
+            Back to sign in
+          </button>
+        </p>
       </div>
     </div>
   )
@@ -127,13 +103,6 @@ const forgotStyles = {
     fontSize: fontSizes.base,
     color: colors.textSecondary,
     lineHeight: '1.6',
-    margin: '0 0 8px 0',
-  } as const,
-  email: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.md,
-    color: colors.textPrimary,
-    fontWeight: '600',
-    margin: '0 0 8px 0',
-  } as const,
+    margin: '0 0 24px 0',
+  },
 }

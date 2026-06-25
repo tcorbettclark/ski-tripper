@@ -15,7 +15,8 @@ export async function signupVerifyAndLogin(page: Page): Promise<TestUser> {
   const auth = new AuthPage(page)
   const user = generateTestUser()
   await auth.signup(user)
-  await auth.verifyEmail(user.email)
+  await auth.enterOtpCode(user.email)
+  await auth.setPassword(user.password)
   return user
 }
 

@@ -940,6 +940,35 @@ export async function updateName(
     .update(userId, { name }) as unknown as Record<string, unknown>
 }
 
+export async function requestOtp(
+  email: string,
+  client: PocketBase = getPb()
+): Promise<{ otpId: string }> {
+  return client.collection('users').requestOTP(email) as Promise<{
+    otpId: string
+  }>
+}
+
+export async function authWithOtp(
+  otpId: string,
+  otp: string,
+  client: PocketBase = getPb()
+): Promise<Record<string, unknown>> {
+  const authResponse = await client.collection('users').authWithOTP(otpId, otp)
+  return authResponse.record as unknown as Record<string, unknown>
+}
+
+export async function updateUserPassword(
+  userId: string,
+  password: string,
+  passwordConfirm: string,
+  client: PocketBase = getPb()
+): Promise<unknown> {
+  return client
+    .collection('users')
+    .update(userId, { password, passwordConfirm })
+}
+
 export async function createPreferences(
   userId: string,
   data: Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>,

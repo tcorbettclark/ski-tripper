@@ -1,8 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
-import { extractLink, waitForEmail } from '../helpers/mailpit'
+import { extractOtp, waitForEmail } from '../helpers/mailpit'
 
 const BASE_URL = process.env.PUBLIC_EXTERNAL_URL!
-const APP_URL = process.env.POCKETBASE_APP_URL!
 
 export class AuthPage {
   readonly page: Page
@@ -28,15 +27,30 @@ export class AuthPage {
     await expect(this.emailInput).toBeVisible()
   }
 
-  async signup(user: { name: string; email: string; password: string }) {
+  async signup(user: { name: string; email: string }) {
     await this.goto()
     await this.switchModeButton.click()
     await this.nameInput.fill(user.name)
     await this.emailInput.fill(user.email)
-    await this.passwordInput.fill(user.password)
     await this.submitButton.click()
     await expect(
-      this.page.getByRole('heading', { name: /verify your email/i })
+      this.page.getByRole('heading', { name: /enter verification code/i })
+    ).toBeVisible()
+  }
+
+  async enterOtpCode(email: string) {
+    const message = await waitForEmail(email, { subject: 'verification code' })
+    const code = extractOtp(message.HTML)
+    await this.page.getByTestId('otp-code').fill(code)
+    await this.page.getByRole('button', { name: /verify/i }).click()
+  }
+
+  async setPassword(password: string) {
+    await this.page.getByTestId('set-password').fill(password)
+    await this.page.getByTestId('set-confirm-password').fill(password)
+    await this.page.getByTestId('set-password-submit').click()
+    await expect(
+      this.page.getByRole('button', { name: /sign in/i })
     ).toBeVisible()
   }
 
@@ -55,47 +69,8 @@ export class AuthPage {
     await this.page.getByTestId('forgot-email').fill(email)
   }
 
-  async clickSendResetLink() {
-    await this.page.getByTestId('send-reset-link').click()
-  }
-
-  async fillResetPassword(password: string) {
-    await this.page.getByTestId('reset-password').fill(password)
-    await this.page.getByTestId('reset-confirm-password').fill(password)
-  }
-
-  async clickResetSubmit() {
-    await this.page.getByTestId('reset-submit').click()
-  }
-
-  async verifyEmail(email: string) {
-    const message = await waitForEmail(email, { subject: 'Verify' })
-    const link = extractLink(message.HTML)
-    const localLink = link.replace(APP_URL, BASE_URL)
-    await this.page.goto(localLink)
-    await this.page.waitForURL(`${BASE_URL}/`)
-  }
-
-  async resetPassword(email: string, newPassword: string) {
-    await this.goto()
-    await this.clickForgotPassword()
-    await this.fillForgotEmail(email)
-    await this.clickSendResetLink()
-    await expect(
-      this.page.getByText(/sent a password reset link/i)
-    ).toBeVisible()
-
-    const message = await waitForEmail(email, { subject: 'Reset' })
-    const link = extractLink(message.HTML)
-    const localLink = link.replace(APP_URL, BASE_URL)
-    await this.page.goto(localLink)
-    await expect(this.page.getByTestId('reset-password')).toBeVisible()
-
-    await this.fillResetPassword(newPassword)
-    await this.clickResetSubmit()
-    await expect(
-      this.page.getByRole('button', { name: /sign in/i })
-    ).toBeVisible()
+  async clickSendOtp() {
+    await this.page.getByTestId('send-otp').click()
   }
 }
 

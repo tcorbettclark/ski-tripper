@@ -77,6 +77,16 @@ export function extractLink(html: string): string {
   return hrefMatch[1]
 }
 
+export function extractOtp(html: string): string {
+  const strongMatch = html.match(/<strong>(\d+)<\/strong>/)
+  if (strongMatch) return strongMatch[1]
+  const codeMatch = html.match(/\b(\d{6,8})\b/)
+  if (!codeMatch) {
+    throw new Error('Could not find OTP code in email HTML')
+  }
+  return codeMatch[1]
+}
+
 export async function deleteAllEmails(): Promise<void> {
   const res = await fetch(`${MAILPIT_API}/messages`, { method: 'DELETE' })
   if (!res.ok) {

@@ -7,7 +7,7 @@ test.beforeEach(async () => {
 })
 
 test.describe('Auth flow', () => {
-  test('signup, verify email, and login', async ({ page }) => {
+  test('signup with OTP and set password', async ({ page }) => {
     const auth = new AuthPage(page)
     const user = generateTestUser()
 
@@ -15,50 +15,36 @@ test.describe('Auth flow', () => {
       await auth.signup(user)
     })
 
-    await test.step('verify email', async () => {
-      await auth.verifyEmail(user.email)
-    })
-
-    await test.step('assert welcome screen after verification', async () => {
+    await test.step('enter OTP code', async () => {
+      await auth.enterOtpCode(user.email)
       await expect(
-        page.getByRole('heading', { name: /welcome/i })
+        page.getByRole('heading', { name: /set your password/i })
       ).toBeVisible()
     })
 
-    await test.step('logout and assert auth form', async () => {
-      await page.evaluate(() => {
-        localStorage.clear()
-        const pb = (
-          window as unknown as Record<
-            string,
-            { authStore: { clear: () => void } }
-          >
-        ).__pocketbase__
-        if (pb) pb.authStore.clear()
-      })
-      await auth.goto()
-      await expect(auth.emailInput).toBeVisible()
+    await test.step('set password', async () => {
+      await auth.setPassword(user.password)
+      await expect(
+        page.getByRole('heading', { name: /sign in/i })
+      ).toBeVisible()
     })
 
-    await test.step('login', async () => {
-      await auth.login(user)
-    })
-
-    await test.step('assert welcome screen after login', async () => {
+    await test.step('login with new password', async () => {
+      await auth.login({ email: user.email, password: user.password })
       await expect(
         page.getByRole('heading', { name: /welcome/i })
       ).toBeVisible()
     })
   })
 
-  test('forgot password and reset', async ({ page }) => {
+  test('forgot password with OTP', async ({ page }) => {
     const auth = new AuthPage(page)
     const user = generateTestUser()
-    const newPassword = 'NewPass456!'
 
-    await test.step('signup and verify', async () => {
+    await test.step('signup and set password', async () => {
       await auth.signup(user)
-      await auth.verifyEmail(user.email)
+      await auth.enterOtpCode(user.email)
+      await auth.setPassword(user.password)
     })
 
     await test.step('logout', async () => {
@@ -76,18 +62,26 @@ test.describe('Auth flow', () => {
       await expect(auth.emailInput).toBeVisible()
     })
 
-    await test.step('reset password and login with new password', async () => {
-      await auth.resetPassword(user.email, newPassword)
-      await auth.login({ email: user.email, password: newPassword })
+    await test.step('reset password via OTP', async () => {
+      const newPassword = 'NewPass456!'
+      await auth.clickForgotPassword()
+      await auth.fillForgotEmail(user.email)
+      await auth.clickSendOtp()
       await expect(
-        page.getByRole('heading', { name: /welcome/i })
+        page.getByRole('heading', { name: /enter verification code/i })
       ).toBeVisible()
+
+      await auth.enterOtpCode(user.email)
+      await expect(
+        page.getByRole('heading', { name: /set new password/i })
+      ).toBeVisible()
+
+      await auth.setPassword(newPassword)
+      await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible()
     })
   })
 
-  test('unverified user sees verification screen and can resend', async ({
-    page,
-  }) => {
+  test('resend OTP code works', async ({ page }) => {
     const auth = new AuthPage(page)
     const user = generateTestUser()
 
@@ -95,17 +89,10 @@ test.describe('Auth flow', () => {
       await auth.signup(user)
     })
 
-    await test.step('resend verification', async () => {
-      const resendBtn = page.getByTestId('resend-verification')
+    await test.step('resend code', async () => {
+      const resendBtn = page.getByTestId('resend-otp')
       await resendBtn.click()
-      await expect(page.getByText(/verification email resent/i)).toBeVisible()
-    })
-
-    await test.step('verify email and assert screen gone', async () => {
-      await auth.verifyEmail(user.email)
-      await expect(
-        page.getByRole('heading', { name: /verify your email/i })
-      ).not.toBeVisible()
+      await expect(page.getByText(/verification code resent/i)).toBeVisible()
     })
   })
 })

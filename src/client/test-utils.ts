@@ -44,11 +44,11 @@ export function createStrictMockClient(): PocketBase {
       confirmPasswordReset: mock(() => {
         throw new Error('FORGOT TO MOCK: confirmPasswordReset()')
       }),
-      requestVerification: mock(() => {
-        throw new Error('FORGOT TO MOCK: requestVerification()')
+      requestOTP: mock(() => {
+        throw new Error('FORGOT TO MOCK: requestOTP()')
       }),
-      confirmVerification: mock(() => {
-        throw new Error('FORGOT TO MOCK: confirmVerification()')
+      authWithOTP: mock(() => {
+        throw new Error('FORGOT TO MOCK: authWithOTP()')
       }),
     }
   }

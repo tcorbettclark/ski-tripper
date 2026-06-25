@@ -6,22 +6,29 @@ import { authStyles, formStyles } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
-interface ResetPasswordFormProps {
-  token: string
+interface SetPasswordFormProps {
+  userId: string
   onSuccess: () => void
-  confirmPasswordReset?: (
-    token: string,
+  updatePassword?: (
+    userId: string,
     password: string,
     passwordConfirm: string
   ) => Promise<unknown>
+  title?: string
+  submitLabel?: string
 }
 
-export default function ResetPasswordForm({
-  token,
+export default function SetPasswordForm({
+  userId,
   onSuccess,
-  confirmPasswordReset = (t, pw, pwc) =>
-    getPb().collection('users').confirmPasswordReset(t, pw, pwc),
-}: ResetPasswordFormProps) {
+  updatePassword = (id, pw, pwc) =>
+    getPb().collection('users').update(id, {
+      password: pw,
+      passwordConfirm: pwc,
+    }),
+  title = 'Set your password',
+  submitLabel = 'Set password',
+}: SetPasswordFormProps) {
   const isSmall = useIsSmallScreen()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -37,7 +44,7 @@ export default function ResetPasswordForm({
     setError('')
     setLoading(true)
     try {
-      await confirmPasswordReset(token, password, password)
+      await updatePassword(userId, password, password)
       onSuccess()
     } catch (err) {
       setError(getErrorMessage(err))
@@ -64,12 +71,12 @@ export default function ResetPasswordForm({
           padding: isSmall ? '28px 20px' : '48px 44px',
         }}
       >
-        <h1 style={authStyles.title}>Set new password</h1>
+        <h1 style={authStyles.title}>{title}</h1>
         <form onSubmit={handleSubmit} style={authStyles.form}>
           <Field
-            label="New password"
+            label="Password"
             name="password"
-            data-testid="reset-password"
+            data-testid="set-password"
             type="password"
             autoComplete="new-password"
             value={password}
@@ -82,7 +89,7 @@ export default function ResetPasswordForm({
           <Field
             label="Confirm password"
             name="confirmPassword"
-            data-testid="reset-confirm-password"
+            data-testid="set-confirm-password"
             type="password"
             autoComplete="new-password"
             value={confirmPassword}
@@ -95,11 +102,11 @@ export default function ResetPasswordForm({
           {error && <p style={formStyles.error}>{error}</p>}
           <button
             type="submit"
-            data-testid="reset-submit"
+            data-testid="set-password-submit"
             disabled={loading}
             style={formStyles.primaryButton}
           >
-            {loading ? 'Saving…' : 'Reset password'}
+            {loading ? 'Saving…' : submitLabel}
           </button>
         </form>
       </div>

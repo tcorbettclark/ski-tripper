@@ -15,6 +15,15 @@ interface FieldProps {
   variant?: 'default' | 'auth'
   minLength?: number
   autoComplete?: string
+  inputMode?:
+    | 'numeric'
+    | 'tel'
+    | 'url'
+    | 'email'
+    | 'decimal'
+    | 'search'
+    | 'text'
+    | 'none'
   options?: string[]
   'data-testid'?: string
 }
@@ -30,6 +39,7 @@ export default function Field({
   variant = 'default',
   minLength,
   autoComplete,
+  inputMode,
   options,
   'data-testid': dataTestId,
 }: FieldProps) {
@@ -76,6 +86,7 @@ export default function Field({
         placeholder={placeholder}
         minLength={minLength}
         autoComplete={autoComplete}
+        inputMode={inputMode}
         style={styles.input}
         data-testid={dataTestId}
       />

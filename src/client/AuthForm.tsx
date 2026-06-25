@@ -7,11 +7,12 @@ import InfoBanner from './InfoBanner'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, fontSizes, formStyles } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
-import { getErrorMessage } from './utils'
+import { getErrorMessage, randomPassword } from './utils'
 
 interface AuthFormProps {
   mode?: 'login' | 'signup'
   onSuccess: (user: User) => void
+  onOtpRequested: (otpId: string, email: string) => void
   onSwitchMode: () => void
   onForgotPassword?: () => void
   createUser?: (
@@ -20,7 +21,7 @@ interface AuthFormProps {
     name: string
   ) => Promise<unknown>
   authWithPassword?: (email: string, password: string) => Promise<User>
-  requestVerification?: (email: string) => Promise<unknown>
+  requestOtp?: (email: string) => Promise<{ otpId: string }>
   sessionExpiredMessage?: string | null
 }
 
@@ -36,6 +37,7 @@ function mapUser(record: Record<string, unknown>): User {
 export default function AuthForm({
   mode = 'login',
   onSuccess,
+  onOtpRequested,
   onSwitchMode,
   onForgotPassword,
   createUser = (email, password, name) =>
@@ -48,8 +50,8 @@ export default function AuthForm({
       getPb().authStore.record as unknown as Record<string, unknown>
     )
   },
-  requestVerification = (email) =>
-    getPb().collection('users').requestVerification(email),
+  requestOtp = (email) =>
+    getPb().collection('users').requestOTP(email) as Promise<{ otpId: string }>,
   sessionExpiredMessage = null,
 }: AuthFormProps) {
   const isSmall = useIsSmallScreen()
@@ -67,24 +69,10 @@ export default function AuthForm({
     setLoading(true)
     try {
       if (isSignup) {
-        await createUser(email, password, name)
-        const user = await authWithPassword(email, password)
-        try {
-          if (navigator.credentials?.store) {
-            const credential = new PasswordCredential({
-              id: email,
-              name,
-              password,
-            })
-            await navigator.credentials.store(credential)
-          }
-        } catch {
-          // Credential Management API not supported or blocked
-        }
-        if (!user.emailVerification) {
-          await requestVerification(email)
-        }
-        onSuccess(user)
+        const generatedPassword = randomPassword()
+        await createUser(email, generatedPassword, name)
+        const result = await requestOtp(email)
+        onOtpRequested(result.otpId, email)
       } else {
         const user = await authWithPassword(email, password)
         onSuccess(user)
@@ -158,19 +146,20 @@ export default function AuthForm({
             placeholder="you@example.com"
             variant="auth"
           />
-          <Field
-            label="Password"
-            name="password"
-            data-testid="auth-password"
-            type="password"
-            autoComplete={isSignup ? 'new-password' : 'current-password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required={isSignup}
-            minLength={isSignup ? 8 : undefined}
-            placeholder="••••••••"
-            variant="auth"
-          />
+          {!isSignup && (
+            <Field
+              label="Password"
+              name="password"
+              data-testid="auth-password"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+              variant="auth"
+            />
+          )}
           {!isSignup && onForgotPassword && (
             <div style={{ textAlign: 'right', marginTop: '-12px' }}>
               <button

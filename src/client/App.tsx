@@ -5,6 +5,7 @@ import type {
   Preferences,
   ResortWithEmbedding,
   Trip,
+  User,
 } from '../shared/types.d'
 import AboutModal from './AboutModal'
 import AuthForm from './AuthForm'
@@ -22,21 +23,20 @@ import {
   updateTrip as _updateTrip,
   getPb,
 } from './backend'
-import ConfirmEmailChangeScreen from './ConfirmEmailChangeScreen'
-import EmailVerifyScreen from './EmailVerifyScreen'
 import ErrorBoundary from './ErrorBoundary'
 import Footer from './Footer'
 import ForgotPasswordForm from './ForgotPasswordForm'
 import Header from './Header'
 import LandingSeoContent from './LandingSeoContent'
+import OtpCodeEntry from './OtpCodeEntry'
 import Overview from './Overview'
 import Poll from './Poll'
 import PreferencesForm from './PreferencesForm'
 import PreferencesModal from './PreferencesModal'
 import Proposals from './Proposals'
 import type { StatusFilter } from './ProposalsGrid'
-import ResetPasswordForm from './ResetPasswordForm'
 import Resorts from './Resorts'
+import SetPasswordForm from './SetPasswordForm'
 import Trips from './Trips'
 import { colors, fontSizes, fonts, mix } from './theme'
 import useAuth from './useAuth'
@@ -48,12 +48,20 @@ interface ListTripsResult {
   coordinatorUserIds: Record<string, string>
 }
 
+type PageState =
+  | 'login'
+  | 'signup'
+  | 'signupOtp'
+  | 'signupSetPassword'
+  | 'forgotPassword'
+  | 'forgotPasswordOtp'
+  | 'forgotPasswordSetPassword'
+
 interface AppProps {
   useAuthHook?: typeof useAuth
   useIsSmallScreenHook?: () => boolean
   useAutoHideFooterHook?: () => 'visible' | 'hidden'
   hasSession?: () => boolean
-  confirmVerification?: (token: string) => Promise<unknown>
   listTrips?: (userId: string) => Promise<ListTripsResult>
   listParticipatedTrips?: (userId: string) => Promise<{
     trips: Trip[]
@@ -80,11 +88,6 @@ interface AppProps {
     data: Partial<Trip>,
     userId: string
   ) => Promise<Trip>
-  confirmPasswordReset?: (
-    token: string,
-    password: string,
-    passwordConfirm: string
-  ) => Promise<unknown>
   fetchResortDataWithAuth?: () => Promise<string>
   updateName?: (name: string) => Promise<unknown>
   listTripParticipants?: (
@@ -92,8 +95,6 @@ interface AppProps {
   ) => Promise<{ participants: Participant[] }>
 }
 
-const defaultConfirmVerification = (token: string) =>
-  getPb().collection('users').confirmVerification(token)
 const defaultListTrips = _listTrips
 const defaultListParticipatedTrips = _listParticipatedTrips
 const defaultListPolls = _listPolls
@@ -101,17 +102,18 @@ const defaultGetCoordinatorParticipant = _getCoordinatorParticipant
 const defaultGetPreferences = _getPreferences
 const defaultCreatePreferences = _createPreferences
 const defaultUpdateTrip = _updateTrip
-const defaultConfirmPasswordReset = (
-  token: string,
-  password: string,
-  passwordConfirm: string
-) =>
-  getPb()
-    .collection('users')
-    .confirmPasswordReset(token, password, passwordConfirm)
 const defaultFetchResortDataWithAuth = _fetchResortDataWithAuth
 const defaultUpdateName = _updateName
 const defaultListTripParticipants = _listTripParticipants
+
+function mapUser(record: Record<string, unknown>): User {
+  return {
+    id: record.id as string,
+    name: (record.name as string) || '',
+    email: record.email as string,
+    emailVerification: record.verified as boolean,
+  }
+}
 
 type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
 
@@ -125,7 +127,6 @@ export default function App({
   useIsSmallScreenHook = useIsSmallScreen,
   useAutoHideFooterHook,
   hasSession = _hasSession,
-  confirmVerification = defaultConfirmVerification,
   listTrips = defaultListTrips,
   listParticipatedTrips = defaultListParticipatedTrips,
   listPolls = defaultListPolls,
@@ -133,7 +134,6 @@ export default function App({
   getPreferences = defaultGetPreferences,
   createPreferences = defaultCreatePreferences,
   updateTrip = defaultUpdateTrip,
-  confirmPasswordReset = defaultConfirmPasswordReset,
   fetchResortDataWithAuth = defaultFetchResortDataWithAuth,
   updateName = defaultUpdateName,
   listTripParticipants = defaultListTripParticipants,
@@ -148,14 +148,10 @@ export default function App({
     onAuthError,
     refreshUser,
   } = useAuthHook({ hasSession })
-  const [page, setPage] = useState<'login' | 'signup' | 'forgotPassword'>(
-    'login'
-  )
-  const [resetPasswordToken, setResetPasswordToken] = useState<string | null>(
-    null
-  )
-  const [emailChangeToken, setEmailChangeToken] = useState<string | null>(null)
-  const [passwordResetSuccess, setPasswordResetSuccess] = useState(false)
+  const [page, setPage] = useState<PageState>('login')
+  const [otpId, setOtpId] = useState<string | null>(null)
+  const [otpEmail, setOtpEmail] = useState<string | null>(null)
+  const [otpUserId, setOtpUserId] = useState<string | null>(null)
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
   const [proposalsStatusFilter, setProposalsStatusFilter] =
@@ -210,33 +206,6 @@ export default function App({
       })
       .catch(() => setResorts([]))
   }, [user, fetchResortDataWithAuth])
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const token = params.get('token')
-    if (!token) return
-    if (window.location.pathname === '/reset-password') {
-      setResetPasswordToken(token)
-      setPasswordResetSuccess(false)
-      window.history.replaceState({}, '', '/')
-      return
-    }
-    if (window.location.pathname === '/verify') {
-      confirmVerification(token)
-        .then(() => {
-          window.history.replaceState({}, '', '/')
-          refreshUser()
-        })
-        .catch(() => {
-          window.history.replaceState({}, '', '/')
-        })
-      return
-    }
-    if (window.location.pathname === '/confirm-email') {
-      setEmailChangeToken(token)
-      window.history.replaceState({}, '', '/')
-    }
-  }, [confirmVerification, refreshUser])
 
   const loadTrips = useCallback(
     (userId: string) => {
@@ -346,6 +315,17 @@ export default function App({
     )
   }
 
+  function handleOtpSuccess(record: Record<string, unknown>) {
+    const authenticatedUser = mapUser(record)
+    login(authenticatedUser)
+    setOtpUserId(authenticatedUser.id)
+    if (page === 'signupOtp') {
+      setPage('signupSetPassword')
+    } else {
+      setPage('forgotPasswordSetPassword')
+    }
+  }
+
   const selectedTrip = trips.find((t) => t.id === selectedTripId) || null
 
   if (checking) return null
@@ -378,85 +358,97 @@ export default function App({
         About
       </button>
     )
-    if (resetPasswordToken) {
+
+    if (page === 'signupOtp' && otpId && otpEmail) {
       return (
         <main>
           {aboutButton}
-          <ResetPasswordForm
-            token={resetPasswordToken}
-            onSuccess={() => {
-              setResetPasswordToken(null)
-              setPasswordResetSuccess(true)
-              setPage('login')
-            }}
-            confirmPasswordReset={confirmPasswordReset}
+          <OtpCodeEntry
+            email={otpEmail}
+            otpId={otpId}
+            onSuccess={handleOtpSuccess}
+            onBack={() => setPage('login')}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </main>
       )
     }
-    if (emailChangeToken) {
+
+    if (page === 'forgotPasswordOtp' && otpId && otpEmail) {
       return (
         <main>
           {aboutButton}
-          <ConfirmEmailChangeScreen
-            token={emailChangeToken}
-            onSuccess={() => {
-              setEmailChangeToken(null)
-              setPage('login')
-            }}
-            onBackToLogin={() => {
-              setEmailChangeToken(null)
-              setPage('login')
-            }}
+          <OtpCodeEntry
+            email={otpEmail}
+            otpId={otpId}
+            onSuccess={handleOtpSuccess}
+            onBack={() => setPage('login')}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </main>
       )
     }
+
+    if (
+      (page === 'signupSetPassword' || page === 'forgotPasswordSetPassword') &&
+      otpUserId
+    ) {
+      return (
+        <main>
+          {aboutButton}
+          <SetPasswordForm
+            userId={otpUserId}
+            onSuccess={() => setPage('login')}
+            title={
+              page === 'signupSetPassword'
+                ? 'Set your password'
+                : 'Set new password'
+            }
+          />
+          <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+          <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+        </main>
+      )
+    }
+
     if (page === 'forgotPassword') {
       return (
         <main>
           {aboutButton}
-          <ForgotPasswordForm onBackToLogin={() => setPage('login')} />
+          <ForgotPasswordForm
+            onBackToLogin={() => setPage('login')}
+            onOtpRequested={(newOtpId, email) => {
+              setOtpId(newOtpId)
+              setOtpEmail(email)
+              setPage('forgotPasswordOtp')
+            }}
+          />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         </main>
       )
     }
+
     return (
       <main>
         {aboutButton}
         <AuthForm
-          mode={page as 'login' | 'signup'}
+          mode={page === 'signup' ? 'signup' : 'login'}
           onSuccess={login}
+          onOtpRequested={(newOtpId, email) => {
+            setOtpId(newOtpId)
+            setOtpEmail(email)
+            setPage('signupOtp')
+          }}
           onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
           onForgotPassword={() => setPage('forgotPassword')}
-          sessionExpiredMessage={
-            passwordResetSuccess
-              ? 'Password reset successful. Please sign in with your new password.'
-              : sessionExpiredMessage
-          }
+          sessionExpiredMessage={sessionExpiredMessage}
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         <LandingSeoContent />
-      </main>
-    )
-  }
-
-  if (!user.emailVerification) {
-    return (
-      <main>
-        <EmailVerifyScreen
-          email={user.email}
-          onBackToLogin={handleLogout}
-          requestVerification={(email: string) =>
-            getPb().collection('users').requestVerification(email)
-          }
-        />
       </main>
     )
   }

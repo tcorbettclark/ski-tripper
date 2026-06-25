@@ -14,7 +14,8 @@ async function signupVerifyAndLogin(page: import('@playwright/test').Page) {
   const auth = new AuthPage(page)
   const user = generateTestUser()
   await auth.signup(user)
-  await auth.verifyEmail(user.email)
+  await auth.enterOtpCode(user.email)
+  await auth.setPassword(user.password)
   return user
 }
 

@@ -12,48 +12,40 @@ function projectName(): string {
 }
 
 test.describe('Email flows', () => {
-  test('signup and email verification', async ({ page }) => {
+  test('signup and OTP verification', async ({ page }) => {
     const proj = projectName()
     const auth = new AuthPage(page)
     const user = generateTestUser()
 
-    await test.step('signup triggers verification email', async () => {
+    await test.step('signup triggers OTP email', async () => {
       await auth.signup(user)
       await expect(
-        page.getByRole('heading', { name: /verify your email/i })
+        page.getByRole('heading', { name: /enter verification code/i })
       ).toBeVisible()
-      await screenshot(page, 'email', 'verify-screen', proj)
+      await screenshot(page, 'email', 'otp-entry', proj)
     })
 
-    await test.step('verification link redirects and verifies', async () => {
-      await auth.verifyEmail(user.email)
+    await test.step('enter OTP code and set password', async () => {
+      await auth.enterOtpCode(user.email)
       await expect(
-        page.getByRole('heading', { name: /welcome/i })
+        page.getByRole('heading', { name: /set your password/i })
       ).toBeVisible()
-    })
+      await screenshot(page, 'email', 'set-password', proj)
 
-    await test.step('resend verification button works', async () => {
-      const user2 = generateTestUser()
-      const auth2 = new AuthPage(page)
-      await auth2.signup(user2)
-
-      const resendBtn = page.getByTestId('resend-verification')
-      if (await resendBtn.isVisible()) {
-        await resendBtn.click()
-        await expect(page.getByText(/resent/i)).toBeVisible()
-        await screenshot(page, 'email', 'resend-verification', proj)
-      }
+      await auth.setPassword(user.password)
+      await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible()
     })
   })
 
-  test('forgot password and reset', async ({ page }) => {
+  test('forgot password and OTP reset', async ({ page }) => {
     const proj = projectName()
     const auth = new AuthPage(page)
     const user = generateTestUser()
 
-    await test.step('signup and verify', async () => {
+    await test.step('signup and set password', async () => {
       await auth.signup(user)
-      await auth.verifyEmail(user.email)
+      await auth.enterOtpCode(user.email)
+      await auth.setPassword(user.password)
     })
 
     await test.step('logout and navigate to forgot password', async () => {
@@ -71,10 +63,22 @@ test.describe('Email flows', () => {
       await expect(auth.emailInput).toBeVisible()
     })
 
-    await test.step('reset password via email link', async () => {
+    await test.step('reset password via OTP', async () => {
       const newPassword = 'NewPass456!'
-      await auth.resetPassword(user.email, newPassword)
+      await auth.clickForgotPassword()
+      await auth.fillForgotEmail(user.email)
+      await auth.clickSendOtp()
+      await expect(
+        page.getByRole('heading', { name: /enter verification code/i })
+      ).toBeVisible()
+
+      await auth.enterOtpCode(user.email)
+      await expect(
+        page.getByRole('heading', { name: /set new password/i })
+      ).toBeVisible()
       await screenshot(page, 'email', 'password-reset', proj)
+
+      await auth.setPassword(newPassword)
     })
 
     await test.step('login with new password', async () => {

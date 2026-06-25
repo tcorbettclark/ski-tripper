@@ -8,7 +8,13 @@ const noop = () => {}
 function renderForgotPasswordForm(props = {}) {
   let result: ReturnType<typeof render>
   act(() => {
-    result = render(<ForgotPasswordForm onBackToLogin={noop} {...props} />)
+    result = render(
+      <ForgotPasswordForm
+        onBackToLogin={noop}
+        onOtpRequested={noop}
+        {...props}
+      />
+    )
   })
   return result!
 }
@@ -24,63 +30,39 @@ describe('ForgotPasswordForm', () => {
     expect(screen.getByLabelText(/email/i))
   })
 
-  it('calls requestPasswordReset with email on submit', async () => {
+  it('calls requestOtp and onOtpRequested with email on submit', async () => {
     const user = userEvent.setup()
-    const mockRequestPasswordReset = mock(() => Promise.resolve())
+    const mockRequestOtp = mock(() => Promise.resolve({ otpId: 'otp-xyz' }))
+    const handleOtpRequested = mock(() => {})
     renderForgotPasswordForm({
-      requestPasswordReset: mockRequestPasswordReset,
+      requestOtp: mockRequestOtp,
+      onOtpRequested: handleOtpRequested,
     })
 
     await user.type(screen.getByLabelText(/email/i), 'alice@example.com')
-    await user.click(screen.getByRole('button', { name: /send reset link/i }))
+    await user.click(
+      screen.getByRole('button', { name: /send verification code/i })
+    )
 
     await waitFor(() => {
-      expect(mockRequestPasswordReset).toHaveBeenCalledWith('alice@example.com')
+      expect(mockRequestOtp).toHaveBeenCalledWith('alice@example.com')
+      expect(handleOtpRequested).toHaveBeenCalledWith(
+        'otp-xyz',
+        'alice@example.com'
+      )
     })
   })
 
-  it('shows success message after sending reset link', async () => {
+  it('shows error when requestOtp fails', async () => {
     const user = userEvent.setup()
     renderForgotPasswordForm({
-      requestPasswordReset: () => Promise.resolve(),
-    })
-
-    await user.type(screen.getByLabelText(/email/i), 'alice@example.com')
-    await user.click(screen.getByRole('button', { name: /send reset link/i }))
-
-    await waitFor(() => {
-      expect(screen.getByText(/sent a password reset link/i))
-      expect(screen.getByText('alice@example.com'))
-    })
-  })
-
-  it('shows back to sign in button after sending reset link', async () => {
-    const user = userEvent.setup()
-    const handleBack = mock(() => {})
-    renderForgotPasswordForm({
-      requestPasswordReset: () => Promise.resolve(),
-      onBackToLogin: handleBack,
-    })
-
-    await user.type(screen.getByLabelText(/email/i), 'alice@example.com')
-    await user.click(screen.getByRole('button', { name: /send reset link/i }))
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /back to sign in/i }))
-    })
-
-    await user.click(screen.getByRole('button', { name: /back to sign in/i }))
-    expect(handleBack).toHaveBeenCalledTimes(1)
-  })
-
-  it('shows error when requestPasswordReset fails', async () => {
-    const user = userEvent.setup()
-    renderForgotPasswordForm({
-      requestPasswordReset: () => Promise.reject(new Error('User not found')),
+      requestOtp: () => Promise.reject(new Error('User not found')),
     })
 
     await user.type(screen.getByLabelText(/email/i), 'unknown@example.com')
-    await user.click(screen.getByRole('button', { name: /send reset link/i }))
+    await user.click(
+      screen.getByRole('button', { name: /send verification code/i })
+    )
 
     await waitFor(() => {
       expect(screen.getByText('User not found'))
@@ -97,17 +79,19 @@ describe('ForgotPasswordForm', () => {
   })
 
   it('disables submit button while sending', async () => {
-    let resolveRecovery: ((value: unknown) => void) | undefined
+    let resolveOtp: ((value: unknown) => void) | undefined
     const user = userEvent.setup()
     renderForgotPasswordForm({
-      requestPasswordReset: () =>
+      requestOtp: () =>
         new Promise((resolve) => {
-          resolveRecovery = resolve
+          resolveOtp = resolve
         }),
     })
 
     await user.type(screen.getByLabelText(/email/i), 'alice@example.com')
-    await user.click(screen.getByRole('button', { name: /send reset link/i }))
+    await user.click(
+      screen.getByRole('button', { name: /send verification code/i })
+    )
 
     expect(
       (
@@ -117,7 +101,7 @@ describe('ForgotPasswordForm', () => {
       ).disabled
     ).toBe(true)
     await act(async () => {
-      resolveRecovery?.(undefined)
+      resolveOtp?.({ otpId: 'test' })
     })
   })
 })

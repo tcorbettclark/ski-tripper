@@ -43,15 +43,6 @@ __PUBLIC_DOMAIN__ {
 		}
 	}
 
-	# Auth SPA routes — serve index.html for client-side routing
-	@authPaths path /verify /reset-password /confirm-email
-	handle @authPaths {
-		root * __STATIC_ROOT__
-		header Cache-Control "no-cache"
-		rewrite /index.html
-		file_server
-	}
-
 	# Static files — serve directly; missing files get 404 via handle_errors below
 	handle {
 		root * __STATIC_ROOT__
