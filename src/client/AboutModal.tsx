@@ -42,7 +42,7 @@ export default function AboutModal({ open, onClose }: AboutModalProps) {
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div style={overlayStyles.panelHeader}>
-          <h3 style={overlayStyles.panelTitle}>About</h3>
+          <div style={overlayStyles.panelTitle}>About</div>
           <button
             type="button"
             onClick={onClose}
