@@ -52,8 +52,8 @@ export const fontSizes = {
 } as const
 
 export const fonts = {
-  body: "'DM Sans', sans-serif",
-  display: "'Cormorant Garamond', Georgia, serif",
+  body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+  display: "Georgia, 'Times New Roman', serif",
   mono: 'monospace',
 }
 

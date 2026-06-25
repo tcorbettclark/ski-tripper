@@ -32,10 +32,7 @@ __PUBLIC_DOMAIN__ {
 		# blob: worker-src: ONNX Runtime Web Workers from blob URLs
 		# unsafe-inline script-src: inline theme detection script in index.html
 		# data: and blob: img-src: app icons
-		# connect-src includes HuggingFace CDN (model weights) and jsDelivr (WASM files)
-		# *.hf.co covers single-level CDN subdomains (e.g. cdn.hf.co, xethub.hf.co)
-		# *.aws.cdn.hf.co covers multi-level CDN subdomains (e.g. us.aws.cdn.hf.co, eu.aws.cdn.hf.co)
-		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://*.hf.co https://*.aws.cdn.hf.co https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-inline' blob:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://__PUBLIC_POCKETBASE_DOMAIN__ https://raw.githubusercontent.com https://huggingface.co https://*.hf.co https://*.aws.cdn.hf.co https://cdn.jsdelivr.net; font-src 'self'; frame-ancestors 'none'"
 	}
 
 	# API endpoints — Bun server with SSE streaming for LLM responses

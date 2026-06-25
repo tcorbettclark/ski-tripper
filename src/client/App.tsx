@@ -138,10 +138,6 @@ export default function App({
   updateName = defaultUpdateName,
   listTripParticipants = defaultListTripParticipants,
 }: AppProps) {
-  useEffect(() => {
-    const root = document.getElementById('root')
-    if (root) root.style.visibility = 'visible'
-  }, [])
   const isSmall = useIsSmallScreenHook()
   const {
     user,
