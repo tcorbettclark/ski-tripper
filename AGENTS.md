@@ -2,14 +2,10 @@
 
 ## General
 
-Transform tasks into verifiable success criteria.
-
-Use TDD unless trivial.
-
 Before making changes:
 - State assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them - don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
+- If a simpler approach exists, push back.
 - If something is unclear, stop. Name what's confusing. Ask.
 
 Keep changes small and focussed:
@@ -17,6 +13,8 @@ Keep changes small and focussed:
 - If a task feels too large, break it into subtasks and track progress with todo tool
 - Prefer multiple small commits over one large commit
 - Run ALL feedback loops after each change, not at the end
+
+Wait for specific instruction before committing.
 
 ## Feedback Loops
 
@@ -59,5 +57,5 @@ Without a file path, these commands run on the entire project.
 - `import { describe, it, expect, mock } from 'bun:test'`
 - Use built-in Bun test matchers (`toBeNull`, `toHaveAttribute`, etc.)
 - happy-dom globals in `src/test-setup.ts`
-- Wrap render() in act() for components with async effects.
+- When testing components with useEffect that trigger async state updates on mount, wrap render() in act(). Prefer a render*() helper per test file to enforce consistency.
 - Test responsive behaviour by mocking `src/useIsSmallScreen.ts` (never set window innerWidth property as fragile).
