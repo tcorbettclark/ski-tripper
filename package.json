@@ -32,6 +32,7 @@
     "dev:server": "bun run env:dev bun --watch --no-clear-screen src/server/serve.ts",
     "dev:pb": "bun run env:dev sh -c 'pocketbase serve --http \"$POCKETBASE_HOSTNAME:$POCKETBASE_PORT\" --migrationsDir src/pb_migrations --dir dev/pb_data --automigrate=0'",
     "dev:pb:config": "bun run env:dev bun run infra/scripts/configure-pocketbase.ts",
+    "dev:pb:reset-and-squash": "bun run dev/scripts/reset-and-squash-migrations.ts",
     "dev:pb:create-superuser": "bun run env:dev sh -c 'pocketbase --dir dev/pb_data superuser upsert \"$POCKETBASE_ADMIN_EMAIL\" \"$POCKETBASE_ADMIN_PASSWORD\"'",
     "dev:caddy": "bun run infra/scripts/caddy-log-wrapper.ts",
     "dev:caddy:debug": "bun run infra/scripts/caddy-log-wrapper.ts --debug",

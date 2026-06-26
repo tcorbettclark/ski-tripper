@@ -15,5 +15,5 @@
     "isolatedModules": true,
     "types": ["node", "react", "react-dom", "bun"]
   },
-  "include": ["src", "infra/scripts", "tools", "e2e"]
+  "include": ["src", "infra/scripts", "dev/scripts", "tools", "e2e"]
 }
