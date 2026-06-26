@@ -141,16 +141,16 @@ async function deploy() {
   success('Services stopped')
 
   step('Installing artefacts')
-  await root`mkdir -p ${INSTALL_DIR}/server`
-  await root`mv ${REPO_DIR}/dist/server/serve ${INSTALL_DIR}/server/serve`
-  await root`rsync -a --delete ${REPO_DIR}/dist/static/ ${INSTALL_DIR}/static/`
-  await root`rsync -a --delete ${REPO_DIR}/dist/pb_migrations/ ${INSTALL_DIR}/pb_migrations/`
-  await root`chown -R ski-tripper:ski-tripper ${INSTALL_DIR}`
+  await app`mkdir -p ${INSTALL_DIR}/server`
+  await app`cp ${REPO_DIR}/dist/server/serve ${INSTALL_DIR}/server/serve`
+  await app`rsync -a --delete ${REPO_DIR}/dist/static/ ${INSTALL_DIR}/static/`
+  await app`rsync -a --delete ${REPO_DIR}/dist/pb_migrations/ ${INSTALL_DIR}/pb_migrations/`
   success('Artefacts installed')
 
   step('Creating data directory')
-  await root`mkdir -p /var/lib/ski-tripper/pb_data`
-  await root`chown -R ski-tripper:ski-tripper /var/lib/ski-tripper`
+  await root`mkdir -p /var/lib/ski-tripper`
+  await root`chown ski-tripper:ski-tripper /var/lib/ski-tripper`
+  await app`mkdir -p /var/lib/ski-tripper/pb_data`
   success('Data directory ready')
 
   step('Copying Caddyfile')
@@ -177,7 +177,7 @@ async function deploy() {
   const adminEmail = env.POCKETBASE_ADMIN_EMAIL
   const adminPassword = env.POCKETBASE_ADMIN_PASSWORD
   const pbDataDir = env.POCKETBASE_DATA_DIR || '/var/lib/ski-tripper/pb_data'
-  await root`/usr/local/bin/pocketbase --dir ${pbDataDir} superuser upsert ${adminEmail} ${adminPassword}`
+  await app`/usr/local/bin/pocketbase --dir ${pbDataDir} superuser upsert ${adminEmail} ${adminPassword}`
   success('PocketBase superuser ready')
 
   step('Writing systemd environment override')
