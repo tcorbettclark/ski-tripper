@@ -105,16 +105,15 @@ No Docker involved — everything runs natively on the host.
 
 ## Provisioning
 
-Provisioning is automated (`bun run infra:provision`) and idempotent. Run from the dev box. It uses [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
+Provisioning is automated and idempotent. Run from the dev box. It uses [xec](https://xec.sh/) scripts to SSH into the server, pull the latest code, build, and restart services etc.
 
-| Sub-command | Description                                                             |
-| ----------- | ----------------------------------------------------------------------- |
-| `create`    | Create a droplet and reserved IP (idempotent)                           |
-| `configure` | Install dependencies and set up systemd services on an existing droplet |
-| `status`    | Show service status, IP, and layout info                                |
-| `setup`     | Create, configure, and deploy (full setup)                              |
-| `deploy`    | Pull latest code, build, and restart services (default branch: main)    |
-| `destroy`   | Unassign IP and delete the droplet (preserves the reserved IP)          |
+| Command                             | Description                                                             |
+| ----------------------------------- | ----------------------------------------------------------------------- |
+| `bun run infra:provision create`    | Create a droplet and reserved IP (idempotent)                           |
+| `bun run infra:provision configure` | Install dependencies and set up systemd services on an existing droplet |
+| `bun run infra:provision destroy`   | Unassign IP and delete the droplet (preserves the reserved IP)          |
+| `bun run infra:deploy`              | Pull latest code, build, and restart services (default branch: main)    |
+| `bun run infra:status`              | Show service status, IP, and layout info                                |
 
 ## Server file layout
 

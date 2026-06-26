@@ -56,7 +56,7 @@ that returns 403 for /_/* requests on the PocketBase domain. This script toggles
 that file by renaming it with a .disabled suffix.
 
 After toggling, Caddy is reloaded (not restarted) for zero-downtime config
-changes. Deploying with infra:provision always resets to prod mode.`)
+changes. Deploying with infra:deploy always resets to prod mode.`)
 }
 
 async function modeDebug() {
@@ -115,7 +115,7 @@ async function modeProd() {
     success(`Renamed ${BLOCK_ADMIN_FILE}.disabled → ${BLOCK_ADMIN_FILE}`)
   } else if (!enabledExists) {
     fail(
-      `No file found at ${BLOCK_ADMIN_PATH} or ${BLOCK_ADMIN_DISABLED_PATH}. Run \`bun run infra:provision deploy\` to deploy first.`
+      `No file found at ${BLOCK_ADMIN_PATH} or ${BLOCK_ADMIN_DISABLED_PATH}. Run \`bun run env:prod bun run infra:deploy\` to deploy first.`
     )
   }
 

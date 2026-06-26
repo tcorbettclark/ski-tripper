@@ -176,6 +176,19 @@ async function waitForPocketBase(
 
 async function main() {
   const args = process.argv.slice(2)
+
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`Usage: bun run env:prod bun run infra/scripts/configure-pocketbase.ts [options]
+
+Options:
+  --external    Use external URLs (for production)
+  --internal    Use internal URLs (for local development)
+  --help, -h    Show this help message
+
+Configures PocketBase settings and email templates from JSON5 config files.`)
+    process.exit(0)
+  }
+
   const useExternal = args.includes('--external')
   if (useExternal && args.includes('--internal')) {
     fail('--internal and --external are mutually exclusive')

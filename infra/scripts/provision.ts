@@ -1,139 +1,30 @@
-import { execSync } from 'node:child_process'
-import { existsSync, readFileSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { resolve } from 'node:path'
-import { $, configure, dispose } from '@xec-sh/core'
-import { fail, step, success, warn } from './lib/log'
-
-function getDefaultPrivateKey(): string | undefined {
-  const keyPath = resolve(homedir(), '.ssh', 'id_rsa')
-  const edKeyPath = resolve(homedir(), '.ssh', 'id_ed25519')
-  for (const path of [edKeyPath, keyPath]) {
-    if (existsSync(path)) return readFileSync(path, 'utf-8')
-  }
-  return undefined
-}
-
-const SSH_KEY = getDefaultPrivateKey()
-
-const PROJECT_ROOT = resolve(import.meta.dir, '../..')
-
-configure({ timeout: 600000 })
-
-async function scanHostKey(ip: string) {
-  step('Adding droplet host key to known_hosts')
-  await $`ssh-keyscan -H ${ip} >> ~/.ssh/known_hosts`.nothrow()
-  success('Host key added')
-}
-
-const DROPLET_NAME = 'ski-tripper'
-const DROPLET_SIZE = 's-1vcpu-1gb'
-const DROPLET_REGION = 'lon1'
-const DROPLET_IMAGE = 'ubuntu-24-04-x64'
-const SWAP_SIZE_MB = 1024
-const RESERVED_IP_REGION = DROPLET_REGION
-
-const BUN_VERSION = '1.3.14'
-const POCKETBASE_VERSION = '0.39.4'
-const CADDY_VERSION = '2.11.4'
-
-const REPO_DIR = '/home/ski-tripper/ski-tripper'
-const INSTALL_DIR = '/opt/ski-tripper'
-const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
-
-async function requireDoctl() {
-  const result = await $`doctl version`.nothrow().text()
-  if (!result.includes('doctl')) {
-    fail(
-      'doctl is not installed. Install it: https://docs.digitalocean.com/reference/doctl/'
-    )
-  }
-}
-
-function decryptEnvVars(): Record<string, string> {
-  const envFiles = [
-    resolve(PROJECT_ROOT, '.env.common'),
-    resolve(PROJECT_ROOT, '.env.prod'),
-  ]
-  for (const f of envFiles) {
-    if (!existsSync(f)) {
-      fail(
-        `Env file not found: ${f}\n  Ensure .env.common and .env.prod exist and are committed.`
-      )
-    }
-  }
-
-  const envKeys = new Set<string>()
-  for (const f of envFiles) {
-    const content = readFileSync(f, 'utf-8')
-    for (const line of content.split('\n')) {
-      const trimmed = line.trimStart()
-      if (trimmed.startsWith('#') || trimmed === '') continue
-      const eq = trimmed.indexOf('=')
-      if (eq === -1) continue
-      envKeys.add(trimmed.slice(0, eq))
-    }
-  }
-
-  step('Decrypting production environment variables')
-  const dotenvxCmd = resolve(PROJECT_ROOT, 'node_modules', '.bin', 'dotenvx')
-
-  try {
-    const output = execSync(
-      `${dotenvxCmd} run --overload -f .env.common -f .env.prod -- env`,
-      { cwd: PROJECT_ROOT, encoding: 'utf-8', timeout: 30000 }
-    )
-    const env: Record<string, string> = {}
-    for (const line of output.split('\n')) {
-      const eq = line.indexOf('=')
-      if (eq === -1) continue
-      const key = line.slice(0, eq)
-      const val = line.slice(eq + 1)
-      if (envKeys.has(key)) {
-        env[key] = val
-      }
-    }
-    success(`Decrypted ${Object.keys(env).length} environment variables`)
-    return env
-  } catch (err) {
-    fail(
-      `Failed to decrypt environment variables: ${err}\n  Ensure DOTENV_PRIVATE_KEY_PROD is set in .env.keys`
-    )
-  }
-}
-
-async function getDropletId(): Promise<string> {
-  const result =
-    await $`doctl compute droplet get ${DROPLET_NAME} --format ID --no-header`.text()
-  const id = result.trim()
-  if (!id) {
-    fail('Could not determine droplet ID. Is the droplet running?')
-  }
-  return id
-}
-
-async function getReservedIp(): Promise<string | undefined> {
-  const result =
-    await $`doctl compute reserved-ip list --format IP,Region --no-header`
-      .nothrow()
-      .text()
-  const line = result.split('\n').find((l) => l.includes(RESERVED_IP_REGION))
-  return line?.split(/\s+/)[0] || undefined
-}
-
-async function getDropletIp(): Promise<string> {
-  const reservedIp = await getReservedIp()
-  if (reservedIp) {
-    return reservedIp
-  }
-  const result =
-    await $`doctl compute droplet get ${DROPLET_NAME} --format PublicIPv4 --no-header`.text()
-  const ip = result.trim()
-  if (!ip) {
-    fail('Could not determine droplet IP. Is the droplet running?')
-  }
-  return ip
-}
+import {
+  $,
+  BUN_VERSION,
+  CADDY_VERSION,
+  DROPLET_IMAGE,
+  DROPLET_NAME,
+  DROPLET_REGION,
+  DROPLET_SIZE,
+  dispose,
+  fail,
+  getAppSsh,
+  getDropletId,
+  getDropletIp,
+  getReservedIp,
+  getRootSsh,
+  INSTALL_DIR,
+  POCKETBASE_VERSION,
+  REPO_DIR,
+  REPO_URL,
+  requireDoctl,
+  SWAP_SIZE_MB,
+  scanHostKey,
+  step,
+  success,
+  waitForSsh,
+  warn,
+} from './lib/infra'
 
 async function createDroplet() {
   step('Creating DigitalOcean droplet')
@@ -184,7 +75,7 @@ async function createDroplet() {
   } else {
     step('Creating reserved IP')
     const result =
-      await $`doctl compute reserved-ip create --region ${RESERVED_IP_REGION} --format IP --no-header`.text()
+      await $`doctl compute reserved-ip create --region ${DROPLET_REGION} --format IP --no-header`.text()
     const ip = result.trim()
     if (!ip) {
       fail('Failed to create reserved IP')
@@ -200,37 +91,13 @@ async function createDroplet() {
   }
 }
 
-async function waitForSsh(ip: string) {
-  step('Waiting for SSH to become available')
-  for (let i = 0; i < 30; i++) {
-    try {
-      const result =
-        await $`ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${ip} echo ok`
-          .nothrow()
-          .text()
-      if (result.trim() === 'ok') {
-        success('SSH available')
-        return
-      }
-    } catch {
-      // ignore
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-  }
-  fail('Timed out waiting for SSH')
-}
-
 async function configureDroplet() {
   const ip = await getDropletIp()
   step(`Configuring droplet at ${ip}`)
 
   await scanHostKey(ip)
   await waitForSsh(ip)
-  const root = $.ssh({
-    host: ip,
-    username: 'root',
-    privateKey: SSH_KEY,
-  }).timeout(300000)
+  const root = getRootSsh(ip)
 
   step('Configuring unattended upgrades')
   async function waitForAptLock() {
@@ -311,19 +178,31 @@ EOF"`
   await root`chmod 600 ${skiTripperHome}/.ssh/authorized_keys`
   success('ski-tripper SSH access configured')
 
-  const app = $.ssh({
-    host: ip,
-    username: 'ski-tripper',
-    privateKey: SSH_KEY,
-  }).timeout(300000)
+  const app = getAppSsh(ip)
 
-  const repoCheck = await app`test -d ${REPO_DIR}/.git`.nothrow()
-  if (repoCheck.exitCode !== 0) {
+  const gitDirExists =
+    (await app`test -d ${REPO_DIR}/.git`.nothrow()).exitCode === 0
+  if (gitDirExists) {
+    const remoteUrl = (
+      await app`git -C ${REPO_DIR} remote get-url origin`.nothrow().text()
+    ).trim()
+    if (remoteUrl === REPO_URL) {
+      success('Repository already cloned')
+    } else {
+      fail(
+        `Repository at ${REPO_DIR} has unexpected remote origin: ${remoteUrl} (expected ${REPO_URL})`
+      )
+    }
+  } else {
+    const dirExists = (await app`test -d ${REPO_DIR}`.nothrow()).exitCode === 0
+    if (dirExists) {
+      fail(
+        `Directory ${REPO_DIR} exists but is not a git repository. Remove it manually or investigate.`
+      )
+    }
     step('Cloning repository')
     await app`git clone ${REPO_URL} ${REPO_DIR}`
     success('Repository cloned')
-  } else {
-    success('Repository already cloned')
   }
 
   step('Creating install directory')
@@ -391,74 +270,9 @@ EOF"`
 
   step('Installing systemd units')
   await root`mkdir -p /etc/systemd/system`
-
-  await root`bash -c "cat > /etc/systemd/system/caddy.service << 'EOF'
-[Unit]
-Description=Caddy web server
-Documentation=https://caddyserver.com/docs/
-After=network.target network-online.target
-Requires=network-online.target
-
-[Service]
-Type=notify
-User=caddy
-Group=caddy
-ExecStart=/usr/local/bin/caddy run --config /etc/caddy/Caddyfile
-ExecReload=/usr/local/bin/caddy reload --config /etc/caddy/Caddyfile --force
-TimeoutStopSec=5s
-LimitNOFILE=1048576
-LimitNPROC=512
-PrivateTmp=true
-ProtectSystem=full
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=multi-user.target
-EOF"`
-
-  await root`bash -c "cat > /etc/systemd/system/ski-tripper-pb.service << 'EOF'
-[Unit]
-Description=Ski Tripper - PocketBase
-After=network.target network-online.target
-Requires=network-online.target
-
-[Service]
-Type=simple
-User=ski-tripper
-Group=ski-tripper
-ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/pb_migrations --dir /var/lib/ski-tripper/pb_data
-WorkingDirectory=/opt/ski-tripper
-StateDirectory=ski-tripper
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=multi-user.target
-EOF"`
-
-  await root`bash -c "cat > /etc/systemd/system/ski-tripper-api.service << 'EOF'
-[Unit]
-Description=Ski Tripper - API server
-After=network.target network-online.target ski-tripper-pb.service
-Requires=network-online.target
-Wants=ski-tripper-pb.service
-
-[Service]
-Type=simple
-User=ski-tripper
-Group=ski-tripper
-ExecStart=/opt/ski-tripper/server/serve
-WorkingDirectory=/opt/ski-tripper
-StateDirectory=ski-tripper
-Restart=on-failure
-RestartSec=5s
-
-[Install]
-WantedBy=multi-user.target
-EOF"`
+  await root`cp ${REPO_DIR}/infra/systemd/caddy.service /etc/systemd/system/caddy.service`
+  await root`cp ${REPO_DIR}/infra/systemd/ski-tripper-pb.service /etc/systemd/system/ski-tripper-pb.service`
+  await root`cp ${REPO_DIR}/infra/systemd/ski-tripper-api.service /etc/systemd/system/ski-tripper-api.service`
 
   await root`systemctl daemon-reload`
   await root`systemctl enable ski-tripper-pb ski-tripper-api caddy`
@@ -467,277 +281,6 @@ EOF"`
   await root`mkdir -p /etc/caddy`
 
   success('Configuration complete')
-}
-
-async function deploy() {
-  const args = process.argv.slice(3)
-  if (args.includes('--help') || args.includes('-h')) {
-    printDeployHelp()
-    process.exit(0)
-  }
-
-  const versionIdx = args.indexOf('--version')
-  const skipResortsUpload = args.includes('--skip-resorts-upload')
-  const unknownArgs = args.filter(
-    (a) =>
-      a !== '--skip-resorts-upload' &&
-      a !== '--version' &&
-      (versionIdx === -1 || a !== args[versionIdx + 1])
-  )
-  if (unknownArgs.length > 0) {
-    console.error(`Unknown arguments: ${unknownArgs.join(', ')}`)
-    printDeployHelp()
-    process.exit(1)
-  }
-
-  const branchOrTag = versionIdx !== -1 ? args[versionIdx + 1] : 'main'
-  if (versionIdx !== -1 && !branchOrTag) {
-    console.error('--version requires a value (e.g. --version v1.2.3)')
-    process.exit(1)
-  }
-
-  const env = decryptEnvVars()
-  const ip = await getDropletIp()
-  step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
-
-  await scanHostKey(ip)
-  await waitForSsh(ip)
-  const root = $.ssh({
-    host: ip,
-    username: 'root',
-    privateKey: SSH_KEY,
-  }).timeout(300000)
-  const app = $.ssh({
-    host: ip,
-    username: 'ski-tripper',
-    privateKey: SSH_KEY,
-  }).timeout(300000)
-
-  step('Fetching and checking out latest code')
-  await app`cd ${REPO_DIR} && git fetch --all`
-  const isTag = await app`cd ${REPO_DIR} && git tag -l ${branchOrTag}`.text()
-  if (isTag.trim()) {
-    await app`cd ${REPO_DIR} && git checkout ${branchOrTag}`
-    success(`Checked out tag ${branchOrTag}`)
-  } else {
-    await app`cd ${REPO_DIR} && git reset --hard origin/${branchOrTag}`
-    success(`Checked out branch ${branchOrTag}`)
-  }
-
-  step('Installing dependencies')
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun install --frozen-lockfile`
-  success('Dependencies installed')
-
-  step('Building application')
-  const buildEnvKeys = [
-    'PUBLIC_DOMAIN',
-    'PUBLIC_POCKETBASE_DOMAIN',
-    'STATIC_ROOT',
-    'SERVER_HOSTNAME',
-    'SERVER_PORT',
-    'POCKETBASE_HOSTNAME',
-    'POCKETBASE_PORT',
-  ]
-  const buildEnv: Record<string, string> = {}
-  for (const k of buildEnvKeys) {
-    if (!env[k]) fail(`Missing required env var for build: ${k}`)
-    buildEnv[k] = env[k]
-  }
-  await app`cd ${REPO_DIR} && /usr/local/bin/bun run build`.env(buildEnv)
-  const caddyDomains =
-    await app`grep -E '^[a-z]' ${REPO_DIR}/dist/Caddyfile`.text()
-  if (caddyDomains.includes('localhost')) {
-    fail(
-      `Caddyfile contains localhost domains (build env vars not applied?):\n${caddyDomains}`
-    )
-  }
-  success('Build complete')
-
-  step('Stopping services')
-  await root`systemctl stop ski-tripper-api`.nothrow()
-  await root`bash -c 'while systemctl is-active --quiet ski-tripper-api; do sleep 0.5; done'`.nothrow()
-  success('Services stopped')
-
-  step('Installing artefacts')
-  await root`mkdir -p ${INSTALL_DIR}/server`
-  await root`mv ${REPO_DIR}/dist/server/serve ${INSTALL_DIR}/server/serve`
-  await root`rsync -a --delete ${REPO_DIR}/dist/static/ ${INSTALL_DIR}/static/`
-  await root`rsync -a --delete ${REPO_DIR}/dist/pb_migrations/ ${INSTALL_DIR}/pb_migrations/`
-  await root`chown -R ski-tripper:ski-tripper ${INSTALL_DIR}`
-  success('Artefacts installed')
-
-  step('Creating data directory')
-  await root`mkdir -p /var/lib/ski-tripper/pb_data`
-  await root`chown -R ski-tripper:ski-tripper /var/lib/ski-tripper`
-  success('Data directory ready')
-
-  step('Copying Caddyfile')
-  await root`cp ${REPO_DIR}/dist/Caddyfile /etc/caddy/Caddyfile`
-  await root`chown caddy:caddy /etc/caddy/Caddyfile`
-  success('Caddyfile copied')
-
-  step('Deploying Caddy PB include to block admin UI')
-  await root`mkdir -p /etc/caddy/pb-includes`
-  await root`cp ${REPO_DIR}/infra/caddy/block-pb-admin.caddy /etc/caddy/pb-includes/block-pb-admin.caddy`
-  await root`chown -R caddy:caddy /etc/caddy/pb-includes`
-  // Reset to prod mode in case debug mode was left enabled
-  const disabledExists =
-    (
-      await root`test -f /etc/caddy/pb-includes/block-pb-admin.caddy.disabled`.nothrow()
-    ).exitCode === 0
-  if (disabledExists) {
-    await root`mv /etc/caddy/pb-includes/block-pb-admin.caddy.disabled /etc/caddy/pb-includes/block-pb-admin.caddy`
-    success('Reset from debug mode to prod mode')
-  }
-  success('Caddy PB include deployed (admin UI blocked)')
-
-  step('Creating PocketBase superuser')
-  const adminEmail = env.POCKETBASE_ADMIN_EMAIL
-  const adminPassword = env.POCKETBASE_ADMIN_PASSWORD
-  const pbDataDir = env.POCKETBASE_DATA_DIR || '/var/lib/ski-tripper/pb_data'
-  await root`/usr/local/bin/pocketbase --dir ${pbDataDir} superuser upsert ${adminEmail} ${adminPassword}`
-  success('PocketBase superuser ready')
-
-  step('Writing systemd environment override')
-  const overrideDir = '/etc/systemd/system/ski-tripper-api.service.d'
-  await root`mkdir -p ${overrideDir}`
-  const overrideLines = ['[Service]']
-  for (const [key, value] of Object.entries(env)) {
-    overrideLines.push(`Environment="${key}=${value}"`)
-  }
-  const overrideContent = overrideLines.join('\n')
-  const overrideB64 = Buffer.from(overrideContent).toString('base64')
-  await root`bash -c "echo ${overrideB64} | base64 -d > ${overrideDir}/override.conf"`
-  await root`systemctl daemon-reload`
-  success('Systemd override written')
-
-  step('Restarting services')
-  await root`systemctl restart ski-tripper-pb`
-  await root`systemctl restart ski-tripper-api`
-  await root`systemctl restart caddy`.nothrow()
-  success('Services restarted')
-
-  step('Waiting for PocketBase to become healthy')
-  const pbExtUrl = env.POCKETBASE_EXTERNAL_URL
-  for (let i = 0; i < 60; i++) {
-    try {
-      const res = await fetch(`${pbExtUrl}/api/health`)
-      if (res.ok) {
-        success('PocketBase is healthy')
-        break
-      }
-    } catch {
-      // not ready yet
-    }
-    if (i === 59) fail('PocketBase did not become healthy after 60 attempts')
-    await new Promise((r) => setTimeout(r, 2000))
-  }
-
-  step('Configuring PocketBase settings')
-  try {
-    execSync(
-      'bun run env:prod bun run infra/scripts/configure-pocketbase.ts --external',
-      { cwd: PROJECT_ROOT, stdio: 'pipe', timeout: 120000, encoding: 'utf-8' }
-    )
-    success('PocketBase settings configured')
-  } catch (err: unknown) {
-    const output =
-      err instanceof Error && 'stdout' in err && 'stderr' in err
-        ? `${(err as { stdout: string }).stdout}\n${(err as { stderr: string }).stderr}`
-        : String(err)
-    fail(`PocketBase settings failed:\n${output}`)
-  }
-
-  if (skipResortsUpload) {
-    step('Uploading resort data')
-    warn('Skipping resort data upload (--skip-resorts-upload)')
-  } else {
-    step('Uploading resort data')
-    try {
-      execSync('bun run env:prod bun run tools/resorts.ts upload', {
-        cwd: PROJECT_ROOT,
-        stdio: 'pipe',
-        timeout: 300000,
-        encoding: 'utf-8',
-      })
-      success('Resort data uploaded')
-    } catch (err: unknown) {
-      const output =
-        err instanceof Error && 'stdout' in err && 'stderr' in err
-          ? `${(err as { stdout: string }).stdout}\n${(err as { stderr: string }).stderr}`
-          : String(err)
-      fail(`Resort data upload failed:\n${output}`)
-    }
-  }
-
-  await status(env, ip)
-}
-
-async function status(env?: Record<string, string>, existingIp?: string) {
-  const ip = existingIp ?? (await getDropletIp())
-  step('Checking service status')
-  await $`ssh -o BatchMode=yes -o ConnectTimeout=5 -o StrictHostKeyChecking=no root@${ip} sleep 3`.nothrow()
-
-  const root = $.ssh({
-    host: ip,
-    username: 'root',
-    privateKey: SSH_KEY,
-  }).timeout(300000)
-
-  const pbStatus = (
-    await root`systemctl is-active ski-tripper-pb`.text()
-  ).trim()
-  const apiStatus = (
-    await root`systemctl is-active ski-tripper-api`.text()
-  ).trim()
-  const caddyStatus = (await root`systemctl is-active caddy`.text()).trim()
-
-  if (pbStatus === 'active') success(`PocketBase  ${pbStatus}`)
-  else {
-    warn(`PocketBase  ${pbStatus}`)
-    const logs = await root`journalctl -u ski-tripper-pb -n 20 --no-pager`
-      .nothrow()
-      .text()
-    console.log(logs)
-  }
-  if (apiStatus === 'active') success(`API Server  ${apiStatus}`)
-  else {
-    warn(`API Server  ${apiStatus}`)
-    const logs = await root`journalctl -u ski-tripper-api -n 20 --no-pager`
-      .nothrow()
-      .text()
-    console.log(logs)
-  }
-  if (caddyStatus === 'active') success(`Caddy       ${caddyStatus}`)
-  else {
-    warn(`Caddy       ${caddyStatus}`)
-    const logs = await root`journalctl -u caddy -n 20 --no-pager`
-      .nothrow()
-      .text()
-    console.log(logs)
-  }
-
-  console.log(`\n  App:        ${env?.PUBLIC_EXTERNAL_URL ?? 'N/A'}`)
-  console.log(`  PocketBase: ${env?.POCKETBASE_EXTERNAL_URL ?? 'N/A'}`)
-  console.log(`  IP:         ${ip}`)
-  console.log(`\n  Layout:`)
-  console.log(`    Repo:           /home/ski-tripper/ski-tripper/`)
-  console.log(
-    `    Installed app:  /opt/ski-tripper/  (static/, server/serve, pb_migrations/)`
-  )
-  console.log(`    App data:       /var/lib/ski-tripper/pb_data/`)
-  console.log(`    Caddyfile:      /etc/caddy/Caddyfile`)
-  console.log(`    Binaries:       /usr/local/bin/{bun,caddy,pocketbase}`)
-  console.log(
-    `    Systemd:        /etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service`
-  )
-  console.log(
-    `    Env override:   /etc/systemd/system/ski-tripper-api.service.d/override.conf`
-  )
-  console.log(`\n  Useful logs (SSH with: doctl compute ssh ski-tripper):`)
-  console.log(`    Caddy:       journalctl -u caddy`)
-  console.log(`    PocketBase:  journalctl -u ski-tripper-pb`)
-  console.log(`    API server:  journalctl -u ski-tripper-api`)
 }
 
 async function destroyDroplet(forgetReservedIp: boolean) {
@@ -786,9 +329,6 @@ function printHelp() {
 Commands:
   create      Create a droplet and reserved IP (idempotent)
   configure   Install dependencies and set up systemd services on an existing droplet
-  deploy      Pull latest code, build, and restart services
-  status      Show service status, IP, and layout info
-  setup       Create, configure, and deploy (full setup)
   destroy     Unassign IP and delete the droplet (preserves the reserved IP)
 
 Options:
@@ -798,36 +338,18 @@ Options:
 Requirements:
   doctl           Required for create/destroy. Install: https://docs.digitalocean.com/reference/doctl/
                   Authenticate with: doctl auth init (stores DO API token)
-  SSH access      Required for configure/deploy. The droplet is created with your DO SSH keys.
-  .env.common     Required for deploy. Contains shared env vars.
-  .env.prod       Required for deploy. Contains production env vars (secrets encrypted).
-  .env.keys       Required for deploy. Contains private keys to decrypt .env.prod.
+  SSH access      Required for configure. The droplet is created with your DO SSH keys.
   bun             Required to run this script.
 
 Examples:
-  bun run infra:provision setup                          Full setup from scratch
-  bun run infra:provision deploy                         Deploy current main branch
-  bun run infra:provision deploy --version v1.2.3        Deploy a specific tag
+  bun run infra:provision create                          Create droplet and reserved IP
+  bun run infra:provision configure                       Configure an existing droplet
   bun run infra:provision destroy                        Tear down droplet (preserves reserved IP)
   bun run infra:provision destroy --forget-reserved-ip   Also delete the reserved IP`)
 }
 
-function printDeployHelp() {
-  console.log(`Usage: bun run infra:provision deploy [options]
-
-Options:
-  --version <tag>            Deploy a specific tag (default: main)
-  --skip-resorts-upload      Skip resort data upload
-  --help                     Show this help message
-
-Examples:
-  bun run infra:provision deploy                         Deploy current main branch
-  bun run infra:provision deploy --version v1.2.3        Deploy a specific tag
-  bun run infra:provision deploy --skip-resorts-upload   Deploy without uploading resort data`)
-}
-
 async function provision() {
-  const command = process.argv[2] || 'setup'
+  const command = process.argv[2] || '--help'
 
   if (command === '--help' || command === '-h') {
     printHelp()
@@ -841,18 +363,6 @@ async function provision() {
       break
     case 'configure':
       await configureDroplet()
-      break
-    case 'deploy':
-      await deploy()
-      break
-    case 'status':
-      await status(decryptEnvVars())
-      break
-    case 'setup':
-      await requireDoctl()
-      await createDroplet()
-      await configureDroplet()
-      await deploy()
       break
     case 'destroy':
       await requireDoctl()
