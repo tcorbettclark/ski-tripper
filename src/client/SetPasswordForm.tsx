@@ -53,7 +53,10 @@ export default function SetPasswordForm({
           // browser declined to store — non-critical
         }
       }
-      onSuccess()
+      // Yield one frame before unmounting the form so that browsers (especially
+      // Safari) can snapshot the credential fields while they are still in the
+      // DOM with their values intact.
+      setTimeout(() => onSuccess(), 0)
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
