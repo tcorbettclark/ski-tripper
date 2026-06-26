@@ -958,6 +958,17 @@ export async function authWithOtp(
   return authResponse.record as unknown as Record<string, unknown>
 }
 
+export async function reauthenticate(
+  email: string,
+  password: string,
+  client: PocketBase = getPb()
+): Promise<Record<string, unknown>> {
+  const authResponse = await client
+    .collection('users')
+    .authWithPassword(email, password)
+  return authResponse.record as unknown as Record<string, unknown>
+}
+
 export async function setUserPassword(
   password: string,
   passwordConfirm: string,

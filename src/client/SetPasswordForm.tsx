@@ -1,5 +1,8 @@
 import { useState } from 'react'
-import { setUserPassword as _setUserPassword } from './backend'
+import {
+  reauthenticate as _reauthenticate,
+  setUserPassword as _setUserPassword,
+} from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
@@ -7,13 +10,20 @@ import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface SetPasswordFormProps {
+  email: string
   onSuccess: () => void
   setUserPassword?: (password: string, passwordConfirm: string) => Promise<void>
+  reauthenticate?: (
+    email: string,
+    password: string
+  ) => Promise<Record<string, unknown>>
 }
 
 export default function SetPasswordForm({
+  email,
   onSuccess,
   setUserPassword = _setUserPassword,
+  reauthenticate = _reauthenticate,
 }: SetPasswordFormProps) {
   const isSmall = useIsSmallScreen()
   const [password, setPassword] = useState('')
@@ -31,6 +41,7 @@ export default function SetPasswordForm({
     setLoading(true)
     try {
       await setUserPassword(password, password)
+      await reauthenticate(email, password)
       onSuccess()
     } catch (err) {
       setError(getErrorMessage(err))

@@ -428,7 +428,10 @@ export default function App({
   if (needsPassword && user) {
     return (
       <main>
-        <SetPasswordForm onSuccess={() => setNeedsPassword(false)} />
+        <SetPasswordForm
+          email={user.email}
+          onSuccess={() => setNeedsPassword(false)}
+        />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
       </main>
     )
