@@ -89,7 +89,7 @@ export default function SetPasswordForm({
             name="email"
             data-testid="set-email"
             type="email"
-            autoComplete="username"
+            autoComplete="email"
             value={email}
             onChange={() => {}}
             readOnly
