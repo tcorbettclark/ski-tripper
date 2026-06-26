@@ -2,12 +2,12 @@
 
 ## What is this?
 
-Ski Tripper helps a ski group find and agree on the perfect ski holiday without the "entertaining" chaos of a WhatsApp debate.
+Ski Tripper helps a ski group find and agree on a great ski destination without the "entertaining" chaos of a WhatsApp debate.
 
 Unlike booking sites that start with flights and hotels, Ski Tripper starts with what really matters: the mountain experience and resort vibe.
 
 * **The Trip**: This is your group's shared space (e.g., "Boys Ski 2027"). It's the central hub where everyone gathers ideas and votes.
-* **The Profile**: Everyone in your group declares their preferences (high altitude, great après, off-piste terrain, etc). The AI-powered catalog then ranks options against your combined group profile.
+* **The Profile**: Everyone in your group declares their preferences (high altitude, great après, off-piste terrain, etc). The AI-powered catalogue then ranks options against your combined group profile.
 * **The Proposal**: Anyone can pitch a specific proposal for the Trip. You pick a resort that fits the group, align dates around mountain events, and drop in lodging options so friends can choose between premium hotels or budget-friendly apartments.
 * **The Decision**: Once a selection of promising options is locked in, your group votes in rounds until a clear winner emerges.
 
@@ -17,7 +17,7 @@ _(Ski Tripper doesn't book any flights or hotels. Platforms like [Heidi](https:/
 
 ### 1. Low-Friction Onboarding
 - **Quick Sign-Up:** Everyone creates an account with just an email.
-- **Set Your Skier Profile:** Input your skill level, terrain preference (on/off-piste), and how you split your day between leg-burning slope time, long lunches, après, or chilling in the spa. This shares with your friends (and the AI assistant) what makes a perfect holiday for you.
+- **Set Your Skier Profile:** Input your skill level, terrain preference (on/off-piste), and how you split your day between leg-burning slope time, long lunches, après, or chilling in the spa. This shares with your friends (and the AI assistant) what makes a good ski holiday for you.
 - **Gather the Crew:** The group "coordinator" creates a **Trip** space and shares a simple three-word invite code to bring everyone in.
 
 ### 2. Browse Thousands of Resorts
@@ -54,7 +54,7 @@ Having helped lead the organisation of a boys ski trip for a few years, I though
 
 1. To **build the application**. I experimented with a number of agentic tools, models, local or cloud-based providers, and configurations (skills, MCPs, etc), settling on [OpenCode](https://opencode.ai/) and open source models running in [Ollama cloud](https://ollama.com/) so I can track new models and updates. Much of ski-tripper was written with the help of [GLM5.1](https://huggingface.co/THUDM/glm-5.1).
 2. To **create a rich catalogue of resorts with standardised fields and descriptions**. This involved a pipeline starting with seeding a list, enriching from qualified sources, assessing quality, and fixing inconsistencies using an independent model.
-3. To **make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalog generation, and then the same model is used again in the client browser to quickly find similar resorts.
+3. To **make it easier for users to search the catalogue of resorts**. An [embedding model](https://huggingface.co/Xenova/multi-qa-MiniLM-L6-cos-v1) was used to one-time create embeddings for each resort as part of catalogue generation, and then the same model is used again in the client browser to quickly find similar resorts.
 4. To **generate resort search text from participant preferences**. An LLM is fed everyone's preferences and asked to generate search text to run against the embedding model (previous), and so make it easier to home in on candidate resorts the group will enjoy.
 5. To **assess a proposal against the likes/dislikes of the participants**. An LLM is used to create a narative assessment of the match between a proposal and the likes/dislikes of the participants, trying to identify who would especially like a resort and who might find it less appealing.
 6. To **automate the testing of the applicaton UI** by performing user interactions using a headless browser, looking for bugs and increasing confidence that the application behaves in a reasonable way.
