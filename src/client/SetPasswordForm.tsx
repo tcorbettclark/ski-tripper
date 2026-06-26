@@ -71,6 +71,17 @@ export default function SetPasswordForm({
         <h1 style={authStyles.title}>Set your password</h1>
         <form onSubmit={handleSubmit} style={authStyles.form}>
           <Field
+            label="Email"
+            name="email"
+            data-testid="set-email"
+            type="email"
+            autoComplete="username"
+            value={email}
+            onChange={() => {}}
+            readOnly
+            variant="auth"
+          />
+          <Field
             label="Password"
             name="password"
             data-testid="set-password"

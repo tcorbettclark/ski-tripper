@@ -19,8 +19,16 @@ describe('SetPasswordForm', () => {
 
   it('renders password and confirm password fields', () => {
     renderSetPasswordForm()
+    expect(screen.getByTestId('set-email'))
     expect(screen.getByTestId('set-password'))
     expect(screen.getByTestId('set-confirm-password'))
+  })
+
+  it('shows the email as a read-only field', () => {
+    renderSetPasswordForm()
+    const emailInput = screen.getByTestId('set-email') as HTMLInputElement
+    expect(emailInput.value).toBe('test@example.com')
+    expect(emailInput.readOnly).toBe(true)
   })
 
   it('calls setUserPassword and reauthenticate with password on submit', async () => {

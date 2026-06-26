@@ -25,6 +25,7 @@ interface FieldProps {
     | 'text'
     | 'none'
   options?: string[]
+  readOnly?: boolean
   'data-testid'?: string
 }
 
@@ -41,6 +42,7 @@ export default function Field({
   autoComplete,
   inputMode,
   options,
+  readOnly,
   'data-testid': dataTestId,
 }: FieldProps) {
   const styles = fieldStyles[variant] || fieldStyles.default
@@ -87,6 +89,7 @@ export default function Field({
         minLength={minLength}
         autoComplete={autoComplete}
         inputMode={inputMode}
+        readOnly={readOnly}
         style={styles.input}
         data-testid={dataTestId}
       />
