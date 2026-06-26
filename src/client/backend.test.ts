@@ -1,4 +1,4 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { afterEach, describe, expect, it, mock } from 'bun:test'
 import type PocketBase from 'pocketbase'
 import {
   closePoll,
@@ -2226,5 +2226,96 @@ describe('fetchResortDataWithAuth', () => {
     expect(resort).not.toHaveProperty('piste_km')
     expect(resort).not.toHaveProperty('beginner_pct')
     expect(resort).not.toHaveProperty('linked_resorts_description')
+  })
+})
+
+describe('setUserPassword', () => {
+  const originalFetch = globalThis.fetch
+  const originalEnv = { ...process.env }
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch
+    process.env = { ...originalEnv }
+  })
+
+  function createAuthClient(token = 'test-token'): PocketBase {
+    const client = createMockClient()
+    ;(client as unknown as Record<string, unknown>).authStore = {
+      token,
+    }
+    return client
+  }
+
+  it('calls set-password API with auth token and password', async () => {
+    process.env.PUBLIC_EXTERNAL_URL = 'https://test.local'
+    process.env.PUBLIC_POCKETBASE_DOMAIN = 'pb.test.local'
+    const { setUserPassword } = await import('./backend')
+
+    let capturedUrl = ''
+    let capturedOptions: RequestInit = {}
+
+    globalThis.fetch = mock(
+      (input: RequestInfo | URL, options?: RequestInit) => {
+        capturedUrl =
+          typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.href
+              : input.url
+        capturedOptions = options ?? {}
+        return Promise.resolve(
+          new Response(JSON.stringify({ success: true }), { status: 200 })
+        )
+      }
+    ) as unknown as typeof globalThis.fetch
+
+    const client = createAuthClient('my-auth-token')
+    await setUserPassword('newpass123', 'newpass123', client)
+
+    expect(capturedUrl).toBe('https://test.local/api/set-password')
+    expect(capturedOptions.method).toBe('POST')
+    expect(
+      (capturedOptions.headers as Record<string, string>).Authorization
+    ).toBe('Bearer my-auth-token')
+    expect(
+      (capturedOptions.headers as Record<string, string>)['Content-Type']
+    ).toBe('application/json')
+    expect(capturedOptions.body).toBe(
+      JSON.stringify({ password: 'newpass123', passwordConfirm: 'newpass123' })
+    )
+  })
+
+  it('throws with error message on failure', async () => {
+    process.env.PUBLIC_EXTERNAL_URL = 'https://test.local'
+    process.env.PUBLIC_POCKETBASE_DOMAIN = 'pb.test.local'
+    const { setUserPassword } = await import('./backend')
+
+    globalThis.fetch = mock(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ error: 'Password too short' }), {
+          status: 400,
+        })
+      )
+    ) as unknown as typeof globalThis.fetch
+
+    const client = createAuthClient()
+    await expect(setUserPassword('short', 'short', client)).rejects.toThrow(
+      'Password too short'
+    )
+  })
+
+  it('throws with status code when response is not JSON', async () => {
+    process.env.PUBLIC_EXTERNAL_URL = 'https://test.local'
+    process.env.PUBLIC_POCKETBASE_DOMAIN = 'pb.test.local'
+    const { setUserPassword } = await import('./backend')
+
+    globalThis.fetch = mock(() =>
+      Promise.resolve(new Response('Internal Server Error', { status: 500 }))
+    ) as unknown as typeof globalThis.fetch
+
+    const client = createAuthClient()
+    await expect(
+      setUserPassword('newpass123', 'newpass123', client)
+    ).rejects.toThrow('Failed to set password (500)')
   })
 })

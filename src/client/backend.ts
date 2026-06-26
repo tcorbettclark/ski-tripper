@@ -10,7 +10,7 @@ import type {
   Trip,
   Vote,
 } from '../shared/types.d'
-import { browser_get_pocketbase_url } from './env'
+import { browser_get_api_url, browser_get_pocketbase_url } from './env'
 import { dayjs, ensureUrlScheme, isValidUrl, randomThreeWords } from './utils'
 
 let _pb: PocketBase | undefined
@@ -958,15 +958,28 @@ export async function authWithOtp(
   return authResponse.record as unknown as Record<string, unknown>
 }
 
-export async function updateUserPassword(
-  userId: string,
+export async function setUserPassword(
   password: string,
   passwordConfirm: string,
   client: PocketBase = getPb()
-): Promise<unknown> {
-  return client
-    .collection('users')
-    .update(userId, { password, passwordConfirm })
+): Promise<void> {
+  const token = client.authStore.token
+  const response = await fetch(browser_get_api_url('/api/set-password'), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ password, passwordConfirm }),
+  })
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as {
+      error?: string
+    } | null
+    throw new Error(
+      data?.error || `Failed to set password (${response.status})`
+    )
+  }
 }
 
 export async function createPreferences(

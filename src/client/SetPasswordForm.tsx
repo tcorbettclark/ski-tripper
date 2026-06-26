@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getPb } from './backend'
+import { setUserPassword as _setUserPassword } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
@@ -7,27 +7,13 @@ import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
 interface SetPasswordFormProps {
-  userId: string
   onSuccess: () => void
-  updatePassword?: (
-    userId: string,
-    password: string,
-    passwordConfirm: string
-  ) => Promise<unknown>
-  title?: string
-  submitLabel?: string
+  setUserPassword?: (password: string, passwordConfirm: string) => Promise<void>
 }
 
 export default function SetPasswordForm({
-  userId,
   onSuccess,
-  updatePassword = (id, pw, pwc) =>
-    getPb().collection('users').update(id, {
-      password: pw,
-      passwordConfirm: pwc,
-    }),
-  title = 'Set your password',
-  submitLabel = 'Set password',
+  setUserPassword = _setUserPassword,
 }: SetPasswordFormProps) {
   const isSmall = useIsSmallScreen()
   const [password, setPassword] = useState('')
@@ -44,7 +30,7 @@ export default function SetPasswordForm({
     setError('')
     setLoading(true)
     try {
-      await updatePassword(userId, password, password)
+      await setUserPassword(password, password)
       onSuccess()
     } catch (err) {
       setError(getErrorMessage(err))
@@ -71,7 +57,7 @@ export default function SetPasswordForm({
           padding: isSmall ? '28px 20px' : '48px 44px',
         }}
       >
-        <h1 style={authStyles.title}>{title}</h1>
+        <h1 style={authStyles.title}>Set your password</h1>
         <form onSubmit={handleSubmit} style={authStyles.form}>
           <Field
             label="Password"
@@ -106,7 +92,7 @@ export default function SetPasswordForm({
             disabled={loading}
             style={formStyles.primaryButton}
           >
-            {loading ? 'Saving…' : submitLabel}
+            {loading ? 'Saving…' : 'Set password'}
           </button>
         </form>
       </div>

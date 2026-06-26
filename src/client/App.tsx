@@ -52,10 +52,8 @@ type PageState =
   | 'login'
   | 'signup'
   | 'signupOtp'
-  | 'signupSetPassword'
   | 'forgotPassword'
   | 'forgotPasswordOtp'
-  | 'forgotPasswordSetPassword'
 
 interface AppProps {
   useAuthHook?: typeof useAuth
@@ -151,7 +149,7 @@ export default function App({
   const [page, setPage] = useState<PageState>('login')
   const [otpId, setOtpId] = useState<string | null>(null)
   const [otpEmail, setOtpEmail] = useState<string | null>(null)
-  const [otpUserId, setOtpUserId] = useState<string | null>(null)
+  const [needsPassword, setNeedsPassword] = useState(false)
   const [view, setView] = useState<'tripList' | 'tripDetail'>('tripList')
   const [tripDetailTab, setTripDetailTab] = useState<TripDetailTab>('overview')
   const [proposalsStatusFilter, setProposalsStatusFilter] =
@@ -277,6 +275,7 @@ export default function App({
     try {
       getPb().authStore.clear()
       logout()
+      setNeedsPassword(false)
       setPage('login')
     } catch (err) {
       setLogoutError(getErrorMessage(err))
@@ -318,12 +317,7 @@ export default function App({
   function handleOtpSuccess(record: Record<string, unknown>) {
     const authenticatedUser = mapUser(record)
     login(authenticatedUser)
-    setOtpUserId(authenticatedUser.id)
-    if (page === 'signupOtp') {
-      setPage('signupSetPassword')
-    } else {
-      setPage('forgotPasswordSetPassword')
-    }
+    setNeedsPassword(true)
   }
 
   const selectedTrip = trips.find((t) => t.id === selectedTripId) || null
@@ -391,28 +385,6 @@ export default function App({
       )
     }
 
-    if (
-      (page === 'signupSetPassword' || page === 'forgotPasswordSetPassword') &&
-      otpUserId
-    ) {
-      return (
-        <main>
-          {aboutButton}
-          <SetPasswordForm
-            userId={otpUserId}
-            onSuccess={() => setPage('login')}
-            title={
-              page === 'signupSetPassword'
-                ? 'Set your password'
-                : 'Set new password'
-            }
-          />
-          <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
-          <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
-        </main>
-      )
-    }
-
     if (page === 'forgotPassword') {
       return (
         <main>
@@ -449,6 +421,15 @@ export default function App({
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         <LandingSeoContent />
+      </main>
+    )
+  }
+
+  if (needsPassword && user) {
+    return (
+      <main>
+        <SetPasswordForm onSuccess={() => setNeedsPassword(false)} />
+        <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
       </main>
     )
   }

@@ -6,11 +6,11 @@ import SetPasswordForm from './SetPasswordForm'
 const noop = () => {}
 
 function renderSetPasswordForm(props = {}) {
-  return render(<SetPasswordForm userId="user-1" onSuccess={noop} {...props} />)
+  return render(<SetPasswordForm onSuccess={noop} {...props} />)
 }
 
 describe('SetPasswordForm', () => {
-  it('shows the Set your password heading by default', () => {
+  it('shows the Set your password heading', () => {
     renderSetPasswordForm()
     expect(screen.getByRole('heading', { name: /set your password/i }))
   })
@@ -21,12 +21,12 @@ describe('SetPasswordForm', () => {
     expect(screen.getByTestId('set-confirm-password'))
   })
 
-  it('calls updatePassword with userId and password on submit', async () => {
+  it('calls setUserPassword with password on submit', async () => {
     const user = userEvent.setup()
-    const mockUpdatePassword = mock(() => Promise.resolve())
+    const mockSetUserPassword = mock(() => Promise.resolve())
     const handleSuccess = mock(() => {})
     renderSetPasswordForm({
-      updatePassword: mockUpdatePassword,
+      setUserPassword: mockSetUserPassword,
       onSuccess: handleSuccess,
     })
 
@@ -35,8 +35,7 @@ describe('SetPasswordForm', () => {
     await user.click(screen.getByRole('button', { name: /set password/i }))
 
     await waitFor(() => {
-      expect(mockUpdatePassword).toHaveBeenCalledWith(
-        'user-1',
+      expect(mockSetUserPassword).toHaveBeenCalledWith(
         'newpass123',
         'newpass123'
       )
@@ -55,10 +54,10 @@ describe('SetPasswordForm', () => {
     expect(screen.getByText(/passwords do not match/i))
   })
 
-  it('shows error when updatePassword fails', async () => {
+  it('shows error when setUserPassword fails', async () => {
     const user = userEvent.setup()
     renderSetPasswordForm({
-      updatePassword: () => Promise.reject(new Error('Password too short')),
+      setUserPassword: () => Promise.reject(new Error('Password too short')),
     })
 
     await user.type(screen.getByTestId('set-password'), 'newpass123')
@@ -73,7 +72,7 @@ describe('SetPasswordForm', () => {
   it('disables submit button while saving', async () => {
     const user = userEvent.setup()
     renderSetPasswordForm({
-      updatePassword: () => new Promise(() => {}),
+      setUserPassword: () => new Promise(() => {}),
     })
 
     await user.type(screen.getByTestId('set-password'), 'newpass123')
