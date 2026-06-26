@@ -129,9 +129,9 @@ function deepDiff(
         fullPath
       )
       Object.assign(changes, nested)
-    } else if (JSON.stringify(desiredVal) !== JSON.stringify(currentVal)) {
+    } else if (SENSITIVE_KEYS.has(fullPath)) {
       changes[fullPath] = { old: currentVal, new: desiredVal }
-    } else if (SENSITIVE_KEYS.has(fullPath) && currentVal === undefined) {
+    } else if (JSON.stringify(desiredVal) !== JSON.stringify(currentVal)) {
       changes[fullPath] = { old: currentVal, new: desiredVal }
     }
   }
@@ -244,8 +244,11 @@ Configures PocketBase settings and email templates from JSON5 config files.`)
 
   console.log(`\n${BOLD}Applying ${changeCount} setting change(s):${RESET}`)
   for (const [path, { old, new: newVal }] of Object.entries(changes)) {
+    const suffix = SENSITIVE_KEYS.has(path)
+      ? ' (upserting — current value is masked/unreadable)'
+      : ''
     console.log(
-      `  ${path}: ${maskValue(path, old)} → ${maskValue(path, newVal)}`
+      `  ${path}: ${maskValue(path, old)} → ${maskValue(path, newVal)}${suffix}`
     )
   }
 
@@ -264,6 +267,22 @@ Configures PocketBase settings and email templates from JSON5 config files.`)
   } else {
     warn(`Skipping email templates — ${EMAIL_TEMPLATES_FILE} not found`)
   }
+}
+
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
+  const keys = path.split('.')
+  let current: unknown = obj
+  for (const key of keys) {
+    if (
+      current === null ||
+      current === undefined ||
+      typeof current !== 'object'
+    ) {
+      return undefined
+    }
+    current = (current as Record<string, unknown>)[key]
+  }
+  return current
 }
 
 async function applyEmailTemplates(pb: PocketBase): Promise<void> {
@@ -287,37 +306,42 @@ async function applyEmailTemplates(pb: PocketBase): Promise<void> {
     )) as Record<string, unknown>
 
     const patch: Record<string, unknown> = {}
+    const changedKeys: string[] = []
 
     for (const key of templateKeys) {
       const desiredTemplate = desired[key]
-      const currentTemplate = current[key] as
+      const currentTemplate = getNestedValue(current, key) as
         | { subject: string; body: string }
         | undefined
 
       if (
         !currentTemplate ||
         currentTemplate.subject !== desiredTemplate.subject ||
-        currentTemplate.body !== desiredTemplate.body
+        currentTemplate.body.replace(/\r\n/g, '\n') !==
+          desiredTemplate.body.replace(/\r\n/g, '\n')
       ) {
-        patch[key] = desiredTemplate
+        setNestedValue(patch, key, desiredTemplate)
+        changedKeys.push(key)
       }
     }
 
-    if (Object.keys(patch).length === 0) continue
+    if (changedKeys.length === 0) continue
 
     console.log(
       `\n${BOLD}Applying email templates for ${collectionName}:${RESET}`
     )
-    for (const [key, template] of Object.entries(patch)) {
-      const t = template as { subject: string; body: string }
-      const old = current[key] as { subject: string; body: string } | undefined
+    for (const key of changedKeys) {
+      const desiredTemplate = desired[key]
+      const old = getNestedValue(current, key) as
+        | { subject: string; body: string }
+        | undefined
       const oldSubject = old?.subject ?? '(none)'
       const oldBody = old?.body ?? '(none)'
       console.log(
-        `  ${key}.subject: ${maskValue(`${collectionName}.${key}.subject`, oldSubject)} → ${maskValue(`${collectionName}.${key}.subject`, t.subject)}`
+        `  ${key}.subject: ${maskValue(`${collectionName}.${key}.subject`, oldSubject)} → ${maskValue(`${collectionName}.${key}.subject`, desiredTemplate.subject)}`
       )
       console.log(
-        `  ${key}.body: ${maskValue(`${collectionName}.${key}.body`, oldBody)} → ${maskValue(`${collectionName}.${key}.body`, t.body)}`
+        `  ${key}.body: ${maskValue(`${collectionName}.${key}.body`, oldBody)} → ${maskValue(`${collectionName}.${key}.body`, desiredTemplate.body)}`
       )
     }
 
@@ -326,7 +350,7 @@ async function applyEmailTemplates(pb: PocketBase): Promise<void> {
       body: patch,
     })
 
-    totalChanges += Object.keys(patch).length
+    totalChanges += changedKeys.length
   }
 
   if (totalChanges === 0) {

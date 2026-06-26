@@ -7,7 +7,7 @@
   // {OTP} is a PocketBase built-in placeholder for the one-time password code.
 
   users: {
-    otpTemplate: {
+    'otp.emailTemplate': {
       subject: 'Your {APP_NAME} verification code',
       body: '<p>Hello,</p>\n<p>Your verification code is: <strong>{OTP}</strong></p>\n<p><i>If you didn\'t request this code, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>',
     },
