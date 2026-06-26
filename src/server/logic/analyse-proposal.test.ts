@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'bun:test'
+import type {
+  Accommodation,
+  Participant,
+  Preferences,
+  Proposal,
+} from '../types'
 import {
-  type Accommodation,
   buildSystemPrompt,
   buildUserPrompt,
   computeInputHash,
-  type Participant,
-  type Preferences,
-  type Proposal,
 } from './analyse-proposal'
 
 const proposal: Proposal = {

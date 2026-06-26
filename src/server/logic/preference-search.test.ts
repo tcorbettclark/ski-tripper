@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'bun:test'
+import type { Participant, Preferences } from '../types'
 import {
   buildSystemPrompt,
   buildUserPrompt,
   computeInputHash,
-  type Participant,
-  type Preferences,
 } from './preference-search'
 
 const participant: Participant = {

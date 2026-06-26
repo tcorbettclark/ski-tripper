@@ -2,28 +2,16 @@ import type { AbortableAsyncIterator, ChatResponse } from 'ollama'
 import { Ollama } from 'ollama'
 import type PocketBase from 'pocketbase'
 import { ClientResponseError } from 'pocketbase'
-import {
-  server_get_ollama_api_key,
-  server_get_ollama_model_analysis,
-  server_get_ollama_model_preference_search,
-} from './env'
-import {
-  type Accommodation,
-  buildSystemPrompt as buildAnalysisSystemPrompt,
-  buildUserPrompt as buildAnalysisUserPrompt,
-  computeInputHash as computeAnalysisInputHash,
-  type Participant,
-  type Preferences,
-  type Proposal,
-} from './logic/analyse-proposal'
-import {
-  buildSystemPrompt as buildPreferenceSearchSystemPrompt,
-  buildUserPrompt as buildPreferenceSearchUserPrompt,
-  computeInputHash as computePreferenceSearchInputHash,
-  type Participant as PSParticipant,
-  type Preferences as PSPreferences,
-} from './logic/preference-search'
-import { getAdminClient, verifyTokenAndGetUserId } from './pocketbase'
+import { server_get_ollama_api_key } from '../env'
+import { getAdminClient, verifyTokenAndGetUserId } from '../pocketbase'
+import type {
+  Accommodation,
+  Participant,
+  Preferences,
+  Proposal,
+} from '../types'
+
+export { getAdminClient, verifyTokenAndGetUserId }
 
 function createOllama(): Ollama {
   const ollamaApiKey = server_get_ollama_api_key()
@@ -33,7 +21,7 @@ function createOllama(): Ollama {
   })
 }
 
-async function verifyParticipantMembership(
+export async function verifyParticipantMembership(
   pb: PocketBase,
   tripId: string,
   userId: string
@@ -50,7 +38,7 @@ async function verifyParticipantMembership(
   console.log(`[auth] User ${userId} verified as participant of trip ${tripId}`)
 }
 
-async function fetchProposal(
+export async function fetchProposal(
   pb: PocketBase,
   proposalId: string
 ): Promise<Proposal> {
@@ -84,7 +72,7 @@ async function fetchProposal(
   }
 }
 
-async function fetchAccommodations(
+export async function fetchAccommodations(
   pb: PocketBase,
   proposalId: string
 ): Promise<Accommodation[]> {
@@ -101,7 +89,7 @@ async function fetchAccommodations(
   }))
 }
 
-async function fetchParticipants(
+export async function fetchParticipants(
   pb: PocketBase,
   tripId: string
 ): Promise<Participant[]> {
@@ -117,7 +105,7 @@ async function fetchParticipants(
   }))
 }
 
-async function fetchPreferences(
+export async function fetchPreferences(
   pb: PocketBase,
   userId: string
 ): Promise<Preferences | null> {
@@ -243,7 +231,7 @@ const SSE_HEADERS: Record<string, string> = {
   Connection: 'keep-alive',
 }
 
-interface StreamLlmParams {
+export interface StreamLlmParams {
   label: string
   adminPb: PocketBase
   inputHash: string
@@ -257,7 +245,9 @@ interface StreamLlmParams {
   abortSignal?: AbortSignal
 }
 
-async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
+export async function streamLlmResult(
+  params: StreamLlmParams
+): Promise<Response> {
   const {
     label,
     adminPb,
@@ -454,247 +444,4 @@ async function streamLlmResult(params: StreamLlmParams): Promise<Response> {
   })
 
   return new Response(stream, { headers: SSE_HEADERS })
-}
-
-export async function handleAnalyseProposal(req: Request): Promise<Response> {
-  console.log('[analysis] Received request')
-  if (req.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 })
-  }
-
-  let body: { proposalId?: string; tripId?: string }
-  try {
-    body = await req.json()
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
-  }
-
-  const { proposalId, tripId } = body
-  if (!proposalId || !tripId) {
-    console.log('[analysis] Missing proposalId or tripId')
-    return Response.json(
-      { error: 'Missing proposalId or tripId' },
-      { status: 400 }
-    )
-  }
-
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    console.log('[analysis] Missing or invalid Authorization header')
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const authToken = authHeader.slice(7)
-
-  const userId = await verifyTokenAndGetUserId(authToken)
-  if (!userId) {
-    console.log('[analysis] Invalid auth token - verification failed')
-    return Response.json({ error: 'Invalid token' }, { status: 401 })
-  }
-  console.log(
-    `[analysis] Authenticated user ${userId} for proposal ${proposalId}`
-  )
-
-  let adminPb: PocketBase
-
-  try {
-    adminPb = await getAdminClient()
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Admin auth failed'
-    console.error(`[analysis] Admin auth failed: ${msg}`)
-    return Response.json({ error: msg }, { status: 500 })
-  }
-
-  try {
-    await verifyParticipantMembership(adminPb, tripId, userId)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Authorization failed'
-    console.log(`[analysis] Participant verification failed: ${msg}`)
-    return Response.json({ error: msg }, { status: 403 })
-  }
-
-  let proposal: Proposal
-  let accommodations: Accommodation[]
-  let participants: Participant[]
-
-  try {
-    proposal = await fetchProposal(adminPb, proposalId)
-    accommodations = await fetchAccommodations(adminPb, proposalId)
-    participants = await fetchParticipants(adminPb, tripId)
-    console.log(
-      `[analysis] Fetched proposal ${proposalId}, ${participants.length} participants`
-    )
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Failed to fetch data'
-    console.error(`[analysis] Failed to fetch data: ${msg}`)
-    return Response.json({ error: msg }, { status: 500 })
-  }
-
-  const participantPrefsData: Array<{
-    participant: Participant
-    preferences: Preferences
-  }> = []
-
-  for (const participant of participants) {
-    try {
-      const prefs = await fetchPreferences(adminPb, participant.user)
-      if (prefs) {
-        participantPrefsData.push({ participant, preferences: prefs })
-      }
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to fetch preferences'
-      return Response.json({ error: msg }, { status: 500 })
-    }
-  }
-
-  const inputHash = computeAnalysisInputHash(
-    proposal,
-    accommodations,
-    participantPrefsData
-  )
-  const systemPrompt = buildAnalysisSystemPrompt()
-  const userPrompt = buildAnalysisUserPrompt(
-    proposal,
-    accommodations,
-    participantPrefsData
-  )
-
-  return streamLlmResult({
-    label: 'analysis',
-    adminPb,
-    inputHash,
-    cacheType: 'analysis',
-    cacheProposal: proposalId,
-    tripId,
-    cacheFilter: adminPb.filter('proposal = {:proposalId} && type = {:type}', {
-      proposalId,
-      type: 'analysis',
-    }),
-    systemPrompt,
-    userPrompt,
-    model: server_get_ollama_model_analysis(),
-    abortSignal: req.signal,
-  })
-}
-
-export async function handlePreferenceSearch(req: Request): Promise<Response> {
-  console.log('[preference-search] Received request')
-  if (req.method !== 'POST') {
-    return Response.json({ error: 'Method not allowed' }, { status: 405 })
-  }
-
-  let body: { tripId?: string }
-  try {
-    body = await req.json()
-  } catch {
-    return Response.json({ error: 'Invalid JSON body' }, { status: 400 })
-  }
-
-  const { tripId } = body
-  if (!tripId) {
-    console.log('[preference-search] Missing tripId')
-    return Response.json({ error: 'Missing tripId' }, { status: 400 })
-  }
-
-  console.log(`[preference-search] Trip ${tripId}`)
-  const authHeader = req.headers.get('Authorization')
-  if (!authHeader?.startsWith('Bearer ')) {
-    console.log('[preference-search] Missing or invalid Authorization header')
-    return Response.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const authToken = authHeader.slice(7)
-
-  const userId = await verifyTokenAndGetUserId(authToken)
-  if (!userId) {
-    console.log('[preference-search] Invalid auth token - verification failed')
-    return Response.json({ error: 'Invalid token' }, { status: 401 })
-  }
-  console.log(`[preference-search] Authenticated user ${userId}`)
-
-  let adminPb: PocketBase
-
-  try {
-    adminPb = await getAdminClient()
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Admin auth failed'
-    console.error(`[preference-search] Admin auth failed: ${msg}`)
-    return Response.json({ error: msg }, { status: 500 })
-  }
-
-  try {
-    await verifyParticipantMembership(adminPb, tripId, userId)
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Authorization failed'
-    console.log(`[preference-search] Participant verification failed: ${msg}`)
-    return Response.json({ error: msg }, { status: 403 })
-  }
-
-  let participantsRaw: PSParticipant[]
-
-  try {
-    participantsRaw = (await fetchParticipants(
-      adminPb,
-      tripId
-    )) as PSParticipant[]
-    console.log(
-      `[preference-search] Fetched ${participantsRaw.length} participants for trip ${tripId}`
-    )
-  } catch (err) {
-    const msg =
-      err instanceof Error ? err.message : 'Failed to fetch participants'
-    console.error(`[preference-search] Failed to fetch participants: ${msg}`)
-    return Response.json({ error: msg }, { status: 500 })
-  }
-
-  const participantPrefsData: Array<{
-    participant: PSParticipant
-    preferences: PSPreferences
-  }> = []
-
-  for (const participant of participantsRaw) {
-    try {
-      const prefs = await fetchPreferences(adminPb, participant.user)
-      if (prefs) {
-        participantPrefsData.push({
-          participant,
-          preferences: prefs as unknown as PSPreferences,
-        })
-      }
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to fetch preferences'
-      return Response.json({ error: msg }, { status: 500 })
-    }
-  }
-
-  if (participantPrefsData.length === 0) {
-    console.log(
-      `[preference-search] No participants with preferences for trip ${tripId}`
-    )
-    return Response.json(
-      { error: 'No participants with preferences found' },
-      { status: 400 }
-    )
-  }
-
-  const inputHash = computePreferenceSearchInputHash(participantPrefsData)
-  const systemPrompt = buildPreferenceSearchSystemPrompt()
-  const userPrompt = buildPreferenceSearchUserPrompt(participantPrefsData)
-
-  return streamLlmResult({
-    label: 'preference-search',
-    adminPb,
-    inputHash,
-    cacheType: 'preference-search',
-    cacheProposal: null,
-    tripId,
-    cacheFilter: adminPb.filter('trip = {:tripId} && type = {:type}', {
-      tripId,
-      type: 'preference-search',
-    }),
-    systemPrompt,
-    userPrompt,
-    model: server_get_ollama_model_preference_search(),
-    abortSignal: req.signal,
-  })
 }

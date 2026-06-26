@@ -1,28 +1,5 @@
 import { hash } from 'canonical-json/hash'
-import type {
-  Participant as SharedParticipant,
-  Preferences as SharedPreferences,
-} from '../../shared/types.d'
-
-type Participant = Pick<
-  SharedParticipant,
-  'id' | 'user' | 'userName' | 'trip' | 'role'
->
-
-type Preferences = Pick<
-  SharedPreferences,
-  | 'id'
-  | 'user'
-  | 'skiSnowboard'
-  | 'difficulty'
-  | 'piste'
-  | 'timeSlopes'
-  | 'timeEating'
-  | 'timeApres'
-  | 'timeHotel'
-  | 'accommodation'
-  | 'notes'
->
+import type { Participant, Preferences } from '../types'
 
 export type { Participant, Preferences }
 

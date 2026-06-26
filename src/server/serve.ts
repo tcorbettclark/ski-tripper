@@ -1,5 +1,7 @@
-import { handleAnalyseProposal, handlePreferenceSearch } from './api'
 import { server_get_server_hostname, server_get_server_port } from './env'
+import { handleAnalyseProposal } from './handlers/analyse-proposal'
+import { handlePreferenceSearch } from './handlers/preference-search'
+import { handleSetPassword } from './handlers/set-password'
 
 function main() {
   const hostname = server_get_server_hostname()
@@ -18,6 +20,10 @@ function main() {
 
       if (url.pathname === '/api/preference-search') {
         return handlePreferenceSearch(req)
+      }
+
+      if (url.pathname === '/api/set-password') {
+        return handleSetPassword(req)
       }
 
       return new Response('Not Found', { status: 404 })
