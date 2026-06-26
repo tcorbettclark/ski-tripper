@@ -11,6 +11,48 @@ function renderSetPasswordForm(props = {}) {
   )
 }
 
+function installCredentialApi() {
+  const store = mock(() => Promise.resolve())
+  const originalCredentials = navigator.credentials
+  const originalPasswordCredential = (globalThis as Record<string, unknown>)
+    .PasswordCredential
+  Object.defineProperty(navigator, 'credentials', {
+    value: { store },
+    configurable: true,
+  })
+  ;(globalThis as Record<string, unknown>).PasswordCredential =
+    class PasswordCredential {
+      id: string
+      password: string
+      constructor({ id, password }: { id: string; password: string }) {
+        this.id = id
+        this.password = password
+      }
+    }
+  return {
+    store,
+    restore: () => {
+      if (originalCredentials === undefined) {
+        Object.defineProperty(navigator, 'credentials', {
+          value: undefined,
+          configurable: true,
+        })
+      } else {
+        Object.defineProperty(navigator, 'credentials', {
+          value: originalCredentials,
+          configurable: true,
+        })
+      }
+      if (originalPasswordCredential === undefined) {
+        delete (globalThis as Record<string, unknown>).PasswordCredential
+      } else {
+        ;(globalThis as Record<string, unknown>).PasswordCredential =
+          originalPasswordCredential
+      }
+    },
+  }
+}
+
 describe('SetPasswordForm', () => {
   it('shows the Set your password heading', () => {
     renderSetPasswordForm()
@@ -82,6 +124,50 @@ describe('SetPasswordForm', () => {
         'newpass123'
       )
     })
+  })
+
+  it('stores credentials via Credential Management API when available', async () => {
+    const { store, restore } = installCredentialApi()
+    const user = userEvent.setup()
+    const handleSuccess = mock(() => {})
+    renderSetPasswordForm({
+      setUserPassword: () => Promise.resolve(),
+      reauthenticate: () => Promise.resolve({ id: 'user-1' }),
+      onSuccess: handleSuccess,
+    })
+
+    await user.type(screen.getByTestId('set-password'), 'newpass123')
+    await user.type(screen.getByTestId('set-confirm-password'), 'newpass123')
+    await user.click(screen.getByRole('button', { name: /set password/i }))
+
+    await waitFor(() => {
+      expect(store).toHaveBeenCalledTimes(1)
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const callArgs = store.mock.calls[0] as any[]
+    expect(callArgs[0].id).toBe('test@example.com')
+    expect(callArgs[0].password).toBe('newpass123')
+    restore()
+  })
+
+  it('still calls onSuccess when credential store fails', async () => {
+    const { restore } = installCredentialApi()
+    const user = userEvent.setup()
+    const handleSuccess = mock(() => {})
+    renderSetPasswordForm({
+      setUserPassword: () => Promise.resolve(),
+      reauthenticate: () => Promise.resolve({ id: 'user-1' }),
+      onSuccess: handleSuccess,
+    })
+
+    await user.type(screen.getByTestId('set-password'), 'newpass123')
+    await user.type(screen.getByTestId('set-confirm-password'), 'newpass123')
+    await user.click(screen.getByRole('button', { name: /set password/i }))
+
+    await waitFor(() => {
+      expect(handleSuccess).toHaveBeenCalledTimes(1)
+    })
+    restore()
   })
 
   it('shows error when passwords do not match', async () => {

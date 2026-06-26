@@ -42,6 +42,17 @@ export default function SetPasswordForm({
     try {
       await setUserPassword(password, password)
       await reauthenticate(email, password)
+      if (
+        typeof PasswordCredential !== 'undefined' &&
+        typeof navigator.credentials?.store === 'function'
+      ) {
+        try {
+          const credential = new PasswordCredential({ id: email, password })
+          await navigator.credentials.store(credential)
+        } catch {
+          // browser declined to store — non-critical
+        }
+      }
       onSuccess()
     } catch (err) {
       setError(getErrorMessage(err))
