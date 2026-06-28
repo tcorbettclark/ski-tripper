@@ -4,7 +4,7 @@
 
 Ski Tripper helps a ski group find and agree on a great ski destination without the "entertaining" chaos of a WhatsApp debate.
 
-Unlike booking sites that push the user towards choosing flights and hotels (i.e. commercials), Ski Tripper focuses on what really matters: the mountain experience and resort vibe.
+Unlike booking sites that push the user towards choosing flights and hotels i.e. commercial aspects, Ski Tripper focuses on what really matters: the mountain experience and resort vibe.
 
 * **The Trip**: This is your group's shared space (e.g., "Boys Ski 2027"). It's the central hub where everyone gathers ideas and votes.
 * **The Profile**: Everyone in your group declares their preferences (high altitude, great après, off-piste terrain, etc). The AI-powered catalogue then ranks options against your combined group profile.
@@ -36,8 +36,8 @@ _(Ski Tripper doesn't book any flights or hotels. Platforms like [Heidi](https:/
 - **Iterative Rounds:** The coordinator reviews the token spread and decides the next step. Either chop the bottom options and vote again, or crown a clear winner.
 
 ### 5. Make it to the finish line
-- **"What Next?":** Group trips can die in the WhatsApp void ("What are the choices again?"). A mini-graphic shows each user exactly what their next moves can be the moment they open the app (finish that draft proposal, 2 days to vote, ...).
-- **Stay on Track:** Don't be knocked off course by late and unactionable suggestions ("How about we go to France instead?"). Proposals have to be "well-formed" with enough information to be votable.
+- **"What Next?" prompts:** Group trips can die in the WhatsApp void ("What are the choices again?"). A mini-graphic shows each user what they need to do next,and how that fits in to the overall process (finish that draft proposal, 2 days to vote, ...).
+- **Stay on Track:** Don't be knocked off course by late and unactionable suggestions ("How about we go to France instead?"). Proposals have to be well-formed with enough information to be votable.
 
 ## Who created it?
 
@@ -47,7 +47,7 @@ My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programme
 
 I built Ski Tripper for two reasons: to better understand the practical state of AI today, and to help organise "Boys Ski Trips".
 
-AI is transforming software development, but how exactly has it changed things so far and what does it mean for the future? Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on experience to understand what something can and cannot do, the techniques, the domain language, the tools, and a sense for the direction of travel. Although Ski Tripper is functionally a small application, it exercises the full stack and lifecycle so gives me ideas about how AI should best be used on serious, large-scale software projects.
+AI is transforming software development, but exactly how has it changed things so far and what does it mean for the future? Staying informed by reading other people's opinions is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on experience to understand what something can and cannot do, the techniques, the domain language, the tools, and a sense of the direction of travel. Although Ski Tripper is functionally a small application, it exercises the full stack and lifecycle so gives me ideas about how AI should be used on serious, large-scale software projects.
 
 Having helped lead the organisation of a boys ski trip for a few years, I felt an application could add a bit of structure to the process. In addition, I am running out of fresh ideas so wanted to try separating the role of coordinator from the role of proposer. This allows a coordinator to drive the process whilst leaving space for everyone to generate ideas with enough detail to be useful (i.e. actionable).
 
