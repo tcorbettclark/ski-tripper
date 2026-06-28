@@ -4,14 +4,14 @@
 
 Ski Tripper helps a ski group find and agree on a great ski destination without the "entertaining" chaos of a WhatsApp debate.
 
-Unlike booking sites that start with flights and hotels, Ski Tripper starts with what really matters: the mountain experience and resort vibe.
+Unlike booking sites that push the user towards choosing flights and hotels (i.e. commercials), Ski Tripper focuses on what really matters: the mountain experience and resort vibe.
 
 * **The Trip**: This is your group's shared space (e.g., "Boys Ski 2027"). It's the central hub where everyone gathers ideas and votes.
 * **The Profile**: Everyone in your group declares their preferences (high altitude, great après, off-piste terrain, etc). The AI-powered catalogue then ranks options against your combined group profile.
-* **The Proposal**: Anyone can pitch a specific proposal for the Trip. You pick a resort that fits the group, align dates around mountain events, and drop in lodging options so friends can choose between premium hotels or budget-friendly apartments.
+* **The Proposal**: Anyone can pitch a specific proposal for the Trip. Pick a resort that fits the group, align dates around mountain events, and drop in lodging options so friends can choose between premium hotels or budget-friendly apartments.
 * **The Decision**: Once a selection of promising options is locked in, your group votes in rounds until a clear winner emerges.
 
-_(Ski Tripper doesn't book any flights or hotels. Platforms like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) are still good to help scout specific lodgings. But Ski Tripper is where your group discovers and agrees on great ski destinations!)_
+_(Ski Tripper doesn't book any flights or hotels. Platforms like [Heidi](https://www.heidi.com/), [Igluski](https://www.igluski.com), [Crystal Ski](https://www.crystalski.co.uk), or [Hotels](https://www.hotels.com) are still good to help scout specific lodgings. But Ski Tripper is where your group discovers and agrees on great ski destinations.)_
 
 ## How does it work?
 
@@ -25,18 +25,19 @@ _(Ski Tripper doesn't book any flights or hotels. Platforms like [Heidi](https:/
 - **AI Preference Matcher:** Stuck with what to search for? The built-in AI assistant analyzes everyone’s profile and automatically builds search queries to surface resorts matching the group vibe.
 
 ### 3. Pitch, Discuss, and Refine
-- **Build the "Proposal":** Anyone can draft a proposal combining a resort, specific dates, and various accommodation options. 
-- **AI Suitability Reviews:** The AI scans the proposal and writes a quick brief on how well it fits with everyone's likes and dislikes (e.g., *"Great for Dave's love of off-piste, but transfer time is a bit long for Sarah"*).
+- **Create the Proposals:** Anyone can draft a proposal combining a resort, specific dates, and various accommodation options. 
+- **AI Suitability Reviews:** The AI scans a proposal and writes a quick brief on how well it fits with everyone's likes and dislikes (e.g., *"Great for Dave's love of off-piste, but transfer time is a bit long for Sarah"*).
 - **Hype it up:** Add notes, chat with the group, and refine the pitch until it’s ready for the chopping block.
 
-### 4. Weighted Token Voting (No Simple Majorities)
+### 4. Weighted Token Voting
 - **Launch the Poll:** When the pitches are locked in, the coordinator opens a voting round.
 - **Spread the Love:** Instead of picking just one winner, everyone gets a bundle of tokens to distribute (e.g., spend 3 tokens on your absolute favorite, 1 on a solid backup). 
 - **Flexible Timelines:** Polls run until a set deadline, though the coordinator can call it early if everyone has voted.
 - **Iterative Rounds:** The coordinator reviews the token spread and decides the next step. Either chop the bottom options and vote again, or crown a clear winner.
 
-### 5. Smart "What Next?" Prompts
-- **Stay on Track:** Group trips can die in the WhatsApp void ("What are the choices again?"). Ski Tripper keeps the engine running by showing every user exactly what their next move is the moment they open the app (finish that draft proposal, 2 days to vote, ...).
+### 5. Make it to the finish line
+- **"What Next?":** Group trips can die in the WhatsApp void ("What are the choices again?"). A mini-graphic shows each user exactly what their next moves can be the moment they open the app (finish that draft proposal, 2 days to vote, ...).
+- **Stay on Track:** Don't be knocked off course by late and unactionable suggestions ("How about we go to France instead?"). Proposals have to be "well-formed" with enough information to be votable.
 
 ## Who created it?
 
