@@ -47,9 +47,9 @@ My name is [Timothy Corbett-Clark](https://www.corbettclark.com). I've programme
 
 I built Ski Tripper for two reasons: to better understand the practical state of AI today, and to help organise "Boys Ski Trips".
 
-AI is undeniably transforming software development. Less clear is exactly how it has changed things so far and what it means for the future. Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what AI can and cannot do in 2026, the techniques, the domain language, the tools, and a sense for the direction of travel. Although this is a small application, I also hope to gain some insight into how AI can best be used on serious, large-scale software projects.
+AI is transforming software development. How exactly has it changed things so far and what does it mean for the future? Staying informed by reading the views of others is important, but as ever carries risk of bias and confounding motivations (especially given the hype and excitement). Nothing beats hands-on personal experience for understanding what something can and cannot do, the techniques, the domain language, the tools, and a sense for the direction of travel. Although this is a small application in terms of functionality, it exercises the full stack and lifecycle to give me insight into how AI can best be used on serious, large-scale software projects.
 
-Having helped lead the organisation of a boys ski trip for a few years, I thought an application could add a bit of structure to the process. But more specifically, I am running out of fresh ideas so wanted to try separating the role of coordinator from the role of proposer. This means the coordinator can drive the process and proposers (everyone!) can generate ideas with enough detail to be useful.
+Having helped lead the organisation of a boys ski trip for a few years, I felt an application could add a bit of structure to the process. In addition, I am running out of fresh ideas so wanted to try separating the role of coordinator from the role of proposer. This allows a coordinator to drive the process whilst leaving space for everyone to generate ideas with enough detail to be useful (i.e. actionable).
 
 ## How is AI used?
 
