@@ -19,6 +19,10 @@ export function warn(msg: string) {
   console.log(`  ${YELLOW}⚠${RESET} ${msg}`)
 }
 
+export function retrying(msg: string) {
+  console.log(`  ⏳ ${msg}`)
+}
+
 export function fail(msg: string): never {
   console.error(`  ${RED}✗${RESET} ${msg}`)
   process.exit(1)

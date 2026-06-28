@@ -24,6 +24,7 @@ import {
   success,
   waitForSsh,
   warn,
+  withAptRetry,
 } from './lib/infra'
 
 async function createDroplet() {
@@ -100,21 +101,7 @@ async function configureDroplet() {
   const root = getRootSsh(ip)
 
   step('Configuring unattended upgrades')
-  async function waitForAptLock() {
-    step('Waiting for apt lock')
-    for (let i = 0; i < 60; i++) {
-      const result =
-        await root`fuser /var/lib/dpkg/lock-frontend /var/lib/apt/lists/lock`
-          .nothrow()
-          .text()
-      if (result.trim() === '') break
-      await new Promise((resolve) => setTimeout(resolve, 5000))
-    }
-    success('Apt lock available')
-  }
-
-  await waitForAptLock()
-  await root`dpkg-reconfigure -plow unattended-upgrades`
+  await withAptRetry(() => root`dpkg-reconfigure -plow unattended-upgrades`)
   success('Unattended upgrades configured')
 
   step('Configuring journald log rotation')
@@ -222,8 +209,7 @@ EOF"`
   const bunCheck = await root`/usr/local/bin/bun --version`.nothrow().text()
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
-    await waitForAptLock()
-    await root`apt-get install -y unzip`
+    await withAptRetry(() => root`apt-get install -y unzip`)
     const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip`
     await root`curl -fsSL ${bunUrl} -o /tmp/bun.zip`
     await root`unzip -o /tmp/bun.zip -d /tmp/bun`

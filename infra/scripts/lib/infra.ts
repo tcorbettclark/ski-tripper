@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 import { $, configure, dispose } from '@xec-sh/core'
-import { fail, step, success, warn } from './log'
+import { fail, retrying, step, success, warn } from './log'
 
 configure({ timeout: 600000 })
 
@@ -23,7 +23,44 @@ export const REPO_DIR = '/home/ski-tripper/ski-tripper'
 export const INSTALL_DIR = '/opt/ski-tripper'
 export const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
 
-export { $, configure, dispose, fail, step, success, warn }
+export { $, configure, dispose, fail, retrying, step, success, warn }
+
+const APT_LOCK_PATTERNS = [
+  'Could not get lock',
+  'dpkg lock',
+  'lock-frontend',
+  'Resource temporarily unavailable',
+  'Unable to acquire the dpkg lock',
+  'Could not open lock file',
+]
+
+export async function withAptRetry<T>(
+  run: () => Promise<T>,
+  maxAttempts = 60,
+  delayMs = 5000
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await run()
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message +
+            (err.cause instanceof Error ? `\n${err.cause.message}` : '')
+          : String(err)
+      const isLockError = APT_LOCK_PATTERNS.some((p) =>
+        message.toLowerCase().includes(p.toLowerCase())
+      )
+      if (!isLockError || attempt >= maxAttempts) {
+        throw err
+      }
+      if (attempt === 0) {
+        retrying('Apt lock busy, retrying...')
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+}
 
 function getDefaultPrivateKey(): string | undefined {
   const keyPath = resolve(homedir(), '.ssh', 'id_rsa')
