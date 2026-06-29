@@ -97,14 +97,12 @@ async function deploy() {
 
   const env = getEnvFromProcess()
   const ip = await getDropletIp()
-  step(`Deploying to ${ip} (branch/tag: ${branchOrTag})`)
-
   await scanHostKey(ip)
   await waitForSsh(ip)
   const root = getRootSsh(ip)
   const app = getAppSsh(ip)
 
-  step('Fetching and checking out latest code')
+  step(`Checking out code from GitHub`)
   await app`cd ${REPO_DIR} && git fetch --all`
   const isTag = await app`cd ${REPO_DIR} && git tag -l ${branchOrTag}`.text()
   if (isTag.trim()) {
@@ -119,7 +117,7 @@ async function deploy() {
   await app`cd ${REPO_DIR} && /usr/local/bin/bun install --frozen-lockfile`
   success('Dependencies installed')
 
-  step('Building application')
+  step(`Building application`)
   const buildEnv: Record<string, string> = {}
   for (const k of BUILD_ENV_KEYS) {
     if (!env[k]) fail(`Missing required env var for build: ${k}`)

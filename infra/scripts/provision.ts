@@ -94,7 +94,6 @@ async function createDroplet() {
 
 async function configureDroplet() {
   const ip = await getDropletIp()
-  step(`Configuring droplet at ${ip}`)
 
   await scanHostKey(ip)
   await waitForSsh(ip)
@@ -265,8 +264,6 @@ EOF"`
   success('Systemd units installed and enabled')
 
   await root`mkdir -p /etc/caddy`
-
-  success('Configuration complete')
 }
 
 async function destroyDroplet(forgetReservedIp: boolean) {
@@ -290,7 +287,6 @@ async function destroyDroplet(forgetReservedIp: boolean) {
   step(`Destroying droplet ${DROPLET_NAME}`)
   await $`doctl compute droplet delete ${DROPLET_NAME} --force`
 
-  step('Waiting for droplet to be destroyed')
   for (let i = 0; i < 60; i++) {
     const result = await $`doctl compute droplet list --format Name --no-header`
       .nothrow()
