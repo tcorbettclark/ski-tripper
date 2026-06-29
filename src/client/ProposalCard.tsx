@@ -35,6 +35,7 @@ import {
   formatDate,
   formatTransferTime,
   getErrorMessage,
+  isValidUrl,
   sanitizeUrl,
 } from './utils'
 
@@ -226,6 +227,7 @@ export default function ProposalCard({
     setDeleteError(null)
     try {
       await deleteProposal(proposal.id, userId)
+      toast(`Deleted "${proposal.resortName}"`, 'success')
       onDeleted(proposal.id)
     } catch (err) {
       setDeleteError(getErrorMessage(err))
@@ -842,7 +844,7 @@ function AccommodationEditForm({
     url: string
     cost?: string
     description?: string
-  }) => void
+  }) => Promise<void>
   onCancel: () => void
 }) {
   const [name, setName] = useState(initialData?.name ?? '')
@@ -850,14 +852,21 @@ function AccommodationEditForm({
   const [cost, setCost] = useState(initialData?.cost ?? '')
   const [description, setDescription] = useState(initialData?.description ?? '')
   const [saving, setSaving] = useState(false)
+  const [urlError, setUrlError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const withScheme = ensureUrlScheme(url)
+    if (!isValidUrl(withScheme)) {
+      setUrlError('Please enter a valid URL (e.g. https://example.com)')
+      return
+    }
+    setUrlError('')
     setSaving(true)
     try {
       await onSave({
         name,
-        url: ensureUrlScheme(url),
+        url: withScheme,
         cost: cost || undefined,
         description: description || undefined,
       })
@@ -893,11 +902,22 @@ function AccommodationEditForm({
             id="acc-url"
             type="text"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => {
+              setUrl(e.target.value)
+              if (urlError) setUrlError('')
+            }}
             required
-            style={accFormStyles.input}
+            style={
+              urlError
+                ? {
+                    ...accFormStyles.input,
+                    border: `1px solid ${colors.error}`,
+                  }
+                : accFormStyles.input
+            }
             placeholder="e.g. example.com/hotel"
           />
+          {urlError && <p style={formStyles.error}>{urlError}</p>}
         </div>
         <div style={accFormStyles.field}>
           <label htmlFor="acc-cost" style={accFormStyles.label}>

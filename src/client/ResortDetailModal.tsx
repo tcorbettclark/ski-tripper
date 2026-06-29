@@ -99,7 +99,7 @@ export default function ResortDetailModal({
         `Created proposal for ${customResortName || resort.resortName}`,
         'success'
       )
-      setShowProposalForm(false)
+      onClose()
     } catch (err: unknown) {
       toast(getErrorMessage(err), 'error')
     } finally {

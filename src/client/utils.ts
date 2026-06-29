@@ -15,7 +15,19 @@ export function ensureUrlScheme(url: string): string {
 
 export function isValidUrl(url: string | undefined): boolean {
   if (!url) return true
-  return sanitizeUrl(url) !== 'about:blank'
+  if (sanitizeUrl(url) === 'about:blank') return false
+  try {
+    const parsed = new URL(url)
+    if (!/^https?:$/i.test(parsed.protocol)) return false
+    if (!parsed.hostname) return false
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)) return true
+    if (parsed.hostname === 'localhost') return true
+    const parts = parsed.hostname.split('.')
+    const tld = parts[parts.length - 1]
+    return tld.length >= 2
+  } catch {
+    return false
+  }
 }
 
 export function randomPassword(length = 32): string {

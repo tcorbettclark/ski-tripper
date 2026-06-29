@@ -809,7 +809,7 @@ function validateUrl(url: string | undefined): string | undefined {
   if (!url) return undefined
   const withScheme = ensureUrlScheme(url)
   if (!isValidUrl(withScheme)) {
-    throw new Error('Invalid URL: only http and https schemes are allowed.')
+    throw new Error('Please enter a valid URL (e.g. https://example.com)')
   }
   return withScheme
 }
