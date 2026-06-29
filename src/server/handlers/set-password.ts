@@ -1,6 +1,6 @@
 import type PocketBase from 'pocketbase'
 import { log, logError } from '../log'
-import { getAdminClient, verifyTokenAndGetUserId } from './shared'
+import { getAdminClient, verifyTokenAndGetUserId } from './lib/auth'
 
 export async function handleSetPassword(req: Request): Promise<Response> {
   if (req.method !== 'POST') {

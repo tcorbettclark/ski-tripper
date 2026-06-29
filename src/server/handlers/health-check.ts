@@ -6,11 +6,8 @@ import {
   buildUserPrompt,
   computeInputHash,
 } from '../logic/health-check'
-import {
-  getAdminClient,
-  streamLlmResult,
-  verifyTokenAndGetUserId,
-} from './shared'
+import { getAdminClient, verifyTokenAndGetUserId } from './lib/auth'
+import { streamLlmResult } from './lib/llm-stream'
 
 const HEALTH_CHECK_TRIP_ID = '__health_check__'
 

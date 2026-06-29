@@ -7,14 +7,13 @@ import {
   computeInputHash as computePreferenceSearchInputHash,
 } from '../logic/preference-search'
 import type { Participant, Preferences } from '../types'
+import { getAdminClient, verifyTokenAndGetUserId } from './lib/auth'
 import {
   fetchParticipants,
   fetchPreferences,
-  getAdminClient,
-  streamLlmResult,
   verifyParticipantMembership,
-  verifyTokenAndGetUserId,
-} from './shared'
+} from './lib/data-fetchers'
+import { streamLlmResult } from './lib/llm-stream'
 
 export async function handlePreferenceSearch(req: Request): Promise<Response> {
   log('[preference-search] Received request')

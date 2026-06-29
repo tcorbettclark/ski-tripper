@@ -51,10 +51,13 @@ mock.module('../env', () => ({
   server_get_ollama_model_health_check: () => 'test-health-model',
 }))
 
-mock.module('./shared', () => ({
-  streamLlmResult: mockStreamLlmResult,
+mock.module('./lib/auth', () => ({
   verifyTokenAndGetUserId: mockVerifyTokenAndGetUserId,
   getAdminClient: mockGetAdminClient,
+}))
+
+mock.module('./lib/llm-stream', () => ({
+  streamLlmResult: mockStreamLlmResult,
 }))
 
 mock.module('../log', () => {

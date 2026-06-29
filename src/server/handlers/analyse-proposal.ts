@@ -12,16 +12,15 @@ import type {
   Preferences,
   Proposal,
 } from '../types'
+import { getAdminClient, verifyTokenAndGetUserId } from './lib/auth'
 import {
   fetchAccommodations,
   fetchParticipants,
   fetchPreferences,
   fetchProposal,
-  getAdminClient,
-  streamLlmResult,
   verifyParticipantMembership,
-  verifyTokenAndGetUserId,
-} from './shared'
+} from './lib/data-fetchers'
+import { streamLlmResult } from './lib/llm-stream'
 
 export async function handleAnalyseProposal(req: Request): Promise<Response> {
   log('[analysis] Received request')
