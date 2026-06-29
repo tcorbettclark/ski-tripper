@@ -14,6 +14,7 @@ import { error, fail, help, step, success, warn } from './lib/log'
 
 const BUILD_ENV_KEYS = [
   'PUBLIC_DOMAIN',
+  'PUBLIC_EXTERNAL_URL',
   'PUBLIC_POCKETBASE_DOMAIN',
   'STATIC_ROOT',
   'SERVER_HOSTNAME',
