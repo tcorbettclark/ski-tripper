@@ -90,9 +90,9 @@ Type checking: `bun run check`. To fix type errors: `bun run check:fix`.
 
 Usual collection of unit tests: `bun run test`. These are standalone and do not require the dev server to be running.
 
-Exploratory tests use [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/). Invoke with: `bun run test:e2e`. These need the dev server to be running (`bun run dev`).
+End-to-end tests use [Playwright](https://playwright.dev/) + [Mailpit](https://mailpit.axllent.org/). Invoke with: `bun run test:e2e`. This needs the dev server to be running (`bun run dev`). These tests have been generated with the "AI-first" playwright agent approach, setup with: `bun run playwright init-agents --loop=opencode`.
 
-A smoke test, `bun run test:smoke`, verifies the app is installed correctly in production. It contains both automatic and manual checks.
+A smoke test, `bun run test:smoke`, verifies the app is installed correctly **in production** (unlike the other tests above which run on the dev box). It contains both automatic and manual checks.
 
 ## Versioning
 
