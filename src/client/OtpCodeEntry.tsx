@@ -6,6 +6,7 @@ import {
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, fonts, formStyles } from './theme'
+import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
@@ -28,34 +29,30 @@ export default function OtpCodeEntry({
 }: OtpCodeEntryProps) {
   const isSmall = useIsSmallScreen()
   const [code, setCode] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [resent, setResent] = useState(false)
   const [currentOtpId, setCurrentOtpId] = useState(initialOtpId)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     setLoading(true)
     try {
       const record = await authWithOtp(currentOtpId, code)
       onSuccess(record)
     } catch (err) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setLoading(false)
     }
   }
 
   async function handleResend() {
-    setError('')
     setLoading(true)
     try {
       const result = await requestOtp(email)
       setCurrentOtpId(result.otpId)
-      setResent(true)
+      toast('Verification code resent!', 'success')
     } catch (err) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setLoading(false)
     }
@@ -97,8 +94,6 @@ export default function OtpCodeEntry({
             placeholder="12345678"
             variant="auth"
           />
-          {error && <p style={formStyles.error}>{error}</p>}
-          {resent && <p style={otpStyles.resent}>Verification code resent!</p>}
           <button
             type="submit"
             disabled={loading}
@@ -152,11 +147,5 @@ const otpStyles = {
     color: colors.textSecondary,
     lineHeight: '1.6',
     margin: '0 0 24px 0',
-  },
-  resent: {
-    color: colors.accent,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    margin: '0 0 12px 0',
   },
 }

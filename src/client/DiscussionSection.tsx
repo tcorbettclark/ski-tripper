@@ -8,6 +8,7 @@ import {
   updateDiscussionComment as _updateDiscussionComment,
 } from './backend'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { toast } from './toast'
 import { formatRelativeTime, getErrorMessage } from './utils'
 
 interface DiscussionSectionProps {
@@ -33,24 +34,20 @@ export default function DiscussionSection({
 }: DiscussionSectionProps) {
   const [comments, setComments] = useState<Discussion[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [newBody, setNewBody] = useState('')
   const [posting, setPosting] = useState(false)
-  const [postError, setPostError] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editBody, setEditBody] = useState('')
   const [editPosting, setEditPosting] = useState(false)
-  const [editError, setEditError] = useState<string | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setError(null)
     listDiscussion(proposalId)
       .then((result) => setComments(result))
-      .catch((err) => setError(getErrorMessage(err)))
+      .catch((err) => toast(getErrorMessage(err), 'error'))
       .finally(() => setLoading(false))
   }, [proposalId, listDiscussion])
 
@@ -63,7 +60,6 @@ export default function DiscussionSection({
   async function handlePost() {
     if (!newBody.trim()) return
     setPosting(true)
-    setPostError(null)
     try {
       const comment = await createDiscussionComment(
         proposalId,
@@ -75,7 +71,7 @@ export default function DiscussionSection({
       setNewBody('')
       onCommentsChanged?.()
     } catch (err) {
-      setPostError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setPosting(false)
     }
@@ -84,7 +80,6 @@ export default function DiscussionSection({
   async function handleEditSave() {
     if (!editingId || !editBody.trim()) return
     setEditPosting(true)
-    setEditError(null)
     try {
       const updated = await updateDiscussionComment(
         editingId,
@@ -95,7 +90,7 @@ export default function DiscussionSection({
       setEditingId(null)
       setEditBody('')
     } catch (err) {
-      setEditError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setEditPosting(false)
     }
@@ -123,8 +118,7 @@ export default function DiscussionSection({
         {loading && comments.length === 0 && (
           <p style={sectionStyles.loading}>Loading…</p>
         )}
-        {error && <p style={formStyles.error}>{error}</p>}
-        {!loading && !error && comments.length === 0 && (
+        {!loading && comments.length === 0 && (
           <p style={sectionStyles.empty}>No comments yet.</p>
         )}
         {comments.map((comment) => {
@@ -172,7 +166,6 @@ export default function DiscussionSection({
                       onClick={() => {
                         setEditingId(comment.id)
                         setEditBody(comment.body)
-                        setEditError(null)
                       }}
                       style={sectionStyles.actionButton}
                       aria-label="Edit"
@@ -207,7 +200,6 @@ export default function DiscussionSection({
                       Cancel
                     </button>
                   </div>
-                  {editError && <p style={formStyles.error}>{editError}</p>}
                 </div>
               ) : (
                 <p style={sectionStyles.commentBody}>{comment.body}</p>
@@ -217,7 +209,6 @@ export default function DiscussionSection({
         })}
       </div>
       <div style={sectionStyles.inputArea}>
-        {postError && <p style={formStyles.error}>{postError}</p>}
         <div style={sectionStyles.inputRow}>
           <input
             type="text"

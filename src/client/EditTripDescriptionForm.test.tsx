@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Trip } from '../shared/types.d'
 import EditTripDescriptionForm from './EditTripDescriptionForm'
+import { getToasts } from './toast'
 
 const noop = () => {}
 const testTrip = {
@@ -82,7 +83,13 @@ describe('EditTripDescriptionForm', () => {
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Only the coordinator can edit this trip.'))
+      expect(
+        getToasts().some(
+          (t) =>
+            t.message === 'Only the coordinator can edit this trip.' &&
+            t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 

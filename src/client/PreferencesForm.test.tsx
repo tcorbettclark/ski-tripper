@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Preferences } from '../shared/types.d'
 import PreferencesForm from './PreferencesForm'
+import { getToasts } from './toast'
 
 const defaultPreferences: Preferences = {
   id: 'pref-1',
@@ -232,7 +233,11 @@ describe('PreferencesForm', () => {
     await ue.click(screen.getByRole('button', { name: /save preferences/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Network error'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Network error' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 
@@ -406,7 +411,11 @@ describe('PreferencesForm', () => {
     await ue.click(screen.getByRole('button', { name: /save preferences/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Name update failed'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Name update failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 

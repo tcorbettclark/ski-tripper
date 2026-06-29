@@ -6,6 +6,7 @@ import {
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, formStyles } from './theme'
+import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
@@ -30,16 +31,14 @@ export default function SetPasswordForm({
   const isSmall = useIsSmallScreen()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      toast('Passwords do not match', 'error')
       return
     }
-    setError('')
     setLoading(true)
     try {
       await setUserPassword(password, password)
@@ -55,12 +54,9 @@ export default function SetPasswordForm({
           // browser declined to store — non-critical
         }
       }
-      // Yield one frame before unmounting the form so that browsers (especially
-      // Safari) can snapshot the credential fields while they are still in the
-      // DOM with their values intact.
       setTimeout(() => onSuccess(), 0)
     } catch (err) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setLoading(false)
     }
@@ -123,7 +119,6 @@ export default function SetPasswordForm({
             placeholder="••••••••"
             variant="auth"
           />
-          {error && <p style={formStyles.error}>{error}</p>}
           <button
             type="submit"
             data-testid="set-password-submit"

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
 import type { Poll, Proposal, Vote } from '../shared/types.d'
 import PastPoll from './PastPoll'
+import { getToasts } from './toast'
 import { dayjs } from './utils'
 
 const TEST_IDS = {
@@ -176,7 +177,11 @@ describe('PastPoll', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to load votes'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Failed to load votes' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 

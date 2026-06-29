@@ -2,6 +2,7 @@ import { describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { Proposal } from '../shared/types.d'
 import EditProposalForm from './EditProposalForm'
+import { getToasts } from './toast'
 
 const sampleProposal: Proposal = {
   id: 'p-1',
@@ -169,7 +170,11 @@ describe('EditProposalForm', () => {
     })
 
     await waitFor(() => {
-      expect(screen.getByText('Update failed')).toBeTruthy()
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Update failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 })

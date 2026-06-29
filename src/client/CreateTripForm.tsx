@@ -3,6 +3,7 @@ import type { User } from '../shared/types.d'
 import { createTrip as _createTrip, getPb } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
+import { toast } from './toast'
 import { getErrorMessage } from './utils'
 
 interface CreateTripFormProps {
@@ -35,7 +36,6 @@ export default function CreateTripForm({
 }: CreateTripFormProps) {
   const [form, setForm] = useState({ description: '' })
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
 
   function handleChange(
     e: React.ChangeEvent<
@@ -47,7 +47,6 @@ export default function CreateTripForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     setSaving(true)
     try {
       const userAccount = await accountGet()
@@ -56,7 +55,7 @@ export default function CreateTripForm({
       setForm({ description: '' })
       onDismiss()
     } catch (err: unknown) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSaving(false)
     }
@@ -73,7 +72,6 @@ export default function CreateTripForm({
         placeholder="e.g. 5 days in Val d'Isère, late February, intermediate+ skiers"
         required
       />
-      {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
         <button
           type="submit"

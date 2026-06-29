@@ -12,7 +12,8 @@ import {
 import PastPoll from './PastPoll'
 import PollResults from './PollResults'
 import PollVoting from './PollVoting'
-import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
+import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { formatCountdown, formatDate, getErrorMessage } from './utils'
 
@@ -73,12 +74,9 @@ export default function Poll({
   const [votes, setVotes] = useState<Vote[]>([])
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [_pollsLoading, setPollsLoading] = useState(false)
-  const [pollsError, setPollsError] = useState('')
   const [creatingPoll, setCreatingPoll] = useState(false)
-  const [createPollError, setCreatePollError] = useState<string | null>(null)
   const [pollDuration, setPollDuration] = useState(7)
   const [closingPoll, setClosingPoll] = useState(false)
-  const [closePollError, setClosePollError] = useState<string | null>(null)
   const [outcomeText, setOutcomeText] = useState('')
   const [showOutcomeForm, setShowOutcomeForm] = useState(false)
   const [countdown, setCountdown] = useState<string | null>(null)
@@ -118,7 +116,6 @@ export default function Poll({
     }
     setLoading(false)
     setPollsLoading(true)
-    setPollsError('')
     Promise.all([
       getCoordinatorParticipant(tripId),
       listProposals(tripId, user.id),
@@ -142,7 +139,7 @@ export default function Poll({
         }
       })
       .catch((err) => {
-        if (mountedRef.current) setPollsError(getErrorMessage(err))
+        if (mountedRef.current) toast(getErrorMessage(err), 'error')
       })
       .finally(() => {
         if (mountedRef.current) setPollsLoading(false)
@@ -167,7 +164,6 @@ export default function Poll({
 
   async function handleCreatePoll() {
     setCreatingPoll(true)
-    setCreatePollError(null)
     try {
       const poll = await createPoll(
         tripId,
@@ -179,7 +175,7 @@ export default function Poll({
       setVotes([])
       onActivePollChange?.(poll.endDate)
     } catch (err) {
-      setCreatePollError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setCreatingPoll(false)
     }
@@ -188,7 +184,6 @@ export default function Poll({
   async function handleClosePoll() {
     if (!activePoll) return
     setClosingPoll(true)
-    setClosePollError(null)
     try {
       const closed = await closePoll(activePoll.id, user.id, outcomeText)
       setActivePoll(null)
@@ -197,7 +192,7 @@ export default function Poll({
       setShowOutcomeForm(false)
       setOutcomeText('')
     } catch (err) {
-      setClosePollError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setClosingPoll(false)
     }
@@ -219,11 +214,7 @@ export default function Poll({
         <h1 style={styles.heading}>Voting</h1>
       </div>
 
-      {pollsError && (
-        <p style={{ ...styles.message, color: colors.error }}>{pollsError}</p>
-      )}
-
-      {!pollsError && tripId && (
+      {tripId && (
         <>
           {activePoll ? (
             <div style={styles.pollPanel}>
@@ -288,9 +279,6 @@ export default function Poll({
                   </div>
                 )}
               </div>
-              {closePollError && (
-                <p style={formStyles.error}>{closePollError}</p>
-              )}
               <PollVoting
                 poll={activePoll}
                 proposals={proposals}
@@ -336,9 +324,6 @@ export default function Poll({
                   {creatingPoll ? 'Creating…' : 'Create Poll'}
                 </button>
               </div>
-              {createPollError && (
-                <p style={formStyles.error}>{createPollError}</p>
-              )}
             </div>
           ) : (
             <p style={styles.promptMessage}>

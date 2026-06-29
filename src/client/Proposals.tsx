@@ -25,6 +25,7 @@ import CreateProposalForm from './CreateProposalForm'
 import type { StatusFilter } from './ProposalsGrid'
 import ProposalsGrid from './ProposalsGrid'
 import { borders, colors, fontSizes, fonts } from './theme'
+import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
@@ -140,7 +141,6 @@ export default function Proposals({
   const [loading, setLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [_proposalsLoading, setProposalsLoading] = useState(false)
-  const [proposalsError, setProposalsError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
   const mountedRef = useRef(true)
 
@@ -171,7 +171,6 @@ export default function Proposals({
     lastFetchedTripIdRef.current = tripId
     setLoading(false)
     setProposalsLoading(true)
-    setProposalsError('')
     Promise.all([
       listProposalsRef.current(tripId, user.id),
       getCoordinatorParticipantRef.current(tripId),
@@ -185,7 +184,7 @@ export default function Proposals({
         )
       })
       .catch((err) => {
-        if (mountedRef.current) setProposalsError(getErrorMessage(err))
+        if (mountedRef.current) toast(getErrorMessage(err), 'error')
       })
       .finally(() => {
         if (mountedRef.current) setProposalsLoading(false)
@@ -256,40 +255,32 @@ export default function Proposals({
         />
       )}
 
-      {proposalsError && (
-        <p style={{ ...styles.message, color: colors.error }}>
-          {proposalsError}
-        </p>
-      )}
-
-      {!proposalsError && (
-        <ProposalsGrid
-          proposals={proposals}
-          userId={user.id}
-          userName={user.name || ''}
-          isCoordinator={isCoordinator}
-          statusFilter={statusFilter}
-          onStatusFilterChange={onStatusFilterChange}
-          proposalDetail={proposalDetail}
-          onUpdated={handleUpdated}
-          onDeleted={handleDeleted}
-          onSubmitted={handleSubmitted}
-          onRejected={handleRejected}
-          onRevertedToDraft={handleRevertedToDraft}
-          emptyMessage="No proposals yet. Create one above."
-          updateProposal={updateProposal}
-          deleteProposal={deleteProposal}
-          submitProposal={submitProposal}
-          rejectProposal={rejectProposal}
-          revertProposalToDraft={revertProposalToDraft}
-          listAccommodations={listAccommodations}
-          createAccommodation={createAccommodation}
-          updateAccommodation={updateAccommodation}
-          deleteAccommodation={deleteAccommodation}
-          listDiscussion={listDiscussion}
-          onAuthError={onAuthError}
-        />
-      )}
+      <ProposalsGrid
+        proposals={proposals}
+        userId={user.id}
+        userName={user.name || ''}
+        isCoordinator={isCoordinator}
+        statusFilter={statusFilter}
+        onStatusFilterChange={onStatusFilterChange}
+        proposalDetail={proposalDetail}
+        onUpdated={handleUpdated}
+        onDeleted={handleDeleted}
+        onSubmitted={handleSubmitted}
+        onRejected={handleRejected}
+        onRevertedToDraft={handleRevertedToDraft}
+        emptyMessage="No proposals yet. Create one above."
+        updateProposal={updateProposal}
+        deleteProposal={deleteProposal}
+        submitProposal={submitProposal}
+        rejectProposal={rejectProposal}
+        revertProposalToDraft={revertProposalToDraft}
+        listAccommodations={listAccommodations}
+        createAccommodation={createAccommodation}
+        updateAccommodation={updateAccommodation}
+        deleteAccommodation={deleteAccommodation}
+        listDiscussion={listDiscussion}
+        onAuthError={onAuthError}
+      />
     </div>
   )
 }

@@ -37,8 +37,10 @@ import Proposals from './Proposals'
 import type { StatusFilter } from './ProposalsGrid'
 import Resorts from './Resorts'
 import SetPasswordForm from './SetPasswordForm'
+import ToastContainer from './ToastContainer'
 import Trips from './Trips'
 import { colors, fontSizes, fonts, mix } from './theme'
+import { toast } from './toast'
 import useAuth from './useAuth'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
@@ -137,15 +139,8 @@ export default function App({
   listTripParticipants = defaultListTripParticipants,
 }: AppProps) {
   const isSmall = useIsSmallScreenHook()
-  const {
-    user,
-    checking,
-    sessionExpiredMessage,
-    login,
-    logout,
-    onAuthError,
-    refreshUser,
-  } = useAuthHook({ hasSession })
+  const { user, checking, login, logout, onAuthError, refreshUser } =
+    useAuthHook({ hasSession })
   const [page, setPage] = useState<PageState>('login')
   const [otpId, setOtpId] = useState<string | null>(null)
   const [otpEmail, setOtpEmail] = useState<string | null>(null)
@@ -160,7 +155,6 @@ export default function App({
   const [trips, setTrips] = useState<Trip[]>([])
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null)
   const [refreshProposalsKey, setRefreshProposalsKey] = useState(0)
-  const [logoutError, setLogoutError] = useState<string | null>(null)
   const [preferences, setPreferences] = useState<Preferences | null>(null)
   const [preferencesUpdated, setPreferencesUpdated] = useState<{
     userId: string
@@ -271,14 +265,13 @@ export default function App({
   }, [trips, user, view, listPolls])
 
   async function handleLogout() {
-    setLogoutError(null)
     try {
       getPb().authStore.clear()
       logout()
       setNeedsPassword(false)
       setPage('login')
     } catch (err) {
-      setLogoutError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     }
   }
 
@@ -322,7 +315,7 @@ export default function App({
 
   const selectedTrip = trips.find((t) => t.id === selectedTripId) || null
 
-  if (checking) return null
+  if (checking) return <ToastContainer />
 
   if (!user) {
     const aboutButton = (
@@ -365,6 +358,7 @@ export default function App({
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+          <ToastContainer />
         </main>
       )
     }
@@ -381,6 +375,7 @@ export default function App({
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+          <ToastContainer />
         </main>
       )
     }
@@ -399,6 +394,7 @@ export default function App({
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
+          <ToastContainer />
         </main>
       )
     }
@@ -416,11 +412,11 @@ export default function App({
           }}
           onSwitchMode={() => setPage(page === 'login' ? 'signup' : 'login')}
           onForgotPassword={() => setPage('forgotPassword')}
-          sessionExpiredMessage={sessionExpiredMessage}
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
         <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
         <LandingSeoContent />
+        <ToastContainer />
       </main>
     )
   }
@@ -434,6 +430,7 @@ export default function App({
           onSignOut={handleLogout}
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+        <ToastContainer />
       </main>
     )
   }
@@ -497,6 +494,7 @@ export default function App({
             createPreferences={createPreferences}
           />
         </div>
+        <ToastContainer />
       </main>
     )
   }
@@ -522,7 +520,6 @@ export default function App({
         }}
         userName={user.name || user.email}
         onLogout={handleLogout}
-        logoutError={logoutError}
         onOpenPreferences={() => setShowPreferencesModal(true)}
         activePollEndDate={activePollEndDate}
         useIsSmallScreenHook={useIsSmallScreenHook}
@@ -624,6 +621,7 @@ export default function App({
         updateName={updateName}
       />
       <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+      <ToastContainer />
     </main>
   )
 }

@@ -294,3 +294,14 @@ input[type="range"]:focus-visible::-moz-range-thumb {
     transform: rotate(360deg);
   }
 }
+
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

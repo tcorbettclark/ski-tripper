@@ -10,21 +10,15 @@ const mockLogout = mock((_message?: string) => {})
 const mockAutoLogout = mock((_message?: string) => {})
 
 function createMockAuth(
-  overrides: {
-    user?: User | null
-    checking?: boolean
-    sessionExpiredMessage?: string | null
-  } = {}
+  overrides: { user?: User | null; checking?: boolean } = {}
 ) {
   return (_options?: { hasSession?: () => boolean }) => ({
     user: overrides.user ?? null,
     checking: overrides.checking ?? false,
-    sessionExpiredMessage: overrides.sessionExpiredMessage ?? null,
     login: mockLogin,
     logout: mockLogout,
     autoLogout: mockAutoLogout,
     onAuthError: mock(() => {}),
-    setSessionExpiredMessage: mock(() => {}),
     refreshUser: mock(() => {}),
   })
 }

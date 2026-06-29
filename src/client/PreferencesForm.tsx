@@ -18,6 +18,7 @@ import {
   SnowboardIcon,
 } from './Icons'
 import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { toast } from './toast'
 import { getErrorMessage } from './utils'
 
 const skiSnowboardOptions = ['Ski', 'Snowboard']
@@ -159,7 +160,7 @@ export default function PreferencesForm({
       }
       onSaved(result)
     } catch (err) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSaving(false)
     }

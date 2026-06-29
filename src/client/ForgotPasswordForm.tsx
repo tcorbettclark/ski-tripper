@@ -3,6 +3,7 @@ import { getPb } from './backend'
 import Field from './Field'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, colors, fontSizes, fonts, formStyles } from './theme'
+import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
@@ -20,18 +21,16 @@ export default function ForgotPasswordForm({
 }: ForgotPasswordFormProps) {
   const isSmall = useIsSmallScreen()
   const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     setLoading(true)
     try {
       const result = await requestOtp(email)
       onOtpRequested(result.otpId, email)
     } catch (err) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setLoading(false)
     }
@@ -73,7 +72,6 @@ export default function ForgotPasswordForm({
             placeholder="you@example.com"
             variant="auth"
           />
-          {error && <p style={formStyles.error}>{error}</p>}
           <button
             type="submit"
             data-testid="send-otp"

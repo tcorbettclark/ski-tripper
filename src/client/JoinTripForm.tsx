@@ -7,6 +7,7 @@ import {
 } from './backend'
 import Field from './Field'
 import { borders, colors, formStyles } from './theme'
+import { toast } from './toast'
 import { getErrorMessage } from './utils'
 
 interface JoinTripFormProps {
@@ -41,11 +42,9 @@ export default function JoinTripForm({
 }: JoinTripFormProps) {
   const [code, setCode] = useState('')
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     setSaving(true)
     try {
       const res = await getTripByCode(code.trim().toLowerCase())
@@ -58,7 +57,7 @@ export default function JoinTripForm({
       setCode('')
       onDismiss()
     } catch (err: unknown) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSaving(false)
     }
@@ -75,7 +74,6 @@ export default function JoinTripForm({
         placeholder="e.g. colourful-skinny-screwdriver"
         required
       />
-      {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
         <button
           type="submit"

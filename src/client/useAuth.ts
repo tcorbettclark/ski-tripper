@@ -2,6 +2,7 @@ import { ClientResponseError } from 'pocketbase'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { User } from '../shared/types.d'
 import { hasSession as _hasSession, getPb } from './backend'
+import { toast } from './toast'
 
 const IDLE_TIMEOUT_MS = 5 * 60_000
 const ACTIVITY_THROTTLE_MS = 1_000
@@ -24,9 +25,6 @@ export default function useAuth(options?: {
 
   const [user, setUser] = useState<User | null>(null)
   const [checking, setChecking] = useState(true)
-  const [sessionExpiredMessage, setSessionExpiredMessage] = useState<
-    string | null
-  >(null)
   const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearTimers = useCallback(() => {
@@ -39,7 +37,9 @@ export default function useAuth(options?: {
   const logout = useCallback(
     (message?: string) => {
       setUser(null)
-      setSessionExpiredMessage(message || null)
+      if (message) {
+        toast(message, 'error')
+      }
       clearTimers()
     },
     [clearTimers]
@@ -150,18 +150,15 @@ export default function useAuth(options?: {
         ? prev
         : loggedInUser
     )
-    setSessionExpiredMessage(null)
   }, [])
 
   return {
     user,
     checking,
-    sessionExpiredMessage,
     login,
     logout,
     autoLogout,
     onAuthError,
-    setSessionExpiredMessage,
     refreshUser,
   }
 }

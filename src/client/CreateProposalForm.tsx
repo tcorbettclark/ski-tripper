@@ -13,6 +13,7 @@ import {
   fonts,
   formStyles,
 } from './theme'
+import { toast } from './toast'
 import { ensureUrlScheme, getErrorMessage, isValidUrl } from './utils'
 
 interface CreateProposalFormProps {
@@ -142,7 +143,6 @@ export default function CreateProposalForm({
 }: CreateProposalFormProps) {
   const [form, setForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
   const [dateError, setDateError] = useState('')
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
@@ -204,7 +204,6 @@ export default function CreateProposalForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     if (!form.startDate || !form.endDate) {
       setDateError('Please select both a start and end date')
       return
@@ -247,7 +246,7 @@ export default function CreateProposalForm({
       setForm(EMPTY_FORM)
       onDismiss()
     } catch (err: unknown) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSaving(false)
     }
@@ -496,7 +495,6 @@ export default function CreateProposalForm({
           style={styles.textarea}
         />
       </div>
-      {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
         <button
           type="submit"

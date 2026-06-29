@@ -1,8 +1,9 @@
 import { describe, expect, it, mock } from 'bun:test'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Discussion, Proposal } from '../shared/types.d'
 import ProposalCard from './ProposalCard'
+import { getToasts } from './toast'
 
 const mockUpdateProposal = mock(async () => ({}))
 const mockDeleteProposal = mock(async () => {})
@@ -235,7 +236,13 @@ describe('ProposalCard', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Submit' }))
-    await screen.findByText('Submit failed')
+    await waitFor(() => {
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Submit failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
+    })
     expect(onSubmitted).not.toHaveBeenCalled()
   })
 
@@ -257,7 +264,13 @@ describe('ProposalCard', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Reject' }))
-    await screen.findByText('Reject failed')
+    await waitFor(() => {
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Reject failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
+    })
     expect(onRejected).not.toHaveBeenCalled()
   })
 
@@ -280,7 +293,13 @@ describe('ProposalCard', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Move back to Draft' }))
-    await screen.findByText('Revert failed')
+    await waitFor(() => {
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Revert failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
+    })
     expect(onRevertedToDraft).not.toHaveBeenCalled()
   })
 

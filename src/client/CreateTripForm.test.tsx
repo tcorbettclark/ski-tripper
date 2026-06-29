@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { User } from '../shared/types.d'
 import CreateTripForm from './CreateTripForm'
+import { getToasts } from './toast'
 
 const noop = () => {}
 const testUser = {
@@ -92,7 +93,9 @@ describe('CreateTripForm', () => {
     await user.click(screen.getByRole('button', { name: /save trip/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('API error'))
+      expect(
+        getToasts().some((t) => t.message === 'API error' && t.type === 'error')
+      ).toBeTruthy()
     })
   })
 })

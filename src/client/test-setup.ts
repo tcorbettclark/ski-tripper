@@ -2,6 +2,7 @@ import { afterEach, mock } from 'bun:test'
 import { GlobalRegistrator } from '@happy-dom/global-registrator'
 import PocketBase from 'pocketbase'
 import { getPb, setPb } from './backend'
+import { _resetForTesting } from './toast'
 
 GlobalRegistrator.register()
 
@@ -79,6 +80,7 @@ afterEach(() => {
   cleanup()
   document.body.innerHTML = ''
   localStorage.clear()
+  _resetForTesting()
   ;(getPb().collection as ReturnType<typeof mock>).mockClear()
   ;(globalThis.fetch as unknown as ReturnType<typeof mock>).mockClear()
 })

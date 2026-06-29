@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Trip } from '../shared/types.d'
 import { updateTrip as _updateTrip } from './backend'
 import { fieldStyles, formStyles } from './theme'
+import { toast } from './toast'
 import { getErrorMessage } from './utils'
 
 interface EditTripDescriptionFormProps {
@@ -25,17 +26,15 @@ export default function EditTripDescriptionForm({
 }: EditTripDescriptionFormProps) {
   const [description, setDescription] = useState(trip.description || '')
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     setSaving(true)
     try {
       const updated = await updateTrip(trip.id, { description }, userId)
       onUpdated(updated)
     } catch (err: unknown) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSaving(false)
     }
@@ -57,7 +56,6 @@ export default function EditTripDescriptionForm({
           style={fieldStyles.default.input}
         />
       </div>
-      {error && <p style={formStyles.error}>{error}</p>}
       <div style={editTripDescriptionFormStyles.actions}>
         <button type="submit" disabled={saving} style={formStyles.saveButton}>
           {saving ? 'Saving…' : 'Save'}

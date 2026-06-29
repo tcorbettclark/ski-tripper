@@ -12,6 +12,7 @@ import type {
   Vote,
 } from '../shared/types.d'
 import Overview from './Overview'
+import { getToasts } from './toast'
 
 const user = {
   id: 'user-1',
@@ -598,7 +599,9 @@ it('shows error when participants fetch fails', async () => {
     })
   })
   await waitFor(() => {
-    expect(screen.getByText('Auth failed'))
+    expect(
+      getToasts().some((t) => t.message === 'Auth failed' && t.type === 'error')
+    ).toBeTruthy()
   })
 })
 
@@ -654,7 +657,9 @@ it('copies invite code to clipboard when copy button is clicked', async () => {
   })
   expect(writeText).toHaveBeenCalledWith('blue-mountain-lodge')
   await waitFor(() => {
-    expect(screen.getByText('Copied!'))
+    expect(
+      getToasts().some((t) => t.message === 'Copied!' && t.type === 'success')
+    ).toBeTruthy()
   })
 })
 
@@ -670,7 +675,11 @@ it('shows error when copy fails', async () => {
     fireEvent.click(screen.getByRole('button', { name: /copy invite code/i }))
   })
   await waitFor(() => {
-    expect(screen.getByText('Failed to copy'))
+    expect(
+      getToasts().some(
+        (t) => t.message === 'Failed to copy' && t.type === 'error'
+      )
+    ).toBeTruthy()
   })
 })
 

@@ -2,7 +2,8 @@ import { Gavel } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { Poll, Proposal, Vote } from '../shared/types.d'
 import PollResults from './PollResults'
-import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
+import { toast } from './toast'
 import { formatDate, formatDateTime, getErrorMessage } from './utils'
 
 interface PastPollProps {
@@ -20,7 +21,6 @@ export default function PastPoll({
 }: PastPollProps) {
   const [votes, setVotes] = useState<Vote[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const mountedRef = useRef(true)
 
   useEffect(() => {
@@ -31,7 +31,6 @@ export default function PastPoll({
   }, [])
 
   useEffect(() => {
-    setError('')
     listVotes(poll.id, userId)
       .then(async (result) => {
         if (!mountedRef.current) return
@@ -39,7 +38,7 @@ export default function PastPoll({
       })
       .catch((err) => {
         if (!mountedRef.current) return
-        setError(getErrorMessage(err))
+        toast(getErrorMessage(err), 'error')
       })
       .finally(() => {
         if (mountedRef.current) setLoading(false)
@@ -67,12 +66,11 @@ export default function PastPoll({
           </span>
         </div>
       )}
-      {error && <p style={formStyles.error}>{error}</p>}
       {loading && votes.length === 0 ? (
         <p style={styles.loading}>Loading…</p>
-      ) : !error ? (
+      ) : (
         <PollResults poll={poll} proposals={proposals} votes={votes} />
-      ) : null}
+      )}
     </div>
   )
 }

@@ -29,6 +29,7 @@ import {
   formStyles,
   mix,
 } from './theme'
+import { toast } from './toast'
 import {
   ensureUrlScheme,
   formatDate,
@@ -144,18 +145,12 @@ export default function ProposalCard({
   const [rejecting, setRejecting] = useState(false)
   const [reverting, setReverting] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false)
-  const [rejectError, setRejectError] = useState<string | null>(null)
-  const [revertError, setRevertError] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [editingAccommodationId, setEditingAccommodationId] = useState<
     string | null
   >(null)
   const [addingAccommodation, setAddingAccommodation] = useState(false)
-  const [accommodationError, setAccommodationError] = useState<string | null>(
-    null
-  )
   const [deletingAccommodationId, setDeletingAccommodationId] = useState<
     string | null
   >(null)
@@ -180,11 +175,9 @@ export default function ProposalCard({
   const canReject = isCoordinator && proposal.state === 'SUBMITTED'
   const canRevertToDraft = isCoordinator && isRejected
 
-  const hasActions =
-    canAct || canReject || canRevertToDraft || !!rejectError || !!revertError
+  const hasActions = canAct || canReject || canRevertToDraft
 
   function initiateSubmit() {
-    setSubmitError(null)
     if (accommodations.length === 0) {
       setShowSubmitConfirm(true)
       return
@@ -194,12 +187,11 @@ export default function ProposalCard({
 
   async function handleSubmit() {
     setSubmitting(true)
-    setSubmitError(null)
     try {
       const result = await submitProposal(proposal.id, userId)
       onSubmitted(result)
     } catch (err) {
-      setSubmitError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSubmitting(false)
     }
@@ -207,12 +199,11 @@ export default function ProposalCard({
 
   async function handleReject() {
     setRejecting(true)
-    setRejectError(null)
     try {
       const result = await rejectProposal(proposal.id, userId)
       onRejected(result)
     } catch (err) {
-      setRejectError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setRejecting(false)
     }
@@ -220,12 +211,11 @@ export default function ProposalCard({
 
   async function handleRevertToDraft() {
     setReverting(true)
-    setRevertError(null)
     try {
       const result = await revertProposalToDraft(proposal.id, userId)
       onRevertedToDraft(result)
     } catch (err) {
-      setRevertError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setReverting(false)
     }
@@ -254,13 +244,12 @@ export default function ProposalCard({
     cost?: string
     description?: string
   }) {
-    setAccommodationError(null)
     try {
       await createAccommodation(proposal.id, userId, data)
       setAddingAccommodation(false)
       handleAccommodationsChanged()
     } catch (err) {
-      setAccommodationError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     }
   }
 
@@ -268,13 +257,12 @@ export default function ProposalCard({
     accommodationId: string,
     data: { name?: string; url?: string; cost?: string; description?: string }
   ) {
-    setAccommodationError(null)
     try {
       await updateAccommodation(accommodationId, userId, data)
       setEditingAccommodationId(null)
       handleAccommodationsChanged()
     } catch (err) {
-      setAccommodationError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     }
   }
 
@@ -507,9 +495,7 @@ export default function ProposalCard({
                     onSave={(data) => handleEditAccommodation(acc.id, data)}
                     onCancel={() => {
                       setEditingAccommodationId(null)
-                      setAccommodationError(null)
                     }}
-                    error={accommodationError}
                   />
                 ) : (
                   <div key={acc.id}>
@@ -551,7 +537,6 @@ export default function ProposalCard({
                             type="button"
                             onClick={() => {
                               setEditingAccommodationId(acc.id)
-                              setAccommodationError(null)
                             }}
                             style={styles.accommodationEditButton}
                             aria-label={`Edit accommodation ${acc.name}`}
@@ -570,9 +555,7 @@ export default function ProposalCard({
                   onSave={handleAddAccommodation}
                   onCancel={() => {
                     setAddingAccommodation(false)
-                    setAccommodationError(null)
                   }}
-                  error={accommodationError}
                 />
               )}
               {canAct && !addingAccommodation && accommodations.length < 5 && (
@@ -581,7 +564,6 @@ export default function ProposalCard({
                   data-testid="add-accommodation-btn"
                   onClick={() => {
                     setAddingAccommodation(true)
-                    setAccommodationError(null)
                   }}
                   style={styles.addAccommodationButton}
                 >
@@ -637,7 +619,6 @@ export default function ProposalCard({
                   >
                     {submitting ? 'Submitting…' : 'Submit'}
                   </button>
-                  {submitError && <p style={formStyles.error}>{submitError}</p>}
                 </div>
               </>
             )}
@@ -652,7 +633,6 @@ export default function ProposalCard({
                 {rejecting ? 'Rejecting…' : 'Reject'}
               </button>
             )}
-            {rejectError && <p style={formStyles.error}>{rejectError}</p>}
             {canRevertToDraft && (
               <button
                 type="button"
@@ -664,7 +644,6 @@ export default function ProposalCard({
                 {reverting ? 'Moving to Draft…' : 'Move back to Draft'}
               </button>
             )}
-            {revertError && <p style={formStyles.error}>{revertError}</p>}
           </div>
         )}
       </div>
@@ -856,7 +835,6 @@ function AccommodationEditForm({
   initialData,
   onSave,
   onCancel,
-  error,
 }: {
   initialData?: { name: string; url: string; cost: string; description: string }
   onSave: (data: {
@@ -866,7 +844,6 @@ function AccommodationEditForm({
     description?: string
   }) => void
   onCancel: () => void
-  error: string | null
 }) {
   const [name, setName] = useState(initialData?.name ?? '')
   const [url, setUrl] = useState(initialData?.url ?? '')
@@ -954,7 +931,6 @@ function AccommodationEditForm({
           />
         </div>
       </div>
-      {error && <p style={formStyles.error}>{error}</p>}
       <div style={accFormStyles.actions}>
         <div style={accFormStyles.actionsRight}>
           <button

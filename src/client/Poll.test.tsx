@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react'
 import type { User } from '../shared/types.d'
 import Poll from './Poll'
+import { getToasts } from './toast'
 import { dayjs } from './utils'
 
 const TEST_IDS = {
@@ -714,7 +715,11 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Network error/i))
+        expect(
+          getToasts().some(
+            (t) => t.message === 'Network error' && t.type === 'error'
+          )
+        ).toBeTruthy()
       })
     })
 
@@ -727,7 +732,12 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Failed to load proposals/i))
+        expect(
+          getToasts().some(
+            (t) =>
+              t.message === 'Failed to load proposals' && t.type === 'error'
+          )
+        ).toBeTruthy()
       })
     })
   })
@@ -803,7 +813,11 @@ describe('Poll', () => {
       })
 
       await waitFor(() => {
-        expect(screen.getByText('Create poll failed'))
+        expect(
+          getToasts().some(
+            (t) => t.message === 'Create poll failed' && t.type === 'error'
+          )
+        ).toBeTruthy()
       })
     })
 
@@ -866,7 +880,11 @@ describe('Poll', () => {
       })
 
       await waitFor(() => {
-        expect(screen.getByText('Close poll failed'))
+        expect(
+          getToasts().some(
+            (t) => t.message === 'Close poll failed' && t.type === 'error'
+          )
+        ).toBeTruthy()
       })
     })
   })

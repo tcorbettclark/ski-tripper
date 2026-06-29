@@ -15,6 +15,7 @@ import {
   formStyles,
   overlayStyles,
 } from './theme'
+import { toast } from './toast'
 import {
   ensureUrlScheme,
   formatTransferTime,
@@ -42,14 +43,11 @@ export default function ResortDetailModal({
   tripId,
   user,
   onClose,
-  onNavigateToProposals,
+  onNavigateToProposals: _onNavigateToProposals,
   onAuthError = () => {},
 }: ResortDetailModalProps) {
   const [showProposalForm, setShowProposalForm] = useState(false)
-  const [proposalError, setProposalError] = useState('')
   const [proposalSaving, setProposalSaving] = useState(false)
-  const [proposalSuccess, setProposalSuccess] = useState(false)
-  const [proposalSuccessName, setProposalSuccessName] = useState('')
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
 
   useEffect(() => {
@@ -70,7 +68,6 @@ export default function ResortDetailModal({
     e.preventDefault()
     if (!tripId) return
     setProposalSaving(true)
-    setProposalError('')
     try {
       const { createProposal } = await import('./backend')
       await createProposal(tripId, user.id, user.name, {
@@ -98,10 +95,13 @@ export default function ResortDetailModal({
           linkedResortsDescription: resort.linkedResortsDescription,
         },
       })
-      setProposalSuccessName(customResortName || resort.resortName)
-      setProposalSuccess(true)
+      toast(
+        `Created proposal for ${customResortName || resort.resortName}`,
+        'success'
+      )
+      setShowProposalForm(false)
     } catch (err: unknown) {
-      setProposalError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setProposalSaving(false)
     }
@@ -113,21 +113,13 @@ export default function ResortDetailModal({
 
   function handleProposeResort() {
     setShowProposalForm(true)
-    setProposalError('')
-    setProposalSuccess(false)
-    setProposalSuccessName('')
   }
 
   function handleCancelProposal() {
     setShowProposalForm(false)
-    setProposalError('')
   }
 
-  const title = proposalSuccess
-    ? `Created proposal for ${proposalSuccessName}`
-    : resort.resortName || '\u2014'
-
-  const showFooter = (!showProposalForm && !proposalSuccess) || proposalSuccess
+  const showFooter = !showProposalForm
 
   return (
     <div
@@ -150,9 +142,9 @@ export default function ResortDetailModal({
         <div style={overlayStyles.panelHeader}>
           <div>
             <h3 style={overlayStyles.panelTitle}>
-              {proposalSuccess ? title : resort.resortName || '\u2014'}
+              {resort.resortName || '\u2014'}
             </h3>
-            {!proposalSuccess && (resort.country || resort.region) && (
+            {(resort.country || resort.region) && (
               <div style={resortDetailModalStyles.locationLine}>
                 {(() => {
                   const flagUrl =
@@ -192,7 +184,7 @@ export default function ResortDetailModal({
         </div>
 
         <div style={overlayStyles.panelContent}>
-          {!showProposalForm && !proposalSuccess && (
+          {!showProposalForm && (
             <>
               <div style={resortDetailModalStyles.detailGrid}>
                 <DetailField
@@ -290,25 +282,10 @@ export default function ResortDetailModal({
             </>
           )}
 
-          {proposalSuccess && (
-            <div style={resortDetailModalStyles.successContent}>
-              {onNavigateToProposals && (
-                <button
-                  type="button"
-                  onClick={onNavigateToProposals}
-                  style={resortDetailModalStyles.successButtonPrimary}
-                >
-                  View in proposals
-                </button>
-              )}
-            </div>
-          )}
-
-          {showProposalForm && !proposalSuccess && (
+          {showProposalForm && (
             <ProposalForm
               resort={resort}
               saving={proposalSaving}
-              error={proposalError}
               onSubmit={handleSubmitProposal}
               onCancel={handleCancelProposal}
               onAuthError={onAuthError}
@@ -320,22 +297,13 @@ export default function ResortDetailModal({
 
         {showFooter && (
           <div style={overlayStyles.panelFooter}>
-            {!showProposalForm && !proposalSuccess && (
+            {!showProposalForm && (
               <button
                 type="button"
                 onClick={handleProposeResort}
                 style={resortDetailModalStyles.proposeButton}
               >
                 Propose this resort
-              </button>
-            )}
-            {proposalSuccess && (
-              <button
-                type="button"
-                onClick={handleCloseDetail}
-                style={resortDetailModalStyles.stayButton}
-              >
-                Stay in resorts
               </button>
             )}
           </div>
@@ -348,7 +316,6 @@ export default function ResortDetailModal({
 interface ProposalFormProps {
   resort: ResortWithEmbedding
   saving: boolean
-  error: string
   onSubmit: (
     e: React.FormEvent,
     startDate: string,
@@ -365,7 +332,6 @@ interface ProposalFormProps {
 function ProposalForm({
   resort,
   saving,
-  error,
   onSubmit,
   onCancel,
 }: ProposalFormProps) {
@@ -439,7 +405,6 @@ function ProposalForm({
           rows={12}
         />
       </div>
-      {error && <p style={formStyles.error}>{error}</p>}
       <div style={resortDetailModalStyles.proposalFormActions}>
         <button type="submit" disabled={saving} style={formStyles.saveButton}>
           {saving ? 'Creating draft...' : 'Create Draft Proposal'}

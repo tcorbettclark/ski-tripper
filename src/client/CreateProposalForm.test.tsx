@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react'
 import type { ResortWithEmbedding, User } from '../shared/types.d'
 import CreateProposalForm from './CreateProposalForm'
+import { getToasts } from './toast'
 
 const sampleResorts: ResortWithEmbedding[] = [
   {
@@ -242,7 +243,11 @@ describe('CreateProposalForm', () => {
     fireEvent.submit(container.querySelector('form')!)
 
     await waitFor(() => {
-      expect(screen.getByText('Permission denied')).toBeTruthy()
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Permission denied' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
     expect(onDismiss).not.toHaveBeenCalled()
   })

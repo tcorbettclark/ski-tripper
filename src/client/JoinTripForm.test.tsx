@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { User } from '../shared/types.d'
 import JoinTripForm from './JoinTripForm'
+import { getToasts } from './toast'
 
 const noop = () => {}
 const testUser = {
@@ -99,7 +100,12 @@ describe('JoinTripForm', () => {
     await user.click(screen.getByRole('button', { name: /join trip/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('No trip found with that code.'))
+      expect(
+        getToasts().some(
+          (t) =>
+            t.message === 'No trip found with that code.' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 
@@ -115,7 +121,13 @@ describe('JoinTripForm', () => {
     await user.click(screen.getByRole('button', { name: /join trip/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('You have already joined this trip.'))
+      expect(
+        getToasts().some(
+          (t) =>
+            t.message === 'You have already joined this trip.' &&
+            t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 })

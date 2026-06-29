@@ -2,6 +2,7 @@ import { describe, expect, it, mock } from 'bun:test'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import ForgotPasswordForm from './ForgotPasswordForm'
+import { getToasts } from './toast'
 
 const noop = () => {}
 
@@ -65,7 +66,11 @@ describe('ForgotPasswordForm', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('User not found'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'User not found' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 

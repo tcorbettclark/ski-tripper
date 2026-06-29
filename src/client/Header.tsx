@@ -1,15 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrandTitle, HamburgerIcon } from './Icons'
 import ThemeToggle from './ThemeToggle'
-import {
-  authStyles,
-  borders,
-  colors,
-  fontSizes,
-  fonts,
-  formStyles,
-  mix,
-} from './theme'
+import { authStyles, borders, colors, fontSizes, fonts, mix } from './theme'
 import useIsSmallScreen from './useIsSmallScreen'
 import { formatCountdown } from './utils'
 
@@ -20,7 +12,6 @@ interface HeaderProps {
   onTripDetailTabChange: (tab: string) => void
   userName: string
   onLogout: () => void
-  logoutError?: string | null
   onOpenPreferences?: () => void
   activePollEndDate?: string | null
   useIsSmallScreenHook?: () => boolean
@@ -29,20 +20,14 @@ interface HeaderProps {
 function UserMenu({
   userName,
   onLogout,
-  logoutError,
   onOpenPreferences,
 }: {
   userName: string
   onLogout: () => void
-  logoutError?: string | null
   onOpenPreferences?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (logoutError) setOpen(true)
-  }, [logoutError])
 
   useEffect(() => {
     if (!open) return
@@ -94,11 +79,6 @@ function UserMenu({
           >
             Sign Out
           </button>
-          {logoutError && (
-            <p style={{ ...formStyles.error, padding: '8px 16px' }}>
-              {logoutError}
-            </p>
-          )}
         </div>
       )}
     </div>
@@ -156,7 +136,6 @@ function MobileMenu({
   tripDetailTab,
   onTripDetailTabChange,
   onLogout,
-  logoutError,
   onOpenPreferences,
   activePollEndDate,
   onViewAllTrips,
@@ -166,7 +145,6 @@ function MobileMenu({
   tripDetailTab: string
   onTripDetailTabChange: (tab: string) => void
   onLogout: () => void
-  logoutError?: string | null
   onOpenPreferences?: () => void
   activePollEndDate?: string | null
   onViewAllTrips: () => void
@@ -260,11 +238,6 @@ function MobileMenu({
       >
         Sign Out
       </button>
-      {logoutError && (
-        <p style={{ ...formStyles.error, padding: '12px 20px' }}>
-          {logoutError}
-        </p>
-      )}
     </div>
   )
 }
@@ -276,7 +249,6 @@ export default function Header({
   onTripDetailTabChange,
   userName,
   onLogout,
-  logoutError,
   onOpenPreferences,
   activePollEndDate,
   useIsSmallScreenHook = useIsSmallScreen,
@@ -350,11 +322,6 @@ export default function Header({
                 >
                   Sign Out
                 </button>
-                {logoutError && (
-                  <p style={{ ...formStyles.error, padding: '12px 20px' }}>
-                    {logoutError}
-                  </p>
-                )}
               </div>
             )}
           </>
@@ -364,7 +331,6 @@ export default function Header({
             <UserMenu
               userName={userName}
               onLogout={onLogout}
-              logoutError={logoutError}
               onOpenPreferences={onOpenPreferences}
             />
           </div>
@@ -398,7 +364,6 @@ export default function Header({
           tripDetailTab={tripDetailTab}
           onTripDetailTabChange={onTripDetailTabChange}
           onLogout={onLogout}
-          logoutError={logoutError}
           onOpenPreferences={onOpenPreferences}
           activePollEndDate={activePollEndDate}
           onViewAllTrips={onViewAllTrips}
@@ -411,7 +376,6 @@ export default function Header({
     <UserMenu
       userName={userName}
       onLogout={onLogout}
-      logoutError={logoutError}
       onOpenPreferences={onOpenPreferences}
     />
   )

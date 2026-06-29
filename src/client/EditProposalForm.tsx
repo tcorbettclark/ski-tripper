@@ -12,6 +12,7 @@ import {
   fonts,
   formStyles,
 } from './theme'
+import { toast } from './toast'
 import { ensureUrlScheme, getErrorMessage, isValidUrl } from './utils'
 
 interface EditProposalFormProps {
@@ -57,7 +58,6 @@ export default function EditProposalForm({
     endDate: proposal.endDate || '',
   })
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
   const [dateError, setDateError] = useState('')
 
   function handleChange(
@@ -70,7 +70,6 @@ export default function EditProposalForm({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     if (!form.startDate || !form.endDate) {
       setDateError('Please select both a start and end date')
       return
@@ -98,7 +97,7 @@ export default function EditProposalForm({
       })
       onUpdated(updatedProposal)
     } catch (err: unknown) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSaving(false)
     }
@@ -278,7 +277,6 @@ export default function EditProposalForm({
           style={styles.textarea}
         />
       </div>
-      {error && <p style={formStyles.error}>{error}</p>}
       <div style={styles.actions}>
         <button type="submit" disabled={saving} style={styles.saveButton}>
           {saving ? 'Saving…' : 'Save'}

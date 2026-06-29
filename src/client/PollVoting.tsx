@@ -3,7 +3,8 @@ import { getCountryFlagUrl } from '../shared/countries'
 import type { Poll, Proposal, Vote } from '../shared/types.d'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalCard from './ProposalCard'
-import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
+import { toast } from './toast'
 import { getErrorMessage } from './utils'
 
 interface PollVotingProps {
@@ -69,7 +70,6 @@ export default function PollVoting({
     })
   }, [myVote, sortedProposalIds])
   const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
 
   const maxTokens = sortedProposalIds.length
   const totalUsed = Object.values(allocations).reduce((a, b) => a + b, 0)
@@ -97,7 +97,6 @@ export default function PollVoting({
 
   async function handleSave() {
     setSaving(true)
-    setSaveError(null)
     const nonZeroIds = sortedProposalIds.filter((id) => allocations[id] > 0)
     try {
       const result = await upsertVote(
@@ -109,7 +108,7 @@ export default function PollVoting({
       )
       onVoteSaved(result)
     } catch (err) {
-      setSaveError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setSaving(false)
     }
@@ -168,7 +167,6 @@ export default function PollVoting({
           {saving ? 'Saving…' : 'Save Vote'}
         </button>
       </div>
-      {saveError && <p style={formStyles.error}>{saveError}</p>}
     </div>
   )
 }

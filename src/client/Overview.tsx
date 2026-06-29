@@ -1,4 +1,4 @@
-import { Check, Copy, Heart, Pencil, X } from 'lucide-react'
+import { Copy, Heart, Pencil, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type {
   Participant,
@@ -35,7 +35,8 @@ import {
   SnowboardIcon,
 } from './Icons'
 import Paragraphs from './Paragraphs'
-import { borders, colors, fontSizes, fonts, formStyles, mix } from './theme'
+import { borders, colors, fontSizes, fonts, mix } from './theme'
+import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
 
@@ -101,10 +102,7 @@ export default function Overview({
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
   const [_participantsLoading, setParticipantsLoading] = useState(true)
-  const [participantsError, setParticipantsError] = useState('')
   const [userVotedInActivePoll, setUserVotedInActivePoll] = useState(false)
-  const [codeCopied, setCodeCopied] = useState(false)
-  const [codeCopyError, setCodeCopyError] = useState('')
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [editingDescription, setEditingDescription] = useState(false)
   const [aspectPopup, setAspectPopup] = useState<{
@@ -138,7 +136,6 @@ export default function Overview({
     if (!tripId) return
 
     setParticipantsLoading(true)
-    setParticipantsError('')
     listTripParticipants(tripId)
       .then((result) => {
         if (!mountedRef.current) return
@@ -146,8 +143,7 @@ export default function Overview({
       })
       .catch((err) => {
         if (!mountedRef.current) return
-        const msg = getErrorMessage(err)
-        setParticipantsError(msg)
+        toast(getErrorMessage(err), 'error')
         onAuthError(err)
       })
       .finally(() => {
@@ -441,18 +437,8 @@ export default function Overview({
     if (!trip.code) return
     navigator.clipboard
       .writeText(trip.code)
-      .then(() => {
-        if (!mountedRef.current) return
-        setCodeCopied(true)
-        setCodeCopyError('')
-        setTimeout(() => {
-          if (mountedRef.current) setCodeCopied(false)
-        }, 1500)
-      })
-      .catch(() => {
-        if (!mountedRef.current) return
-        setCodeCopyError('Failed to copy')
-      })
+      .then(() => toast('Copied!', 'success'))
+      .catch(() => toast('Failed to copy', 'error'))
   }
 
   useEffect(() => {
@@ -522,14 +508,8 @@ export default function Overview({
             title="Copy invite code"
             aria-label="Copy invite code"
           >
-            {codeCopied ? <Check size={13} /> : <Copy size={13} />}
+            <Copy size={13} />
           </button>
-          {codeCopied && (
-            <span style={overviewStyles.copyFeedback}>Copied!</span>
-          )}
-          {codeCopyError && (
-            <span style={overviewStyles.copyFeedback}>{codeCopyError}</span>
-          )}
         </span>
       </div>
       {participants.filter((p) => p.role === 'coordinator').length > 0 && (
@@ -548,86 +528,80 @@ export default function Overview({
 
       <section style={overviewStyles.section}>
         <h2 style={overviewStyles.sectionHeading}>Our Preferences</h2>
-        {participantsError && (
-          <p style={formStyles.error}>{participantsError}</p>
-        )}
-        {!participantsError && (
-          <div style={overviewStyles.card}>
-            {participants.length === 0 ? (
-              <p style={overviewStyles.empty}>No participants</p>
-            ) : (
-              <div style={overviewStyles.participantGrid}>
-                <style>{`.participant-name-cell { background: transparent; transition: background 0.15s; } .participant-grid-row-clickable { transition: background 0.15s; } .participant-grid-row-clickable:hover { background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bgCard)); cursor: pointer; } .participant-grid-row-clickable:hover .participant-name-cell { background: transparent; }`}</style>
-                {sortedParticipants.map((p) => {
-                  const prefs = preferencesMap[p.user]
-                  const isCurrentUser =
-                    p.user === user.id && !!onOpenPreferences
-                  return (
-                    <div key={p.id}>
-                      {/* biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally */}
-                      <div
-                        className={
-                          isCurrentUser
-                            ? 'participant-grid-row-clickable'
-                            : undefined
-                        }
+        <div style={overviewStyles.card}>
+          {participants.length === 0 ? (
+            <p style={overviewStyles.empty}>No participants</p>
+          ) : (
+            <div style={overviewStyles.participantGrid}>
+              <style>{`.participant-name-cell { background: transparent; transition: background 0.15s; } .participant-grid-row-clickable { transition: background 0.15s; } .participant-grid-row-clickable:hover { background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bgCard)); cursor: pointer; } .participant-grid-row-clickable:hover .participant-name-cell { background: transparent; }`}</style>
+              {sortedParticipants.map((p) => {
+                const prefs = preferencesMap[p.user]
+                const isCurrentUser = p.user === user.id && !!onOpenPreferences
+                return (
+                  <div key={p.id}>
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally */}
+                    <div
+                      className={
+                        isCurrentUser
+                          ? 'participant-grid-row-clickable'
+                          : undefined
+                      }
+                      style={{
+                        ...overviewStyles.gridRow,
+                        ...(isSmall
+                          ? {
+                              padding: '8px 12px',
+                              gap: '0 10px',
+                              minWidth: '480px',
+                            }
+                          : {}),
+                      }}
+                      onClick={isCurrentUser ? onOpenPreferences : undefined}
+                      onKeyDown={
+                        isCurrentUser
+                          ? (e) => {
+                              if (e.key === 'Enter') onOpenPreferences()
+                            }
+                          : undefined
+                      }
+                      tabIndex={isCurrentUser ? 0 : undefined}
+                      role={isCurrentUser ? 'button' : undefined}
+                    >
+                      <span
+                        className="participant-name-cell"
                         style={{
-                          ...overviewStyles.gridRow,
-                          ...(isSmall
-                            ? {
-                                padding: '8px 12px',
-                                gap: '0 10px',
-                                minWidth: '480px',
-                              }
-                            : {}),
+                          ...(isCurrentUser
+                            ? overviewStyles.nameCellClickable
+                            : overviewStyles.nameCell),
+                          flex: '0 0 auto',
+                          minWidth: colWidths.name,
                         }}
-                        onClick={isCurrentUser ? onOpenPreferences : undefined}
-                        onKeyDown={
-                          isCurrentUser
-                            ? (e) => {
-                                if (e.key === 'Enter') onOpenPreferences()
-                              }
-                            : undefined
-                        }
-                        tabIndex={isCurrentUser ? 0 : undefined}
-                        role={isCurrentUser ? 'button' : undefined}
                       >
+                        <span style={overviewStyles.participantName}>
+                          {p.userName}
+                        </span>
+                      </span>
+                      {prefColumns.map((col) => (
                         <span
-                          className="participant-name-cell"
+                          key={col}
                           style={{
                             ...(isCurrentUser
-                              ? overviewStyles.nameCellClickable
-                              : overviewStyles.nameCell),
+                              ? overviewStyles.gridCellClickable
+                              : overviewStyles.gridCell),
                             flex: '0 0 auto',
-                            minWidth: colWidths.name,
+                            minWidth: colWidths[col],
                           }}
                         >
-                          <span style={overviewStyles.participantName}>
-                            {p.userName}
-                          </span>
+                          {renderPreferenceCell(prefs, col, p.user)}
                         </span>
-                        {prefColumns.map((col) => (
-                          <span
-                            key={col}
-                            style={{
-                              ...(isCurrentUser
-                                ? overviewStyles.gridCellClickable
-                                : overviewStyles.gridCell),
-                              flex: '0 0 auto',
-                              minWidth: colWidths[col],
-                            }}
-                          >
-                            {renderPreferenceCell(prefs, col, p.user)}
-                          </span>
-                        ))}
-                      </div>
+                      ))}
                     </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </section>
 
       <ActionGuide

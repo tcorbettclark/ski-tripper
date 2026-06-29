@@ -2,6 +2,7 @@ import { describe, expect, it, mock } from 'bun:test'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import SetPasswordForm from './SetPasswordForm'
+import { getToasts } from './toast'
 
 const noop = () => {}
 
@@ -178,7 +179,11 @@ describe('SetPasswordForm', () => {
     await user.type(screen.getByTestId('set-confirm-password'), 'different456')
     await user.click(screen.getByRole('button', { name: /set password/i }))
 
-    expect(screen.getByText(/passwords do not match/i))
+    expect(
+      getToasts().some(
+        (t) => t.message === 'Passwords do not match' && t.type === 'error'
+      )
+    ).toBeTruthy()
   })
 
   it('shows error when setUserPassword fails', async () => {
@@ -192,7 +197,11 @@ describe('SetPasswordForm', () => {
     await user.click(screen.getByRole('button', { name: /set password/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Password too short'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Password too short' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 
@@ -209,7 +218,11 @@ describe('SetPasswordForm', () => {
     await user.click(screen.getByRole('button', { name: /set password/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Re-authentication failed'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Re-authentication failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 
@@ -228,7 +241,11 @@ describe('SetPasswordForm', () => {
     await user.click(screen.getByRole('button', { name: /set password/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Re-authentication failed'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Re-authentication failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
     expect(handleSuccess).not.toHaveBeenCalled()
   })

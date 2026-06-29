@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Vote } from '../shared/types.d'
 import PollVoting from './PollVoting'
+import { getToasts } from './toast'
 
 const poll = {
   id: 'poll-1',
@@ -420,7 +421,13 @@ describe('PollVoting', () => {
       screen.getByRole('button', { name: /add vote to Chamonix/i })
     )
     await user.click(screen.getByRole('button', { name: /save vote/i }))
-    await screen.findByText('Save failed')
+    await waitFor(() => {
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Save failed' && t.type === 'error'
+        )
+      ).toBeTruthy()
+    })
     expect(onVoteSaved).not.toHaveBeenCalled()
   })
 

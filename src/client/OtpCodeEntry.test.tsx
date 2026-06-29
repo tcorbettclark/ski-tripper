@@ -2,6 +2,7 @@ import { describe, expect, it, mock } from 'bun:test'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import OtpCodeEntry from './OtpCodeEntry'
+import { getToasts } from './toast'
 
 const noop = () => {}
 
@@ -72,7 +73,11 @@ describe('OtpCodeEntry', () => {
     await user.click(screen.getByRole('button', { name: /verify/i }))
 
     await waitFor(() => {
-      expect(screen.getByText('Invalid code'))
+      expect(
+        getToasts().some(
+          (t) => t.message === 'Invalid code' && t.type === 'error'
+        )
+      ).toBeTruthy()
     })
   })
 
@@ -88,7 +93,12 @@ describe('OtpCodeEntry', () => {
 
     await waitFor(() => {
       expect(mockRequestOtp).toHaveBeenCalledWith('alice@example.com')
-      expect(screen.getByText(/verification code resent/i))
+      expect(
+        getToasts().some(
+          (t) =>
+            t.message === 'Verification code resent!' && t.type === 'success'
+        )
+      ).toBeTruthy()
     })
   })
 

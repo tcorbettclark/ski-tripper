@@ -6,6 +6,7 @@ import { BrandTitle } from './Icons'
 import InfoBanner from './InfoBanner'
 import ThemeToggle from './ThemeToggle'
 import { authStyles, fontSizes, formStyles } from './theme'
+import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage, randomPassword } from './utils'
 
@@ -22,7 +23,6 @@ interface AuthFormProps {
   ) => Promise<unknown>
   authWithPassword?: (email: string, password: string) => Promise<User>
   requestOtp?: (email: string) => Promise<{ otpId: string }>
-  sessionExpiredMessage?: string | null
 }
 
 function mapUser(record: Record<string, unknown>): User {
@@ -52,20 +52,17 @@ export default function AuthForm({
   },
   requestOtp = (email) =>
     getPb().collection('users').requestOTP(email) as Promise<{ otpId: string }>,
-  sessionExpiredMessage = null,
 }: AuthFormProps) {
   const isSmall = useIsSmallScreen()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const isSignup = mode === 'signup'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
     setLoading(true)
     try {
       if (isSignup) {
@@ -78,7 +75,7 @@ export default function AuthForm({
         onSuccess(user)
       }
     } catch (err) {
-      setError(getErrorMessage(err))
+      toast(getErrorMessage(err), 'error')
     } finally {
       setLoading(false)
     }
@@ -115,9 +112,6 @@ export default function AuthForm({
           padding: isSmall ? '28px 20px' : '48px 44px',
         }}
       >
-        {sessionExpiredMessage && (
-          <p style={formStyles.error}>{sessionExpiredMessage}</p>
-        )}
         <h2 style={authStyles.title}>
           {isSignup ? 'Create Account' : 'Sign In'}
         </h2>
@@ -172,7 +166,6 @@ export default function AuthForm({
               </button>
             </div>
           )}
-          {error && <p style={formStyles.error}>{error}</p>}
           <button
             type="submit"
             data-testid="auth-submit"

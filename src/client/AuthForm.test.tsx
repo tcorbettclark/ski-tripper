@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { User } from '../shared/types.d'
 import AuthForm from './AuthForm'
+import { getToasts } from './toast'
 
 const verifiedUser: User = {
   id: 'user-1',
@@ -83,7 +84,11 @@ describe('AuthForm', () => {
       await user.click(screen.getByRole('button', { name: /^sign in$/i }))
 
       await waitFor(() => {
-        expect(screen.getByText('Invalid credentials'))
+        expect(
+          getToasts().some(
+            (t) => t.message === 'Invalid credentials' && t.type === 'error'
+          )
+        ).toBeTruthy()
       })
     })
 
@@ -218,7 +223,11 @@ describe('AuthForm', () => {
       await user.click(screen.getByRole('button', { name: /sign up$/i }))
 
       await waitFor(() => {
-        expect(screen.getByText('Email already in use'))
+        expect(
+          getToasts().some(
+            (t) => t.message === 'Email already in use' && t.type === 'error'
+          )
+        ).toBeTruthy()
       })
     })
 
