@@ -68,14 +68,21 @@ Tip: Put the `.env.keys` in fish universal variables to make them available acro
 | `bun run dev:pb:config`              | Configure local PocketBase settings                   |
 | `bun run dev:pb:create-superuser`    | Create/upsert local PocketBase superuser              |
 | `bun run dev:caddy`                  | Run Caddy reverse proxy (with log wrapper)            |
+| `bun run dev:caddy:debug`            | Run Caddy reverse proxy with debug logging            |
+| `bun run dev:caddy:setup-certs`      | Trust Caddy's local CA certificates                   |
+| `bun run dev:mailpit`                | Run Mailpit email test server                         |
+| `bun run dev:pb:reset-and-squash`    | Reset and squash PocketBase migrations                |
 
 **Build scripts** read env vars from `process.env` (no dotenvx wrapper) so they work in production where env vars are passed inline:
 
-| Command                    | Description                                        |
-| -------------------------- | -------------------------------------------------- |
-| `bun run build`            | Build client, server, static files, and Caddyfile  |
-| `bun run build:client`     | Build client bundle (inlines `PUBLIC_*` env vars)  |
-| `bun run build:caddy`      | Generate Caddyfile from template and env vars      |
+| Command                      | Description                                               |
+| ---------------------------- | --------------------------------------------------------- |
+| `bun run build`              | Build client, server, static files, and Caddyfile         |
+| `bun run build:client`       | Build client bundle (inlines `PUBLIC_*` env vars)         |
+| `bun run build:server`       | Compile server to standalone binary                       |
+| `bun run build:static`       | Copy static files and migrations to dist                  |
+| `bun run build:caddy`        | Generate Caddyfile from template and env vars             |
+| `bun run generate:about`     | Compile ABOUT.md into src code for bundling               |
 
 ## Testing
 
@@ -114,6 +121,8 @@ Provisioning is automated and idempotent. Run from the dev box. It uses [xec](ht
 | `bun run infra:provision destroy`   | Unassign IP and delete the droplet (preserves the reserved IP)          |
 | `bun run infra:deploy`              | Pull latest code, build, and restart services (default branch: main)    |
 | `bun run infra:status`              | Show service status, IP, and layout info                                |
+| `bun run infra:mode`                | Enable / disable the PocketBase admin interface                         |
+| `bun run infra:ssh`                 | SSH into the production server                                          |
 
 ## Server file layout
 
