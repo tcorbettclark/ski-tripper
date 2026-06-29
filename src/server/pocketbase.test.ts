@@ -21,6 +21,35 @@ mock.module('pocketbase', () => ({
   default: MockPocketBase,
 }))
 
+mock.module('./log', () => {
+  let logs: string[] = []
+  let errors: string[] = []
+  const captured: { logs: string[]; errors: string[] } = {
+    get logs() {
+      return logs
+    },
+    get errors() {
+      return errors
+    },
+  }
+  const log = mock((message: string) => {
+    logs.push(message)
+  })
+  const logError = mock((message: string) => {
+    errors.push(message)
+  })
+  const captureLogs = () => {
+    logs = []
+    errors = []
+    return captured
+  }
+  const restoreLogs = () => {
+    logs = []
+    errors = []
+  }
+  return { log, logError, captureLogs, restoreLogs, __captured: captured }
+})
+
 const originalEnv = { ...process.env }
 
 beforeEach(() => {
@@ -32,8 +61,10 @@ beforeEach(() => {
   MockPocketBase.mockClear()
 })
 
-afterEach(() => {
+afterEach(async () => {
   process.env = { ...originalEnv }
+  const { restoreLogs } = await import('./log')
+  restoreLogs()
 })
 
 describe('verifyTokenAndGetUserId', () => {

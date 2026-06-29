@@ -46,6 +46,35 @@ mock.module('../env', () => ({
   server_get_ollama_model_preference_search: () => 'test-model',
 }))
 
+mock.module('../log', () => {
+  let logs: string[] = []
+  let errors: string[] = []
+  const captured: { logs: string[]; errors: string[] } = {
+    get logs() {
+      return logs
+    },
+    get errors() {
+      return errors
+    },
+  }
+  const log = mock((message: string) => {
+    logs.push(message)
+  })
+  const logError = mock((message: string) => {
+    errors.push(message)
+  })
+  const captureLogs = () => {
+    logs = []
+    errors = []
+    return captured
+  }
+  const restoreLogs = () => {
+    logs = []
+    errors = []
+  }
+  return { log, logError, captureLogs, restoreLogs, __captured: captured }
+})
+
 const originalEnv = { ...process.env }
 
 beforeEach(() => {
@@ -63,8 +92,10 @@ beforeEach(() => {
   mockCollection.mockClear()
 })
 
-afterEach(() => {
+afterEach(async () => {
   process.env = { ...originalEnv }
+  const { restoreLogs } = await import('../log')
+  restoreLogs()
 })
 
 describe('handleSetPassword', () => {
@@ -155,10 +186,8 @@ describe('handleSetPassword', () => {
   it('returns 200 and updates password with valid token', async () => {
     mockVerifyTokenAndGetUserId.mockResolvedValueOnce('user-1')
     mockGetAdminClient.mockResolvedValueOnce(mockAdminPbInstance)
-    const logSpy = mock(() => {})
-
-    const originalLog = console.log
-    console.log = logSpy
+    const { captureLogs } = await import('../log')
+    const captured = captureLogs()
 
     const response = await callHandler(
       { password: 'newpass123', passwordConfirm: 'newpass123' },
@@ -172,19 +201,16 @@ describe('handleSetPassword', () => {
       password: 'newpass123',
       passwordConfirm: 'newpass123',
     })
-    expect(logSpy).toHaveBeenCalledWith(
+    expect(captured.logs).toContain(
       '[set-password] Password updated for user user-1'
     )
-    console.log = originalLog
   })
 
   it('returns 500 when admin client fails', async () => {
     mockVerifyTokenAndGetUserId.mockResolvedValueOnce('user-1')
     mockGetAdminClient.mockRejectedValueOnce(new Error('Admin auth failed'))
-    const errorSpy = mock(() => {})
-
-    const originalError = console.error
-    console.error = errorSpy
+    const { captureLogs } = await import('../log')
+    const captured = captureLogs()
 
     const response = await callHandler(
       { password: 'newpass123', passwordConfirm: 'newpass123' },
@@ -194,20 +220,17 @@ describe('handleSetPassword', () => {
     expect(response.status).toBe(500)
     const data = await response.json()
     expect(data.error).toMatch(/admin auth failed/i)
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(captured.errors).toContain(
       '[set-password] Admin auth failed: Admin auth failed'
     )
-    console.error = originalError
   })
 
   it('returns 500 when password update fails', async () => {
     mockVerifyTokenAndGetUserId.mockResolvedValueOnce('user-1')
     mockGetAdminClient.mockResolvedValueOnce(mockAdminPbInstance)
     mockUpdate.mockRejectedValueOnce(new Error('Update failed'))
-    const errorSpy = mock(() => {})
-
-    const originalError = console.error
-    console.error = errorSpy
+    const { captureLogs } = await import('../log')
+    const captured = captureLogs()
 
     const response = await callHandler(
       { password: 'newpass123', passwordConfirm: 'newpass123' },
@@ -217,9 +240,8 @@ describe('handleSetPassword', () => {
     expect(response.status).toBe(500)
     const data = await response.json()
     expect(data.error).toMatch(/update failed/i)
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(captured.errors).toContain(
       '[set-password] Failed for user user-1: Update failed'
     )
-    console.error = originalError
   })
 })

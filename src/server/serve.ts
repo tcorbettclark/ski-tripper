@@ -3,6 +3,7 @@ import { handleAnalyseProposal } from './handlers/analyse-proposal'
 import { handleHealthCheck } from './handlers/health-check'
 import { handlePreferenceSearch } from './handlers/preference-search'
 import { handleSetPassword } from './handlers/set-password'
+import { log } from './log'
 
 function main() {
   const hostname = server_get_server_hostname()
@@ -13,7 +14,7 @@ function main() {
     port,
     fetch: async (req) => {
       const url = new URL(req.url)
-      console.log(`${req.method} ${url.pathname}`)
+      log(`${req.method} ${url.pathname}`)
 
       if (url.pathname === '/api/analyse-proposal') {
         return handleAnalyseProposal(req)
@@ -35,7 +36,7 @@ function main() {
     },
   })
 
-  console.log(`API server listening on http://${hostname}:${port}`)
+  log(`API server listening on http://${hostname}:${port}`)
 }
 
 main()

@@ -1,4 +1,5 @@
 import type PocketBase from 'pocketbase'
+import { log, logError } from '../log'
 import { getAdminClient, verifyTokenAndGetUserId } from './shared'
 
 export async function handleSetPassword(req: Request): Promise<Response> {
@@ -46,7 +47,7 @@ export async function handleSetPassword(req: Request): Promise<Response> {
     adminPb = await getAdminClient()
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Admin auth failed'
-    console.error(`[set-password] Admin auth failed: ${msg}`)
+    logError(`[set-password] Admin auth failed: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
@@ -57,10 +58,10 @@ export async function handleSetPassword(req: Request): Promise<Response> {
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to update password'
-    console.error(`[set-password] Failed for user ${userId}: ${msg}`)
+    logError(`[set-password] Failed for user ${userId}: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
-  console.log(`[set-password] Password updated for user ${userId}`)
+  log(`[set-password] Password updated for user ${userId}`)
   return Response.json({ success: true })
 }

@@ -3,6 +3,7 @@ import { Ollama } from 'ollama'
 import type PocketBase from 'pocketbase'
 import { ClientResponseError } from 'pocketbase'
 import { server_get_ollama_api_key } from '../env'
+import { log, logError } from '../log'
 import { getAdminClient, verifyTokenAndGetUserId } from '../pocketbase'
 import type {
   Accommodation,
@@ -35,7 +36,7 @@ export async function verifyParticipantMembership(
   if (rows.length === 0) {
     throw new Error('You must be a participant of this trip.')
   }
-  console.log(`[auth] User ${userId} verified as participant of trip ${tripId}`)
+  log(`[auth] User ${userId} verified as participant of trip ${tripId}`)
 }
 
 export async function fetchProposal(
@@ -175,7 +176,7 @@ async function streamCachedResponse(
   model: string,
   label: string
 ): Promise<void> {
-  console.log(`[${label}] Streaming cached result (id: ${cacheId})`)
+  log(`[${label}] Streaming cached result (id: ${cacheId})`)
   if (thinking) {
     const words = thinking.split(/(\s+)/)
     let buffer = ''
@@ -212,7 +213,7 @@ async function streamCachedResponse(
     }
   }
 
-  console.log(`[${label}] Completed streaming cached result (id: ${cacheId})`)
+  log(`[${label}] Completed streaming cached result (id: ${cacheId})`)
   controller.enqueue(
     sseEvent('done', {
       cacheId,
@@ -267,7 +268,7 @@ export async function streamLlmResult(
     cacheRows = await fetchLlmCache(adminPb, cacheFilter)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to check cache'
-    console.error(`[${label}] Failed to check cache: ${msg}`)
+    logError(`[${label}] Failed to check cache: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
@@ -296,7 +297,7 @@ export async function streamLlmResult(
     if (row.id === latestCompleteId) continue
     try {
       await adminPb.collection('llm_cache').delete(row.id)
-      console.log(
+      log(
         `[${label}] Deleted stale cache row ${row.id} (status: ${row.status})`
       )
     } catch {
@@ -315,7 +316,7 @@ export async function streamLlmResult(
 
       const onClientAbort = () => {
         clientAborted = true
-        console.log(`[${label}] Client disconnected, aborting LLM stream`)
+        log(`[${label}] Client disconnected, aborting LLM stream`)
         if (llmStream && 'abort' in llmStream) {
           ;(llmStream as { abort: () => void }).abort()
         }
@@ -323,9 +324,7 @@ export async function streamLlmResult(
 
       if (abortSignal) {
         if (abortSignal.aborted) {
-          console.log(
-            `[${label}] Client already disconnected, skipping LLM call`
-          )
+          log(`[${label}] Client already disconnected, skipping LLM call`)
           controller.close()
           return
         }
@@ -345,17 +344,13 @@ export async function streamLlmResult(
         llmStream = chatStream
 
         if (clientAborted) {
-          console.log(
-            `[${label}] Client disconnected before LLM stream started`
-          )
+          log(`[${label}] Client disconnected before LLM stream started`)
           return
         }
 
         for await (const chunk of chatStream) {
           if (clientAborted) {
-            console.log(
-              `[${label}] Aborting LLM stream due to client disconnect`
-            )
+            log(`[${label}] Aborting LLM stream due to client disconnect`)
             break
           }
 
@@ -376,7 +371,7 @@ export async function streamLlmResult(
         }
 
         if (clientAborted) {
-          console.log(`[${label}] Stream aborted, closing without caching`)
+          log(`[${label}] Stream aborted, closing without caching`)
           return
         }
 
@@ -386,14 +381,14 @@ export async function streamLlmResult(
           const message = accumulatedThinking
             ? 'Model thought for too long and produced no visible result. Please try again.'
             : 'Model produced no output. Please try again.'
-          console.error(
+          logError(
             `[${label}] No content produced (thinking: ${accumulatedThinking.length} chars)`
           )
           controller.enqueue(sseEvent('error', { message }))
           return
         }
 
-        console.log(`[${label}] LLM stream complete`)
+        log(`[${label}] LLM stream complete`)
 
         let cacheId: string
         try {
@@ -408,14 +403,14 @@ export async function streamLlmResult(
             model,
           })
           cacheId = created.id
-          console.log(`[${label}] Cached result (id: ${cacheId})`)
+          log(`[${label}] Cached result (id: ${cacheId})`)
         } catch (err) {
           cacheId = ''
           const errData =
             err instanceof ClientResponseError
               ? JSON.stringify({ status: err.status, response: err.response })
               : ''
-          console.error(
+          logError(
             `[${label}] Failed to cache result: ${err instanceof Error ? err.message : String(err)}${errData ? ` (${errData})` : ''}`
           )
         }
@@ -432,7 +427,7 @@ export async function streamLlmResult(
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : 'LLM generation failed'
-        console.error(`[${label}] LLM error: ${errorMsg}`)
+        logError(`[${label}] LLM error: ${errorMsg}`)
         controller.enqueue(sseEvent('error', { message: errorMsg }))
       } finally {
         if (abortSignal) {

@@ -1,5 +1,6 @@
 import type PocketBase from 'pocketbase'
 import { server_get_ollama_model_health_check } from '../env'
+import { log, logError } from '../log'
 import {
   buildSystemPrompt,
   buildUserPrompt,
@@ -14,24 +15,24 @@ import {
 const HEALTH_CHECK_TRIP_ID = '__health_check__'
 
 export async function handleHealthCheck(req: Request): Promise<Response> {
-  console.log('[health-check] Received request')
+  log('[health-check] Received request')
   if (req.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 })
   }
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    console.log('[health-check] Missing or invalid Authorization header')
+    log('[health-check] Missing or invalid Authorization header')
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const authToken = authHeader.slice(7)
 
   const userId = await verifyTokenAndGetUserId(authToken)
   if (!userId) {
-    console.log('[health-check] Invalid auth token - verification failed')
+    log('[health-check] Invalid auth token - verification failed')
     return Response.json({ error: 'Invalid token' }, { status: 401 })
   }
-  console.log(`[health-check] Authenticated user ${userId}`)
+  log(`[health-check] Authenticated user ${userId}`)
 
   let adminPb: PocketBase
 
@@ -39,7 +40,7 @@ export async function handleHealthCheck(req: Request): Promise<Response> {
     adminPb = await getAdminClient()
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Admin auth failed'
-    console.error(`[health-check] Admin auth failed: ${msg}`)
+    logError(`[health-check] Admin auth failed: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
@@ -58,7 +59,7 @@ export async function handleHealthCheck(req: Request): Promise<Response> {
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to clear cache'
-    console.error(`[health-check] Failed to clear cache: ${msg}`)
+    logError(`[health-check] Failed to clear cache: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 

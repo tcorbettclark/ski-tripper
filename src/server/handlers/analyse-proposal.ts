@@ -1,5 +1,6 @@
 import type PocketBase from 'pocketbase'
 import { server_get_ollama_model_analysis } from '../env'
+import { log, logError } from '../log'
 import {
   buildSystemPrompt as buildAnalysisSystemPrompt,
   buildUserPrompt as buildAnalysisUserPrompt,
@@ -23,7 +24,7 @@ import {
 } from './shared'
 
 export async function handleAnalyseProposal(req: Request): Promise<Response> {
-  console.log('[analysis] Received request')
+  log('[analysis] Received request')
   if (req.method !== 'POST') {
     return Response.json({ error: 'Method not allowed' }, { status: 405 })
   }
@@ -37,7 +38,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
   const { proposalId, tripId } = body
   if (!proposalId || !tripId) {
-    console.log('[analysis] Missing proposalId or tripId')
+    log('[analysis] Missing proposalId or tripId')
     return Response.json(
       { error: 'Missing proposalId or tripId' },
       { status: 400 }
@@ -46,19 +47,17 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
 
   const authHeader = req.headers.get('Authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    console.log('[analysis] Missing or invalid Authorization header')
+    log('[analysis] Missing or invalid Authorization header')
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const authToken = authHeader.slice(7)
 
   const userId = await verifyTokenAndGetUserId(authToken)
   if (!userId) {
-    console.log('[analysis] Invalid auth token - verification failed')
+    log('[analysis] Invalid auth token - verification failed')
     return Response.json({ error: 'Invalid token' }, { status: 401 })
   }
-  console.log(
-    `[analysis] Authenticated user ${userId} for proposal ${proposalId}`
-  )
+  log(`[analysis] Authenticated user ${userId} for proposal ${proposalId}`)
 
   let adminPb: PocketBase
 
@@ -66,7 +65,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     adminPb = await getAdminClient()
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Admin auth failed'
-    console.error(`[analysis] Admin auth failed: ${msg}`)
+    logError(`[analysis] Admin auth failed: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 
@@ -74,7 +73,7 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     await verifyParticipantMembership(adminPb, tripId, userId)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Authorization failed'
-    console.log(`[analysis] Participant verification failed: ${msg}`)
+    log(`[analysis] Participant verification failed: ${msg}`)
     return Response.json({ error: msg }, { status: 403 })
   }
 
@@ -86,12 +85,12 @@ export async function handleAnalyseProposal(req: Request): Promise<Response> {
     proposal = await fetchProposal(adminPb, proposalId)
     accommodations = await fetchAccommodations(adminPb, proposalId)
     participants = await fetchParticipants(adminPb, tripId)
-    console.log(
+    log(
       `[analysis] Fetched proposal ${proposalId}, ${participants.length} participants`
     )
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to fetch data'
-    console.error(`[analysis] Failed to fetch data: ${msg}`)
+    logError(`[analysis] Failed to fetch data: ${msg}`)
     return Response.json({ error: msg }, { status: 500 })
   }
 

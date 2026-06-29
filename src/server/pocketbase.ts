@@ -5,6 +5,7 @@ import {
   server_get_pocketbase_hostname,
   server_get_pocketbase_port,
 } from './env'
+import { log } from './log'
 
 let adminClient: PocketBase | null = null
 
@@ -19,10 +20,10 @@ export async function getAdminClient(): Promise<PocketBase> {
   const email = server_get_pocketbase_admin_email()
   const password = server_get_pocketbase_admin_password()
 
-  console.log(`[pocketbase] Authenticating admin client to ${url}`)
+  log(`[pocketbase] Authenticating admin client to ${url}`)
   adminClient = new PocketBase(url)
   await adminClient.collection('_superusers').authWithPassword(email, password)
-  console.log('[pocketbase] Admin client authenticated')
+  log('[pocketbase] Admin client authenticated')
   return adminClient
 }
 

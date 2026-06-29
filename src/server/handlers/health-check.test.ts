@@ -57,6 +57,35 @@ mock.module('./shared', () => ({
   getAdminClient: mockGetAdminClient,
 }))
 
+mock.module('../log', () => {
+  let logs: string[] = []
+  let errors: string[] = []
+  const captured: { logs: string[]; errors: string[] } = {
+    get logs() {
+      return logs
+    },
+    get errors() {
+      return errors
+    },
+  }
+  const log = mock((message: string) => {
+    logs.push(message)
+  })
+  const logError = mock((message: string) => {
+    errors.push(message)
+  })
+  const captureLogs = () => {
+    logs = []
+    errors = []
+    return captured
+  }
+  const restoreLogs = () => {
+    logs = []
+    errors = []
+  }
+  return { log, logError, captureLogs, restoreLogs, __captured: captured }
+})
+
 const originalEnv = { ...process.env }
 
 beforeEach(() => {
@@ -75,8 +104,10 @@ beforeEach(() => {
   mockAuthStoreClear.mockReset()
 })
 
-afterEach(() => {
+afterEach(async () => {
   process.env = { ...originalEnv }
+  const { restoreLogs } = await import('../log')
+  restoreLogs()
 })
 
 describe('handleHealthCheck', () => {
@@ -122,16 +153,17 @@ describe('handleHealthCheck', () => {
   it('returns 500 when admin client fails', async () => {
     mockVerifyTokenAndGetUserId.mockResolvedValueOnce('user-1')
     mockGetAdminClient.mockRejectedValueOnce(new Error('Admin auth failed'))
-    const errorSpy = mock(() => {})
-    const originalError = console.error
-    console.error = errorSpy
+    const { captureLogs } = await import('../log')
+    const captured = captureLogs()
 
     const response = await callHandler('valid-token')
 
     expect(response.status).toBe(500)
     const data = await response.json()
     expect(data.error).toMatch(/admin auth failed/i)
-    console.error = originalError
+    expect(captured.errors).toContain(
+      '[health-check] Admin auth failed: Admin auth failed'
+    )
   })
 
   it('clears health-check cache and calls streamLlmResult with correct params', async () => {
