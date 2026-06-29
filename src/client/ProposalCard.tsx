@@ -590,7 +590,7 @@ export default function ProposalCard({
           )}
         </div>
 
-        {!previewMode && hasActions && (
+        {!previewMode && activeTab === 'proposal' && hasActions && (
           <div style={styles.actions}>
             {canAct && (
               <>
