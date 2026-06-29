@@ -52,7 +52,7 @@ export type Preferences = Pick<
   | 'difficulty'
   | 'piste'
   | 'timeSlopes'
-  | 'timeEating'
+  | 'timeHuts'
   | 'timeApres'
   | 'timeHotel'
   | 'accommodation'

@@ -16,7 +16,7 @@ export function computeInputHash(
         difficulty: p.preferences.difficulty,
         piste: p.preferences.piste,
         timeSlopes: p.preferences.timeSlopes,
-        timeEating: p.preferences.timeEating,
+        timeHuts: p.preferences.timeHuts,
         timeApres: p.preferences.timeApres,
         timeHotel: p.preferences.timeHotel,
         accommodation: p.preferences.accommodation,
@@ -60,7 +60,7 @@ export function buildUserPrompt(
     lines.push(`- Difficulty: ${preferences.difficulty.join(', ')}`)
     lines.push(`- Piste preference: ${preferences.piste.join(', ')}`)
     lines.push(
-      `- Time allocation: slopes ${preferences.timeSlopes}%, eating ${preferences.timeEating}%, après-ski ${preferences.timeApres}%, hotel ${preferences.timeHotel}%`
+      `- Time allocation: slopes ${preferences.timeSlopes}%, huts ${preferences.timeHuts}%, après-ski ${preferences.timeApres}%, hotel ${preferences.timeHotel}%`
     )
     lines.push(`- Accommodation: ${preferences.accommodation.join(', ')}`)
     if (preferences.notes) {

@@ -121,7 +121,7 @@ export async function fetchPreferences(
     difficulty: r.difficulty as string[],
     piste: r.piste as string[],
     timeSlopes: r.time_slopes as number,
-    timeEating: r.time_eating as number,
+    timeHuts: r.time_huts as number,
     timeApres: r.time_apres as number,
     timeHotel: r.time_hotel as number,
     accommodation: r.accommodation as string[],

@@ -45,7 +45,7 @@ const defaultPreferences: Preferences = {
   difficulty: ['Red'],
   piste: ['On-Piste'],
   timeSlopes: 20,
-  timeEating: 20,
+  timeHuts: 20,
   timeApres: 20,
   timeHotel: 40,
   accommodation: ['Chalet'],

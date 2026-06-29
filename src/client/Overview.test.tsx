@@ -209,7 +209,7 @@ const samplePreferencesAlice: Preferences = {
   difficulty: ['Red', 'Black'],
   piste: ['On-Piste', 'Off-Piste'],
   timeSlopes: 60,
-  timeEating: 20,
+  timeHuts: 20,
   timeApres: 15,
   timeHotel: 5,
   accommodation: ['Chalet'],
@@ -225,7 +225,7 @@ const samplePreferencesBob: Preferences = {
   difficulty: ['Blue'],
   piste: ['On-Piste'],
   timeSlopes: 40,
-  timeEating: 30,
+  timeHuts: 30,
   timeApres: 20,
   timeHotel: 10,
   accommodation: ['Hotel'],
@@ -305,7 +305,7 @@ describe('Overview', () => {
     })
     await waitFor(() => {
       expect(screen.getByTitle('Slopes 60%')).toBeTruthy()
-      expect(screen.getByTitle('Eating 20%')).toBeTruthy()
+      expect(screen.getByTitle('Huts 20%')).toBeTruthy()
       expect(screen.getByTitle('Après 15%')).toBeTruthy()
       expect(screen.getByTitle('Hotel 5%')).toBeTruthy()
       expect(screen.getByTitle('Slopes 40%')).toBeTruthy()

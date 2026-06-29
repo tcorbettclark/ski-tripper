@@ -10,7 +10,7 @@ export const colors = {
   pisteBeginner: 'var(--color-pisteBeginner)',
   pisteIntermediate: 'var(--color-pisteIntermediate)',
   pisteAdvanced: 'var(--color-pisteAdvanced)',
-  timeEating: 'var(--color-timeEating)',
+  timeHuts: 'var(--color-timeHuts)',
   timeApres: 'var(--color-timeApres)',
   timeHotel: 'var(--color-timeHotel)',
   snowboard: 'var(--color-snowboard)',

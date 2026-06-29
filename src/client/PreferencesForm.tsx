@@ -29,7 +29,7 @@ const accommodationOptions = [
   'Chalet',
   'Pension/guesthouse',
 ]
-const timeLabels = ['Slopes', 'Eating', 'Après', 'Hotel Chill']
+const timeLabels = ['Slopes', 'Huts', 'Après', 'Hotel Chill']
 
 interface PreferencesFormProps {
   userId: string
@@ -73,7 +73,7 @@ export default function PreferencesForm({
   const initialTime = initial
     ? [
         initial.timeSlopes ?? 20,
-        initial.timeEating ?? 20,
+        initial.timeHuts ?? 20,
         initial.timeApres ?? 20,
         initial.timeHotel ?? 40,
       ]
@@ -144,7 +144,7 @@ export default function PreferencesForm({
         difficulty,
         piste,
         timeSlopes: timeAllocation[0],
-        timeEating: timeAllocation[1],
+        timeHuts: timeAllocation[1],
         timeApres: timeAllocation[2],
         timeHotel: timeAllocation[3],
         accommodation,

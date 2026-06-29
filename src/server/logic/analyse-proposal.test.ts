@@ -63,7 +63,7 @@ const preferences: Preferences = {
   difficulty: ['Red', 'Black'],
   piste: ['On-Piste', 'Off-Piste'],
   timeSlopes: 60,
-  timeEating: 20,
+  timeHuts: 20,
   timeApres: 15,
   timeHotel: 5,
   accommodation: ['Chalet'],

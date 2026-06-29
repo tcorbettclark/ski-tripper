@@ -155,7 +155,7 @@ function mapPreferences(row: Record<string, unknown>): Preferences {
     difficulty: row.difficulty as string[],
     piste: row.piste as string[],
     timeSlopes: row.time_slopes as number,
-    timeEating: row.time_eating as number,
+    timeHuts: row.time_huts as number,
     timeApres: row.time_apres as number,
     timeHotel: row.time_hotel as number,
     accommodation: row.accommodation as string[],
@@ -1004,7 +1004,7 @@ export async function createPreferences(
     difficulty: data.difficulty,
     piste: data.piste,
     time_slopes: data.timeSlopes,
-    time_eating: data.timeEating,
+    time_huts: data.timeHuts,
     time_apres: data.timeApres,
     time_hotel: data.timeHotel,
     accommodation: data.accommodation,
@@ -1026,7 +1026,7 @@ export async function updatePreferences(
   if (data.difficulty !== undefined) updateData.difficulty = data.difficulty
   if (data.piste !== undefined) updateData.piste = data.piste
   if (data.timeSlopes !== undefined) updateData.time_slopes = data.timeSlopes
-  if (data.timeEating !== undefined) updateData.time_eating = data.timeEating
+  if (data.timeHuts !== undefined) updateData.time_huts = data.timeHuts
   if (data.timeApres !== undefined) updateData.time_apres = data.timeApres
   if (data.timeHotel !== undefined) updateData.time_hotel = data.timeHotel
   if (data.accommodation !== undefined)

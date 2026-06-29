@@ -137,7 +137,7 @@ export interface Preferences {
   difficulty: string[]
   piste: string[]
   timeSlopes: number
-  timeEating: number
+  timeHuts: number
   timeApres: number
   timeHotel: number
   accommodation: string[]

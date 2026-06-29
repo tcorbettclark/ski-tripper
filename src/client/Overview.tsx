@@ -317,10 +317,10 @@ export default function Overview({
           color: colors.accent,
         },
         {
-          key: 'eating',
-          label: 'Eating',
-          value: prefs.timeEating,
-          color: colors.timeEating,
+          key: 'huts',
+          label: 'Huts',
+          value: prefs.timeHuts,
+          color: colors.timeHuts,
         },
         {
           key: 'apres',
