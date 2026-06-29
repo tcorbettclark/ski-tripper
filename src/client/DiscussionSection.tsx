@@ -207,32 +207,32 @@ export default function DiscussionSection({
             </div>
           )
         })}
-      </div>
-      <div style={sectionStyles.inputArea}>
-        <div style={sectionStyles.inputRow}>
-          <input
-            type="text"
-            placeholder="Write a comment…"
-            value={newBody}
-            onChange={(e) => setNewBody(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) handlePost()
-            }}
-            style={sectionStyles.input}
-            disabled={posting}
-          />
-          <button
-            type="button"
-            onClick={handlePost}
-            disabled={posting || !newBody.trim()}
-            style={
-              posting || !newBody.trim()
-                ? sectionStyles.postButtonDisabled
-                : sectionStyles.postButton
-            }
-          >
-            Post
-          </button>
+        <div style={sectionStyles.inputArea}>
+          <div style={sectionStyles.inputRow}>
+            <input
+              type="text"
+              placeholder="Write a comment…"
+              value={newBody}
+              onChange={(e) => setNewBody(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) handlePost()
+              }}
+              style={sectionStyles.input}
+              disabled={posting}
+            />
+            <button
+              type="button"
+              onClick={handlePost}
+              disabled={posting || !newBody.trim()}
+              style={
+                posting || !newBody.trim()
+                  ? sectionStyles.postButtonDisabled
+                  : sectionStyles.postButton
+              }
+            >
+              Post
+            </button>
+          </div>
         </div>
       </div>
 
@@ -439,9 +439,6 @@ const sectionStyles = {
     cursor: 'pointer',
   },
   inputArea: {
-    borderTop: borders.subtle,
-    paddingTop: '14px',
-    paddingBottom: '14px',
     flexShrink: 0,
   },
   inputRow: {
