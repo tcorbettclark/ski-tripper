@@ -1,7 +1,6 @@
 import { execSync } from 'node:child_process'
 import {
   dispose,
-  fail,
   getAppSsh,
   getDropletIp,
   getRootSsh,
@@ -9,10 +8,9 @@ import {
   PROJECT_ROOT,
   REPO_DIR,
   scanHostKey,
-  step,
-  success,
   waitForSsh,
 } from './lib/infra'
+import { error, fail, help, step, success, warn } from './lib/log'
 
 const BUILD_ENV_KEYS = [
   'PUBLIC_DOMAIN',
@@ -68,11 +66,22 @@ function getEnvFromProcess(): Record<string, string> {
   return env
 }
 
+const HELP_TEXT = `Usage: bun run env:prod bun run infra:deploy [options]
+
+Options:
+  --version <tag>            Deploy a specific tag (default: main)
+  --skip-resorts-upload      Skip resort data upload
+  --help                     Show this help message
+
+Examples:
+  bun run env:prod bun run infra:deploy                         Deploy current main branch
+  bun run env:prod bun run infra:deploy --version v1.2.3        Deploy a specific tag
+  bun run env:prod bun run infra:deploy --skip-resorts-upload   Deploy without uploading resort data`
+
 async function deploy() {
   const args = process.argv.slice(2)
   if (args.includes('--help') || args.includes('-h')) {
-    printDeployHelp()
-    process.exit(0)
+    help(HELP_TEXT, 0)
   }
 
   const versionIdx = args.indexOf('--version')
@@ -84,14 +93,13 @@ async function deploy() {
       (versionIdx === -1 || a !== args[versionIdx + 1])
   )
   if (unknownArgs.length > 0) {
-    console.error(`Unknown arguments: ${unknownArgs.join(', ')}`)
-    printDeployHelp()
-    process.exit(1)
+    error(`Unknown arguments: ${unknownArgs.join(', ')}`)
+    help(HELP_TEXT, 1)
   }
 
   const branchOrTag = versionIdx !== -1 ? args[versionIdx + 1] : 'main'
   if (versionIdx !== -1 && !branchOrTag) {
-    console.error('--version requires a value (e.g. --version v1.2.3)')
+    error('--version requires a value (e.g. --version v1.2.3)')
     process.exit(1)
   }
 
@@ -230,7 +238,6 @@ async function deploy() {
 
   if (skipResortsUpload) {
     step('Uploading resort data')
-    const { warn } = await import('./lib/log')
     warn('Skipping resort data upload (--skip-resorts-upload)')
   } else {
     step('Uploading resort data')
@@ -252,23 +259,9 @@ async function deploy() {
   }
 }
 
-function printDeployHelp() {
-  console.log(`Usage: bun run env:prod bun run infra:deploy [options]
-
-Options:
-  --version <tag>            Deploy a specific tag (default: main)
-  --skip-resorts-upload      Skip resort data upload
-  --help                     Show this help message
-
-Examples:
-  bun run env:prod bun run infra:deploy                         Deploy current main branch
-  bun run env:prod bun run infra:deploy --version v1.2.3        Deploy a specific tag
-  bun run env:prod bun run infra:deploy --skip-resorts-upload   Deploy without uploading resort data`)
-}
-
 deploy()
   .catch((err) => {
-    console.error('\n✗ Deploy failed:', err)
+    error(`Deploy failed: ${err}`)
     process.exitCode = 1
   })
   .finally(() => dispose())

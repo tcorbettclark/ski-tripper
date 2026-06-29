@@ -2,7 +2,18 @@ import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import JSON5 from 'json5'
 import PocketBase from 'pocketbase'
-import { BOLD, fail, GREEN, RED, RESET, success, warn, YELLOW } from './lib/log'
+import {
+  BOLD,
+  error,
+  fail,
+  help,
+  info,
+  RESET,
+  step,
+  success,
+  warn,
+  YELLOW,
+} from './lib/log'
 
 const PROJECT_ROOT = resolve(import.meta.dir, '../..')
 const SETTINGS_FILE = resolve(PROJECT_ROOT, 'infra/pocketbase/settings.json5')
@@ -10,6 +21,15 @@ const EMAIL_TEMPLATES_FILE = resolve(
   PROJECT_ROOT,
   'infra/pocketbase/email-templates.json5'
 )
+
+const HELP_TEXT = `Usage: bun run env:prod bun run infra/scripts/configure-pocketbase.ts [options]
+
+Options:
+  --external    Use external URLs (for production)
+  --internal    Use internal URLs (for local development)
+  --help, -h    Show this help message
+
+Configures PocketBase settings and email templates from JSON5 config files.`
 
 function requireEnv(name: string): string {
   const value = process.env[name]
@@ -86,13 +106,11 @@ function interpolateSettings(
   }
 
   if (missing.length > 0) {
-    console.error(
-      `\n${RED}${BOLD}Missing required environment variables:${RESET}`
-    )
+    error(`${BOLD}Missing required environment variables:${RESET}`)
     for (const v of missing) {
-      console.error(`  ${YELLOW}${v}${RESET}`)
+      error(`  ${YELLOW}${v}${RESET}`)
     }
-    console.error('\nSet them and try again.')
+    error('Set them and try again.')
     process.exit(1)
   }
 
@@ -178,15 +196,7 @@ async function main() {
   const args = process.argv.slice(2)
 
   if (args.includes('--help') || args.includes('-h')) {
-    console.log(`Usage: bun run env:prod bun run infra/scripts/configure-pocketbase.ts [options]
-
-Options:
-  --external    Use external URLs (for production)
-  --internal    Use internal URLs (for local development)
-  --help, -h    Show this help message
-
-Configures PocketBase settings and email templates from JSON5 config files.`)
-    process.exit(0)
+    help(HELP_TEXT, 0)
   }
 
   const useExternal = args.includes('--external')
@@ -211,12 +221,12 @@ Configures PocketBase settings and email templates from JSON5 config files.`)
     ? requireEnv('POCKETBASE_EXTERNAL_URL')
     : `http://${requireEnv('POCKETBASE_HOSTNAME')}:${requireEnv('POCKETBASE_PORT')}`
 
-  console.log(
+  step(
     `Connecting to PocketBase at ${pbUrl} (${useExternal ? 'external' : 'internal'})`
   )
   await waitForPocketBase(pbUrl)
 
-  console.log('Authenticating as superuser...')
+  step('Authenticating as superuser')
   const pb = new PocketBase(pbUrl)
   try {
     await pb
@@ -229,7 +239,7 @@ Configures PocketBase settings and email templates from JSON5 config files.`)
     fail(`Authentication failed: ${err}`)
   }
 
-  console.log('Fetching current settings...')
+  step('Fetching current settings')
   const currentSettings = (await pb.send('/api/settings', {
     method: 'GET',
   })) as Record<string, unknown>
@@ -242,13 +252,13 @@ Configures PocketBase settings and email templates from JSON5 config files.`)
     return
   }
 
-  console.log(`\n${BOLD}Applying ${changeCount} setting change(s):${RESET}`)
+  step(`Applying ${changeCount} setting change(s):`)
   for (const [path, { old, new: newVal }] of Object.entries(changes)) {
     const suffix = SENSITIVE_KEYS.has(path)
       ? ' (upserting — current value is masked/unreadable)'
       : ''
-    console.log(
-      `  ${path}: ${maskValue(path, old)} → ${maskValue(path, newVal)}${suffix}`
+    info(
+      `${path}: ${maskValue(path, old)} → ${maskValue(path, newVal)}${suffix}`
     )
   }
 
@@ -258,9 +268,7 @@ Configures PocketBase settings and email templates from JSON5 config files.`)
     body: patch,
   })
 
-  console.log(
-    `\n${GREEN}${BOLD}Done${RESET} — ${changeCount} setting(s) updated successfully`
-  )
+  success(`${changeCount} setting(s) updated successfully`)
 
   if (existsSync(EMAIL_TEMPLATES_FILE)) {
     await applyEmailTemplates(pb)
@@ -327,9 +335,7 @@ async function applyEmailTemplates(pb: PocketBase): Promise<void> {
 
     if (changedKeys.length === 0) continue
 
-    console.log(
-      `\n${BOLD}Applying email templates for ${collectionName}:${RESET}`
-    )
+    step(`Applying email templates for ${collectionName}`)
     for (const key of changedKeys) {
       const desiredTemplate = desired[key]
       const old = getNestedValue(current, key) as
@@ -337,11 +343,11 @@ async function applyEmailTemplates(pb: PocketBase): Promise<void> {
         | undefined
       const oldSubject = old?.subject ?? '(none)'
       const oldBody = old?.body ?? '(none)'
-      console.log(
-        `  ${key}.subject: ${maskValue(`${collectionName}.${key}.subject`, oldSubject)} → ${maskValue(`${collectionName}.${key}.subject`, desiredTemplate.subject)}`
+      info(
+        `${key}.subject: ${maskValue(`${collectionName}.${key}.subject`, oldSubject)} → ${maskValue(`${collectionName}.${key}.subject`, desiredTemplate.subject)}`
       )
-      console.log(
-        `  ${key}.body: ${maskValue(`${collectionName}.${key}.body`, oldBody)} → ${maskValue(`${collectionName}.${key}.body`, desiredTemplate.body)}`
+      info(
+        `${key}.body: ${maskValue(`${collectionName}.${key}.body`, oldBody)} → ${maskValue(`${collectionName}.${key}.body`, desiredTemplate.body)}`
       )
     }
 
@@ -356,9 +362,7 @@ async function applyEmailTemplates(pb: PocketBase): Promise<void> {
   if (totalChanges === 0) {
     success('No changes needed — email templates are already up to date')
   } else {
-    console.log(
-      `\n${GREEN}${BOLD}Done${RESET} — ${totalChanges} email template(s) updated successfully`
-    )
+    success(`${totalChanges} email template(s) updated successfully`)
   }
 }
 

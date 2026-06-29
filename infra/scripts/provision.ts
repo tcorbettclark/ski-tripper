@@ -7,7 +7,6 @@ import {
   DROPLET_REGION,
   DROPLET_SIZE,
   dispose,
-  fail,
   getAppSsh,
   getDropletId,
   getDropletIp,
@@ -20,12 +19,10 @@ import {
   requireDoctl,
   SWAP_SIZE_MB,
   scanHostKey,
-  step,
-  success,
   waitForSsh,
-  warn,
   withAptRetry,
 } from './lib/infra'
+import { error, fail, help, step, success, warn } from './lib/log'
 
 async function createDroplet() {
   step('Creating DigitalOcean droplet')
@@ -82,9 +79,7 @@ async function createDroplet() {
       fail('Failed to create reserved IP')
     }
     success(`Reserved IP created: ${ip}`)
-    console.log(
-      '  Point your DNS records to this IP. It will persist across droplet recreations.'
-    )
+    step('Point your DNS records to this IP')
     const dropletId = await getDropletId()
     step('Assigning reserved IP to droplet')
     await $`doctl compute reserved-ip-action assign ${ip} ${dropletId}`
@@ -294,8 +289,8 @@ async function destroyDroplet(forgetReservedIp: boolean) {
     if (!result.split('\n').some((line) => line.trim() === DROPLET_NAME)) {
       success(`Droplet ${DROPLET_NAME} destroyed`)
       if (reservedIp && !forgetReservedIp) {
-        console.log(
-          `\n  Reserved IP ${reservedIp} is preserved and ready for next deployment.`
+        step(
+          `Reserved IP ${reservedIp} is preserved and ready for next deployment`
         )
       }
       return
@@ -305,8 +300,7 @@ async function destroyDroplet(forgetReservedIp: boolean) {
   fail('Timed out waiting for droplet to be destroyed')
 }
 
-function printHelp() {
-  console.log(`Usage: bun run infra:provision <command> [options]
+const HELP_TEXT = `Usage: bun run infra:provision <command> [options]
 
 Commands:
   create      Create a droplet and reserved IP (idempotent)
@@ -327,15 +321,13 @@ Examples:
   bun run infra:provision create                         Create droplet and reserved IP
   bun run infra:provision configure                      Configure an existing droplet
   bun run infra:provision destroy                        Tear down droplet (preserves reserved IP)
-  bun run infra:provision destroy --forget-reserved-ip   Also delete the reserved IP`)
-}
+  bun run infra:provision destroy --forget-reserved-ip   Also delete the reserved IP`
 
 async function provision() {
   const command = process.argv[2] || '--help'
 
   if (command === '--help' || command === '-h') {
-    printHelp()
-    process.exit(0)
+    help(HELP_TEXT, 0)
   }
 
   switch (command) {
@@ -351,15 +343,14 @@ async function provision() {
       await destroyDroplet(process.argv.includes('--forget-reserved-ip'))
       break
     default:
-      console.log(`Unknown command: ${command}`)
-      printHelp()
-      process.exit(1)
+      error(`Unknown command: ${command}`)
+      help(HELP_TEXT, 1)
   }
 }
 
 provision()
   .catch((err) => {
-    console.error('\n✗ Provision failed:', err)
+    error(`Provision failed: ${err}`)
     process.exitCode = 1
   })
   .finally(() => dispose())

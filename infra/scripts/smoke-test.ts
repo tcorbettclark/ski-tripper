@@ -1,23 +1,21 @@
 #!/usr/bin/env bun
 
-import { BOLD, CYAN, GREEN, RED, RESET, section } from './lib/log'
-
-const PASS = `${GREEN}PASS${RESET}`
-const FAIL = `${RED}FAIL${RESET}`
+import {
+  BOLD,
+  banner,
+  error,
+  info,
+  RESET,
+  raw,
+  section,
+  success,
+  testFail,
+  testPass,
+  testSummary,
+} from './lib/log'
 
 let passed = 0
 let failed = 0
-
-function pass(msg: string) {
-  passed++
-  console.log(`  ${PASS} ${msg}`)
-}
-
-function fail(msg: string, detail?: string) {
-  failed++
-  console.log(`  ${FAIL} ${msg}`)
-  if (detail) console.log(`        ${RED}${detail}${RESET}`)
-}
 
 async function fetchWithTimeout(
   url: string,
@@ -33,6 +31,16 @@ async function fetchWithTimeout(
   }
 }
 
+function pass(msg: string) {
+  passed++
+  testPass(msg)
+}
+
+function fail(msg: string, detail?: string) {
+  failed++
+  testFail(msg, detail)
+}
+
 async function check(label: string, fn: () => Promise<void>): Promise<void> {
   try {
     await fn()
@@ -44,11 +52,9 @@ async function check(label: string, fn: () => Promise<void>): Promise<void> {
 function requireEnv(name: string): string {
   const value = process.env[name]
   if (!value) {
-    console.error(
-      `${RED}${BOLD}Error:${RESET} Required env var ${name} is not set`
-    )
-    console.error(
-      `\nRun with: ${BOLD}bun run env:prod bun run tools/smoke-test.ts${RESET}`
+    error(`Required env var ${name} is not set`)
+    error(
+      `Run with: ${BOLD}bun run env:prod bun run tools/smoke-test.ts${RESET}`
     )
     process.exit(1)
   }
@@ -65,7 +71,7 @@ async function askYesNo(question: string): Promise<boolean> {
       process.stdin.setRawMode(false)
       process.stdin.pause()
       const answer = data.toString().trim().toLowerCase()
-      console.log()
+      raw('')
       resolve(answer === 'y' || answer === 'yes')
     })
   })
@@ -76,15 +82,9 @@ async function main() {
   const pbExternalUrl = requireEnv('POCKETBASE_EXTERNAL_URL')
   const appUrl = requireEnv('PUBLIC_EXTERNAL_URL')
 
-  console.log(
-    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
-  )
-  console.log(`${BOLD}${CYAN}  Ski Tripper — Production Smoke Test${RESET}`)
-  console.log(
-    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
-  )
-  console.log(`  App:         ${appUrl}`)
-  console.log(`  PocketBase:  ${pbExternalUrl}`)
+  banner('Ski Tripper — Production Smoke Test')
+  info(`App:         ${appUrl}`)
+  info(`PocketBase:  ${pbExternalUrl}`)
 
   // ── 1. TLS / HTTPS ──
 
@@ -460,33 +460,17 @@ async function main() {
 
   // ── 10. Summary ──
 
-  console.log(
-    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
-  )
-  console.log(`${BOLD}${CYAN}  Automated Test Summary${RESET}`)
-  console.log(
-    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
-  )
-  console.log(
-    `  ${GREEN}${passed} passed${RESET}, ${RED}${failed} failed${RESET}`
-  )
+  banner('Automated Test Summary')
+  testSummary(passed, failed)
 
   if (failed > 0) {
-    console.log(
-      `\n${RED}${BOLD}Fix the failures above before continuing with manual tests.${RESET}\n`
-    )
+    error('Fix the failures above before continuing with manual tests.')
     process.exit(1)
   }
 
   // ── 11. Manual checks ──
 
-  console.log(
-    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
-  )
-  console.log(`${BOLD}${CYAN}  Manual Checks${RESET}`)
-  console.log(
-    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}\n`
-  )
+  banner('Manual Checks')
 
   const manualPassed: string[] = []
   const manualFailed: string[] = []
@@ -500,10 +484,10 @@ async function main() {
     )
     if (confirmed) {
       manualPassed.push(description)
-      console.log(`  ${PASS} ${description}\n`)
+      testPass(description)
     } else {
       manualFailed.push(description)
-      console.log(`  ${FAIL} ${description}\n`)
+      testFail(description)
     }
   }
 
@@ -524,33 +508,19 @@ async function main() {
 
   // ── 12. Final summary ──
 
-  console.log(
-    `\n${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
-  )
-  console.log(`${BOLD}${CYAN}  Final Summary${RESET}`)
-  console.log(
-    `${BOLD}${CYAN}══════════════════════════════════════════════════════${RESET}`
-  )
-  console.log(
-    `  Automated: ${GREEN}${passed} passed${RESET}, ${RED}${failed} failed${RESET}`
-  )
-  console.log(
-    `  Manual:    ${GREEN}${manualPassed.length} passed${RESET}, ${RED}${manualFailed.length} failed${RESET}`
-  )
+  banner('Final Summary')
+  testSummary(passed, failed, 'Automated')
+  testSummary(manualPassed.length, manualFailed.length, 'Manual')
 
   if (failed > 0 || manualFailed.length > 0) {
-    console.log(
-      `\n${RED}${BOLD}Some checks failed. Review the output above.${RESET}\n`
-    )
+    error('Some checks failed. Review the output above.')
     process.exit(1)
   }
 
-  console.log(
-    `\n${GREEN}${BOLD}All checks passed! Production is healthy.${RESET}\n`
-  )
+  success('All checks passed! Production is healthy.')
 }
 
 main().catch((err) => {
-  console.error(`${RED}Fatal error:${RESET}`, err)
+  error(`Fatal error: ${err}`)
   process.exit(1)
 })

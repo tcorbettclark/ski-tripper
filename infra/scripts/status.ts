@@ -1,15 +1,7 @@
-import {
-  $,
-  dispose,
-  getDropletIp,
-  getRootSsh,
-  step,
-  success,
-  warn,
-} from './lib/infra'
+import { $, dispose, getDropletIp, getRootSsh } from './lib/infra'
+import { error, help, info, raw, step, success, warn } from './lib/log'
 
-function printHelp() {
-  console.log(`Usage: bun run infra:status
+const HELP_TEXT = `Usage: bun run infra:status
 
 Checks the status of the production server by connecting via SSH and
 inspecting systemd services, the Caddyfile, and key file paths.
@@ -18,14 +10,12 @@ Options:
   --help, -h    Show this help message
 
 Examples:
-  bun run infra:status`)
-}
+  bun run infra:status`
 
 async function main() {
   const arg = process.argv[2]
   if (arg === '--help' || arg === '-h') {
-    printHelp()
-    process.exit(0)
+    help(HELP_TEXT, 0)
   }
 
   const ip = await getDropletIp()
@@ -48,7 +38,7 @@ async function main() {
     const logs = await root`journalctl -u ski-tripper-pb -n 20 --no-pager`
       .nothrow()
       .text()
-    console.log(logs)
+    raw(logs)
   }
   if (apiStatus === 'active') success(`API Server  ${apiStatus}`)
   else {
@@ -56,7 +46,7 @@ async function main() {
     const logs = await root`journalctl -u ski-tripper-api -n 20 --no-pager`
       .nothrow()
       .text()
-    console.log(logs)
+    raw(logs)
   }
   if (caddyStatus === 'active') success(`Caddy       ${caddyStatus}`)
   else {
@@ -64,7 +54,7 @@ async function main() {
     const logs = await root`journalctl -u caddy -n 20 --no-pager`
       .nothrow()
       .text()
-    console.log(logs)
+    raw(logs)
   }
 
   // Read domains from the Caddyfile on the server
@@ -77,27 +67,27 @@ async function main() {
   const appUrl = appDomain ? `https://${appDomain}` : 'N/A'
   const pbUrl = pbDomain ? `https://${pbDomain}` : 'N/A'
 
-  console.log(`\n  App:        ${appUrl}`)
-  console.log(`  PocketBase: ${pbUrl}`)
-  console.log(`  IP:         ${ip}`)
-  console.log(`\n  Layout:`)
-  console.log(`    Repo:           /home/ski-tripper/ski-tripper/`)
-  console.log(
-    `    Installed app:  /opt/ski-tripper/  (static/, server/serve, pb_migrations/)`
+  info(`App:        ${appUrl}`)
+  info(`PocketBase: ${pbUrl}`)
+  info(`IP:         ${ip}`)
+  step('Layout')
+  info(`Repo:           /home/ski-tripper/ski-tripper/`)
+  info(
+    `Installed app:  /opt/ski-tripper/  (static/, server/serve, pb_migrations/)`
   )
-  console.log(`    App data:       /var/lib/ski-tripper/pb_data/`)
-  console.log(`    Caddyfile:      /etc/caddy/Caddyfile`)
-  console.log(`    Binaries:       /usr/local/bin/{bun,caddy,pocketbase}`)
-  console.log(
-    `    Systemd:        /etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service`
+  info(`App data:       /var/lib/ski-tripper/pb_data/`)
+  info(`Caddyfile:      /etc/caddy/Caddyfile`)
+  info(`Binaries:       /usr/local/bin/{bun,caddy,pocketbase}`)
+  info(
+    `Systemd:        /etc/systemd/system/{ski-tripper-pb,ski-tripper-api,caddy}.service`
   )
-  console.log(
-    `    Env override:   /etc/systemd/system/ski-tripper-api.service.d/override.conf`
+  info(
+    `Env override:   /etc/systemd/system/ski-tripper-api.service.d/override.conf`
   )
-  console.log(`\n  Useful logs (SSH with: doctl compute ssh ski-tripper):`)
-  console.log(`    Caddy:       journalctl -u caddy`)
-  console.log(`    PocketBase:  journalctl -u ski-tripper-pb`)
-  console.log(`    API server:  journalctl -u ski-tripper-api`)
+  step('Useful logs (SSH with: doctl compute ssh ski-tripper)')
+  info(`Caddy:       journalctl -u caddy`)
+  info(`PocketBase:  journalctl -u ski-tripper-pb`)
+  info(`API server:  journalctl -u ski-tripper-api`)
 }
 
 function extractCaddyDomains(caddyfile: string): string[] {
@@ -127,7 +117,7 @@ function extractCaddyDomains(caddyfile: string): string[] {
 
 main()
   .catch((err: unknown) => {
-    console.error('\n✗ Status check failed:', err)
+    error(`Status check failed: ${err}`)
     process.exitCode = 1
   })
   .finally(() => dispose())

@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 import { $, configure, dispose } from '@xec-sh/core'
-import { fail, retrying, step, success, warn } from './log'
+import { fail, retrying, step, success } from './log'
 
 configure({ timeout: 600000 })
 
@@ -23,7 +23,7 @@ export const REPO_DIR = '/home/ski-tripper/ski-tripper'
 export const INSTALL_DIR = '/opt/ski-tripper'
 export const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
 
-export { $, configure, dispose, fail, retrying, step, success, warn }
+export { $, configure, dispose }
 
 const APT_LOCK_PATTERNS = [
   'Could not get lock',
