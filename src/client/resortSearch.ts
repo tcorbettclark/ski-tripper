@@ -1,4 +1,4 @@
-import { browser_get_is_test } from './env'
+import { isBunCLI } from './env'
 import {
   cosineSimilarity,
   lexicalBoost,
@@ -23,7 +23,7 @@ function notifyReady(): void {
   readyListeners.length = 0
 }
 
-const initPromise = browser_get_is_test()
+const initPromise = isBunCLI()
   ? (async () => {
       modelFailed = true
       notifyReady()

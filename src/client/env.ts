@@ -1,5 +1,5 @@
-export function browser_get_is_test(): boolean {
-  return typeof process !== 'undefined' && process.env.NODE_ENV === 'test'
+export function isBunCLI(): boolean {
+  return typeof process !== 'undefined' && !!process.versions?.bun
 }
 
 export function browser_get_pocketbase_url(): string {

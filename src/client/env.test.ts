@@ -1,35 +1,5 @@
-import { afterAll, beforeEach, describe, expect, it } from 'bun:test'
-import {
-  browser_get_api_url,
-  browser_get_is_test,
-  browser_get_pocketbase_url,
-} from './env'
-
-describe('browser_get_is_test', () => {
-  const originalNodeEnv = process.env.NODE_ENV
-
-  beforeEach(() => {
-    delete process.env.NODE_ENV
-  })
-
-  afterAll(() => {
-    process.env.NODE_ENV = originalNodeEnv
-  })
-
-  it('returns true when NODE_ENV is test', () => {
-    process.env.NODE_ENV = 'test'
-    expect(browser_get_is_test()).toBe(true)
-  })
-
-  it('returns false when NODE_ENV is production', () => {
-    process.env.NODE_ENV = 'production'
-    expect(browser_get_is_test()).toBe(false)
-  })
-
-  it('returns false when NODE_ENV is not set', () => {
-    expect(browser_get_is_test()).toBe(false)
-  })
-})
+import { beforeEach, describe, expect, it } from 'bun:test'
+import { browser_get_api_url, browser_get_pocketbase_url } from './env'
 
 describe('browser_get_pocketbase_url', () => {
   beforeEach(() => {
