@@ -76,7 +76,7 @@ Rules:
 - Think concisely: state each insight once, do not repeat or rephrase
 - Do not second-guess conclusions you have already reached
 - When you have enough information to assess each participant, stop thinking and write your analysis
-- Format your response exactly as shown below, with no additional text before or after. If no participant might struggle, write "None" under that heading
+- Format your response exactly as shown below, with no additional text before or after. If no participants fit a section, write "Nobody" under that heading
 
 ## Summary
 1-2 sentence overall assessment.
