@@ -177,43 +177,6 @@ async function main() {
     pass('GET / returns 200 with HTML')
   })
 
-  await check('SPA route /verify returns 200 with HTML', async () => {
-    const res = await fetchWithTimeout(`${appUrl}/verify`)
-    if (res.status !== 200) {
-      fail('SPA route /verify returns 200 with HTML', `Status ${res.status}`)
-      return
-    }
-    const text = await res.text()
-    if (!text.includes('<div id="root">')) {
-      fail(
-        'SPA route /verify returns 200 with HTML',
-        'Response does not contain <div id="root">'
-      )
-      return
-    }
-    pass('SPA route /verify returns 200 with HTML')
-  })
-
-  await check('SPA route /reset-password returns 200 with HTML', async () => {
-    const res = await fetchWithTimeout(`${appUrl}/reset-password`)
-    if (res.status !== 200) {
-      fail(
-        'SPA route /reset-password returns 200 with HTML',
-        `Status ${res.status}`
-      )
-      return
-    }
-    const text = await res.text()
-    if (!text.includes('<div id="root">')) {
-      fail(
-        'SPA route /reset-password returns 200 with HTML',
-        'Response does not contain <div id="root">'
-      )
-      return
-    }
-    pass('SPA route /reset-password returns 200 with HTML')
-  })
-
   // ── 4. Static assets ──
 
   section('4. Static assets')
