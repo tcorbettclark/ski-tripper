@@ -49,9 +49,6 @@ export class AuthPage {
     await this.page.getByTestId('set-password').fill(password)
     await this.page.getByTestId('set-confirm-password').fill(password)
     await this.page.getByTestId('set-password-submit').click()
-    await expect(
-      this.page.getByRole('button', { name: /sign in/i })
-    ).toBeVisible()
   }
 
   async login(user: { email: string; password: string }) {

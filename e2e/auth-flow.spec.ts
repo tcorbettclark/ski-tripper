@@ -25,14 +25,7 @@ test.describe('Auth flow', () => {
     await test.step('set password', async () => {
       await auth.setPassword(user.password)
       await expect(
-        page.getByRole('heading', { name: /sign in/i })
-      ).toBeVisible()
-    })
-
-    await test.step('login with new password', async () => {
-      await auth.login({ email: user.email, password: user.password })
-      await expect(
-        page.getByRole('heading', { name: /welcome/i })
+        page.getByRole('heading', { name: /welcome! set your preferences/i })
       ).toBeVisible()
     })
   })
@@ -73,11 +66,13 @@ test.describe('Auth flow', () => {
 
       await auth.enterOtpCode(user.email)
       await expect(
-        page.getByRole('heading', { name: /set new password/i })
+        page.getByRole('heading', { name: /set your password/i })
       ).toBeVisible()
 
       await auth.setPassword(newPassword)
-      await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible()
+      await expect(
+        page.getByRole('heading', { name: /welcome! set your preferences/i })
+      ).toBeVisible()
     })
   })
 
