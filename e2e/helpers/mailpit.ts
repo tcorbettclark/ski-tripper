@@ -69,14 +69,6 @@ export async function waitForEmail(
   return message!
 }
 
-export function extractLink(html: string): string {
-  const hrefMatch = html.match(/href="([^"]*)"/)
-  if (!hrefMatch) {
-    throw new Error('Could not find href in email HTML')
-  }
-  return hrefMatch[1]
-}
-
 export function extractOtp(html: string): string {
   const strongMatch = html.match(/<strong>(\d+)<\/strong>/)
   if (strongMatch) return strongMatch[1]

@@ -92,7 +92,7 @@ test.describe('Auth flow', () => {
     await test.step('resend code', async () => {
       const resendBtn = page.getByTestId('resend-otp')
       await resendBtn.click()
-      await expect(page.getByText(/verification code resent/i)).toBeVisible()
+      await expect(page.getByRole('alert')).toContainText(/resent/i)
     })
   })
 })

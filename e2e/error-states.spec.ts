@@ -33,7 +33,7 @@ test.describe('Error states and edge cases', () => {
         await page.getByTestId('trip-save').click()
 
         const errorVisible = await page
-          .getByText(/error|failed|couldn't/i)
+          .getByRole('alert')
           .isVisible()
           .catch(() => false)
         if (errorVisible) {
@@ -154,7 +154,7 @@ test.describe('Error states and edge cases', () => {
       .isVisible()
       .catch(() => false)
     if (onLoginPage) {
-      const expiredMessage = page.getByText(/session|expired|sign.*in/i)
+      const expiredMessage = page.getByRole('alert')
       if (await expiredMessage.isVisible().catch(() => false)) {
         await screenshot(page, 'error-states', 'session-expired-message', proj)
       }

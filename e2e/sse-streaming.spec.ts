@@ -74,7 +74,7 @@ test.describe('SSE streaming (LLM responses)', () => {
       await analyseBtn.click()
 
       const errorVisible = await page
-        .getByText(/error|failed|unavailable/i)
+        .getByRole('alert')
         .isVisible()
         .catch(() => false)
       if (errorVisible) {
