@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
+import { beforeEach, describe, expect, it, mock, vi } from 'bun:test'
 import {
   _resetForTesting,
   dismissToast,
+  EXIT_DURATION,
   getToasts,
   subscribe,
   toast,
@@ -67,13 +68,17 @@ describe('toast', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
-  it('dismissToast removes a toast by id', () => {
+  it('dismissToast removes a toast by id after exit animation', () => {
+    vi.useFakeTimers()
     toast('keep', 'info')
     toast('remove', 'error')
     const id = getToasts()[1].id
     dismissToast(id)
+    expect(getToasts().length).toBe(2)
+    vi.advanceTimersByTime(EXIT_DURATION)
     const t = getToasts()
     expect(t.length).toBe(1)
     expect(t[0].message).toBe('keep')
+    vi.useRealTimers()
   })
 })

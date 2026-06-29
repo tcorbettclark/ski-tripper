@@ -2,7 +2,7 @@ import { X } from 'lucide-react'
 import { useSyncExternalStore } from 'react'
 import { colors, fontSizes, fonts } from './theme'
 import type { ToastType } from './toast'
-import { dismissToast, getToasts, subscribe } from './toast'
+import { dismissToast, getToasts, isExiting, subscribe } from './toast'
 
 const TYPE_STYLES: Record<ToastType, { borderLeft: string; bg: string }> = {
   success: {
@@ -28,6 +28,7 @@ export default function ToastContainer() {
     <div style={toastStyles.container} aria-live="polite">
       {toasts.map((t) => {
         const style = TYPE_STYLES[t.type]
+        const exiting = isExiting(t.id)
         return (
           <div
             key={t.id}
@@ -35,6 +36,9 @@ export default function ToastContainer() {
               ...toastStyles.toast,
               borderLeft: style.borderLeft,
               background: style.bg,
+              animation: exiting
+                ? 'toast-slide-out 0.5s ease-in forwards'
+                : 'toast-slide-in 0.5s ease-out',
             }}
             role="alert"
           >
@@ -77,7 +81,6 @@ const toastStyles = {
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
     color: colors.textPrimary,
-    animation: 'toast-slide-in 0.25s ease-out',
   },
   message: {
     flex: 1,

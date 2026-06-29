@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, it } from 'bun:test'
+import { beforeEach, describe, expect, it, vi } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import ToastContainer from './ToastContainer'
-import { _resetForTesting, toast } from './toast'
+import { _resetForTesting, EXIT_DURATION, toast } from './toast'
 
 beforeEach(() => {
   _resetForTesting()
@@ -39,13 +39,27 @@ describe('ToastContainer', () => {
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeTruthy()
   })
 
-  it('dismisses a toast when the dismiss button is clicked', () => {
+  it('keeps toast visible during exit animation after dismiss', () => {
     render(<ToastContainer />)
     act(() => {
       toast('dismiss me', 'info')
     })
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+    expect(screen.getByText('dismiss me')).toBeTruthy()
+  })
+
+  it('removes toast after exit animation completes', () => {
+    vi.useFakeTimers()
+    render(<ToastContainer />)
+    act(() => {
+      toast('dismiss me', 'info')
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+    act(() => {
+      vi.advanceTimersByTime(EXIT_DURATION)
+    })
     expect(screen.queryByText('dismiss me')).toBeNull()
+    vi.useRealTimers()
   })
 
   it('sets role=alert on toasts', () => {
