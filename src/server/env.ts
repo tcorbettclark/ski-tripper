@@ -42,6 +42,7 @@ const OLLAMA_MODEL_DEFAULTS = {
   OLLAMA_MODEL_AUDIT: 'kimi-k2.6',
   OLLAMA_MODEL_ANALYSIS: 'kimi-k2.6',
   OLLAMA_MODEL_PREFERENCE_SEARCH: 'minimax-m3',
+  OLLAMA_MODEL_HEALTH_CHECK: 'deepseek-v4-flash',
 } as const
 
 function serverGetOllamaModel(
@@ -58,6 +59,8 @@ export const server_get_ollama_model_analysis = () =>
   serverGetOllamaModel('OLLAMA_MODEL_ANALYSIS')
 export const server_get_ollama_model_preference_search = () =>
   serverGetOllamaModel('OLLAMA_MODEL_PREFERENCE_SEARCH')
+export const server_get_ollama_model_health_check = () =>
+  serverGetOllamaModel('OLLAMA_MODEL_HEALTH_CHECK')
 
 export function server_get_ollama_api_key(): string {
   return serverRequire('OLLAMA_API_KEY')

@@ -1,5 +1,6 @@
 import { server_get_server_hostname, server_get_server_port } from './env'
 import { handleAnalyseProposal } from './handlers/analyse-proposal'
+import { handleHealthCheck } from './handlers/health-check'
 import { handlePreferenceSearch } from './handlers/preference-search'
 import { handleSetPassword } from './handlers/set-password'
 
@@ -16,6 +17,10 @@ function main() {
 
       if (url.pathname === '/api/analyse-proposal') {
         return handleAnalyseProposal(req)
+      }
+
+      if (url.pathname === '/api/health-check') {
+        return handleHealthCheck(req)
       }
 
       if (url.pathname === '/api/preference-search') {

@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import PocketBase from 'pocketbase'
 import {
   BOLD,
   banner,
@@ -458,7 +459,131 @@ async function main() {
     pass('API rejects GET on POST-only endpoints (405)')
   })
 
-  // ── 10. Summary ──
+  // ── 10. Ollama health check ──
+
+  section('10. Ollama health check')
+
+  const adminEmail = requireEnv('POCKETBASE_ADMIN_EMAIL')
+  const adminPassword = requireEnv('POCKETBASE_ADMIN_PASSWORD')
+
+  const testUserEmail = `smoke-test-${Date.now()}@test.local`
+  const testUserPassword = `Sm0ke!Test${Date.now()}`
+  let testUserId = ''
+  let userAuthToken = ''
+
+  try {
+    await check('Ollama health check — create temporary user', async () => {
+      const pb = new PocketBase(pbExternalUrl)
+      await pb
+        .collection('_superusers')
+        .authWithPassword(adminEmail, adminPassword)
+      const user = await pb.collection('users').create({
+        email: testUserEmail,
+        password: testUserPassword,
+        passwordConfirm: testUserPassword,
+        name: 'Smoke Test',
+        verified: true,
+      })
+      testUserId = user.id
+      pb.authStore.clear()
+      const authResult = await pb
+        .collection('users')
+        .authWithPassword(testUserEmail, testUserPassword)
+      userAuthToken = authResult.token
+      pb.authStore.clear()
+      pass('Ollama health check — temporary user created')
+    })
+
+    await check('Ollama health check — LLM streams a response', async () => {
+      const res = await fetchWithTimeout(`${appUrl}/api/health-check`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${userAuthToken}`,
+        },
+        timeout: 60000,
+      })
+
+      if (res.status !== 200) {
+        const body = await res.text()
+        fail(
+          'Ollama health check — LLM streams a response',
+          `Expected 200, got ${res.status}: ${body}`
+        )
+        return
+      }
+
+      const contentType = res.headers.get('content-type') || ''
+      if (!contentType.includes('text/event-stream')) {
+        fail(
+          'Ollama health check — LLM streams a response',
+          `Expected text/event-stream, got ${contentType}`
+        )
+        return
+      }
+
+      const text = await res.text()
+      let gotContent = false
+      let gotDone = false
+      let gotError = false
+      let errorMessage = ''
+
+      for (const line of text.split('\n')) {
+        if (line.startsWith('event: content')) {
+          gotContent = true
+        } else if (line.startsWith('event: done')) {
+          gotDone = true
+        } else if (line.startsWith('event: error')) {
+          gotError = true
+        } else if (line.startsWith('data: ') && gotError) {
+          errorMessage = line.slice(6)
+        }
+      }
+
+      if (gotError) {
+        fail(
+          'Ollama health check — LLM streams a response',
+          `LLM returned error: ${errorMessage}`
+        )
+        return
+      }
+
+      if (!gotContent) {
+        fail(
+          'Ollama health check — LLM streams a response',
+          'No content events received from LLM'
+        )
+        return
+      }
+
+      if (!gotDone) {
+        fail(
+          'Ollama health check — LLM streams a response',
+          'No done event received from LLM'
+        )
+        return
+      }
+
+      pass('Ollama health check — LLM streams a response')
+    })
+  } finally {
+    if (testUserId) {
+      try {
+        const pb = new PocketBase(pbExternalUrl)
+        await pb
+          .collection('_superusers')
+          .authWithPassword(adminEmail, adminPassword)
+        await pb.collection('users').delete(testUserId)
+        pb.authStore.clear()
+        info('Ollama health check — temporary user cleaned up')
+      } catch (err) {
+        error(
+          `Ollama health check — failed to clean up temporary user: ${err instanceof Error ? err.message : String(err)}`
+        )
+      }
+    }
+  }
+
+  // ── 11. Summary ──
 
   banner('Automated Test Summary')
   testSummary(passed, failed)
@@ -468,7 +593,7 @@ async function main() {
     process.exit(1)
   }
 
-  // ── 11. Manual checks ──
+  // ── 12. Manual checks ──
 
   banner('Manual Checks')
 
@@ -501,12 +626,7 @@ async function main() {
     `Sign up at ${appUrl} — a verification email should arrive (SMTP via Resend). Then verify and log in.`
   )
 
-  await manualCheck(
-    'AI analysis works (Ollama API key)',
-    'Create a trip and proposal, then trigger AI analysis. The LLM should stream a response. This verifies the OLLAMA_API_KEY is valid.'
-  )
-
-  // ── 12. Final summary ──
+  // ── 13. Final summary ──
 
   banner('Final Summary')
   testSummary(passed, failed, 'Automated')
