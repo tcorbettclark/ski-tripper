@@ -361,7 +361,7 @@ export default function App({
             email={otpEmail}
             otpId={otpId}
             onSuccess={handleOtpSuccess}
-            onBack={() => setPage('login')}
+            onBack={handleLogout}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
@@ -377,7 +377,7 @@ export default function App({
             email={otpEmail}
             otpId={otpId}
             onSuccess={handleOtpSuccess}
-            onBack={() => setPage('login')}
+            onBack={handleLogout}
           />
           <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
           <AboutModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
@@ -390,7 +390,7 @@ export default function App({
         <main>
           {aboutButton}
           <ForgotPasswordForm
-            onBackToLogin={() => setPage('login')}
+            onBackToLogin={handleLogout}
             onOtpRequested={(newOtpId, email) => {
               setOtpId(newOtpId)
               setOtpEmail(email)
@@ -431,6 +431,7 @@ export default function App({
         <SetPasswordForm
           email={user.email}
           onSuccess={() => setNeedsPassword(false)}
+          onSignOut={handleLogout}
         />
         <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
       </main>
@@ -492,6 +493,7 @@ export default function App({
               setView('tripList')
               setSelectedTripId(null)
             }}
+            onSignOut={handleLogout}
             createPreferences={createPreferences}
           />
         </div>

@@ -12,6 +12,7 @@ import { getErrorMessage } from './utils'
 interface SetPasswordFormProps {
   email: string
   onSuccess: () => void
+  onSignOut?: () => void
   setUserPassword?: (password: string, passwordConfirm: string) => Promise<void>
   reauthenticate?: (
     email: string,
@@ -22,6 +23,7 @@ interface SetPasswordFormProps {
 export default function SetPasswordForm({
   email,
   onSuccess,
+  onSignOut,
   setUserPassword = _setUserPassword,
   reauthenticate = _reauthenticate,
 }: SetPasswordFormProps) {
@@ -130,6 +132,18 @@ export default function SetPasswordForm({
           >
             {loading ? 'Saving…' : 'Set password'}
           </button>
+          {onSignOut && (
+            <p style={authStyles.switchText}>
+              <button
+                type="button"
+                onClick={onSignOut}
+                style={authStyles.switchLink}
+                data-testid="sign-out"
+              >
+                Sign out
+              </button>
+            </p>
+          )}
         </form>
       </div>
     </div>

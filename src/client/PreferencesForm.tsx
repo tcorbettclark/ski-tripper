@@ -38,6 +38,7 @@ interface PreferencesFormProps {
   onSaved: (preferences: Preferences) => void
   onNameUpdated?: () => void
   onCancel?: () => void
+  onSignOut?: () => void
   createPreferences?: (
     userId: string,
     data: Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>
@@ -58,6 +59,7 @@ export default function PreferencesForm({
   onSaved,
   onNameUpdated,
   onCancel,
+  onSignOut,
   createPreferences = _createPreferences,
   updatePreferences = _updatePreferences,
   updateName: _updateName,
@@ -335,6 +337,16 @@ export default function PreferencesForm({
               style={formStyles.cancelButton}
             >
               Cancel
+            </button>
+          )}
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              style={formStyles.cancelButton}
+              data-testid="sign-out"
+            >
+              Sign out
             </button>
           )}
         </div>

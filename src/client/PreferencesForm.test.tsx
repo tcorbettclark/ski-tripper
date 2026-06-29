@@ -249,6 +249,43 @@ describe('PreferencesForm', () => {
     expect(screen.getByRole('button', { name: /cancel/i })).toBeDefined()
   })
 
+  it('shows sign out button when onSignOut is provided', async () => {
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          onSaved={mock(() => {})}
+          onSignOut={mock(() => {})}
+        />
+      )
+    })
+    expect(screen.getByTestId('sign-out')).toBeDefined()
+  })
+
+  it('does not show sign out button when onSignOut is not provided', async () => {
+    await act(async () => {
+      render(<PreferencesForm userId="user-1" onSaved={mock(() => {})} />)
+    })
+    expect(screen.queryByTestId('sign-out')).toBeNull()
+  })
+
+  it('calls onSignOut when sign out is clicked', async () => {
+    const ue = userEvent.setup()
+    const handleSignOut = mock(() => {})
+    await act(async () => {
+      render(
+        <PreferencesForm
+          userId="user-1"
+          onSaved={mock(() => {})}
+          onSignOut={handleSignOut}
+        />
+      )
+    })
+
+    await ue.click(screen.getByRole('button', { name: /sign out/i }))
+    expect(handleSignOut).toHaveBeenCalledTimes(1)
+  })
+
   it('renders name field when updateName is provided', async () => {
     await act(async () => {
       render(

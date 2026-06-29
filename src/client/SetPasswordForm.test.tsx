@@ -251,4 +251,23 @@ describe('SetPasswordForm', () => {
       ).disabled
     ).toBe(true)
   })
+
+  it('renders sign out button when onSignOut is provided', () => {
+    renderSetPasswordForm({ onSignOut: noop })
+    expect(screen.getByTestId('sign-out')).toBeDefined()
+  })
+
+  it('does not render sign out button when onSignOut is not provided', () => {
+    renderSetPasswordForm()
+    expect(screen.queryByTestId('sign-out')).toBeNull()
+  })
+
+  it('calls onSignOut when sign out is clicked', async () => {
+    const user = userEvent.setup()
+    const handleSignOut = mock(() => {})
+    renderSetPasswordForm({ onSignOut: handleSignOut })
+
+    await user.click(screen.getByRole('button', { name: /sign out/i }))
+    expect(handleSignOut).toHaveBeenCalledTimes(1)
+  })
 })
