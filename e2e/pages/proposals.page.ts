@@ -37,26 +37,16 @@ export class ProposalsPage {
   }
 
   async selectFutureDates() {
-    const now = new Date()
-    const startDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 5
-    )
-    const endDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 8
-    )
-
-    const startStr = startDate.toISOString().split('T')[0]
-    const endStr = endDate.toISOString().split('T')[0]
-
     const dateField = this.page.getByTestId('date-range-field')
-    await dateField
-      .locator(`[data-day="${startStr}"]:not([data-hidden])`)
-      .click()
-    await dateField.locator(`[data-day="${endStr}"]:not([data-hidden])`).click()
+
+    await dateField.getByRole('button', { name: /next month/i }).click()
+
+    const visibleDays = dateField.locator(
+      '[data-day]:not([data-hidden]):not([data-disabled])'
+    )
+    await expect(visibleDays.first()).toBeVisible()
+    await visibleDays.nth(0).click()
+    await visibleDays.nth(6).click()
   }
 
   async fillResortProposal(data: {
