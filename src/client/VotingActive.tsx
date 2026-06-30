@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { Poll, Proposal, Vote } from '../shared/types.d'
 import { upsertVote as _upsertVote } from './backend'
 import ProposalRow from './ProposalRow'
-import { borders, colors, fontSizes, fonts } from './theme'
+import { colors, fontSizes, fonts } from './theme'
 import { toast } from './toast'
 import { getErrorMessage } from './utils'
 
@@ -151,7 +151,7 @@ export default function VotingActive({
             </span>
           ))}
           <span style={styles.footerText}>
-            {remaining} of {maxTokens} tokens remaining
+            {remaining} of {maxTokens} available
           </span>
         </div>
         <button
@@ -181,10 +181,10 @@ const styles = {
   },
   footer: {
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    gap: '16px',
     paddingTop: '14px',
-    borderTop: borders.subtle,
   },
   tokenBar: {
     display: 'flex',

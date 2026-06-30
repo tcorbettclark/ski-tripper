@@ -74,6 +74,7 @@ export default function Voting({
   const [closingPoll, setClosingPoll] = useState(false)
   const [outcomeText, setOutcomeText] = useState('')
   const [showOutcomeForm, setShowOutcomeForm] = useState(false)
+  const [resultsExpanded, setResultsExpanded] = useState(false)
   const [countdown, setCountdown] = useState<string | null>(null)
   const mountedRef = useRef(true)
 
@@ -284,12 +285,31 @@ export default function Voting({
                 upsertVote={upsertVote}
               />
               <div style={styles.activeResultsSection}>
-                <h2 style={styles.activeResultsHeading}>Votes so far</h2>
-                <VotingResults
-                  poll={activePoll}
-                  proposals={proposals}
-                  votes={votes}
-                />
+                <button
+                  type="button"
+                  onClick={() => setResultsExpanded((prev) => !prev)}
+                  style={styles.activeResultsToggle}
+                  aria-expanded={resultsExpanded}
+                >
+                  <span style={styles.activeResultsHeading}>Votes so far</span>
+                  <div style={styles.activeResultsRight}>
+                    <span style={styles.voterCount}>
+                      {votes.length === 1
+                        ? '1 voter'
+                        : `${votes.length} voters`}
+                    </span>
+                    <span style={styles.chevron}>
+                      {resultsExpanded ? '▾' : '▸'}
+                    </span>
+                  </div>
+                </button>
+                {resultsExpanded && (
+                  <VotingResults
+                    poll={activePoll}
+                    proposals={proposals}
+                    votes={votes}
+                  />
+                )}
               </div>
             </div>
           ) : isCoordinator && hasSubmittedProposals ? (
@@ -499,12 +519,42 @@ const styles = {
     paddingTop: '20px',
     borderTop: borders.subtle,
   },
-  activeResultsHeading: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes.md,
+  activeResultsToggle: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    padding: '0',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
     fontWeight: '600',
     color: colors.textSecondary,
     margin: '0 0 12px',
+  },
+  activeResultsHeading: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase' as const,
+  },
+  chevron: {
+    fontSize: fontSizes.md,
+    color: colors.textSecondary,
+  },
+  activeResultsRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+  voterCount: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.textSecondary,
   },
   createSection: {
     marginBottom: '24px',
