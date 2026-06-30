@@ -190,6 +190,7 @@ export default function ProposalCard({
     setSubmitting(true)
     try {
       const result = await submitProposal(proposal.id, userId)
+      toast(`Submitted "${proposal.resortName}"`, 'success')
       onSubmitted(result)
     } catch (err) {
       toast(getErrorMessage(err), 'error')
@@ -202,6 +203,7 @@ export default function ProposalCard({
     setRejecting(true)
     try {
       const result = await rejectProposal(proposal.id, userId)
+      toast(`Rejected "${proposal.resortName}"`, 'success')
       onRejected(result)
     } catch (err) {
       toast(getErrorMessage(err), 'error')
@@ -214,6 +216,7 @@ export default function ProposalCard({
     setReverting(true)
     try {
       const result = await revertProposalToDraft(proposal.id, userId)
+      toast(`Moved "${proposal.resortName}" back to draft`, 'success')
       onRevertedToDraft(result)
     } catch (err) {
       toast(getErrorMessage(err), 'error')
