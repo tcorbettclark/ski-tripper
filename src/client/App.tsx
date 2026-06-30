@@ -29,7 +29,6 @@ import Header from './Header'
 import LandingSeoContent from './LandingSeoContent'
 import OtpCodeEntry from './OtpCodeEntry'
 import Overview from './Overview'
-import Poll from './Poll'
 import PreferencesForm from './PreferencesForm'
 import PreferencesModal from './PreferencesModal'
 import Proposals from './Proposals'
@@ -43,6 +42,7 @@ import { toast } from './toast'
 import useAuth from './useAuth'
 import useIsSmallScreen from './useIsSmallScreen'
 import { getErrorMessage } from './utils'
+import Voting from './Voting'
 
 interface ListTripsResult {
   trips: Trip[]
@@ -114,7 +114,7 @@ function mapUser(record: Record<string, unknown>): User {
   }
 }
 
-type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'poll'
+type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'voting'
 
 type ProposalDetail = {
   proposalId: string
@@ -594,13 +594,12 @@ export default function App({
               />
             </ErrorBoundary>
           )}
-          {tripDetailTab === 'poll' && (
+          {tripDetailTab === 'voting' && (
             <ErrorBoundary>
-              <Poll
+              <Voting
                 user={user}
                 tripId={selectedTripId}
                 onActivePollChange={handleActivePollChange}
-                onAuthError={onAuthError}
               />
             </ErrorBoundary>
           )}

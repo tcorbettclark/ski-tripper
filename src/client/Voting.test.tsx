@@ -8,9 +8,9 @@ import {
   waitFor,
 } from '@testing-library/react'
 import type { User } from '../shared/types.d'
-import Poll from './Poll'
 import { getToasts } from './toast'
 import { dayjs } from './utils'
+import Voting from './Voting'
 
 const TEST_IDS = {
   USER: 'user-1',
@@ -61,6 +61,7 @@ function createMockVote(overrides: Record<string, unknown> = {}) {
     id: TEST_IDS.VOTE_1,
     poll: TEST_IDS.POLL_OPEN,
     voter: TEST_IDS.USER,
+    voterUserName: TEST_IDS.USER_NAME,
     proposalIds: [TEST_IDS.PROPOSAL_1],
     tokenCounts: [5],
     ...overrides,
@@ -90,7 +91,6 @@ function createMockCallbacks(
     getCoordinatorParticipant: mock(() =>
       Promise.resolve({ participants: [] })
     ),
-    listAccommodations: mock(() => Promise.resolve([])),
     ...overrides,
   }
 }
@@ -107,10 +107,10 @@ function createNonCoordinatorMock() {
   return mock(() => Promise.resolve({ participants: [] }))
 }
 
-function renderPoll(overrides: any = {}) {
+function renderVoting(overrides: any = {}) {
   const callbacks = createMockCallbacks(overrides)
   const result = render(
-    <Poll
+    <Voting
       user={MOCK_USER}
       tripId={TEST_IDS.TRIP}
       {...callbacks}
@@ -120,35 +120,24 @@ function renderPoll(overrides: any = {}) {
   return { ...result, ...callbacks }
 }
 
-describe('Poll', () => {
+describe('Voting', () => {
   afterEach(() => {
     cleanup()
   })
 
   describe('loading states', () => {
-    it('renders heading while fetching data', async () => {
-      let resolvePolls: (value: { polls: [] }) => void
-      const listPolls = mock(
-        () =>
-          new Promise<{ polls: [] }>((resolve) => {
-            resolvePolls = resolve
-          })
-      )
-
+    it('renders heading after data loads', async () => {
       await act(async () => {
-        renderPoll({ listPolls })
+        renderVoting()
       })
-
-      expect(screen.getByRole('heading', { name: /voting/i }))
-
-      await act(async () => {
-        resolvePolls?.({ polls: [] })
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: /voting/i }))
       })
     })
 
     it('removes loading state after data is fetched', async () => {
       await act(async () => {
-        renderPoll()
+        renderVoting()
       })
       await waitFor(() => {
         expect(screen.queryByText(/Loading…/i)).toBeNull()
@@ -156,34 +145,34 @@ describe('Poll', () => {
     })
   })
 
-  describe('poll creation', () => {
-    it('shows Create Poll button when coordinator with SUBMITTED proposals and no active poll', async () => {
+  describe('voting creation', () => {
+    it('shows Start Voting button when coordinator with SUBMITTED proposals and no active poll', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /create poll/i }))
+        expect(screen.getByRole('button', { name: /start voting/i }))
       })
     })
 
-    it('does not show Create Poll button when not coordinator', async () => {
+    it('does not show Start Voting button when not coordinator', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           getCoordinatorParticipant: createNonCoordinatorMock(),
         })
       })
       await waitFor(() => {
         expect(
-          screen.queryByRole('button', { name: /create poll/i })
+          screen.queryByRole('button', { name: /start voting/i })
         ).toBeNull()
       })
     })
 
-    it('does not show Create Poll button when there are no SUBMITTED proposals', async () => {
+    it('does not show Start Voting button when there are no SUBMITTED proposals', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           getCoordinatorParticipant: createCoordinatorMock(),
           listProposals: mock(() =>
             Promise.resolve({
@@ -194,41 +183,41 @@ describe('Poll', () => {
       })
       await waitFor(() => {
         expect(
-          screen.queryByRole('button', { name: /create poll/i })
+          screen.queryByRole('button', { name: /start voting/i })
         ).toBeNull()
       })
     })
 
-    it('does not show Create Poll button when an OPEN poll already exists', async () => {
+    it('does not show Start Voting button when an OPEN poll already exists', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
         expect(
-          screen.queryByRole('button', { name: /create poll/i })
+          screen.queryByRole('button', { name: /start voting/i })
         ).toBeNull()
       })
     })
 
-    it('calls createPoll when Create Poll button is clicked', async () => {
+    it('calls createPoll when Start Voting button is clicked', async () => {
       const createPoll = mock(() => Promise.resolve(createMockPoll()))
       const onActivePollChange = mock(() => {})
       await act(async () => {
-        renderPoll({
+        renderVoting({
           createPoll,
           onActivePollChange,
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /create poll/i }))
+        expect(screen.getByRole('button', { name: /start voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /start voting/i }))
       })
 
       await waitFor(() => {
@@ -253,17 +242,17 @@ describe('Poll', () => {
       )
 
       await act(async () => {
-        renderPoll({
+        renderVoting({
           createPoll,
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /create poll/i }))
+        expect(screen.getByRole('button', { name: /start voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /start voting/i }))
       })
 
       expect(
@@ -278,14 +267,14 @@ describe('Poll', () => {
   })
 
   describe('active poll display', () => {
-    it('shows active poll panel when an OPEN poll exists', async () => {
+    it('shows OPEN status when an OPEN poll exists', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Active Poll/i))
+        expect(screen.getByText(/OPEN/i))
       })
     })
 
@@ -294,7 +283,7 @@ describe('Poll', () => {
         Promise.resolve({ votes: [createMockVote()] })
       )
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           listVotes,
         })
@@ -309,7 +298,7 @@ describe('Poll', () => {
 
     it('displays "Votes so far" section when poll is open', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           listVotes: mock(() => Promise.resolve({ votes: [createMockVote()] })),
         })
@@ -321,43 +310,45 @@ describe('Poll', () => {
   })
 
   describe('poll closing', () => {
-    it('shows Close Poll button for coordinator when poll is OPEN', async () => {
+    it('shows Close Voting button for coordinator when poll is OPEN', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
     })
 
-    it('does not show Close Poll button for non-coordinator', async () => {
+    it('does not show Close Voting button for non-coordinator', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createNonCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.queryByRole('button', { name: /close poll/i })).toBeNull()
+        expect(
+          screen.queryByRole('button', { name: /close voting/i })
+        ).toBeNull()
       })
     })
 
-    it('shows outcome form when Close Poll is clicked', async () => {
+    it('shows outcome form when Close Voting is clicked', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /close voting/i }))
       })
 
       expect(screen.getByLabelText(/outcome/i)).toBeTruthy()
@@ -379,7 +370,7 @@ describe('Poll', () => {
       )
       const onActivePollChange = mock(() => {})
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
           closePoll,
@@ -387,11 +378,11 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
@@ -417,17 +408,17 @@ describe('Poll', () => {
 
     it('disables Confirm Close when outcome is empty', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /close voting/i }))
       })
 
       expect(
@@ -441,17 +432,17 @@ describe('Poll', () => {
 
     it('hides outcome form on Cancel', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /close voting/i }))
       })
 
       expect(screen.getByLabelText(/outcome/i)).toBeTruthy()
@@ -461,10 +452,10 @@ describe('Poll', () => {
       })
 
       expect(screen.queryByLabelText(/outcome/i)).toBeNull()
-      expect(screen.getByRole('button', { name: /close poll/i })).toBeTruthy()
+      expect(screen.getByRole('button', { name: /close voting/i })).toBeTruthy()
     })
 
-    it('moves closed poll to past polls section', async () => {
+    it('moves closed poll to past votings section', async () => {
       const closedPoll = createMockPoll({
         id: TEST_IDS.POLL_CLOSED,
         state: 'CLOSED',
@@ -472,18 +463,18 @@ describe('Poll', () => {
       })
       const closePoll = mock(() => Promise.resolve(closedPoll))
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
           closePoll,
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
@@ -497,7 +488,7 @@ describe('Poll', () => {
       })
 
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i))
+        expect(screen.getByText(/Past Voting Rounds/i))
       })
     })
 
@@ -511,18 +502,18 @@ describe('Poll', () => {
       )
 
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
           closePoll,
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
@@ -552,10 +543,10 @@ describe('Poll', () => {
     })
   })
 
-  describe('past polls', () => {
-    it('shows past polls section when closed polls exist', async () => {
+  describe('past voting rounds', () => {
+    it('shows Past Voting Rounds section when closed polls exist', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() =>
             Promise.resolve({
               polls: [
@@ -566,13 +557,13 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i))
+        expect(screen.getByText(/Past Voting Rounds/i))
       })
     })
 
-    it('shows past poll expanded by default with dates', async () => {
+    it('shows past voting rounds collapsed by default with CLOSED status', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() =>
             Promise.resolve({
               polls: [
@@ -580,62 +571,11 @@ describe('Poll', () => {
               ],
             })
           ),
-          listVotes: mock(() => Promise.resolve({ votes: [createMockVote()] })),
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i))
-        expect(screen.getByText(/Poll · CLOSED/i))
-        expect(screen.getByText(/29 Mar 2026/i))
-        expect(screen.getByText(/04 Apr 2026/i))
-        expect(screen.getByText(/1 vote/i))
-      })
-    })
-
-    it('fetches votes on mount for past poll', async () => {
-      const listVotes = mock(() =>
-        Promise.resolve({
-          votes: [createMockVote({ poll: TEST_IDS.POLL_CLOSED })],
-        })
-      )
-      await act(async () => {
-        renderPoll({
-          listPolls: mock(() =>
-            Promise.resolve({
-              polls: [
-                createMockPoll({ id: TEST_IDS.POLL_CLOSED, state: 'CLOSED' }),
-              ],
-            })
-          ),
-          listVotes,
-        })
-      })
-      await waitFor(() => {
-        expect(listVotes).toHaveBeenCalledWith(
-          TEST_IDS.POLL_CLOSED,
-          TEST_IDS.USER
-        )
-      })
-    })
-
-    it('displays multiple past polls expanded by default', async () => {
-      const listVotes = mock(() => Promise.resolve({ votes: [] }))
-      await act(async () => {
-        renderPoll({
-          listPolls: mock(() =>
-            Promise.resolve({
-              polls: [
-                createMockPoll({ id: 'poll-closed-1', state: 'CLOSED' }),
-                createMockPoll({ id: 'poll-closed-2', state: 'CLOSED' }),
-              ],
-            })
-          ),
-          listVotes,
-        })
-      })
-      await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i))
-        expect(screen.getAllByText(/Poll · CLOSED/i)).toHaveLength(2)
+        expect(screen.getByText(/Past Voting Rounds/i))
+        expect(screen.getByText(/Voting · CLOSED/i))
       })
     })
   })
@@ -644,7 +584,7 @@ describe('Poll', () => {
     it('calls listPolls with correct tripId and userId', async () => {
       const listPolls = mock(() => Promise.resolve({ polls: [] }))
       await act(async () => {
-        renderPoll({ listPolls })
+        renderVoting({ listPolls })
       })
       await waitFor(() => {
         expect(listPolls).toHaveBeenCalledWith(TEST_IDS.TRIP, TEST_IDS.USER)
@@ -654,7 +594,7 @@ describe('Poll', () => {
     it('calls listProposals with correct tripId and userId', async () => {
       const listProposals = mock(() => Promise.resolve({ proposals: [] }))
       await act(async () => {
-        renderPoll({ listProposals })
+        renderVoting({ listProposals })
       })
       await waitFor(() => {
         expect(listProposals).toHaveBeenCalledWith(TEST_IDS.TRIP, TEST_IDS.USER)
@@ -666,43 +606,10 @@ describe('Poll', () => {
         Promise.resolve({ participants: [] })
       )
       await act(async () => {
-        renderPoll({ getCoordinatorParticipant })
+        renderVoting({ getCoordinatorParticipant })
       })
       await waitFor(() => {
         expect(getCoordinatorParticipant).toHaveBeenCalledWith(TEST_IDS.TRIP)
-      })
-    })
-
-    it('refetches data when tripId changes', async () => {
-      const listPolls = mock(() => Promise.resolve({ polls: [] }))
-      const { rerender } = await act(async () => {
-        return renderPoll({ listPolls, tripId: 'trip-1' })
-      })
-      await waitFor(() => {
-        expect(listPolls).toHaveBeenCalledWith('trip-1', TEST_IDS.USER)
-      })
-
-      listPolls.mockClear()
-
-      const fresh = createMockCallbacks()
-      await act(async () => {
-        rerender(
-          <Poll
-            user={MOCK_USER}
-            tripId="trip-2"
-            listPolls={listPolls as any}
-            listProposals={fresh.listProposals as any}
-            listVotes={fresh.listVotes as any}
-            createPoll={fresh.createPoll as any}
-            closePoll={fresh.closePoll as any}
-            upsertVote={fresh.upsertVote as any}
-            getCoordinatorParticipant={fresh.getCoordinatorParticipant as any}
-          />
-        )
-      })
-
-      await waitFor(() => {
-        expect(listPolls).toHaveBeenCalledWith('trip-2', TEST_IDS.USER)
       })
     })
   })
@@ -710,7 +617,7 @@ describe('Poll', () => {
   describe('error handling', () => {
     it('displays error message when listPolls fails', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.reject(new Error('Network error'))),
         })
       })
@@ -725,7 +632,7 @@ describe('Poll', () => {
 
     it('displays error message when listProposals fails', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listProposals: mock(() =>
             Promise.reject(new Error('Failed to load proposals'))
           ),
@@ -745,38 +652,18 @@ describe('Poll', () => {
   describe('edge cases', () => {
     it('handles empty proposals array', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listProposals: mock(() => Promise.resolve({ proposals: [] })),
         })
       })
       await waitFor(() => {
-        expect(screen.queryByText(/Loading poll/i)).toBeNull()
-      })
-    })
-
-    it('handles multiple past polls', async () => {
-      await act(async () => {
-        renderPoll({
-          listPolls: mock(() =>
-            Promise.resolve({
-              polls: [
-                createMockPoll({ id: 'poll-closed-1', state: 'CLOSED' }),
-                createMockPoll({ id: 'poll-closed-2', state: 'CLOSED' }),
-              ],
-            })
-          ),
-          listVotes: mock(() => Promise.resolve({ votes: [] })),
-        })
-      })
-      await waitFor(() => {
-        expect(screen.getByText(/Past Polls/i))
-        expect(screen.getAllByText(/Poll · CLOSED/i)).toHaveLength(2)
+        expect(screen.queryByText(/Loading/i)).toBeNull()
       })
     })
 
     it('only considers SUBMITTED proposals for poll creation eligibility', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           getCoordinatorParticipant: createCoordinatorMock(),
           listProposals: mock(() =>
             Promise.resolve({
@@ -790,7 +677,7 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /create poll/i }))
+        expect(screen.getByRole('button', { name: /start voting/i }))
       })
     })
 
@@ -799,17 +686,17 @@ describe('Poll', () => {
         Promise.reject(new Error('Create poll failed'))
       )
       await act(async () => {
-        renderPoll({
+        renderVoting({
           createPoll,
           getCoordinatorParticipant: createCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /create poll/i }))
+        expect(screen.getByRole('button', { name: /start voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /create poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /start voting/i }))
       })
 
       await waitFor(() => {
@@ -823,19 +710,19 @@ describe('Poll', () => {
 
     it('shows empty state for non-coordinator when no active poll', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           getCoordinatorParticipant: createNonCoordinatorMock(),
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/No open poll yet/i))
-        expect(screen.getByText(/coordinator will create one when ready/i))
+        expect(screen.getByText(/No open voting yet/i))
+        expect(screen.getByText(/coordinator will start one when ready/i))
       })
     })
 
     it('shows empty state for coordinator without submitted proposals', async () => {
       await act(async () => {
-        renderPoll({
+        renderVoting({
           getCoordinatorParticipant: createCoordinatorMock(),
           listProposals: mock(() =>
             Promise.resolve({
@@ -845,8 +732,8 @@ describe('Poll', () => {
         })
       })
       await waitFor(() => {
-        expect(screen.getByText(/No open poll/i))
-        expect(screen.getByText(/Submit proposals to enable poll creation/i))
+        expect(screen.getByText(/No open voting/i))
+        expect(screen.getByText(/Submit proposals to enable voting/i))
       })
     })
 
@@ -855,18 +742,18 @@ describe('Poll', () => {
         Promise.reject(new Error('Close poll failed'))
       )
       await act(async () => {
-        renderPoll({
+        renderVoting({
           listPolls: mock(() => Promise.resolve({ polls: [createMockPoll()] })),
           getCoordinatorParticipant: createCoordinatorMock(),
           closePoll,
         })
       })
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /close poll/i }))
+        expect(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /close poll/i }))
+        fireEvent.click(screen.getByRole('button', { name: /close voting/i }))
       })
 
       await act(async () => {

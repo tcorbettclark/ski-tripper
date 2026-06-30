@@ -75,14 +75,14 @@ describe('NextActions', () => {
     await act(async () => {
       renderNextActions({ submittedCount: 2, isCoordinator: true })
     })
-    expect(screen.getByText(/create a poll from 2 proposals/i))
+    expect(screen.getByText(/Start voting from 2 proposals/i))
   })
 
   it('does not show create poll for non-coordinator', async () => {
     await act(async () => {
       renderNextActions({ submittedCount: 1, isCoordinator: false })
     })
-    expect(screen.queryByText(/create a poll/i)).toBeNull()
+    expect(screen.queryByText(/Start voting/i)).toBeNull()
   })
 
   it('shows vote in active poll when user has not voted', async () => {
@@ -92,7 +92,7 @@ describe('NextActions', () => {
         userVotedInActivePoll: false,
       })
     })
-    expect(screen.getByText(/vote in the active poll/i))
+    expect(screen.getByText(/Vote in the active voting/i))
   })
 
   it('shows view active poll when user has already voted', async () => {
@@ -102,8 +102,8 @@ describe('NextActions', () => {
         userVotedInActivePoll: true,
       })
     })
-    expect(screen.getByText(/view active poll/i))
-    expect(screen.queryByText(/vote in the active poll/i)).toBeNull()
+    expect(screen.getByText(/View active voting/i))
+    expect(screen.queryByText(/Vote in the active voting/i)).toBeNull()
   })
 
   it('navigates to proposals tab with SUBMITTED filter from comment action', async () => {
@@ -124,7 +124,7 @@ describe('NextActions', () => {
     await act(async () => {
       renderNextActions({ closedPollCount: 1 })
     })
-    expect(screen.getByText(/review 1 closed poll/i))
+    expect(screen.getByText(/review 1 past voting rounds/i))
   })
 
   it('navigates to resorts tab on click', async () => {
@@ -153,15 +153,15 @@ describe('NextActions', () => {
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT')
   })
 
-  it('navigates to poll tab on click', async () => {
+  it('navigates to voting tab on click', async () => {
     const onNavigateToTab = mock(() => {})
     const eventUser = userEvent.setup()
     await act(async () => {
       renderNextActions({ activePoll: sampleActivePoll, onNavigateToTab })
     })
     await eventUser.click(
-      screen.getByRole('button', { name: /vote in the active poll/i })
+      screen.getByRole('button', { name: /Vote in the active voting/i })
     )
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith('voting', undefined)
   })
 })

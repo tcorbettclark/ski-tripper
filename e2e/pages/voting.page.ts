@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { clickNavTab } from '../helpers/navigation'
 
-export class PollPage {
+export class VotingPage {
   readonly page: Page
   readonly pollDurationInput: Locator
   readonly createPollButton: Locator
@@ -17,24 +17,24 @@ export class PollPage {
   }
 
   async clickVotingTab() {
-    await clickNavTab(this.page, 'poll')
+    await clickNavTab(this.page, 'voting')
   }
 
   async createPoll(durationDays = 7) {
     await this.pollDurationInput.fill(String(durationDays))
     await this.createPollButton.click()
-    await expect(this.page.getByText(/active poll/i)).toBeVisible()
+    await expect(this.page.getByText(/OPEN/i)).toBeVisible()
   }
 
   async addVoteToProposal(resortName: string) {
     await this.page
-      .getByRole('button', { name: `Add vote to ${resortName}` })
+      .getByRole('button', { name: `Add token to ${resortName}` })
       .click()
   }
 
   async saveVote() {
     await this.saveVoteButton.click()
-    await expect(this.saveVoteButton).toHaveText('Save Vote')
+    await expect(this.saveVoteButton).toHaveText('Cast Vote')
   }
 
   async closePoll(outcome: string) {
@@ -42,6 +42,6 @@ export class PollPage {
     await this.page.getByLabel(/outcome/i).fill(outcome)
     const confirmBtn = this.page.getByTestId('confirm-close-poll-btn')
     await confirmBtn.click()
-    await expect(this.page.getByText(/past polls/i)).toBeVisible()
+    await expect(this.page.getByText(/Past Voting Rounds/i)).toBeVisible()
   }
 }

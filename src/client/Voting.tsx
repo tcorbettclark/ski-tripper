@@ -9,19 +9,18 @@ import {
   listVotes as _listVotes,
   upsertVote as _upsertVote,
 } from './backend'
-import PastPoll from './PastPoll'
-import PollResults from './PollResults'
-import PollVoting from './PollVoting'
+import PastVoting from './PastVoting'
 import { borders, colors, fontSizes, fonts, mix } from './theme'
 import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
 import { formatCountdown, formatDate, getErrorMessage } from './utils'
+import VotingActive from './VotingActive'
+import VotingResults from './VotingResults'
 
-interface PollComponentProps {
+interface VotingProps {
   user: User
   tripId: string
   onActivePollChange?: (endDate: string | null) => void
-  onAuthError?: (err: unknown) => void
   listPolls?: (tripId: string, userId: string) => Promise<{ polls: PollType[] }>
   listProposals?: (
     tripId: string,
@@ -51,13 +50,10 @@ interface PollComponentProps {
   ) => Promise<{ participants: Array<{ user: string }> }>
 }
 
-const noopAuthError = () => {}
-
-export default function Poll({
+export default function Voting({
   user,
   tripId,
   onActivePollChange,
-  onAuthError: _onAuthError = noopAuthError,
   listPolls = _listPolls,
   listProposals = _listProposals,
   listVotes = _listVotes,
@@ -65,7 +61,7 @@ export default function Poll({
   closePoll = _closePoll,
   upsertVote = _upsertVote,
   getCoordinatorParticipant = _getCoordinatorParticipant,
-}: PollComponentProps) {
+}: VotingProps) {
   const isSmall = useIsSmallScreen()
   const [loading, setLoading] = useState(true)
   const [activePoll, setActivePoll] = useState<PollType | null>(null)
@@ -73,7 +69,6 @@ export default function Poll({
   const [proposals, setProposals] = useState<Proposal[]>([])
   const [votes, setVotes] = useState<Vote[]>([])
   const [isCoordinator, setIsCoordinator] = useState(false)
-  const [_pollsLoading, setPollsLoading] = useState(false)
   const [creatingPoll, setCreatingPoll] = useState(false)
   const [pollDuration, setPollDuration] = useState(7)
   const [closingPoll, setClosingPoll] = useState(false)
@@ -99,7 +94,7 @@ export default function Poll({
       setCountdown(formatCountdown(activePoll.endDate))
     }
     tick()
-    const interval = setInterval(tick, 15000)
+    const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [activePoll])
 
@@ -114,8 +109,7 @@ export default function Poll({
       onActivePollChange?.(null)
       return
     }
-    setLoading(false)
-    setPollsLoading(true)
+    setLoading(true)
     Promise.all([
       getCoordinatorParticipant(tripId),
       listProposals(tripId, user.id),
@@ -142,7 +136,7 @@ export default function Poll({
         if (mountedRef.current) toast(getErrorMessage(err), 'error')
       })
       .finally(() => {
-        if (mountedRef.current) setPollsLoading(false)
+        if (mountedRef.current) setLoading(false)
       })
   }, [
     tripId,
@@ -217,69 +211,70 @@ export default function Poll({
       {tripId && (
         <>
           {activePoll ? (
-            <div style={styles.pollPanel}>
-              <div style={styles.heroBanner}>
-                <div style={styles.heroContent}>
-                  <span style={styles.pollStatus}>Active Poll · OPEN</span>
-                  <p style={styles.pollDates}>
+            <div style={styles.votingPanel}>
+              <div style={styles.statusLine}>
+                <div style={styles.statusInfo}>
+                  <span style={styles.statusBadge}>OPEN</span>
+                  <span style={styles.statusDates}>
                     {formatDate(activePoll.startDate)} –{' '}
                     {formatDate(activePoll.endDate)}
-                  </p>
+                  </span>
+                  {countdown && (
+                    <span style={styles.countdownText}>
+                      closes in {countdown}
+                    </span>
+                  )}
                 </div>
-                {countdown && (
-                  <div style={styles.countdownBadge}>
-                    <span style={styles.countdownIcon}>⏱</span>
-                    <span style={styles.countdownText}>{countdown}</span>
-                  </div>
-                )}
                 {isCoordinator && !showOutcomeForm && (
                   <button
                     type="button"
                     data-testid="close-poll-btn"
                     onClick={() => setShowOutcomeForm(true)}
-                    style={styles.closePollButton}
+                    style={styles.closeButton}
                   >
-                    Close Poll
+                    Close Voting
                   </button>
                 )}
-                {isCoordinator && showOutcomeForm && (
-                  <div style={styles.outcomeForm}>
-                    <label htmlFor="outcome" style={styles.outcomeLabel}>
-                      Outcome:
-                    </label>
-                    <textarea
-                      id="outcome"
-                      value={outcomeText}
-                      onChange={(e) => setOutcomeText(e.target.value)}
-                      placeholder="Which proposals are through and which are rejected..."
-                      style={styles.outcomeTextarea}
-                    />
-                    <div style={styles.outcomeActions}>
-                      <button
-                        type="button"
-                        data-testid="confirm-close-poll-btn"
-                        onClick={handleClosePoll}
-                        disabled={closingPoll || !outcomeText.trim()}
-                        style={styles.outcomeSubmitButton}
-                      >
-                        {closingPoll ? 'Closing…' : 'Confirm Close'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowOutcomeForm(false)
-                          setOutcomeText('')
-                        }}
-                        disabled={closingPoll}
-                        style={styles.outcomeCancelButton}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
-              <PollVoting
+
+              {isCoordinator && showOutcomeForm && (
+                <div style={styles.outcomeForm}>
+                  <label htmlFor="outcome" style={styles.outcomeLabel}>
+                    Outcome:
+                  </label>
+                  <textarea
+                    id="outcome"
+                    value={outcomeText}
+                    onChange={(e) => setOutcomeText(e.target.value)}
+                    placeholder="Which proposals are through and which are rejected..."
+                    style={styles.outcomeTextarea}
+                  />
+                  <div style={styles.outcomeActions}>
+                    <button
+                      type="button"
+                      data-testid="confirm-close-poll-btn"
+                      onClick={handleClosePoll}
+                      disabled={closingPoll || !outcomeText.trim()}
+                      style={styles.outcomeSubmitButton}
+                    >
+                      {closingPoll ? 'Closing…' : 'Confirm Close'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOutcomeForm(false)
+                        setOutcomeText('')
+                      }}
+                      disabled={closingPoll}
+                      style={styles.outcomeCancelButton}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <VotingActive
                 poll={activePoll}
                 proposals={proposals}
                 myVote={myVote}
@@ -288,9 +283,9 @@ export default function Poll({
                 onVoteSaved={handleVoteSaved}
                 upsertVote={upsertVote}
               />
-              <div style={styles.activeVotesSection}>
-                <h2 style={styles.activeVotesHeading}>Votes so far</h2>
-                <PollResults
+              <div style={styles.activeResultsSection}>
+                <h2 style={styles.activeResultsHeading}>Votes so far</h2>
+                <VotingResults
                   poll={activePoll}
                   proposals={proposals}
                   votes={votes}
@@ -301,7 +296,7 @@ export default function Poll({
             <div style={styles.createSection}>
               <div style={styles.durationRow}>
                 <label style={styles.label} htmlFor="pollDuration">
-                  Poll duration:
+                  Voting duration:
                 </label>
                 <input
                   id="pollDuration"
@@ -321,23 +316,23 @@ export default function Poll({
                   disabled={creatingPoll}
                   style={styles.createButton}
                 >
-                  {creatingPoll ? 'Creating…' : 'Create Poll'}
+                  {creatingPoll ? 'Creating…' : 'Start Voting'}
                 </button>
               </div>
             </div>
           ) : (
             <p style={styles.promptMessage}>
               {isCoordinator
-                ? 'No open poll. Submit proposals to enable poll creation.'
-                : 'No open poll yet. The coordinator will create one when ready.'}
+                ? 'No open voting. Submit proposals to enable voting.'
+                : 'No open voting yet. The coordinator will start one when ready.'}
             </p>
           )}
 
           {pastPolls.length > 0 && (
             <div style={styles.pastSection}>
-              <h2 style={styles.pastHeading}>Past Polls</h2>
+              <h2 style={styles.pastHeading}>Past Voting Rounds</h2>
               {pastPolls.map((poll) => (
-                <PastPoll
+                <PastVoting
                   key={poll.id}
                   poll={poll}
                   proposals={proposals}
@@ -390,7 +385,7 @@ const styles = {
     textAlign: 'center',
     fontSize: fontSizes.md,
   },
-  pollPanel: {
+  votingPanel: {
     border: borders.card,
     borderRadius: '12px',
     padding: '24px',
@@ -398,57 +393,44 @@ const styles = {
     marginBottom: '24px',
     boxShadow: '0 2px 12px var(--color-shadow)',
   },
-  heroBanner: {
+  statusLine: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: '20px',
-    padding: '16px 20px',
-    borderRadius: '10px',
-    background: `linear-gradient(135deg, ${mix('--color-accent', 0.08)}, ${mix('--color-accent', 0.02)})`,
-    borderLeft: `4px solid ${colors.accent}`,
+    paddingBottom: '16px',
+    borderBottom: borders.subtle,
   },
-  heroContent: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-  },
-  countdownBadge: {
+  statusInfo: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
-    padding: '6px 14px',
-    borderRadius: '8px',
-    background: mix('--color-accent', 0.15),
-    border: `1px solid ${mix('--color-accent', 0.25)}`,
+    gap: '10px',
+    flexWrap: 'wrap' as const,
   },
-  countdownIcon: {
-    fontSize: fontSizes.md,
-    lineHeight: '1',
+  statusBadge: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    fontWeight: '700',
+    color: colors.bgPrimary,
+    background: colors.accent,
+    padding: '3px 10px',
+    borderRadius: '4px',
+    letterSpacing: '0.05em',
+    textTransform: 'uppercase',
+  },
+  statusDates: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: colors.textSecondary,
   },
   countdownText: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    letterSpacing: '0.02em',
-  },
-  pollStatus: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    fontWeight: '600',
     color: colors.accent,
-    letterSpacing: '0.05em',
-    textTransform: 'uppercase',
+    fontWeight: '600',
   },
-  pollDates: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textSecondary,
-    margin: '4px 0 0',
-  },
-  closePollButton: {
-    padding: '7px 18px',
+  closeButton: {
+    padding: '6px 14px',
     borderRadius: '6px',
     border: `1px solid ${mix('--color-error', 0.3)}`,
     background: 'transparent',
@@ -462,7 +444,11 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
-    minWidth: '280px',
+    marginBottom: '20px',
+    padding: '16px',
+    background: mix('--color-accent', 0.04),
+    borderRadius: '8px',
+    border: borders.subtle,
   },
   outcomeLabel: {
     fontFamily: fonts.body,
@@ -508,19 +494,12 @@ const styles = {
     fontWeight: '500',
     cursor: 'pointer',
   },
-  pollColumns: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '24px',
-  },
-  pollLeft: {},
-  pollRight: {},
-  activeVotesSection: {
+  activeResultsSection: {
     marginTop: '24px',
     paddingTop: '20px',
     borderTop: borders.subtle,
   },
-  activeVotesHeading: {
+  activeResultsHeading: {
     fontFamily: fonts.display,
     fontSize: fontSizes.md,
     fontWeight: '600',

@@ -204,7 +204,7 @@ describe('App', () => {
         }),
     })
     await waitFor(() => {
-      expect(screen.getByText(/Poll closing in \d+d \d+h/))
+      expect(screen.getByText(/Voting closes in \d+d \d+h/))
     })
   })
 

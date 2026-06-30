@@ -99,11 +99,11 @@ function NavTabs({
     { id: 'resorts', label: 'Resorts' },
     { id: 'proposals', label: 'Proposals' },
     {
-      id: 'poll',
+      id: 'voting',
       label: activePollEndDate
         ? (() => {
             const cd = formatCountdown(activePollEndDate)
-            return cd === 'Ended' ? 'Poll ended' : `Poll closing in ${cd}`
+            return cd === 'Ended' ? 'Voting ended' : `Voting closes in ${cd}`
           })()
         : 'Voting',
     },
@@ -169,11 +169,11 @@ function MobileMenu({
     { id: 'resorts', label: 'Resorts' },
     { id: 'proposals', label: 'Proposals' },
     {
-      id: 'poll',
+      id: 'voting',
       label: activePollEndDate
         ? (() => {
             const cd = formatCountdown(activePollEndDate)
-            return cd === 'Ended' ? 'Poll ended' : `Poll closing in ${cd}`
+            return cd === 'Ended' ? 'Voting ended' : `Voting closes in ${cd}`
           })()
         : 'Voting',
     },

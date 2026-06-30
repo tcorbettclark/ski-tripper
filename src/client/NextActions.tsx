@@ -13,7 +13,7 @@ import { formatDate } from './utils'
 
 interface Action {
   label: string
-  tab: 'resorts' | 'proposals' | 'poll'
+  tab: 'resorts' | 'proposals' | 'voting'
   statusFilter?: StatusFilter
   icon: React.ReactNode
 }
@@ -27,7 +27,7 @@ interface NextActionsProps {
   userVotedInActivePoll: boolean
   isCoordinator: boolean
   onNavigateToTab: (
-    tab: 'resorts' | 'proposals' | 'poll',
+    tab: 'resorts' | 'proposals' | 'voting',
     statusFilter?: StatusFilter
   ) => void
 }
@@ -61,32 +61,32 @@ function buildActions(props: NextActionsProps): Action[] {
 
   if (props.submittedCount > 0 && !props.activePoll && props.isCoordinator) {
     actions.push({
-      label: `Create a poll from ${props.submittedCount} proposal${props.submittedCount !== 1 ? 's' : ''}`,
-      tab: 'poll',
+      label: `Start voting from ${props.submittedCount} proposal${props.submittedCount !== 1 ? 's' : ''}`,
+      tab: 'voting',
       icon: <BarChart3 size={16} />,
     })
   }
 
   if (props.activePoll && !props.userVotedInActivePoll) {
     actions.push({
-      label: `Vote in the active poll (ends ${formatDate(props.activePoll.endDate)})`,
-      tab: 'poll',
+      label: `Vote in the active voting (ends ${formatDate(props.activePoll.endDate)})`,
+      tab: 'voting',
       icon: <Vote size={16} />,
     })
   }
 
   if (props.activePoll && props.userVotedInActivePoll) {
     actions.push({
-      label: `View active poll (ends ${formatDate(props.activePoll.endDate)})`,
-      tab: 'poll',
+      label: `View active voting (ends ${formatDate(props.activePoll.endDate)})`,
+      tab: 'voting',
       icon: <BarChart3 size={16} />,
     })
   }
 
   if (props.closedPollCount > 0) {
     actions.push({
-      label: `Review ${props.closedPollCount} closed poll${props.closedPollCount !== 1 ? 's' : ''}`,
-      tab: 'poll',
+      label: `Review ${props.closedPollCount} past voting rounds`,
+      tab: 'voting',
       icon: <BarChart3 size={16} />,
     })
   }

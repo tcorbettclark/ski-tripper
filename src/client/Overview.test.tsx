@@ -424,7 +424,7 @@ describe('Overview', () => {
     })
   })
 
-  it('navigates to poll tab when clicking vote in active poll', async () => {
+  it('navigates to voting tab when clicking vote in active poll', async () => {
     const onNavigateToTab = mock(() => {})
     await act(async () => {
       renderOverview({ onNavigateToTab })
@@ -433,10 +433,10 @@ describe('Overview', () => {
       expect(screen.getByText(/vote now/i))
     })
     fireEvent.click(screen.getByText(/vote now/i))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith('voting', undefined, undefined)
   })
 
-  it('navigates to poll tab when clicking closed polls button', async () => {
+  it('navigates to voting tab when clicking closed polls button', async () => {
     const closedPoll: Poll = {
       id: 'poll-closed',
       created: '2024-01-01T00:00:00Z',
@@ -458,10 +458,10 @@ describe('Overview', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText(/1 past poll/i))
+      expect(screen.getByText(/1 past voting rounds/i))
     })
-    fireEvent.click(screen.getByText(/review \d+ past poll/i))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
+    fireEvent.click(screen.getByText(/review \d+ past voting rounds/i))
+    expect(onNavigateToTab).toHaveBeenCalledWith('voting', undefined, undefined)
   })
 
   it('navigates to resorts tab when clicking browse resorts', async () => {
@@ -538,7 +538,7 @@ it('shows view active poll when user already voted', async () => {
   })
   await waitFor(() => {
     expect(screen.queryByText(/vote now/i)).toBeNull()
-    expect(screen.getByText(/view poll/i))
+    expect(screen.getByText(/view voting/i))
   })
 })
 
@@ -557,7 +557,7 @@ it('shows next step prompt for coordinator with submitted proposals and no poll'
   await waitFor(() => {
     expect(screen.getByText(/Browse \d+ submitted/i))
     expect(screen.getByRole('button', { name: /Discuss: Chamonix/ }))
-    expect(screen.getByText(/create poll/i))
+    expect(screen.getByText(/Start voting/i))
   })
 })
 
@@ -639,7 +639,7 @@ it('shows closed poll button', async () => {
     })
   })
   await waitFor(() => {
-    expect(screen.getByText(/1 past poll/i))
+    expect(screen.getByText(/1 past voting rounds/i))
   })
 })
 

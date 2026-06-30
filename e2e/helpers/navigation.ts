@@ -16,7 +16,7 @@ export async function openMobileMenuIfNeeded(page: Page): Promise<void> {
 
 export async function clickNavTab(
   page: Page,
-  tab: 'overview' | 'resorts' | 'proposals' | 'poll'
+  tab: 'overview' | 'resorts' | 'proposals' | 'voting'
 ): Promise<void> {
   await openMobileMenuIfNeeded(page)
   await page.getByTestId(`nav-tab-${tab}`).click()

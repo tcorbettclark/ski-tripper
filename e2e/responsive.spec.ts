@@ -97,7 +97,7 @@ test.describe('Responsive layout and visual', () => {
 
   test('voting tab renders without overflow', async ({ page }) => {
     await setupUserWithTrip(page, 'Voting trip')
-    await clickNavTab(page, 'poll')
+    await clickNavTab(page, 'voting')
     await expect(page).toHaveScreenshot(
       'voting-tab.png',
       snapshotOptions.loggedIn(page)
@@ -150,9 +150,9 @@ test.describe('Responsive layout and visual', () => {
         },
       },
       {
-        name: 'poll',
+        name: 'voting',
         action: async () => {
-          await clickNavTab(page, 'poll')
+          await clickNavTab(page, 'voting')
         },
       },
     ]
@@ -183,7 +183,7 @@ test.describe('Responsive layout and visual', () => {
       await expect(page.getByTestId('nav-tab-overview')).toBeVisible()
       await expect(page.getByTestId('nav-tab-resorts')).toBeVisible()
       await expect(page.getByTestId('nav-tab-proposals')).toBeVisible()
-      await expect(page.getByTestId('nav-tab-poll')).toBeVisible()
+      await expect(page.getByTestId('nav-tab-voting')).toBeVisible()
     })
 
     await test.step('clicking each tab switches content', async () => {
@@ -201,10 +201,10 @@ test.describe('Responsive layout and visual', () => {
         snapshotOptions.loggedIn(page)
       )
 
-      await clickNavTab(page, 'poll')
+      await clickNavTab(page, 'voting')
       await waitForAnimation(page)
       await expect(page).toHaveScreenshot(
-        'desktop-tabs-poll.png',
+        'desktop-tabs-voting.png',
         snapshotOptions.loggedIn(page)
       )
     })

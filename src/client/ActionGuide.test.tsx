@@ -55,7 +55,7 @@ describe('ActionGuide', () => {
       expect(screen.getByText('Resort Catalog')).toBeTruthy()
       expect(screen.getByText('Draft Proposals')).toBeTruthy()
       expect(screen.getByText('Submitted Proposals')).toBeTruthy()
-      expect(screen.getByText('Poll')).toBeTruthy()
+      expect(screen.getByText('Voting')).toBeTruthy()
       expect(screen.getByText('Results')).toBeTruthy()
     })
   })
@@ -140,7 +140,7 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Create poll')).toBeTruthy()
+      expect(screen.getByText('Start voting')).toBeTruthy()
     })
   })
 
@@ -155,7 +155,7 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.queryByText('Create poll')).toBeNull()
+      expect(screen.queryByText('Start voting')).toBeNull()
     })
   })
 
@@ -164,7 +164,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ closedPollCount: 2 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Review 2 past polls')).toBeTruthy()
+      expect(screen.getByText('Review 2 past voting rounds')).toBeTruthy()
     })
   })
 
@@ -257,7 +257,7 @@ describe('ActionGuide', () => {
     )
   })
 
-  it('navigates to poll tab when Vote now action clicked', async () => {
+  it('navigates to voting tab when Vote now action clicked', async () => {
     const onNavigateToTab = mock(() => {})
     await act(async () => {
       renderActionGuide({
@@ -269,10 +269,10 @@ describe('ActionGuide', () => {
       expect(screen.getByText('Vote now')).toBeTruthy()
     })
     fireEvent.click(screen.getByText('Vote now'))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
+    expect(onNavigateToTab).toHaveBeenCalledWith('voting', undefined, undefined)
   })
 
-  it('navigates to poll tab when Create poll action clicked', async () => {
+  it('navigates to voting tab when Create poll action clicked', async () => {
     const onNavigateToTab = mock(() => {})
     await act(async () => {
       renderActionGuide({
@@ -285,10 +285,10 @@ describe('ActionGuide', () => {
       })
     })
     await waitFor(() => {
-      expect(screen.getByText('Create poll')).toBeTruthy()
+      expect(screen.getByText('Start voting')).toBeTruthy()
     })
-    fireEvent.click(screen.getByText('Create poll'))
-    expect(onNavigateToTab).toHaveBeenCalledWith('poll', undefined, undefined)
+    fireEvent.click(screen.getByText('Start voting'))
+    expect(onNavigateToTab).toHaveBeenCalledWith('voting', undefined, undefined)
   })
 
   it('navigates with detail when Accommodations action clicked', async () => {

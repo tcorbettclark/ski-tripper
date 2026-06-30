@@ -46,7 +46,7 @@ interface OverviewProps {
   tripId: string
   resorts: ResortWithEmbedding[]
   onNavigateToTab: (
-    tab: 'resorts' | 'proposals' | 'poll',
+    tab: 'resorts' | 'proposals' | 'voting',
     statusFilter?: 'DRAFT' | 'SUBMITTED' | 'REJECTED',
     detail?: ProposalDetail
   ) => void

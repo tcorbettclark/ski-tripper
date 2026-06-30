@@ -6,8 +6,8 @@ import {
   setupUserWithPreferences,
   setupUserWithSubmittedProposal,
 } from './helpers/setup'
-import { PollPage } from './pages/poll.page'
 import { TripsPage } from './pages/trips.page'
+import { VotingPage } from './pages/voting.page'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
@@ -61,7 +61,7 @@ test.describe('Multi-user scenarios', () => {
       })
 
       await test.step('coordinator can create a poll', async () => {
-        const poll1 = new PollPage(page1)
+        const poll1 = new VotingPage(page1)
         await poll1.clickVotingTab()
         await poll1.createPoll(7)
       })
@@ -72,7 +72,7 @@ test.describe('Multi-user scenarios', () => {
           .first()
           .click()
           .catch(() => {})
-        const poll2 = new PollPage(page2)
+        const poll2 = new VotingPage(page2)
         await poll2.clickVotingTab()
         await poll2.addVoteToProposal('PermResort')
         await poll2.saveVote()
@@ -104,7 +104,7 @@ test.describe('Multi-user scenarios', () => {
         await trips2.joinTrip(inviteCode!)
       })
 
-      const poll1 = new PollPage(page1)
+      const poll1 = new VotingPage(page1)
       await poll1.clickVotingTab()
       await poll1.createPoll(7)
 
@@ -114,7 +114,7 @@ test.describe('Multi-user scenarios', () => {
       })
 
       await test.step('user 2 votes', async () => {
-        const poll2 = new PollPage(page2)
+        const poll2 = new VotingPage(page2)
         await page2
           .getByRole('heading', { name: /Voting trip/i })
           .first()

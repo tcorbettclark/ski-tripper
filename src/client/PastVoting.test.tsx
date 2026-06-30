@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it, mock } from 'bun:test'
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { Poll, Proposal, Vote } from '../shared/types.d'
-import PastPoll from './PastPoll'
+import PastVoting from './PastVoting'
 import { getToasts } from './toast'
 import { dayjs } from './utils'
 
@@ -81,7 +82,7 @@ function createMockVote(overrides: Partial<Vote> = {}): Vote {
   }
 }
 
-function renderPastPoll(
+function renderPastVoting(
   overrides: {
     poll?: Poll
     proposals?: Proposal[]
@@ -93,7 +94,7 @@ function renderPastPoll(
   const listVotes =
     overrides.listVotes ?? mock(() => Promise.resolve({ votes: [] }))
   const result = render(
-    <PastPoll
+    <PastVoting
       poll={poll}
       proposals={proposals}
       userId={TEST_IDS.USER}
@@ -103,67 +104,96 @@ function renderPastPoll(
   return { ...result, listVotes, poll, proposals }
 }
 
-describe('PastPoll', () => {
+describe('PastVoting', () => {
   afterEach(() => {
     cleanup()
   })
 
-  it('renders loading state before votes load', async () => {
-    let resolveVotes: (value: { votes: Vote[] }) => void
-    const listVotes = mock(
-      () =>
-        new Promise<{ votes: Vote[] }>((resolve) => {
-          resolveVotes = resolve
-        })
-    )
-
+  it('renders "Voting · CLOSED" label collapsed by default', async () => {
     await act(async () => {
-      render(
-        <PastPoll
-          poll={createMockPoll()}
-          proposals={[createMockProposal()]}
-          userId={TEST_IDS.USER}
-          listVotes={listVotes}
-        />
-      )
+      renderPastVoting()
     })
 
-    expect(screen.getByText(/Loading…/i)).toBeTruthy()
-
-    await act(async () => {
-      resolveVotes?.({ votes: [] })
+    await waitFor(() => {
+      expect(screen.getByText(/Voting · CLOSED/i))
     })
   })
 
-  it('calls listVotes with correct pollId and userId', async () => {
-    const poll = createMockPoll()
+  it('calls listVotes on mount', async () => {
     const listVotes = mock(() => Promise.resolve({ votes: [] }))
 
     await act(async () => {
-      render(
-        <PastPoll
-          poll={poll}
-          proposals={[createMockProposal()]}
-          userId={TEST_IDS.USER}
-          listVotes={listVotes}
-        />
-      )
+      renderPastVoting({ listVotes })
     })
 
-    expect(listVotes).toHaveBeenCalledWith(poll.id, TEST_IDS.USER)
+    await waitFor(() => {
+      expect(listVotes).toHaveBeenCalledWith(TEST_IDS.POLL, TEST_IDS.USER)
+    })
   })
 
-  it('renders PollResults after votes load', async () => {
-    const vote = createMockVote()
-
+  it('shows voter count in header without expanding', async () => {
     await act(async () => {
-      renderPastPoll({
-        listVotes: mock(() => Promise.resolve({ votes: [vote] })),
+      renderPastVoting({
+        listVotes: mock(() => Promise.resolve({ votes: [createMockVote()] })),
       })
     })
 
     await waitFor(() => {
-      expect(screen.getByText(/1 vote/i))
+      expect(screen.getByText('1 voter'))
+    })
+  })
+
+  it('shows "0 voters" before votes load', async () => {
+    await act(async () => {
+      renderPastVoting({
+        listVotes: mock(() => new Promise<{ votes: Vote[] }>(() => {})),
+      })
+    })
+
+    expect(screen.getByText('0 voters'))
+  })
+
+  it('renders outcome text when expanded and outcome present', async () => {
+    const user = userEvent.setup()
+
+    await act(async () => {
+      renderPastVoting({
+        poll: createMockPoll({
+          outcome: 'Chamonix through to next round, Annecy rejected',
+        }),
+        listVotes: mock(() => Promise.resolve({ votes: [] })),
+      })
+    })
+
+    const headerButton = screen.getByRole('button', {
+      name: /Voting · CLOSED/i,
+    })
+    await user.click(headerButton)
+
+    await waitFor(() => {
+      expect(screen.getByText('Outcome'))
+      expect(
+        screen.getByText('Chamonix through to next round, Annecy rejected')
+      )
+    })
+  })
+
+  it('renders results when expanded', async () => {
+    const user = userEvent.setup()
+
+    await act(async () => {
+      renderPastVoting({
+        listVotes: mock(() => Promise.resolve({ votes: [createMockVote()] })),
+      })
+    })
+
+    const headerButton = screen.getByRole('button', {
+      name: /Voting · CLOSED/i,
+    })
+    await user.click(headerButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/Chamonix/))
     })
   })
 
@@ -173,7 +203,7 @@ describe('PastPoll', () => {
     )
 
     await act(async () => {
-      renderPastPoll({ listVotes })
+      renderPastVoting({ listVotes })
     })
 
     await waitFor(() => {
@@ -185,50 +215,36 @@ describe('PastPoll', () => {
     })
   })
 
-  it('renders formatDate(poll.startDate) in output', async () => {
+  it('renders date range in header', async () => {
     await act(async () => {
-      renderPastPoll()
+      renderPastVoting()
     })
 
     await waitFor(() => {
       expect(screen.getByText(/29 Mar 2026/i))
+      expect(screen.getByText(/04 Apr 2026/i))
     })
   })
 
-  it('renders "Poll · CLOSED" label', async () => {
-    await act(async () => {
-      renderPastPoll()
-    })
+  it('collapses when clicked again after expanding', async () => {
+    const user = userEvent.setup()
 
-    await waitFor(() => {
-      expect(screen.getByText(/Poll · CLOSED/i))
-    })
-  })
-
-  it('renders outcome text when present', async () => {
     await act(async () => {
-      renderPastPoll({
-        poll: createMockPoll({
-          outcome: 'Chamonix through to next round, Annecy rejected',
-        }),
+      renderPastVoting({
+        listVotes: mock(() => Promise.resolve({ votes: [] })),
       })
     })
 
-    await waitFor(() => {
-      expect(screen.getByText('Outcome'))
-      expect(
-        screen.getByText('Chamonix through to next round, Annecy rejected')
-      )
-    })
-  })
-
-  it('does not render outcome element when outcome is empty', async () => {
-    await act(async () => {
-      renderPastPoll()
+    const headerButton = screen.getByRole('button', {
+      name: /Voting · CLOSED/i,
     })
 
+    await user.click(headerButton)
     await waitFor(() => {
-      expect(screen.getByText(/Poll · CLOSED/i))
+      expect(screen.getByText(/Chamonix/))
     })
+
+    await user.click(headerButton)
+    expect(screen.queryByText(/Chamonix/)).toBeNull()
   })
 })

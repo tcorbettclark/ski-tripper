@@ -63,12 +63,12 @@ test.describe('Error states and edge cases', () => {
     )
   })
 
-  test('empty state: no open poll', async ({ page }) => {
-    await setupUserWithTrip(page, 'Empty poll trip')
-    await clickNavTab(page, 'poll')
+  test('empty state: no open voting', async ({ page }) => {
+    await setupUserWithTrip(page, 'Empty voting trip')
+    await clickNavTab(page, 'voting')
 
     await expect(page).toHaveScreenshot(
-      'error-states-no-poll.png',
+      'error-states-no-voting.png',
       snapshotOptions.loggedIn(page)
     )
   })
@@ -81,7 +81,7 @@ test.describe('Error states and edge cases', () => {
       await waitForAnimation(page, 500)
       await clickNavTab(page, 'proposals')
       await waitForAnimation(page, 500)
-      await clickNavTab(page, 'poll')
+      await clickNavTab(page, 'voting')
       await waitForAnimation(page, 500)
       await clickNavTab(page, 'overview')
       await waitForAnimation(page, 500)

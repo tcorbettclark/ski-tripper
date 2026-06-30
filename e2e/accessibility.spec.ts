@@ -133,8 +133,8 @@ test.describe('Accessibility', () => {
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
 
-    await test.step('poll accessibility', async () => {
-      await clickNavTab(page, 'poll')
+    await test.step('voting accessibility', async () => {
+      await clickNavTab(page, 'voting')
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
   })
@@ -224,10 +224,10 @@ test.describe('Accessibility', () => {
       )
     })
 
-    await test.step('poll tab dark mode', async () => {
-      await clickNavTab(page, 'poll')
+    await test.step('voting tab dark mode', async () => {
+      await clickNavTab(page, 'voting')
       await expect(page).toHaveScreenshot(
-        'dark-theme-poll.png',
+        'dark-theme-voting.png',
         snapshotOptions.loggedIn(page)
       )
     })
@@ -251,7 +251,7 @@ test.describe('Accessibility', () => {
       await waitForAnimation(page)
       await clickNavTab(page, 'proposals')
       await waitForAnimation(page)
-      await clickNavTab(page, 'poll')
+      await clickNavTab(page, 'voting')
       await waitForAnimation(page)
     })
   })

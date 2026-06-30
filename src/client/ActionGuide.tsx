@@ -22,7 +22,7 @@ export type ProposalDetail = {
 interface ActionChip {
   label: string
   boldSuffix?: string
-  tab: 'resorts' | 'proposals' | 'poll'
+  tab: 'resorts' | 'proposals' | 'voting'
   statusFilter?: StatusFilter
   detail?: ProposalDetail
   variant: 'primary' | 'secondary'
@@ -37,7 +37,7 @@ interface GuideNodeData {
   actions: ActionChip[]
   status: NodeStatus
   onNavigateToTab: (
-    tab: 'resorts' | 'proposals' | 'poll',
+    tab: 'resorts' | 'proposals' | 'voting',
     statusFilter?: StatusFilter,
     detail?: ProposalDetail
   ) => void
@@ -54,7 +54,7 @@ interface ActionGuideProps {
   userVotedInActivePoll: boolean
   isCoordinator: boolean
   onNavigateToTab: (
-    tab: 'resorts' | 'proposals' | 'poll',
+    tab: 'resorts' | 'proposals' | 'voting',
     statusFilter?: StatusFilter,
     detail?: ProposalDetail
   ) => void
@@ -144,21 +144,21 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
     if (!props.userVotedInActivePoll) {
       pollActions.push({
         label: 'Vote now',
-        tab: 'poll',
+        tab: 'voting',
         variant: 'primary',
       })
     } else {
       pollActions.push({
-        label: 'View poll',
-        tab: 'poll',
+        label: 'View voting',
+        tab: 'voting',
         variant: 'primary',
       })
       pollStats.push("You've voted")
     }
   } else if (props.submittedProposals.length > 0 && props.isCoordinator) {
     pollActions.push({
-      label: 'Create poll',
-      tab: 'poll',
+      label: 'Start voting',
+      tab: 'voting',
       variant: 'primary',
     })
   }
@@ -166,8 +166,8 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
   const resultsActions: ActionChip[] = []
   if (props.closedPollCount > 0) {
     resultsActions.push({
-      label: `Review ${props.closedPollCount} past poll${props.closedPollCount !== 1 ? 's' : ''}`,
-      tab: 'poll',
+      label: `Review ${props.closedPollCount} past voting rounds`,
+      tab: 'voting',
       variant: 'secondary',
     })
   }
@@ -201,9 +201,9 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       onNavigateToTab: nav,
     },
     {
-      nodeId: 'poll',
+      nodeId: 'voting',
       icon: Vote,
-      title: 'Poll',
+      title: 'Voting',
       subtitle: pollSubtitle,
       stats: pollStats,
       actions: pollActions,
@@ -230,16 +230,16 @@ const nodeSlideColor: Record<string, string> = {
   resorts: '--color-palette0',
   drafts: '--color-palette1',
   submitted: '--color-palette2',
-  poll: '--color-palette3',
+  voting: '--color-palette3',
   results: '--color-palette4',
 }
 
-const tabMap: Record<string, 'resorts' | 'proposals' | 'poll'> = {
+const tabMap: Record<string, 'resorts' | 'proposals' | 'voting'> = {
   resorts: 'resorts',
   drafts: 'proposals',
   submitted: 'proposals',
-  poll: 'poll',
-  results: 'poll',
+  voting: 'voting',
+  results: 'voting',
 }
 
 function GuideNode({ data }: { data: GuideNodeData }) {
