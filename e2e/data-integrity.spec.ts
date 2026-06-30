@@ -79,8 +79,9 @@ test.describe('Data integrity', () => {
 
     await test.step('add accommodation and submit successfully', async () => {
       await proposals.addAccommodation('Hotel Lifecycle')
+      await proposals.selectProposalTab()
       await proposals.proposalSubmitBtn.click()
-      await expect(page.getByText(/submitted/i)).toBeVisible()
+      await expect(page.getByText(/submitted \(1\)/i)).toBeVisible()
     })
 
     await test.step('cannot delete submitted proposal', async () => {
@@ -167,11 +168,11 @@ test.describe('Data integrity', () => {
     })
 
     await test.step('re-voting updates existing vote', async () => {
-      const addBtn = page.getByRole('button', {
-        name: /add vote to tokenresort/i,
+      const removeBtn = page.getByRole('button', {
+        name: /remove vote from tokenresort/i,
       })
-      if (await addBtn.isVisible()) {
-        await addBtn.click()
+      if (await removeBtn.isVisible()) {
+        await removeBtn.click()
         await poll.saveVote()
         await screenshot(page, 'data-integrity', 're-vote', proj)
       }

@@ -73,8 +73,7 @@ test.describe('Proposals and voting', () => {
     await test.step('add accommodation and submit', async () => {
       const proposals = new ProposalsPage(page)
       await proposals.addAccommodation('Hotel Mont Blanc')
-      await proposals.proposalSubmitBtn.click()
-      await expect(page.getByText(/submitted/i)).toBeVisible()
+      await proposals.submitProposal()
     })
   })
 
@@ -88,8 +87,7 @@ test.describe('Proposals and voting', () => {
       await proposals.goToProposalsTab()
       await proposals.createDraftProposal('Zermatt')
       await proposals.addAccommodation('Hotel Zermatt')
-      await proposals.proposalSubmitBtn.click()
-      await expect(page.getByText(/submitted/i)).toBeVisible()
+      await proposals.submitProposal()
     })
 
     await test.step('create poll and vote', async () => {
@@ -112,8 +110,7 @@ test.describe('Proposals and voting', () => {
       await proposals.goToProposalsTab()
       await proposals.createDraftProposal('Morzine')
       await proposals.addAccommodation('Hotel Morzine')
-      await proposals.proposalSubmitBtn.click()
-      await expect(page.getByText(/submitted/i)).toBeVisible()
+      await proposals.submitProposal()
     })
 
     await test.step('create and close poll', async () => {

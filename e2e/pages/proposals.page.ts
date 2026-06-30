@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { clickNavTab } from '../helpers/navigation'
+import { waitForToast } from '../helpers/toast'
 
 export class ProposalsPage {
   readonly page: Page
@@ -22,6 +23,21 @@ export class ProposalsPage {
 
   async goToProposalsTab() {
     await clickNavTab(this.page, 'proposals')
+  }
+
+  async selectProposalTab() {
+    await this.page.getByRole('button', { name: /^proposal$/i }).click()
+  }
+
+  async selectAccommodationsTab() {
+    await this.page
+      .getByRole('button', { name: /^accommodations/i })
+      .first()
+      .click()
+  }
+
+  async selectDiscussionTab() {
+    await this.page.getByRole('button', { name: /^discussion/i }).click()
   }
 
   async clickNewProposal() {
@@ -202,7 +218,8 @@ export class ProposalsPage {
   }
 
   async submitProposal() {
+    await this.selectProposalTab()
     await this.proposalSubmitBtn.click()
-    await expect(this.page.getByText(/submitted/i)).toBeVisible()
+    await waitForToast(this.page, 'Submitted')
   }
 }

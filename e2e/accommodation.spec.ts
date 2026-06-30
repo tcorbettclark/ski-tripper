@@ -43,6 +43,7 @@ test.describe('Accommodation flow', () => {
     await proposals.goToProposalsTab()
     await proposals.createDraftProposal('TestResort')
     await proposals.addAccommodation('Hotel Test')
+    await proposals.selectProposalTab()
     await proposals.proposalSubmitBtn.click()
     await expect(page.getByText(/submitted/i)).toBeVisible()
   })

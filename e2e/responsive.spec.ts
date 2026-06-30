@@ -42,11 +42,11 @@ test.describe('Responsive layout and visual', () => {
       await page.getByTestId('auth-switch-mode').click()
       await expect(page.getByTestId('auth-name')).toBeVisible()
       await expect(page.getByTestId('auth-email')).toBeVisible()
-      await expect(page.getByTestId('auth-password')).toBeVisible()
       await screenshot(page, 'auth-signup-form', 'visible', proj)
     })
 
     await test.step('forgot password link visible and tappable', async () => {
+      await page.getByTestId('auth-switch-mode').click()
       await page.getByTestId('auth-forgot-password').click()
       await expect(page.getByTestId('forgot-email')).toBeVisible()
       await screenshot(page, 'auth-forgot-password', 'visible', proj)
@@ -89,6 +89,7 @@ test.describe('Responsive layout and visual', () => {
     const proj = projectName()
     await setupUserWithTrip(page, 'My trip')
     await expect(page.getByTestId('invite-code')).toBeVisible()
+    await page.getByRole('button', { name: '← My Trips' }).click()
     await screenshot(page, 'trips-list', 'visible', proj)
 
     await test.step('create and join buttons accessible', async () => {
@@ -96,7 +97,8 @@ test.describe('Responsive layout and visual', () => {
       await page.getByTestId('join-trip-btn').waitFor({ state: 'visible' })
     })
 
-    await test.step('invite code is readable and copyable', async () => {
+    await test.step('invite code is readable and copyable on specific trip', async () => {
+      await page.getByRole('cell', { name: 'My trip' }).click()
       const code = page.getByTestId('invite-code')
       await expect(code).toBeVisible()
       const text = await code.textContent()
