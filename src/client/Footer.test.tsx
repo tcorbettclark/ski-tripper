@@ -21,4 +21,9 @@ describe('Footer', () => {
     expect(footer.style.opacity).toBe('0')
     expect(footer.style.pointerEvents).toBe('none')
   })
+
+  it('renders nothing when isSmall is true', () => {
+    render(<Footer useAutoHideFooterHook={() => 'visible'} isSmall />)
+    expect(screen.queryByRole('contentinfo')).toBeNull()
+  })
 })

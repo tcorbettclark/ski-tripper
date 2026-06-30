@@ -622,7 +622,7 @@ export default function App({
         createPreferences={createPreferences}
         updateName={updateName}
       />
-      <Footer useAutoHideFooterHook={useAutoHideFooterHook} />
+      <Footer useAutoHideFooterHook={useAutoHideFooterHook} isSmall={isSmall} />
       <ToastContainer />
     </main>
   )

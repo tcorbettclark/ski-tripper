@@ -11,14 +11,18 @@ const AUTHOR_URL = 'https://www.corbettclark.com'
 
 interface FooterProps {
   useAutoHideFooterHook?: () => 'visible' | 'hidden'
+  isSmall?: boolean
 }
 
 export default function Footer({
   useAutoHideFooterHook = useAutoHideFooter,
+  isSmall = false,
 }: FooterProps = {}) {
   const visibility = useAutoHideFooterHook()
   const [footerHeight, setFooterHeight] = useState(0)
   const footerRef = useRef<HTMLElement>(null)
+
+  if (isSmall) return null
 
   if (footerRef.current && footerRef.current.offsetHeight !== footerHeight) {
     setFooterHeight(footerRef.current.offsetHeight)
