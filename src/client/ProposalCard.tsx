@@ -30,6 +30,7 @@ import {
   mix,
 } from './theme'
 import { toast } from './toast'
+import useIsSmallScreen from './useIsSmallScreen'
 import {
   ensureUrlScheme,
   formatDate,
@@ -114,6 +115,7 @@ export default function ProposalCard({
   listDiscussion = _listDiscussion,
   onAuthError = noopAuthError,
 }: ProposalCardProps) {
+  const isSmall = useIsSmallScreen()
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [activeTab, setActiveTab] = useState<
@@ -380,7 +382,12 @@ export default function ProposalCard({
         <div style={previewMode ? undefined : styles.tabContent}>
           {(previewMode || activeTab === 'proposal') && (
             <div style={styles.section}>
-              <div style={styles.grid}>
+              <div
+                style={{
+                  ...styles.grid,
+                  gridTemplateColumns: isSmall ? '1fr' : '1fr 1fr',
+                }}
+              >
                 <DetailField
                   label="Start Date"
                   value={formatDate(proposal.startDate)}
@@ -424,7 +431,7 @@ export default function ProposalCard({
                 {proposal.websites && proposal.websites.length > 0 && (
                   <DetailField
                     label="Websites"
-                    style={{ gridColumn: 'span 2' }}
+                    style={{ gridColumn: isSmall ? '1' : 'span 2' }}
                   >
                     <ul style={styles.websiteList}>
                       {proposal.websites.map((url) => (
@@ -491,6 +498,7 @@ export default function ProposalCard({
                 editingAccommodationId === acc.id ? (
                   <AccommodationEditForm
                     key={acc.id}
+                    isSmall={isSmall}
                     initialData={{
                       name: acc.name,
                       url: acc.url,
@@ -506,7 +514,12 @@ export default function ProposalCard({
                   <div key={acc.id}>
                     <div style={styles.accommodationItem}>
                       <div style={styles.accommodationItemContent}>
-                        <div style={styles.grid}>
+                        <div
+                          style={{
+                            ...styles.grid,
+                            gridTemplateColumns: isSmall ? '1fr' : '1fr 1fr',
+                          }}
+                        >
                           <DetailField label="Name">
                             <a
                               href={sanitizeUrl(acc.url)}
@@ -518,7 +531,12 @@ export default function ProposalCard({
                             </a>
                           </DetailField>
                           <DetailField label="Cost" value={acc.cost} />
-                          <div style={{ gridColumn: '1/-1', maxWidth: '75%' }}>
+                          <div
+                            style={{
+                              gridColumn: '1/-1',
+                              maxWidth: isSmall ? '100%' : '75%',
+                            }}
+                          >
                             <DetailField
                               label="Description"
                               value={acc.description}
@@ -557,6 +575,7 @@ export default function ProposalCard({
               )}
               {addingAccommodation && (
                 <AccommodationEditForm
+                  isSmall={isSmall}
                   onSave={handleAddAccommodation}
                   onCancel={() => {
                     setAddingAccommodation(false)
@@ -838,9 +857,11 @@ export default function ProposalCard({
 
 function AccommodationEditForm({
   initialData,
+  isSmall = false,
   onSave,
   onCancel,
 }: {
+  isSmall?: boolean
   initialData?: { name: string; url: string; cost: string; description: string }
   onSave: (data: {
     name: string
@@ -882,7 +903,12 @@ function AccommodationEditForm({
 
   return (
     <form onSubmit={handleSubmit} style={accFormStyles.form}>
-      <div style={accFormStyles.grid}>
+      <div
+        style={{
+          ...accFormStyles.grid,
+          gridTemplateColumns: isSmall ? '1fr' : '1fr 1fr',
+        }}
+      >
         <div style={accFormStyles.field}>
           <label htmlFor="acc-name" style={accFormStyles.label}>
             Name
@@ -939,7 +965,7 @@ function AccommodationEditForm({
           style={{
             ...accFormStyles.field,
             gridColumn: '1/-1',
-            maxWidth: '75%',
+            maxWidth: isSmall ? '100%' : '75%',
           }}
         >
           <label htmlFor="acc-desc" style={accFormStyles.label}>

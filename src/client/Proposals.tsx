@@ -187,7 +187,12 @@ export default function Proposals({
     ])
       .then(([proposalsResult, coordResult]) => {
         if (!mountedRef.current) return null
-        setProposals(proposalsResult.proposals)
+        setProposals((prev) => {
+          const serverProposals = proposalsResult.proposals
+          const serverIds = new Set(serverProposals.map((p: Proposal) => p.id))
+          const localOnly = prev.filter((p) => !serverIds.has(p.id))
+          return [...serverProposals, ...localOnly]
+        })
         setIsCoordinator(
           coordResult.participants.length > 0 &&
             coordResult.participants[0].user === user.id
