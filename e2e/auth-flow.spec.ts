@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { logout } from './helpers/auth'
 import { deleteAllEmails } from './helpers/mailpit'
-import { waitForAnimation } from './helpers/navigation'
+import { openUserMenu, waitForAnimation } from './helpers/navigation'
 import { setupUserWithPreferences } from './helpers/setup'
 import { snapshotOptions } from './helpers/snapshot'
 import { AuthPage, generateTestUser } from './pages/auth.page'
@@ -111,13 +111,8 @@ test.describe('Auth flow', () => {
     })
 
     await test.step('logout via user menu', async () => {
-      const menuTrigger = page.getByTestId('user-menu-trigger')
-      if (await menuTrigger.isVisible()) {
-        await menuTrigger.click()
-        await page.getByTestId('sign-out').click()
-      } else {
-        await logout(page)
-      }
+      await openUserMenu(page)
+      await page.getByTestId('sign-out').click()
       await expect(page.getByTestId('auth-email')).toBeVisible()
     })
 
@@ -184,10 +179,12 @@ test.describe('Auth flow', () => {
     await setupUserWithPreferences(page)
 
     await test.step('open preferences modal', async () => {
-      const menuTrigger = page.getByTestId('user-menu-trigger')
-      if (await menuTrigger.isVisible()) {
-        await menuTrigger.click()
-        await page.getByRole('menuitem', { name: /preferences/i }).click()
+      await openUserMenu(page)
+      const preferencesItem = page.getByRole('menuitem', {
+        name: /preferences/i,
+      })
+      if (await preferencesItem.isVisible()) {
+        await preferencesItem.click()
         await waitForAnimation(page, 500)
       }
     })

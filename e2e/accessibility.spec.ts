@@ -4,7 +4,12 @@ import {
   assertNoContrastViolations,
 } from './helpers/axe'
 import { deleteAllEmails } from './helpers/mailpit'
-import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import {
+  clickNavTab,
+  getNavTabLocator,
+  openUserMenu,
+  waitForAnimation,
+} from './helpers/navigation'
 import { setupUserWithTrip } from './helpers/setup'
 import { snapshotOptions } from './helpers/snapshot'
 
@@ -242,7 +247,7 @@ test.describe('Accessibility', () => {
     await setupUserWithTrip(page, 'A11y tab roles trip')
 
     await test.step('nav tabs have accessible role', async () => {
-      const overviewTab = page.getByTestId('nav-tab-overview')
+      const overviewTab = await getNavTabLocator(page, 'overview')
       const _role = await overviewTab.evaluate((el) => el.getAttribute('role'))
       const tagName = await overviewTab.evaluate((el) => el.tagName)
 
@@ -292,10 +297,12 @@ test.describe('Accessibility', () => {
     })
 
     await test.step('preferences modal closes with Escape', async () => {
-      const menuTrigger = page.getByTestId('user-menu-trigger')
-      if (await menuTrigger.isVisible()) {
-        await menuTrigger.click()
-        await page.getByRole('menuitem', { name: /preferences/i }).click()
+      await openUserMenu(page)
+      const preferencesItem = page.getByRole('menuitem', {
+        name: /preferences/i,
+      })
+      if (await preferencesItem.isVisible()) {
+        await preferencesItem.click()
         await waitForAnimation(page)
         await page.keyboard.press('Escape')
         await waitForAnimation(page)

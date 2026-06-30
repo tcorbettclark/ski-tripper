@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
 export async function waitForAnimation(page: Page, ms = 300): Promise<void> {
   await page.waitForTimeout(ms)
@@ -14,10 +14,26 @@ export async function openMobileMenuIfNeeded(page: Page): Promise<void> {
   }
 }
 
+export async function getNavTabLocator(
+  page: Page,
+  tab: 'overview' | 'resorts' | 'proposals' | 'voting'
+): Promise<Locator> {
+  await openMobileMenuIfNeeded(page)
+  return page.getByTestId(`nav-tab-${tab}`)
+}
+
 export async function clickNavTab(
   page: Page,
   tab: 'overview' | 'resorts' | 'proposals' | 'voting'
 ): Promise<void> {
+  const locator = await getNavTabLocator(page, tab)
+  await locator.click()
+}
+
+export async function openUserMenu(page: Page): Promise<void> {
   await openMobileMenuIfNeeded(page)
-  await page.getByTestId(`nav-tab-${tab}`).click()
+  const menuTrigger = page.getByTestId('user-menu-trigger')
+  if (await menuTrigger.isVisible()) {
+    await menuTrigger.click()
+  }
 }
