@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test'
+import { navigateToMyTrips } from '../helpers/navigation'
 
 export class TripsPage {
   readonly page: Page
@@ -42,7 +43,7 @@ export class TripsPage {
   }
 
   async navigateToTripList() {
-    await this.page.getByRole('button', { name: /my trips/i }).click()
+    await navigateToMyTrips(this.page)
   }
 
   async joinTrip(code: string) {

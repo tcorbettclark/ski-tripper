@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test'
 import { deleteAllEmails } from './helpers/mailpit'
-import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import {
+  clickNavTab,
+  navigateToMyTrips,
+  waitForAnimation,
+} from './helpers/navigation'
 import { setupUserWithPreferences, setupUserWithTrip } from './helpers/setup'
 import { snapshotOptions } from './helpers/snapshot'
 import { ProposalsPage } from './pages/proposals.page'
@@ -47,7 +51,7 @@ test.describe('Responsive layout and visual', () => {
   test('trips list renders correctly', async ({ page }) => {
     await setupUserWithTrip(page, 'My trip')
     await expect(page.getByTestId('invite-code')).toBeVisible()
-    await page.getByRole('button', { name: '← My Trips' }).click()
+    await navigateToMyTrips(page)
     await expect(page).toHaveScreenshot(
       'trips-list.png',
       snapshotOptions.loggedIn(page)

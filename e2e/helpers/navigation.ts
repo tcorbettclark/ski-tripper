@@ -30,6 +30,11 @@ export async function clickNavTab(
   await locator.click()
 }
 
+export async function navigateToMyTrips(page: Page): Promise<void> {
+  await openMobileMenuIfNeeded(page)
+  await page.getByRole('button', { name: /my trips/i }).click()
+}
+
 export async function openUserMenu(page: Page): Promise<void> {
   await openMobileMenuIfNeeded(page)
   const menuTrigger = page.getByTestId('user-menu-trigger')
