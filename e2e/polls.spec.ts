@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { deleteAllEmails } from './helpers/mailpit'
 import { clickNavTab, waitForAnimation } from './helpers/navigation'
-import { projectName, screenshot } from './helpers/screenshot'
 import {
   setupUserWithSubmittedProposal,
   setupUserWithTrip,
@@ -62,7 +61,6 @@ test.describe('Polls', () => {
   test('poll constraints: cannot create poll without submitted proposals', async ({
     page,
   }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Poll constraints trip')
 
     await test.step('cannot create poll without submitted proposals', async () => {
@@ -83,12 +81,10 @@ test.describe('Polls', () => {
       const poll = new PollPage(page)
       await poll.clickVotingTab()
       await poll.createPoll(7)
-      await screenshot(page, 'polls', 'poll-created', proj)
     })
   })
 
   test('token allocation constraints in voting', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithSubmittedProposal(page, 'Token trip', 'TokenResort')
 
     const poll = new PollPage(page)
@@ -98,7 +94,6 @@ test.describe('Polls', () => {
     await test.step('vote and verify tokens are allocated', async () => {
       await poll.addVoteToProposal('TokenResort')
       await poll.saveVote()
-      await screenshot(page, 'polls', 'token-allocated', proj)
     })
 
     await test.step('re-voting updates existing vote', async () => {
@@ -108,13 +103,11 @@ test.describe('Polls', () => {
       if (await removeBtn.isVisible()) {
         await removeBtn.click()
         await poll.saveVote()
-        await screenshot(page, 'polls', 're-vote', proj)
       }
     })
   })
 
   test('poll results update after voting', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithSubmittedProposal(page, 'Results trip', 'ResultsResort')
 
     const poll = new PollPage(page)
@@ -125,7 +118,6 @@ test.describe('Polls', () => {
 
     await test.step('results are visible after voting', async () => {
       await waitForAnimation(page, 500)
-      await screenshot(page, 'polls', 'poll-results', proj)
     })
   })
 })

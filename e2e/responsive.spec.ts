@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { deleteAllEmails } from './helpers/mailpit'
 import { clickNavTab, waitForAnimation } from './helpers/navigation'
-import { isMobile, projectName, screenshot } from './helpers/screenshot'
 import { setupUserWithPreferences, setupUserWithTrip } from './helpers/setup'
+import { snapshotOptions } from './helpers/snapshot'
 import { ProposalsPage } from './pages/proposals.page'
 
 test.beforeEach(async () => {
@@ -11,8 +11,7 @@ test.beforeEach(async () => {
 
 test.describe('Responsive layout and visual', () => {
   test('auth screens mobile layout', async ({ page }) => {
-    const proj = projectName()
-    if (!isMobile(proj)) test.skip()
+    test.skip(page.viewportSize()?.width !== 390)
 
     await page.goto('/')
     await expect(page.getByTestId('auth-email')).toBeVisible()
@@ -20,7 +19,10 @@ test.describe('Responsive layout and visual', () => {
     await test.step('about button visible and not overlapping form', async () => {
       const aboutBtn = page.getByRole('button', { name: /about/i })
       await expect(aboutBtn).toBeVisible()
-      await screenshot(page, 'auth-about-button-mobile', 'visible', proj)
+      await expect(page).toHaveScreenshot(
+        'auth-about-button-mobile.png',
+        snapshotOptions.auth(page)
+      )
     })
 
     await test.step('login form fits viewport', async () => {
@@ -35,17 +37,21 @@ test.describe('Responsive layout and visual', () => {
   })
 
   test('preferences form is navigable', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithPreferences(page)
-    await screenshot(page, 'preferences', 'saved', proj)
+    await expect(page).toHaveScreenshot(
+      'preferences-saved.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 
   test('trips list renders correctly', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'My trip')
     await expect(page.getByTestId('invite-code')).toBeVisible()
     await page.getByRole('button', { name: '← My Trips' }).click()
-    await screenshot(page, 'trips-list', 'visible', proj)
+    await expect(page).toHaveScreenshot(
+      'trips-list.png',
+      snapshotOptions.loggedIn(page)
+    )
 
     await test.step('create and join buttons accessible', async () => {
       await page.getByTestId('new-trip-btn').waitFor({ state: 'visible' })
@@ -62,37 +68,44 @@ test.describe('Responsive layout and visual', () => {
   })
 
   test('overview tab renders without overflow', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Overview trip')
     await expect(page.getByTestId('invite-code')).toBeVisible()
-    await screenshot(page, 'overview-tab', 'visible', proj)
+    await expect(page).toHaveScreenshot(
+      'overview-tab.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 
   test('resorts tab renders without overflow', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Resorts trip')
     await clickNavTab(page, 'resorts')
-    await screenshot(page, 'resorts-tab', 'visible', proj)
+    await expect(page).toHaveScreenshot(
+      'resorts-tab.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 
   test('proposals tab renders without overflow', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Proposals trip')
     await clickNavTab(page, 'proposals')
     await expect(page.getByTestId('new-proposal-btn')).toBeVisible()
-    await screenshot(page, 'proposals-tab', 'visible', proj)
+    await expect(page).toHaveScreenshot(
+      'proposals-tab.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 
   test('voting tab renders without overflow', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Voting trip')
     await clickNavTab(page, 'poll')
-    await screenshot(page, 'voting-tab', 'visible', proj)
+    await expect(page).toHaveScreenshot(
+      'voting-tab.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 
   test('header mobile menu works correctly', async ({ page }) => {
-    const proj = projectName()
-    if (!isMobile(proj)) test.skip()
+    test.skip(page.viewportSize()?.width !== 390)
 
     await setupUserWithTrip(page, 'Header trip')
 
@@ -110,13 +123,15 @@ test.describe('Responsive layout and visual', () => {
       await expect(
         page.getByRole('menuitem', { name: /preferences/i })
       ).toBeVisible()
-      await screenshot(page, 'mobile-menu', 'open', proj)
+      await expect(page).toHaveScreenshot(
+        'mobile-menu-open.png',
+        snapshotOptions.loggedIn(page)
+      )
     })
   })
 
   test('no horizontal overflow on mobile', async ({ page }) => {
-    const proj = projectName()
-    if (!isMobile(proj)) test.skip()
+    test.skip(page.viewportSize()?.width !== 390)
 
     await setupUserWithTrip(page, 'Overflow trip')
     const pages = [
@@ -152,13 +167,15 @@ test.describe('Responsive layout and visual', () => {
         )
       })
       expect(hasOverflow).toBe(false)
-      await screenshot(page, `overflow-check-${name}`, 'no-overflow', proj)
+      await expect(page).toHaveScreenshot(
+        `overflow-check-${name}.png`,
+        snapshotOptions.loggedIn(page)
+      )
     }
   })
 
   test('desktop tabs visible and navigable', async ({ page }) => {
-    const proj = projectName()
-    if (isMobile(proj)) test.skip()
+    test.skip(page.viewportSize()?.width === 390)
 
     await setupUserWithTrip(page, 'Desktop tabs trip')
 
@@ -172,21 +189,29 @@ test.describe('Responsive layout and visual', () => {
     await test.step('clicking each tab switches content', async () => {
       await clickNavTab(page, 'resorts')
       await waitForAnimation(page)
-      await screenshot(page, 'desktop-tabs', 'resorts', proj)
+      await expect(page).toHaveScreenshot(
+        'desktop-tabs-resorts.png',
+        snapshotOptions.loggedIn(page)
+      )
 
       await clickNavTab(page, 'proposals')
       await waitForAnimation(page)
-      await screenshot(page, 'desktop-tabs', 'proposals', proj)
+      await expect(page).toHaveScreenshot(
+        'desktop-tabs-proposals.png',
+        snapshotOptions.loggedIn(page)
+      )
 
       await clickNavTab(page, 'poll')
       await waitForAnimation(page)
-      await screenshot(page, 'desktop-tabs', 'poll', proj)
+      await expect(page).toHaveScreenshot(
+        'desktop-tabs-poll.png',
+        snapshotOptions.loggedIn(page)
+      )
     })
   })
 
   test('desktop header shows user name button', async ({ page }) => {
-    const proj = projectName()
-    if (isMobile(proj)) test.skip()
+    test.skip(page.viewportSize()?.width === 390)
 
     await setupUserWithTrip(page, 'Desktop header trip')
 
@@ -199,23 +224,28 @@ test.describe('Responsive layout and visual', () => {
       const menuTrigger = page.getByTestId('user-menu-trigger')
       await menuTrigger.click()
       await expect(page.getByTestId('sign-out')).toBeVisible()
-      await screenshot(page, 'desktop-header', 'menu-open', proj)
+      await expect(page).toHaveScreenshot(
+        'desktop-header-menu-open.png',
+        snapshotOptions.loggedIn(page)
+      )
     })
   })
 
   test('proposal form slider controls are visible on mobile', async ({
     page,
   }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Slider trip')
     const proposals = new ProposalsPage(page)
     await proposals.goToProposalsTab()
     await proposals.clickNewProposal()
 
     await expect(page.getByTestId('proposal-resort-name')).toBeVisible()
-    await screenshot(page, 'proposal-form', 'open', proj)
+    await expect(page).toHaveScreenshot(
+      'proposal-form-open.png',
+      snapshotOptions.loggedIn(page)
+    )
 
-    if (isMobile(proj)) {
+    if (page.viewportSize()?.width === 390) {
       const formOverflow = await page.evaluate(() => {
         const form =
           document.querySelector('form') ??

@@ -134,6 +134,7 @@ export default function InfoBanner({
   return (
     <section
       aria-label="Feature highlights"
+      data-testid="info-banner"
       style={bannerStyles.container}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}

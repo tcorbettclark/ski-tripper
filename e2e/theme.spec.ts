@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { deleteAllEmails } from './helpers/mailpit'
-import { projectName, screenshot } from './helpers/screenshot'
 import { setupUserWithTrip } from './helpers/setup'
+import { snapshotOptions } from './helpers/snapshot'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
@@ -9,7 +9,6 @@ test.beforeEach(async () => {
 
 test.describe('Theme', () => {
   test('light theme renders correctly', async ({ page }) => {
-    const proj = projectName()
     await page.goto('/')
 
     await test.step('default theme is light', async () => {
@@ -21,7 +20,10 @@ test.describe('Theme', () => {
 
     await test.step('all screens render with correct light colours', async () => {
       await expect(page.getByTestId('auth-email')).toBeVisible()
-      await screenshot(page, 'theme-light', 'auth', proj)
+      await expect(page).toHaveScreenshot(
+        'theme-light-auth.png',
+        snapshotOptions.auth(page)
+      )
     })
 
     await test.step('card backgrounds have subtle contrast against page', async () => {
@@ -45,7 +47,6 @@ test.describe('Theme', () => {
   })
 
   test('dark theme renders correctly', async ({ page }) => {
-    const proj = projectName()
     await page.goto('/')
 
     await test.step('toggle to dark theme', async () => {
@@ -63,7 +64,10 @@ test.describe('Theme', () => {
         () => document.documentElement.dataset.theme
       )
       expect(theme).toBe('dark')
-      await screenshot(page, 'theme-dark', 'auth', proj)
+      await expect(page).toHaveScreenshot(
+        'theme-dark-auth.png',
+        snapshotOptions.auth(page)
+      )
     })
 
     await test.step('no white backgrounds bleeding through', async () => {
@@ -136,7 +140,6 @@ test.describe('Theme', () => {
   })
 
   test('accent colour is consistent throughout', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Accent trip')
 
     const _accentElements = await page.evaluate(() => {
@@ -151,6 +154,9 @@ test.describe('Theme', () => {
       })
       return Array.from(accentColors)
     })
-    await screenshot(page, 'theme', 'accent-colours', proj)
+    await expect(page).toHaveScreenshot(
+      'theme-accent-colours.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 })

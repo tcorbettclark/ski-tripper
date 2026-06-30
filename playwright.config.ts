@@ -7,6 +7,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   outputDir: 'e2e/test-results',
+  snapshotPathTemplate:
+    'e2e/snapshots/{/projectName}/{testFilePath}/{arg}{ext}',
   reporter: [
     ['list'],
     ['html', { open: 'never', outputFolder: 'e2e/playwright-report' }],
@@ -15,7 +17,6 @@ export default defineConfig({
   use: {
     baseURL: process.env.PUBLIC_EXTERNAL_URL,
     trace: 'on-first-retry',
-    screenshot: 'on',
   },
   projects: [
     {

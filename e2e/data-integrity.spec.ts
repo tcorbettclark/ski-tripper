@@ -2,12 +2,12 @@ import { expect, test } from '@playwright/test'
 import { withTwoPages } from './helpers/browser'
 import { deleteAllEmails } from './helpers/mailpit'
 import { waitForAnimation } from './helpers/navigation'
-import { projectName, screenshot } from './helpers/screenshot'
 import {
   setupUserWithPreferences,
   setupUserWithSubmittedProposal,
   setupUserWithTrip,
 } from './helpers/setup'
+import { snapshotOptions } from './helpers/snapshot'
 import { ProposalsPage } from './pages/proposals.page'
 import { TripsPage } from './pages/trips.page'
 
@@ -17,7 +17,6 @@ test.beforeEach(async () => {
 
 test.describe('Data integrity', () => {
   test('invite code generation and copying', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Invite code trip')
 
     await test.step('invite code is generated on trip creation', async () => {
@@ -37,8 +36,6 @@ test.describe('Data integrity', () => {
         expect(clipboardText.trim().length).toBeGreaterThan(0)
       }
     })
-
-    await screenshot(page, 'data-integrity', 'invite-code', proj)
   })
 
   test('join a trip with invite code', async ({ browser }) => {
@@ -64,7 +61,6 @@ test.describe('Data integrity', () => {
   })
 
   test('invalid invite code shows error', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Invalid code trip')
 
     await test.step('joining with invalid code shows error', async () => {
@@ -72,18 +68,14 @@ test.describe('Data integrity', () => {
       await trips.navigateToTripList()
       await trips.joinTrip('invalid-code-xyz')
 
-      const errorVisible = await page
+      await page
         .getByText(/error|invalid|not found|no trip/i)
         .isVisible()
         .catch(() => false)
-      if (errorVisible) {
-        await screenshot(page, 'data-integrity', 'invalid-code-error', proj)
-      }
     })
   })
 
   test('proposal lifecycle constraints', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Proposal lifecycle trip')
     const proposals = new ProposalsPage(page)
     await proposals.goToProposalsTab()
@@ -93,7 +85,6 @@ test.describe('Data integrity', () => {
       await proposals.proposalSubmitBtn.click()
       await expect(page.getByText(/no accommodations/i)).toBeVisible()
       await proposals.dismissSubmitDialog()
-      await screenshot(page, 'data-integrity', 'no-accommodation-submit', proj)
     })
 
     await test.step('add accommodation and submit successfully', async () => {
@@ -112,7 +103,6 @@ test.describe('Data integrity', () => {
   })
 
   test('coordinator can reject and revert a proposal', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithSubmittedProposal(page, 'Reject trip', 'RejectResort')
 
     await test.step('coordinator can reject submitted proposal', async () => {
@@ -120,7 +110,6 @@ test.describe('Data integrity', () => {
       if (await rejectBtn.isVisible()) {
         await rejectBtn.click()
         await expect(page.getByText(/rejected/i)).toBeVisible()
-        await screenshot(page, 'data-integrity', 'proposal-rejected', proj)
       }
     })
 
@@ -129,13 +118,11 @@ test.describe('Data integrity', () => {
       if (await revertBtn.isVisible()) {
         await revertBtn.click()
         await waitForAnimation(page, 500)
-        await screenshot(page, 'data-integrity', 'proposal-reverted', proj)
       }
     })
   })
 
   test('date range validation: start must be before end', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Date validation trip')
     const proposals = new ProposalsPage(page)
     await proposals.goToProposalsTab()
@@ -143,6 +130,9 @@ test.describe('Data integrity', () => {
 
     const dateField = page.getByTestId('date-range-field')
     await expect(dateField).toBeVisible()
-    await screenshot(page, 'data-integrity', 'date-range-picker', proj)
+    await expect(page).toHaveScreenshot(
+      'data-integrity-date-range-picker.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 })

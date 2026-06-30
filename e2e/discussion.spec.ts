@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test'
 import { withTwoPages } from './helpers/browser'
 import { deleteAllEmails } from './helpers/mailpit'
 import { clickNavTab } from './helpers/navigation'
-import { projectName, screenshot } from './helpers/screenshot'
 import {
   setupUserWithDraftProposal,
   setupUserWithPreferences,
@@ -16,16 +15,13 @@ test.beforeEach(async () => {
 
 test.describe('Discussion and comments', () => {
   test('can post a comment on a proposal', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithDraftProposal(page, 'Comment trip', 'CommentResort')
 
     const proposals = new ProposalsPage(page)
     await proposals.postComment('Great proposal!')
-    await screenshot(page, 'discussion', 'comment-posted', proj)
   })
 
   test('can edit own comment', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithDraftProposal(page, 'Edit trip', 'EditResort')
 
     const proposals = new ProposalsPage(page)
@@ -40,11 +36,9 @@ test.describe('Discussion and comments', () => {
       await saveBtn.click()
       await expect(page.getByText('Edited comment')).toBeVisible()
     }
-    await screenshot(page, 'discussion', 'comment-edited', proj)
   })
 
   test('can delete own comment', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithDraftProposal(page, 'Delete trip', 'DeleteResort')
 
     const proposals = new ProposalsPage(page)
@@ -54,7 +48,6 @@ test.describe('Discussion and comments', () => {
     if (await deleteBtn.isVisible()) {
       await deleteBtn.click()
     }
-    await screenshot(page, 'discussion', 'comment-deleted', proj)
   })
 
   test('cannot edit or delete another users comment', async ({ browser }) => {

@@ -1,7 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { deleteAllEmails } from './helpers/mailpit'
 import { waitForAnimation } from './helpers/navigation'
-import { projectName, screenshot } from './helpers/screenshot'
 import { setupUserWithDraftProposal, setupUserWithTrip } from './helpers/setup'
 import { ProposalsPage } from './pages/proposals.page'
 
@@ -51,7 +50,6 @@ test.describe('Proposals', () => {
   })
 
   test('edit a draft proposal', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithDraftProposal(page, 'Edit trip', 'EditResort')
 
     await test.step('click edit button on draft proposal', async () => {
@@ -64,7 +62,6 @@ test.describe('Proposals', () => {
 
         const dialog = page.getByRole('dialog', { name: /edit proposal/i })
         if (await dialog.isVisible()) {
-          await screenshot(page, 'proposals', 'edit-dialog-open', proj)
         }
       }
     })
@@ -78,14 +75,12 @@ test.describe('Proposals', () => {
         if (await saveBtn.isVisible()) {
           await saveBtn.click()
           await waitForAnimation(page, 500)
-          await screenshot(page, 'proposals', 'edit-saved', proj)
         }
       }
     })
   })
 
   test('delete a draft proposal', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithDraftProposal(page, 'Delete trip', 'DeleteResort')
 
     await test.step('click delete button', async () => {
@@ -97,7 +92,6 @@ test.describe('Proposals', () => {
           name: /delete proposal/i,
         })
         if (await confirmDialog.isVisible()) {
-          await screenshot(page, 'proposals', 'delete-confirm-dialog', proj)
         }
       }
     })
@@ -109,7 +103,6 @@ test.describe('Proposals', () => {
       if (await confirmBtn.isVisible()) {
         await confirmBtn.click()
         await waitForAnimation(page, 500)
-        await screenshot(page, 'proposals', 'deleted', proj)
       }
     })
   })

@@ -2,7 +2,6 @@ import { expect, test } from '@playwright/test'
 import { withTwoPages } from './helpers/browser'
 import { deleteAllEmails } from './helpers/mailpit'
 import { clickNavTab } from './helpers/navigation'
-import { projectName, screenshot } from './helpers/screenshot'
 import {
   setupUserWithPreferences,
   setupUserWithSubmittedProposal,
@@ -65,12 +64,6 @@ test.describe('Multi-user scenarios', () => {
         const poll1 = new PollPage(page1)
         await poll1.clickVotingTab()
         await poll1.createPoll(7)
-        await screenshot(
-          page1,
-          'multi-user',
-          'coordinator-poll-created',
-          projectName()
-        )
       })
 
       await test.step('participant can vote', async () => {
@@ -131,8 +124,6 @@ test.describe('Multi-user scenarios', () => {
         await poll2.addVoteToProposal('VoteResort')
         await poll2.saveVote()
       })
-
-      await screenshot(page1, 'multi-user', 'concurrent-voting', projectName())
     })
   })
 })

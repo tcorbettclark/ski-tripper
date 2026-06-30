@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test'
 import { logout } from './helpers/auth'
 import { deleteAllEmails } from './helpers/mailpit'
 import { waitForAnimation } from './helpers/navigation'
-import { projectName, screenshot } from './helpers/screenshot'
 import { setupUserWithPreferences } from './helpers/setup'
+import { snapshotOptions } from './helpers/snapshot'
 import { AuthPage, generateTestUser } from './pages/auth.page'
 
 test.beforeEach(async () => {
@@ -12,7 +12,6 @@ test.beforeEach(async () => {
 
 test.describe('Auth flow', () => {
   test('signup and OTP verification', async ({ page }) => {
-    const proj = projectName()
     const auth = new AuthPage(page)
     const user = generateTestUser()
 
@@ -21,7 +20,6 @@ test.describe('Auth flow', () => {
       await expect(
         page.getByRole('heading', { name: /enter verification code/i })
       ).toBeVisible()
-      await screenshot(page, 'email', 'otp-entry', proj)
     })
 
     await test.step('enter OTP code and set password', async () => {
@@ -29,7 +27,6 @@ test.describe('Auth flow', () => {
       await expect(
         page.getByRole('heading', { name: /set your password/i })
       ).toBeVisible()
-      await screenshot(page, 'email', 'set-password', proj)
 
       await auth.setPassword(user.password)
       await expect(
@@ -39,7 +36,6 @@ test.describe('Auth flow', () => {
   })
 
   test('forgot password and OTP reset', async ({ page }) => {
-    const proj = projectName()
     const auth = new AuthPage(page)
     const user = generateTestUser()
 
@@ -66,7 +62,6 @@ test.describe('Auth flow', () => {
       await expect(
         page.getByRole('heading', { name: /set your password/i })
       ).toBeVisible()
-      await screenshot(page, 'email', 'password-reset', proj)
 
       await auth.setPassword(newPassword)
       await expect(
@@ -113,7 +108,6 @@ test.describe('Auth flow', () => {
       await expect(
         page.getByRole('heading', { name: /welcome! set your preferences/i })
       ).toBeVisible()
-      await screenshot(page, 'auth', 'logged-in', projectName())
     })
 
     await test.step('logout via user menu', async () => {
@@ -125,7 +119,6 @@ test.describe('Auth flow', () => {
         await logout(page)
       }
       await expect(page.getByTestId('auth-email')).toBeVisible()
-      await screenshot(page, 'auth', 'logged-out', projectName())
     })
 
     await test.step('log back in with password', async () => {
@@ -137,39 +130,48 @@ test.describe('Auth flow', () => {
   })
 
   test('auth screens render correctly', async ({ page }) => {
-    const proj = projectName()
-
     await test.step('login form is centred with readable labels', async () => {
       await page.goto('/')
       await expect(page.getByTestId('auth-email')).toBeVisible()
       await expect(page.getByTestId('auth-password')).toBeVisible()
-      await screenshot(page, 'auth-login-form', 'visible', proj)
+      await expect(page).toHaveScreenshot(
+        'auth-login-form.png',
+        snapshotOptions.auth(page)
+      )
     })
 
     await test.step('switch to signup — fields still usable', async () => {
       await page.getByTestId('auth-switch-mode').click()
       await expect(page.getByTestId('auth-name')).toBeVisible()
       await expect(page.getByTestId('auth-email')).toBeVisible()
-      await screenshot(page, 'auth-signup-form', 'visible', proj)
+      await expect(page).toHaveScreenshot(
+        'auth-signup-form.png',
+        snapshotOptions.auth(page)
+      )
     })
 
     await test.step('forgot password link visible and tappable', async () => {
       await page.getByTestId('auth-switch-mode').click()
       await page.getByTestId('auth-forgot-password').click()
       await expect(page.getByTestId('forgot-email')).toBeVisible()
-      await screenshot(page, 'auth-forgot-password', 'visible', proj)
+      await expect(page).toHaveScreenshot(
+        'auth-forgot-password.png',
+        snapshotOptions.auth(page)
+      )
     })
   })
 
   test('auth screens on desktop are centred with comfortable margins', async ({
     page,
   }) => {
-    const proj = projectName()
-    if (projectName().includes('mobile')) test.skip()
+    test.skip(page.viewportSize()?.width === 390)
 
     await page.goto('/')
     await expect(page.getByTestId('auth-email')).toBeVisible()
-    await screenshot(page, 'auth-desktop', 'centred', proj)
+    await expect(page).toHaveScreenshot(
+      'auth-desktop-centred.png',
+      snapshotOptions.auth(page)
+    )
 
     const cardWidth = await page.getByTestId('auth-email').evaluate((el) => {
       const card = el.closest('[style*="maxWidth"]') ?? el.closest('div')
@@ -179,7 +181,6 @@ test.describe('Auth flow', () => {
   })
 
   test('edit preferences after initial setup', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithPreferences(page)
 
     await test.step('open preferences modal', async () => {
@@ -209,7 +210,6 @@ test.describe('Auth flow', () => {
         if (await saveBtn.isVisible()) {
           await saveBtn.click()
           await waitForAnimation(page, 500)
-          await screenshot(page, 'auth', 'preferences-updated', proj)
         }
       }
     })

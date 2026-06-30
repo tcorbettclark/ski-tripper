@@ -5,8 +5,8 @@ import {
 } from './helpers/axe'
 import { deleteAllEmails } from './helpers/mailpit'
 import { clickNavTab, waitForAnimation } from './helpers/navigation'
-import { projectName, screenshot } from './helpers/screenshot'
 import { setupUserWithTrip } from './helpers/setup'
+import { snapshotOptions } from './helpers/snapshot'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
@@ -14,7 +14,6 @@ test.beforeEach(async () => {
 
 test.describe('Accessibility', () => {
   test('keyboard navigation through auth form', async ({ page }) => {
-    const proj = projectName()
     await page.goto('/')
 
     await test.step('tab through interactive elements', async () => {
@@ -30,7 +29,6 @@ test.describe('Accessibility', () => {
         if (focused) focusableElements.push(focused)
       }
       expect(focusableElements.length).toBeGreaterThan(2)
-      await screenshot(page, 'a11y', 'keyboard-tab-order', proj)
     })
 
     await test.step('enter submits form', async () => {
@@ -53,7 +51,6 @@ test.describe('Accessibility', () => {
   })
 
   test('keyboard navigation through app screens', async ({ page }) => {
-    const _proj = projectName()
     await setupUserWithTrip(page, 'A11y trip')
 
     await test.step('tab through header and tabs', async () => {
@@ -102,7 +99,6 @@ test.describe('Accessibility', () => {
   })
 
   test('buttons have meaningful text or aria-labels', async ({ page }) => {
-    const _proj = projectName()
     await setupUserWithTrip(page, 'A11y buttons trip')
 
     const buttons = await page.locator('button').all()
@@ -120,7 +116,6 @@ test.describe('Accessibility', () => {
   })
 
   test('axe-core scan on main app screens', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'A11y scan trip')
 
     await test.step('overview accessibility', async () => {
@@ -142,19 +137,18 @@ test.describe('Accessibility', () => {
       await clickNavTab(page, 'poll')
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
-
-    await screenshot(page, 'a11y', 'app-screens-scanned', proj)
   })
 
   test('contrast checks on auth screen (light)', async ({ page }) => {
-    const proj = projectName()
     await page.goto('/')
     await assertNoContrastViolations(page)
-    await screenshot(page, 'theme-contrast-light', 'auth', proj)
+    await expect(page).toHaveScreenshot(
+      'theme-contrast-light-auth.png',
+      snapshotOptions.auth(page)
+    )
   })
 
   test('contrast checks on auth screen (dark)', async ({ page }) => {
-    const proj = projectName()
     await page.goto('/')
     await page.evaluate(() => {
       document.documentElement.dataset.theme = 'dark'
@@ -162,11 +156,13 @@ test.describe('Accessibility', () => {
     })
     await page.reload()
     await assertNoContrastViolations(page)
-    await screenshot(page, 'theme-contrast-dark', 'auth', proj)
+    await expect(page).toHaveScreenshot(
+      'theme-contrast-dark-auth.png',
+      snapshotOptions.auth(page)
+    )
   })
 
   test('contrast checks on main app screens', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Theme contrast trip')
 
     await test.step('overview contrast check', async () => {
@@ -184,11 +180,13 @@ test.describe('Accessibility', () => {
       await assertNoContrastViolations(page)
     })
 
-    await screenshot(page, 'theme-contrast', 'app-screens', proj)
+    await expect(page).toHaveScreenshot(
+      'theme-contrast-app-screens.png',
+      snapshotOptions.loggedIn(page)
+    )
   })
 
   test('dark theme contrast checks on all app tabs', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'Dark theme trip')
 
     await test.step('switch to dark theme', async () => {
@@ -201,30 +199,41 @@ test.describe('Accessibility', () => {
     })
 
     await test.step('overview tab dark mode', async () => {
-      await screenshot(page, 'dark-theme', 'overview', proj)
+      await expect(page).toHaveScreenshot(
+        'dark-theme-overview.png',
+        snapshotOptions.loggedIn(page)
+      )
       await assertNoContrastViolations(page)
     })
 
     await test.step('resorts tab dark mode', async () => {
       await clickNavTab(page, 'resorts')
       await waitForAnimation(page, 1000)
-      await screenshot(page, 'dark-theme', 'resorts', proj)
+      await expect(page).toHaveScreenshot(
+        'dark-theme-resorts.png',
+        snapshotOptions.loggedIn(page)
+      )
       await assertNoContrastViolations(page)
     })
 
     await test.step('proposals tab dark mode', async () => {
       await clickNavTab(page, 'proposals')
-      await screenshot(page, 'dark-theme', 'proposals', proj)
+      await expect(page).toHaveScreenshot(
+        'dark-theme-proposals.png',
+        snapshotOptions.loggedIn(page)
+      )
     })
 
     await test.step('poll tab dark mode', async () => {
       await clickNavTab(page, 'poll')
-      await screenshot(page, 'dark-theme', 'poll', proj)
+      await expect(page).toHaveScreenshot(
+        'dark-theme-poll.png',
+        snapshotOptions.loggedIn(page)
+      )
     })
   })
 
   test('tab navigation has proper ARIA roles', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'A11y tab roles trip')
 
     await test.step('nav tabs have accessible role', async () => {
@@ -244,12 +253,10 @@ test.describe('Accessibility', () => {
       await waitForAnimation(page)
       await clickNavTab(page, 'poll')
       await waitForAnimation(page)
-      await screenshot(page, 'a11y', 'tab-roles', proj)
     })
   })
 
   test('resort table rows are focusable', async ({ page }) => {
-    const proj = projectName()
     await setupUserWithTrip(page, 'A11y table trip')
     await clickNavTab(page, 'resorts')
     await waitForAnimation(page, 2000)
@@ -257,13 +264,11 @@ test.describe('Accessibility', () => {
     await test.step('table has appropriate ARIA', async () => {
       const table = page.locator('[role="grid"], [role="table"], table').first()
       if (await table.isVisible()) {
-        await screenshot(page, 'a11y', 'resorts-table', proj)
       }
     })
   })
 
   test('modal can be closed with Escape', async ({ page }) => {
-    const _proj = projectName()
     await setupUserWithTrip(page, 'A11y modal trip')
 
     await test.step('about modal closes with Escape', async () => {
