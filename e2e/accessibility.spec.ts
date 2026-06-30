@@ -130,11 +130,13 @@ test.describe('Accessibility', () => {
 
     await test.step('proposals accessibility', async () => {
       await clickNavTab(page, 'proposals')
+      await page.getByRole('heading', { name: /proposals/i }).waitFor()
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
 
     await test.step('voting accessibility', async () => {
       await clickNavTab(page, 'voting')
+      await page.getByRole('heading', { name: /voting/i }).waitFor()
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
   })
@@ -177,6 +179,7 @@ test.describe('Accessibility', () => {
 
     await test.step('proposals tab contrast check', async () => {
       await clickNavTab(page, 'proposals')
+      await page.getByRole('heading', { name: /proposals/i }).waitFor()
       await assertNoContrastViolations(page)
     })
 
@@ -218,6 +221,7 @@ test.describe('Accessibility', () => {
 
     await test.step('proposals tab dark mode', async () => {
       await clickNavTab(page, 'proposals')
+      await page.getByRole('heading', { name: /proposals/i }).waitFor()
       await expect(page).toHaveScreenshot(
         'dark-theme-proposals.png',
         snapshotOptions.loggedIn(page)
@@ -226,6 +230,7 @@ test.describe('Accessibility', () => {
 
     await test.step('voting tab dark mode', async () => {
       await clickNavTab(page, 'voting')
+      await page.getByRole('heading', { name: /voting/i }).waitFor()
       await expect(page).toHaveScreenshot(
         'dark-theme-voting.png',
         snapshotOptions.loggedIn(page)
@@ -250,9 +255,9 @@ test.describe('Accessibility', () => {
       await clickNavTab(page, 'resorts')
       await waitForAnimation(page)
       await clickNavTab(page, 'proposals')
-      await waitForAnimation(page)
+      await page.getByRole('heading', { name: /proposals/i }).waitFor()
       await clickNavTab(page, 'voting')
-      await waitForAnimation(page)
+      await page.getByRole('heading', { name: /voting/i }).waitFor()
     })
   })
 
