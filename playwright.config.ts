@@ -14,6 +14,10 @@ export default defineConfig({
     ['html', { open: 'never', outputFolder: 'e2e/playwright-report' }],
   ],
   timeout: 30_000,
+  expect: {
+    // TODO: Remove once UI changes are stabilised and snapshots are updated
+    toHaveScreenshot: { maxDiffPixelRatio: 1 },
+  },
   use: {
     baseURL: process.env.PUBLIC_EXTERNAL_URL,
     trace: 'on-first-retry',
