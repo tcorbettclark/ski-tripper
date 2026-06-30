@@ -78,11 +78,12 @@ export default function ProposalRow({
           <img src={flagUrl} alt={proposal.country} style={styles.flag} />
         )}
         <span style={styles.proposalName}>{name}</span>
-        {tokens.map((i) => (
-          <span key={`p-${i}`} style={styles.tokenFilled}>
-            🍺
-          </span>
-        ))}
+        {showStepper &&
+          tokens.map((i) => (
+            <span key={`p-${i}`} style={styles.tokenFilled}>
+              🍺
+            </span>
+          ))}
       </div>
       {showStepper && (
         <div style={styles.stepper}>
@@ -120,7 +121,15 @@ export default function ProposalRow({
           </button>
         </div>
       )}
-      {!showStepper && <div style={styles.totalBadge}>{count}</div>}
+      {!showStepper && (
+        <div style={styles.tokenIcons}>
+          {tokens.map((i) => (
+            <span key={`p-${i}`} style={styles.tokenFilled}>
+              🍺
+            </span>
+          ))}
+        </div>
+      )}
 
       {showPopup && (
         <div
@@ -252,12 +261,9 @@ const styles = {
     minWidth: '16px',
     textAlign: 'center',
   },
-  totalBadge: {
-    fontSize: fontSizes.base,
-    color: colors.accent,
-    fontWeight: '600',
-    minWidth: '24px',
-    textAlign: 'right',
+  tokenIcons: {
+    display: 'flex',
+    alignItems: 'center',
   },
 } as const
 
