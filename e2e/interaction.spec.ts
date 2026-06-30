@@ -8,7 +8,7 @@ test.beforeEach(async () => {
   await deleteAllEmails()
 })
 
-test.describe('Cross-browser (Chrome)', () => {
+test.describe('UI interactions', () => {
   test('date range picker renders and is interactable', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Date picker trip')

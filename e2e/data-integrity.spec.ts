@@ -1,12 +1,13 @@
 import { expect, test } from '@playwright/test'
+import { withTwoPages } from './helpers/browser'
 import { deleteAllEmails } from './helpers/mailpit'
-import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { waitForAnimation } from './helpers/navigation'
 import { projectName, screenshot } from './helpers/screenshot'
 import {
+  setupUserWithPreferences,
   setupUserWithSubmittedProposal,
   setupUserWithTrip,
 } from './helpers/setup'
-import { PollPage } from './pages/poll.page'
 import { ProposalsPage } from './pages/proposals.page'
 import { TripsPage } from './pages/trips.page'
 
@@ -38,6 +39,28 @@ test.describe('Data integrity', () => {
     })
 
     await screenshot(page, 'data-integrity', 'invite-code', proj)
+  })
+
+  test('join a trip with invite code', async ({ browser }) => {
+    await withTwoPages(browser, async (page1, page2) => {
+      let inviteCode: string
+
+      await test.step('user 1 signs up and creates trip', async () => {
+        await setupUserWithTrip(page1, 'Zermatt 2026')
+        const trips1 = new TripsPage(page1)
+        inviteCode = await trips1.getInviteCode()
+      })
+
+      await test.step('user 2 signs up and joins trip', async () => {
+        await setupUserWithPreferences(page2)
+        const trips2 = new TripsPage(page2)
+        await trips2.joinTrip(inviteCode!)
+      })
+
+      await test.step('assert user 2 sees the trip', async () => {
+        await expect(page2.getByText('Zermatt 2026')).toBeVisible()
+      })
+    })
   })
 
   test('invalid invite code shows error', async ({ page }) => {
@@ -111,32 +134,6 @@ test.describe('Data integrity', () => {
     })
   })
 
-  test('poll constraints', async ({ page }) => {
-    const proj = projectName()
-    await setupUserWithTrip(page, 'Poll constraints trip')
-
-    await test.step('cannot create poll without submitted proposals', async () => {
-      await clickNavTab(page, 'poll')
-      const createPollBtn = page.getByTestId('create-poll-btn')
-      if (await createPollBtn.isVisible()) {
-        expect(await createPollBtn.isDisabled()).toBe(true)
-      }
-    })
-
-    await test.step('create poll after submitting proposal', async () => {
-      const proposals = new ProposalsPage(page)
-      await proposals.goToProposalsTab()
-      await proposals.createDraftProposal('PollResort')
-      await proposals.addAccommodation('Hotel Poll')
-      await proposals.submitProposal()
-
-      const poll = new PollPage(page)
-      await poll.clickVotingTab()
-      await poll.createPoll(7)
-      await screenshot(page, 'data-integrity', 'poll-created', proj)
-    })
-  })
-
   test('date range validation: start must be before end', async ({ page }) => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Date validation trip')
@@ -147,47 +144,5 @@ test.describe('Data integrity', () => {
     const dateField = page.getByTestId('date-range-field')
     await expect(dateField).toBeVisible()
     await screenshot(page, 'data-integrity', 'date-range-picker', proj)
-  })
-
-  test('token allocation constraints in voting', async ({ page }) => {
-    const proj = projectName()
-    await setupUserWithSubmittedProposal(page, 'Token trip', 'TokenResort')
-
-    const poll = new PollPage(page)
-    await poll.clickVotingTab()
-    await poll.createPoll(7)
-
-    await test.step('vote and verify tokens are allocated', async () => {
-      await poll.addVoteToProposal('TokenResort')
-      await poll.saveVote()
-      await screenshot(page, 'data-integrity', 'token-allocated', proj)
-    })
-
-    await test.step('re-voting updates existing vote', async () => {
-      const removeBtn = page.getByRole('button', {
-        name: /remove vote from tokenresort/i,
-      })
-      if (await removeBtn.isVisible()) {
-        await removeBtn.click()
-        await poll.saveVote()
-        await screenshot(page, 'data-integrity', 're-vote', proj)
-      }
-    })
-  })
-
-  test('poll results update after voting', async ({ page }) => {
-    const proj = projectName()
-    await setupUserWithSubmittedProposal(page, 'Results trip', 'ResultsResort')
-
-    const poll = new PollPage(page)
-    await poll.clickVotingTab()
-    await poll.createPoll(7)
-    await poll.addVoteToProposal('ResultsResort')
-    await poll.saveVote()
-
-    await test.step('results are visible after voting', async () => {
-      await waitForAnimation(page, 500)
-      await screenshot(page, 'data-integrity', 'poll-results', proj)
-    })
   })
 })

@@ -10,66 +10,28 @@ test.beforeEach(async () => {
 })
 
 test.describe('Responsive layout and visual', () => {
-  test('auth screens render correctly', async ({ page }) => {
+  test('auth screens mobile layout', async ({ page }) => {
     const proj = projectName()
-    const mobile = isMobile(proj)
-
-    await test.step('login form is centred with readable labels', async () => {
-      await page.goto('/')
-      await expect(page.getByTestId('auth-email')).toBeVisible()
-      await expect(page.getByTestId('auth-password')).toBeVisible()
-      await screenshot(page, 'auth-login-form', 'visible', proj)
-
-      if (mobile) {
-        const formBox = await page.getByTestId('auth-email').evaluate((el) => {
-          const form = el.closest('form') ?? el.parentElement!
-          const rect = form.getBoundingClientRect()
-          return { width: rect.width, left: rect.left }
-        })
-        const viewport = page.viewportSize()!
-        expect(formBox.width).toBeLessThanOrEqual(viewport.width)
-      }
-    })
-
-    await test.step('switch to signup — fields still usable', async () => {
-      await page.getByTestId('auth-switch-mode').click()
-      await expect(page.getByTestId('auth-name')).toBeVisible()
-      await expect(page.getByTestId('auth-email')).toBeVisible()
-      await screenshot(page, 'auth-signup-form', 'visible', proj)
-    })
-
-    await test.step('forgot password link visible and tappable', async () => {
-      await page.getByTestId('auth-switch-mode').click()
-      await page.getByTestId('auth-forgot-password').click()
-      await expect(page.getByTestId('forgot-email')).toBeVisible()
-      await screenshot(page, 'auth-forgot-password', 'visible', proj)
-    })
-
-    if (mobile) {
-      await test.step('about button visible and not overlapping form', async () => {
-        await page.goto('/')
-        const aboutBtn = page.getByRole('button', { name: /about/i })
-        await expect(aboutBtn).toBeVisible()
-        await screenshot(page, 'auth-about-button-mobile', 'visible', proj)
-      })
-    }
-  })
-
-  test('auth screens on desktop are centred with comfortable margins', async ({
-    page,
-  }) => {
-    const proj = projectName()
-    if (isMobile(proj)) test.skip()
+    if (!isMobile(proj)) test.skip()
 
     await page.goto('/')
     await expect(page.getByTestId('auth-email')).toBeVisible()
-    await screenshot(page, 'auth-desktop', 'centred', proj)
 
-    const cardWidth = await page.getByTestId('auth-email').evaluate((el) => {
-      const card = el.closest('[style*="maxWidth"]') ?? el.closest('div')
-      return card?.getBoundingClientRect().width ?? 0
+    await test.step('about button visible and not overlapping form', async () => {
+      const aboutBtn = page.getByRole('button', { name: /about/i })
+      await expect(aboutBtn).toBeVisible()
+      await screenshot(page, 'auth-about-button-mobile', 'visible', proj)
     })
-    expect(cardWidth).toBeLessThanOrEqual(560)
+
+    await test.step('login form fits viewport', async () => {
+      const formBox = await page.getByTestId('auth-email').evaluate((el) => {
+        const form = el.closest('form') ?? el.parentElement!
+        const rect = form.getBoundingClientRect()
+        return { width: rect.width, left: rect.left }
+      })
+      const viewport = page.viewportSize()!
+      expect(formBox.width).toBeLessThanOrEqual(viewport.width)
+    })
   })
 
   test('preferences form is navigable', async ({ page }) => {

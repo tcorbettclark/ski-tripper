@@ -146,25 +146,81 @@ test.describe('Accessibility', () => {
     await screenshot(page, 'a11y', 'app-screens-scanned', proj)
   })
 
-  test.skip('contrast check on all screens', async ({ page }) => {
+  test('contrast checks on auth screen (light)', async ({ page }) => {
     const proj = projectName()
     await page.goto('/')
     await assertNoContrastViolations(page)
+    await screenshot(page, 'theme-contrast-light', 'auth', proj)
+  })
 
-    await setupUserWithTrip(page, 'Contrast trip')
+  test('contrast checks on auth screen (dark)', async ({ page }) => {
+    const proj = projectName()
+    await page.goto('/')
+    await page.evaluate(() => {
+      document.documentElement.dataset.theme = 'dark'
+      localStorage.setItem('theme', 'dark')
+    })
+    await page.reload()
     await assertNoContrastViolations(page)
+    await screenshot(page, 'theme-contrast-dark', 'auth', proj)
+  })
 
-    await clickNavTab(page, 'resorts')
-    await waitForAnimation(page, 500)
-    await assertNoContrastViolations(page)
+  test('contrast checks on main app screens', async ({ page }) => {
+    const proj = projectName()
+    await setupUserWithTrip(page, 'Theme contrast trip')
 
-    await clickNavTab(page, 'proposals')
-    await assertNoContrastViolations(page)
+    await test.step('overview contrast check', async () => {
+      await assertNoContrastViolations(page)
+    })
 
-    await clickNavTab(page, 'poll')
-    await assertNoContrastViolations(page)
+    await test.step('resorts tab contrast check', async () => {
+      await clickNavTab(page, 'resorts')
+      await waitForAnimation(page, 500)
+      await assertNoContrastViolations(page)
+    })
 
-    await screenshot(page, 'a11y', 'contrast-checks', proj)
+    await test.step('proposals tab contrast check', async () => {
+      await clickNavTab(page, 'proposals')
+      await assertNoContrastViolations(page)
+    })
+
+    await screenshot(page, 'theme-contrast', 'app-screens', proj)
+  })
+
+  test('dark theme contrast checks on all app tabs', async ({ page }) => {
+    const proj = projectName()
+    await setupUserWithTrip(page, 'Dark theme trip')
+
+    await test.step('switch to dark theme', async () => {
+      await page.evaluate(() => {
+        document.documentElement.dataset.theme = 'dark'
+        localStorage.setItem('theme', 'dark')
+      })
+      await page.reload()
+      await page.getByTestId('invite-code').waitFor({ state: 'visible' })
+    })
+
+    await test.step('overview tab dark mode', async () => {
+      await screenshot(page, 'dark-theme', 'overview', proj)
+      await assertNoContrastViolations(page)
+    })
+
+    await test.step('resorts tab dark mode', async () => {
+      await clickNavTab(page, 'resorts')
+      await waitForAnimation(page, 1000)
+      await screenshot(page, 'dark-theme', 'resorts', proj)
+      await assertNoContrastViolations(page)
+    })
+
+    await test.step('proposals tab dark mode', async () => {
+      await clickNavTab(page, 'proposals')
+      await screenshot(page, 'dark-theme', 'proposals', proj)
+    })
+
+    await test.step('poll tab dark mode', async () => {
+      await clickNavTab(page, 'poll')
+      await screenshot(page, 'dark-theme', 'poll', proj)
+    })
   })
 
   test('tab navigation has proper ARIA roles', async ({ page }) => {
@@ -235,27 +291,5 @@ test.describe('Accessibility', () => {
         await waitForAnimation(page)
       }
     })
-  })
-
-  test.skip('dark mode contrast check on all screens', async ({ page }) => {
-    const proj = projectName()
-    await page.goto('/')
-    await page.evaluate(() => {
-      document.documentElement.dataset.theme = 'dark'
-      localStorage.setItem('theme', 'dark')
-    })
-
-    await assertNoContrastViolations(page)
-
-    await setupUserWithTrip(page, 'Dark contrast trip')
-
-    await assertNoContrastViolations(page)
-    await clickNavTab(page, 'resorts')
-    await waitForAnimation(page, 500)
-    await assertNoContrastViolations(page)
-    await clickNavTab(page, 'proposals')
-    await assertNoContrastViolations(page)
-
-    await screenshot(page, 'a11y', 'dark-contrast-checks', proj)
   })
 })
