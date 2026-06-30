@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Discussion } from '../shared/types.d'
 import {
   createDiscussionComment as _createDiscussionComment,
@@ -42,7 +42,6 @@ export default function DiscussionSection({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const listRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     listDiscussion(proposalId)
@@ -50,12 +49,6 @@ export default function DiscussionSection({
       .catch((err) => toast(getErrorMessage(err), 'error'))
       .finally(() => setLoading(false))
   }, [proposalId, listDiscussion])
-
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.scrollTop = listRef.current.scrollHeight
-    }
-  })
 
   async function handlePost() {
     if (!newBody.trim()) return
@@ -114,7 +107,7 @@ export default function DiscussionSection({
 
   return (
     <div style={sectionStyles.container}>
-      <div ref={listRef} style={sectionStyles.commentList}>
+      <div style={sectionStyles.commentList}>
         {loading && comments.length === 0 && (
           <p style={sectionStyles.loading}>Loading…</p>
         )}
@@ -202,7 +195,12 @@ export default function DiscussionSection({
                   </div>
                 </div>
               ) : (
-                <p style={sectionStyles.commentBody}>{comment.body}</p>
+                <p
+                  data-testid={`comment-${comment.id}`}
+                  style={sectionStyles.commentBody}
+                >
+                  {comment.body}
+                </p>
               )}
             </div>
           )
@@ -211,6 +209,7 @@ export default function DiscussionSection({
           <div style={sectionStyles.inputRow}>
             <input
               type="text"
+              data-testid="comment-input"
               placeholder="Write a comment…"
               value={newBody}
               onChange={(e) => setNewBody(e.target.value)}
@@ -222,6 +221,7 @@ export default function DiscussionSection({
             />
             <button
               type="button"
+              data-testid="comment-post-btn"
               onClick={handlePost}
               disabled={posting || !newBody.trim()}
               style={

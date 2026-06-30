@@ -1,5 +1,5 @@
 import { MapPin, Sparkles } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getCountryFlagUrl } from '../shared/countries'
 import type { Accommodation, Discussion, Proposal } from '../shared/types.d'
 import AnalysisModal from './AnalysisModal'
@@ -122,12 +122,10 @@ export default function ProposalCard({
     'proposal' | 'accommodations' | 'discussion'
   >(initialTab ?? 'proposal')
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
-  const cardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (initialTab) {
       setActiveTab(initialTab)
-      cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }, [initialTab])
 
@@ -289,7 +287,7 @@ export default function ProposalCard({
 
   return (
     <>
-      <div ref={cardRef} style={previewMode ? styles.previewCard : styles.card}>
+      <div style={previewMode ? styles.previewCard : styles.card}>
         <div style={styles.header}>
           <div style={styles.headerLeft}>
             <span style={detailStyles.title}>
@@ -367,6 +365,7 @@ export default function ProposalCard({
             </button>
             <button
               type="button"
+              data-testid="discussion-tab"
               onClick={() => setActiveTab('discussion')}
               style={
                 activeTab === 'discussion'

@@ -26,10 +26,7 @@ export class ProposalsPage {
   }
 
   async selectDiscussionTab() {
-    await this.page
-      .getByRole('button', { name: /^discussion/i })
-      .first()
-      .click()
+    await this.page.getByTestId('discussion-tab').click()
   }
 
   async clickNewProposal() {
@@ -209,14 +206,8 @@ export class ProposalsPage {
 
   async postComment(text: string) {
     await this.selectDiscussionTab()
-    await this.page
-      .getByPlaceholder(/comment|write/i)
-      .first()
-      .fill(text)
-    await this.page
-      .getByRole('button', { name: /post|send/i })
-      .first()
-      .click()
+    await this.page.getByTestId('comment-input').fill(text)
+    await this.page.getByTestId('comment-post-btn').click()
     await expect(this.page.getByText(text)).toBeVisible()
   }
 }

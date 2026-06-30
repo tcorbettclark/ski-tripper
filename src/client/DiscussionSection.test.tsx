@@ -88,7 +88,7 @@ describe('DiscussionSection', () => {
     })
 
     expect(screen.getByText('Alice submitted this proposal')).toBeDefined()
-    expect(screen.getByText('Looks great!')).toBeDefined()
+    expect(screen.getByTestId('comment-d-2')).toBeDefined()
     expect(screen.getByText('AI')).toBeDefined()
   })
 
@@ -104,7 +104,7 @@ describe('DiscussionSection', () => {
       )
     })
 
-    expect(screen.getByText('Looks great!')).toBeDefined()
+    expect(screen.getByTestId('comment-d-2')).toBeDefined()
 
     const allEditButtons = screen.queryAllByRole('button', { name: 'Edit' })
     const allDeleteButtons = screen.queryAllByRole('button', {
@@ -145,11 +145,11 @@ describe('DiscussionSection', () => {
       )
     })
 
-    expect(screen.getByText('Looks great!')).toBeDefined()
+    expect(screen.getByTestId('comment-d-2')).toBeDefined()
 
-    const input = screen.getByPlaceholderText('Write a comment…')
+    const input = screen.getByTestId('comment-input')
     await userEvent.type(input, 'New comment')
-    const postButton = screen.getByRole('button', { name: 'Post' })
+    const postButton = screen.getByTestId('comment-post-btn')
     await userEvent.click(postButton)
     expect(createDiscussionCommentMock).toHaveBeenCalledWith(
       'prop-1',
