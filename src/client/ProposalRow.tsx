@@ -63,7 +63,7 @@ export default function ProposalRow({
 
   return (
     <div style={styles.row}>
-      <div style={styles.infoButtonWrap}>
+      <div style={styles.leftCol} data-testid={`count-${proposal.id}`}>
         <button
           type="button"
           aria-label={`View details for ${name}`}
@@ -78,8 +78,6 @@ export default function ProposalRow({
           <img src={flagUrl} alt={proposal.country} style={styles.flag} />
         )}
         <span style={styles.proposalName}>{name}</span>
-      </div>
-      <div style={styles.tokenRow} data-testid={`count-${proposal.id}`}>
         {tokens.map((i) => (
           <span key={`p-${i}`} style={styles.tokenFilled}>
             🍺
@@ -183,10 +181,16 @@ const styles = {
     border: borders.card,
     borderRadius: '12px',
     display: 'grid',
-    gridTemplateColumns: 'auto 1fr auto',
+    gridTemplateColumns: '1fr auto',
     alignItems: 'center',
-    gap: '8px',
+    gap: '12px',
     boxShadow: '0 2px 12px var(--color-shadow)',
+  },
+  leftCol: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    minWidth: 0,
   },
   proposalName: {
     fontSize: fontSizes.base,
@@ -200,11 +204,6 @@ const styles = {
     objectFit: 'contain' as const,
     verticalAlign: 'middle',
   },
-  infoButtonWrap: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-  },
   infoButton: {
     background: 'none',
     border: 'none',
@@ -214,12 +213,6 @@ const styles = {
     padding: '4px',
     opacity: 0.6,
     transition: 'opacity 0.15s',
-  },
-  tokenRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '2px',
   },
   tokenFilled: {
     fontSize: fontSizes.base,
