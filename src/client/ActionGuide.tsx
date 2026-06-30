@@ -403,7 +403,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
                 border: `1px solid ${action.variant === 'primary' ? mix(colorToken, 0.5) : mix('--color-textSecondary', 0.2)}`,
                 background:
                   action.variant === 'primary'
-                    ? mix(colorToken, 0.15)
+                    ? mix(colorToken, 0.08)
                     : 'transparent',
                 color:
                   action.variant === 'primary'

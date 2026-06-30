@@ -11,7 +11,7 @@
   --color-error: #c42b2b;
   --color-overlay: rgba(0, 0, 0, 0.4);
   --color-shadow: rgba(0, 0, 0, 0.15);
-  --color-pisteBeginner: #3a78c0;
+  --color-pisteBeginner: #2f6ab0;
   --color-pisteIntermediate: #cc2e2e;
   --color-pisteAdvanced: #444444;
   --color-timeHuts: #cc8830;
@@ -53,7 +53,7 @@
   --color-overlay: rgba(4, 12, 24, 0.85);
   --color-shadow: rgba(0, 0, 0, 0.6);
   --color-pisteBeginner: #4a90d9;
-  --color-pisteIntermediate: #e53935;
+  --color-pisteIntermediate: #ef4444;
   --color-pisteAdvanced: #888888;
   --color-timeHuts: #f0a050;
   --color-timeApres: #c070d0;
