@@ -136,6 +136,60 @@ export function auditEnrichedData(
   }
 }
 
+export function filterAuditResult(
+  result: AuditResult,
+  fields: string[]
+): AuditResult {
+  if (fields.length === 0) return result
+
+  const enrichedProblems = result.enrichedProblems.filter((problem) =>
+    fields.every((field) =>
+      problem.issues.some((issue) => issueMatchesField(issue, field))
+    )
+  )
+
+  return { ...result, enrichedProblems }
+}
+
+function issueMatchesField(issue: AuditIssue, field: string): boolean {
+  if (issue.type === 'low-quality') return issue.fields.includes(field)
+  if (issue.type === 'invalid-snow-reliability')
+    return field === 'snowReliability'
+  if (issue.type === 'negative-transfer-time') return field === 'transferTime'
+  return false
+}
+
+export const ALL_PROBLEM_FIELDS = Object.keys(QUALITY_FIELDS)
+
+export function problemFieldCounts(
+  result: AuditResult
+): Array<{ field: string; count: number }> {
+  const counts = new Map<string, number>(
+    ALL_PROBLEM_FIELDS.map((f): [string, number] => [f, 0])
+  )
+  for (const problem of result.enrichedProblems) {
+    const seen = new Set<string>()
+    for (const issue of problem.issues) {
+      for (const field of issueFields(issue)) {
+        if (!seen.has(field)) {
+          seen.add(field)
+          counts.set(field, (counts.get(field) ?? 0) + 1)
+        }
+      }
+    }
+  }
+  return [...counts.entries()]
+    .map(([field, count]) => ({ field, count }))
+    .sort((a, b) => b.count - a.count || a.field.localeCompare(b.field))
+}
+
+function issueFields(issue: AuditIssue): string[] {
+  if (issue.type === 'low-quality') return issue.fields
+  if (issue.type === 'invalid-snow-reliability') return ['snowReliability']
+  if (issue.type === 'negative-transfer-time') return ['transferTime']
+  return []
+}
+
 function findDuplicateIds(items: { id: string }[]): string[] {
   const seen = new Set<string>()
   const dupes = new Set<string>()

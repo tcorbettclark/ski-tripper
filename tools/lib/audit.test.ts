@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import { auditEnrichedData } from './audit'
+import {
+  auditEnrichedData,
+  filterAuditResult,
+  problemFieldCounts,
+} from './audit'
 import { mergeEnrichedIntoSeeded } from './read-resorts'
 import type { EnrichedResort, SeededResort } from './types'
 
@@ -169,6 +173,127 @@ describe('auditEnrichedData', () => {
         issues: [{ type: 'low-quality', fields: ['nearestAirport'] }],
       },
     ])
+  })
+})
+
+describe('filterAuditResult', () => {
+  const baseResult = auditEnrichedData(
+    [
+      seededResort,
+      { ...seededResort, id: 'other-alps-france', resortName: 'Other' },
+    ],
+    [
+      { ...goodEnriched, nearestAirport: '', snowReliability: 'extreme' },
+      { ...goodEnriched, id: 'other-alps-france', transferTime: -5 },
+    ]
+  )
+
+  it('returns unfiltered result when no fields specified', () => {
+    expect(filterAuditResult(baseResult, [])).toEqual(baseResult)
+  })
+
+  it('filters by a single field', () => {
+    const filtered = filterAuditResult(baseResult, ['nearestAirport'])
+    expect(filtered.enrichedProblems).toHaveLength(1)
+    expect(filtered.enrichedProblems[0].id).toBe('chamonix-alps-france')
+  })
+
+  it('filters by conjunction of multiple fields', () => {
+    const filtered = filterAuditResult(baseResult, [
+      'nearestAirport',
+      'snowReliability',
+    ])
+    expect(filtered.enrichedProblems).toHaveLength(1)
+    expect(filtered.enrichedProblems[0].id).toBe('chamonix-alps-france')
+  })
+
+  it('excludes resorts that do not match all filter fields', () => {
+    const filtered = filterAuditResult(baseResult, [
+      'nearestAirport',
+      'transferTime',
+    ])
+    expect(filtered.enrichedProblems).toHaveLength(0)
+  })
+
+  it('matches field from type-specific issue', () => {
+    const filtered = filterAuditResult(baseResult, ['snowReliability'])
+    expect(filtered.enrichedProblems).toHaveLength(1)
+    expect(filtered.enrichedProblems[0].id).toBe('chamonix-alps-france')
+  })
+
+  it('matches field from negative-transfer-time issue', () => {
+    const filtered = filterAuditResult(baseResult, ['transferTime'])
+    expect(filtered.enrichedProblems).toHaveLength(1)
+    expect(filtered.enrichedProblems[0].id).toBe('other-alps-france')
+  })
+
+  it('preserves non-filtered fields in the result', () => {
+    const filtered = filterAuditResult(baseResult, ['nearestAirport'])
+    expect(filtered.seededCount).toBe(baseResult.seededCount)
+    expect(filtered.enrichedCount).toBe(baseResult.enrichedCount)
+    expect(filtered.orphans).toEqual(baseResult.orphans)
+    expect(filtered.duplicateSeededIds).toEqual(baseResult.duplicateSeededIds)
+    expect(filtered.duplicateEnrichedIds).toEqual(
+      baseResult.duplicateEnrichedIds
+    )
+  })
+})
+
+describe('problemFieldCounts', () => {
+  it('returns all fields with zero counts for clean data', () => {
+    const result = auditEnrichedData([seededResort], [goodEnriched])
+    const counts = problemFieldCounts(result)
+    expect(counts).toHaveLength(12)
+    for (const { count } of counts) {
+      expect(count).toBe(0)
+    }
+  })
+
+  it('counts resorts per problem field', () => {
+    const lowQuality: EnrichedResort = {
+      ...goodEnriched,
+      nearestAirport: '',
+      snowReliability: 'extreme',
+    }
+    const result = auditEnrichedData([seededResort], [lowQuality])
+    const counts = problemFieldCounts(result)
+    const byField = new Map(counts.map((c) => [c.field, c.count]))
+    expect(byField.get('nearestAirport')).toBe(1)
+    expect(byField.get('snowReliability')).toBe(1)
+    expect(byField.get('terrainDescription')).toBe(0)
+  })
+
+  it('counts each resort only once per field even with multiple issues on that field', () => {
+    const bad: EnrichedResort = {
+      ...goodEnriched,
+      snowReliability: '',
+    }
+    const result = auditEnrichedData([seededResort], [bad])
+    const counts = problemFieldCounts(result)
+    const byField = new Map(counts.map((c) => [c.field, c.count]))
+    expect(byField.get('snowReliability')).toBe(1)
+  })
+
+  it('sorts by count descending then field name', () => {
+    const resort1: SeededResort = { ...seededResort, id: 'resort-1' }
+    const resort2: SeededResort = { ...seededResort, id: 'resort-2' }
+    const enriched1: EnrichedResort = {
+      ...goodEnriched,
+      id: 'resort-1',
+      nearestAirport: '',
+    }
+    const enriched2: EnrichedResort = {
+      ...goodEnriched,
+      id: 'resort-2',
+      nearestAirport: '',
+      terrainDescription: '',
+    }
+    const result = auditEnrichedData([resort1, resort2], [enriched1, enriched2])
+    const counts = problemFieldCounts(result)
+    const fields = counts.map((c) => c.field)
+    const nearestIdx = fields.indexOf('nearestAirport')
+    const terrainIdx = fields.indexOf('terrainDescription')
+    expect(nearestIdx).toBeLessThan(terrainIdx)
   })
 })
 

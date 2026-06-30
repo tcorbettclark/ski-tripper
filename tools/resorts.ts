@@ -18,9 +18,11 @@ import {
 import {
   type AuditIssue,
   auditEnrichedData,
+  filterAuditResult,
   hasLowQualityFields,
   isLowQualityValue,
   listLowQualityFields,
+  problemFieldCounts,
   QUALITY_FIELDS,
 } from './lib/audit'
 import { cleanUrls } from './lib/clean-urls'
@@ -818,11 +820,24 @@ async function checkAndFixResortInconsistencies(
   return { fixed: validInconsistencies.length, skipped: false }
 }
 
-function audit(options: { detail?: boolean }) {
+function audit(options: { detail?: boolean; filter?: string[] }) {
   const seeded = readSeeded()
   const enriched = readEnriched()
 
-  const result = auditEnrichedData(seeded, enriched)
+  let result = auditEnrichedData(seeded, enriched)
+
+  if (options.filter && options.filter.length > 0) {
+    result = filterAuditResult(result, options.filter)
+  }
+
+  if (options.filter && options.filter.length > 0) {
+    for (const { resortName, id } of result.enrichedProblems) {
+      console.log(
+        `${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}${id}${ANSI_RESET}`
+      )
+    }
+    return
+  }
 
   if (result.seededCount === 0) {
     console.log(
@@ -854,6 +869,20 @@ function audit(options: { detail?: boolean }) {
     `${ANSI_DIM}Resorts with problems${ANSI_RESET}   ${ANSI_BOLD}${result.enrichedProblems.length}${ANSI_RESET}`
   )
 
+  const fieldCounts = problemFieldCounts(result)
+  console.log()
+  console.log(`${ANSI_BOLD}Problem fields${ANSI_RESET}`)
+  const maxFieldLen = Math.max(...fieldCounts.map((fc) => fc.field.length))
+  for (const { field, count } of fieldCounts) {
+    const colour = FIELD_COLOURS[field] ?? ANSI_RESET
+    const padded = field.padEnd(maxFieldLen)
+    const num =
+      count > 0
+        ? `${ANSI_BOLD}${count}${ANSI_RESET}`
+        : `${ANSI_DIM}0${ANSI_RESET}`
+    console.log(`  ${colour}${padded}${ANSI_RESET}  ${num}`)
+  }
+
   const totalIssues =
     result.orphans.length +
     result.duplicateSeededIds.length +
@@ -866,32 +895,15 @@ function audit(options: { detail?: boolean }) {
     return
   }
 
-  console.log()
-  console.log(
-    `${ANSI_YELLOW}${ANSI_BOLD}${totalIssues} total issue(s)${ANSI_RESET}`
-  )
-
   if (result.enrichedProblems.length > 0) {
-    console.log()
     if (options.detail) {
+      console.log()
       for (const { id, resortName, issues } of result.enrichedProblems) {
         console.log(
           `${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}${id}${ANSI_RESET}`
         )
         console.log(`  ${formatIssueTags(issues)}`)
         console.log()
-      }
-    } else {
-      const show = result.enrichedProblems.slice(0, 10)
-      for (const { resortName, id } of show) {
-        console.log(
-          `  ${ANSI_BOLD}${resortName}${ANSI_RESET} ${ANSI_DIM}(${id})${ANSI_RESET}`
-        )
-      }
-      if (result.enrichedProblems.length > 10) {
-        console.log(
-          `  ${ANSI_DIM}... and ${result.enrichedProblems.length - 10} more (use --detail to see all)${ANSI_RESET}`
-        )
       }
     }
   }
@@ -1569,6 +1581,10 @@ async function seed(options: { dryRun?: boolean; minPisteLength?: number }) {
   )
 }
 
+function collectOptions(value: string, previous: string[]): string[] {
+  return previous.concat([value])
+}
+
 const program = new Command()
 
 program
@@ -1642,8 +1658,14 @@ program
   .command('audit')
   .description('Summarise enriched data and list problems')
   .option('--detail', 'Show per-resort quality issue details')
-  .action((options: { detail?: boolean }) => {
-    audit({ detail: options.detail })
+  .option(
+    '--filter <field>',
+    'Filter resorts to those with issues on the given field (repeatable)',
+    collectOptions,
+    []
+  )
+  .action((options: { detail?: boolean; filter?: string[] }) => {
+    audit({ detail: options.detail, filter: options.filter })
   })
 
 program
