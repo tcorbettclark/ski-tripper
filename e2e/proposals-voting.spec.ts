@@ -1,45 +1,17 @@
 import { expect, test } from '@playwright/test'
 import { deleteAllEmails } from './helpers/mailpit'
-import { AuthPage, generateTestUser } from './pages/auth.page'
+import { setupUserWithTrip } from './helpers/setup'
 import { PollPage } from './pages/poll.page'
-import { PreferencesPage } from './pages/preferences.page'
 import { ProposalsPage } from './pages/proposals.page'
-import { TripsPage } from './pages/trips.page'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
 
-async function signupVerifyAndLogin(page: import('@playwright/test').Page) {
-  const auth = new AuthPage(page)
-  const user = generateTestUser()
-  await auth.signup(user)
-  await auth.enterOtpCode(user.email)
-  await auth.setPassword(user.password)
-  return user
-}
-
-async function setupUserAndTrip(
-  page: import('@playwright/test').Page,
-  tripDescription: string
-) {
-  await signupVerifyAndLogin(page)
-  const preferences = new PreferencesPage(page)
-  await preferences.fillAndSave({
-    sports: ['Ski'],
-    levels: ['Red'],
-    types: ['On-Piste'],
-    accommodations: ['Chalet'],
-  })
-
-  const trips = new TripsPage(page)
-  await trips.createAndNavigateTo(tripDescription)
-}
-
 test.describe('Proposals and voting', () => {
   test('create a proposal and submit it', async ({ page }) => {
     await test.step('setup user and trip', async () => {
-      await setupUserAndTrip(page, 'Chamonix trip')
+      await setupUserWithTrip(page, 'Chamonix trip')
     })
 
     await test.step('fill and submit proposal', async () => {
@@ -79,7 +51,7 @@ test.describe('Proposals and voting', () => {
 
   test('create a poll and vote', async ({ page }) => {
     await test.step('setup user and trip', async () => {
-      await setupUserAndTrip(page, 'Zermatt trip')
+      await setupUserWithTrip(page, 'Zermatt trip')
     })
 
     await test.step('create and submit proposal', async () => {
@@ -102,7 +74,7 @@ test.describe('Proposals and voting', () => {
 
   test('coordinator closes a poll', async ({ page }) => {
     await test.step('setup user and trip', async () => {
-      await setupUserAndTrip(page, 'Morzine trip')
+      await setupUserWithTrip(page, 'Morzine trip')
     })
 
     await test.step('create and submit proposal', async () => {

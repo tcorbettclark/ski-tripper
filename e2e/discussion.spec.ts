@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { screenshot } from './helpers/screenshot'
+import { withTwoPages } from './helpers/browser'
+import { deleteAllEmails } from './helpers/mailpit'
+import { projectName, screenshot } from './helpers/screenshot'
 import {
-  deleteAllEmails,
   setupUserWithSubmittedProposal,
   signupVerifyAndLogin,
 } from './helpers/setup'
@@ -12,10 +13,6 @@ import { TripsPage } from './pages/trips.page'
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
-
-function projectName(): string {
-  return test.info().project.name
-}
 
 test.describe('Discussion and comments', () => {
   test('can post a comment on a proposal', async ({ page }) => {
@@ -107,12 +104,7 @@ test.describe('Discussion and comments', () => {
   })
 
   test('cannot edit or delete another users comment', async ({ browser }) => {
-    const ctx1 = await browser.newContext()
-    const ctx2 = await browser.newContext()
-    const page1 = await ctx1.newPage()
-    const page2 = await ctx2.newPage()
-
-    try {
+    await withTwoPages(browser, async (page1, page2) => {
       await signupVerifyAndLogin(page1)
       const preferences1 = new PreferencesPage(page1)
       await preferences1.fillAndSave({
@@ -169,9 +161,6 @@ test.describe('Discussion and comments', () => {
       const deleteBtn = page2.getByRole('button', { name: /delete/i }).first()
       expect(await editBtn.isVisible().catch(() => false)).toBe(false)
       expect(await deleteBtn.isVisible().catch(() => false)).toBe(false)
-    } finally {
-      await ctx1.close()
-      await ctx2.close()
-    }
+    })
   })
 })

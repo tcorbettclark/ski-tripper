@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test'
-import { clickNavTab } from './helpers/navigation'
-import { screenshot } from './helpers/screenshot'
+import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { projectName, screenshot } from './helpers/screenshot'
 import {
-  deleteAllEmails,
   setupUserWithSubmittedProposal,
   setupUserWithTrip,
 } from './helpers/setup'
@@ -12,10 +12,6 @@ import { ProposalsPage } from './pages/proposals.page'
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
-
-function projectName(): string {
-  return test.info().project.name
-}
 
 test.describe('Data integrity', () => {
   test('invite code generation and copying', async ({ page }) => {
@@ -109,7 +105,7 @@ test.describe('Data integrity', () => {
       const revertBtn = page.getByTestId('proposal-revert').first()
       if (await revertBtn.isVisible()) {
         await revertBtn.click()
-        await page.waitForTimeout(500)
+        await waitForAnimation(page, 500)
         await screenshot(page, 'data-integrity', 'proposal-reverted', proj)
       }
     })
@@ -190,7 +186,7 @@ test.describe('Data integrity', () => {
     await poll.saveVote()
 
     await test.step('results are visible after voting', async () => {
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
       await screenshot(page, 'data-integrity', 'poll-results', proj)
     })
   })

@@ -1,20 +1,13 @@
 import { expect, test } from '@playwright/test'
-import { clickNavTab } from './helpers/navigation'
-import { isMobile, screenshot } from './helpers/screenshot'
-import {
-  deleteAllEmails,
-  setupUserWithPreferences,
-  setupUserWithTrip,
-} from './helpers/setup'
+import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { isMobile, projectName, screenshot } from './helpers/screenshot'
+import { setupUserWithPreferences, setupUserWithTrip } from './helpers/setup'
 import { ProposalsPage } from './pages/proposals.page'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
-
-function projectName(): string {
-  return test.info().project.name
-}
 
 test.describe('Responsive layout and visual', () => {
   test('auth screens render correctly', async ({ page }) => {
@@ -22,7 +15,7 @@ test.describe('Responsive layout and visual', () => {
     const mobile = isMobile(proj)
 
     await test.step('login form is centred with readable labels', async () => {
-      await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+      await page.goto('/')
       await expect(page.getByTestId('auth-email')).toBeVisible()
       await expect(page.getByTestId('auth-password')).toBeVisible()
       await screenshot(page, 'auth-login-form', 'visible', proj)
@@ -54,7 +47,7 @@ test.describe('Responsive layout and visual', () => {
 
     if (mobile) {
       await test.step('about button visible and not overlapping form', async () => {
-        await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+        await page.goto('/')
         const aboutBtn = page.getByRole('button', { name: /about/i })
         await expect(aboutBtn).toBeVisible()
         await screenshot(page, 'auth-about-button-mobile', 'visible', proj)
@@ -68,7 +61,7 @@ test.describe('Responsive layout and visual', () => {
     const proj = projectName()
     if (isMobile(proj)) test.skip()
 
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
     await expect(page.getByTestId('auth-email')).toBeVisible()
     await screenshot(page, 'auth-desktop', 'centred', proj)
 
@@ -170,7 +163,7 @@ test.describe('Responsive layout and visual', () => {
         name: 'resorts',
         action: async () => {
           await clickNavTab(page, 'resorts')
-          await page.waitForTimeout(1000)
+          await waitForAnimation(page, 1000)
         },
       },
       {
@@ -189,7 +182,7 @@ test.describe('Responsive layout and visual', () => {
 
     for (const { name, action } of pages) {
       await action()
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       const hasOverflow = await page.evaluate(() => {
         return (
           document.documentElement.scrollWidth >
@@ -216,15 +209,15 @@ test.describe('Responsive layout and visual', () => {
 
     await test.step('clicking each tab switches content', async () => {
       await clickNavTab(page, 'resorts')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       await screenshot(page, 'desktop-tabs', 'resorts', proj)
 
       await clickNavTab(page, 'proposals')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       await screenshot(page, 'desktop-tabs', 'proposals', proj)
 
       await clickNavTab(page, 'poll')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       await screenshot(page, 'desktop-tabs', 'poll', proj)
     })
   })

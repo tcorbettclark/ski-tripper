@@ -3,7 +3,6 @@ import { AuthPage, generateTestUser } from '../pages/auth.page'
 import { PreferencesPage } from '../pages/preferences.page'
 import { ProposalsPage } from '../pages/proposals.page'
 import { TripsPage } from '../pages/trips.page'
-import { deleteAllEmails } from './mailpit'
 
 export interface TestUser {
   name: string
@@ -59,9 +58,3 @@ export async function setupUserWithSubmittedProposal(
   await proposals.submitProposal()
   return { user, tripDescription, resortName }
 }
-
-export { PollPage } from '../pages/poll.page'
-export { PreferencesPage } from '../pages/preferences.page'
-export { ProposalsPage } from '../pages/proposals.page'
-export { TripsPage } from '../pages/trips.page'
-export { AuthPage, deleteAllEmails, generateTestUser }

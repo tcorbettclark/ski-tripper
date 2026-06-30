@@ -1,21 +1,18 @@
 import { expect, test } from '@playwright/test'
 import { assertNoContrastViolations } from './helpers/axe'
-import { clickNavTab } from './helpers/navigation'
-import { screenshot } from './helpers/screenshot'
-import { deleteAllEmails, setupUserWithTrip } from './helpers/setup'
+import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { projectName, screenshot } from './helpers/screenshot'
+import { setupUserWithTrip } from './helpers/setup'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
 
-function projectName(): string {
-  return test.info().project.name
-}
-
 test.describe('Theme', () => {
   test('light theme renders correctly', async ({ page }) => {
     const proj = projectName()
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
 
     await test.step('default theme is light', async () => {
       const theme = await page.evaluate(
@@ -51,7 +48,7 @@ test.describe('Theme', () => {
 
   test('dark theme renders correctly', async ({ page }) => {
     const proj = projectName()
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
 
     await test.step('toggle to dark theme', async () => {
       const toggle = page.getByRole('button', { name: /switch to dark/i })
@@ -112,7 +109,7 @@ test.describe('Theme', () => {
   })
 
   test('theme persistence', async ({ page }) => {
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
 
     await test.step('set dark theme and reload', async () => {
       await page.evaluate(() => {
@@ -131,7 +128,7 @@ test.describe('Theme', () => {
         localStorage.setItem('theme', 'dark')
       })
       const newTab = await page.context().newPage()
-      await newTab.goto(process.env.PUBLIC_EXTERNAL_URL!)
+      await newTab.goto('/')
       const theme = await newTab.evaluate(
         () => document.documentElement.dataset.theme
       )
@@ -142,14 +139,14 @@ test.describe('Theme', () => {
 
   test('contrast checks on auth screen (light)', async ({ page }) => {
     const proj = projectName()
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
     await assertNoContrastViolations(page)
     await screenshot(page, 'theme-contrast-light', 'auth', proj)
   })
 
   test('contrast checks on auth screen (dark)', async ({ page }) => {
     const proj = projectName()
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
     await page.evaluate(() => {
       document.documentElement.dataset.theme = 'dark'
       localStorage.setItem('theme', 'dark')
@@ -169,7 +166,7 @@ test.describe('Theme', () => {
 
     await test.step('resorts tab contrast check', async () => {
       await clickNavTab(page, 'resorts')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
       await assertNoContrastViolations(page)
     })
 
@@ -201,7 +198,7 @@ test.describe('Theme', () => {
 
     await test.step('resorts tab dark mode', async () => {
       await clickNavTab(page, 'resorts')
-      await page.waitForTimeout(1000)
+      await waitForAnimation(page, 1000)
       await screenshot(page, 'dark-theme', 'resorts', proj)
       await assertNoContrastViolations(page)
     })

@@ -1,15 +1,12 @@
 import { expect, test } from '@playwright/test'
-import { clickNavTab } from './helpers/navigation'
-import { screenshot } from './helpers/screenshot'
-import { deleteAllEmails, setupUserWithTrip } from './helpers/setup'
+import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { projectName, screenshot } from './helpers/screenshot'
+import { setupUserWithTrip } from './helpers/setup'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
-
-function projectName(): string {
-  return test.info().project.name
-}
 
 test.describe('Cross-browser (Chrome)', () => {
   test('date range picker renders and is interactable', async ({ page }) => {
@@ -29,7 +26,7 @@ test.describe('Cross-browser (Chrome)', () => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Table scroll trip')
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(2000)
+    await waitForAnimation(page, 2000)
 
     await screenshot(page, 'cross-browser', 'resorts-table', proj)
 
@@ -38,7 +35,7 @@ test.describe('Cross-browser (Chrome)', () => {
       .first()
     if (await tableContainer.isVisible()) {
       await page.mouse.wheel(0, 300)
-      await page.waitForTimeout(200)
+      await waitForAnimation(page, 200)
       await screenshot(page, 'cross-browser', 'resorts-table-scrolled', proj)
     }
   })
@@ -47,7 +44,7 @@ test.describe('Cross-browser (Chrome)', () => {
     const proj = projectName()
     await setupUserWithTrip(page, 'Textarea trip')
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(1000)
+    await waitForAnimation(page, 1000)
 
     const searchInput = page.getByPlaceholder(/search/i).first()
     if (await searchInput.isVisible()) {

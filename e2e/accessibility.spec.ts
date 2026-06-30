@@ -3,22 +3,19 @@ import {
   assertNoAccessibilityViolations,
   assertNoContrastViolations,
 } from './helpers/axe'
-import { clickNavTab } from './helpers/navigation'
-import { screenshot } from './helpers/screenshot'
-import { deleteAllEmails, setupUserWithTrip } from './helpers/setup'
+import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { projectName, screenshot } from './helpers/screenshot'
+import { setupUserWithTrip } from './helpers/setup'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
 
-function projectName(): string {
-  return test.info().project.name
-}
-
 test.describe('Accessibility', () => {
   test('keyboard navigation through auth form', async ({ page }) => {
     const proj = projectName()
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
 
     await test.step('tab through interactive elements', async () => {
       const focusableElements: string[] = []
@@ -40,7 +37,7 @@ test.describe('Accessibility', () => {
       await page.getByTestId('auth-email').fill('test@example.com')
       await page.getByTestId('auth-password').fill('TestPassword123!')
       await page.keyboard.press('Enter')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
     })
 
     await test.step('escape closes modals', async () => {
@@ -51,7 +48,7 @@ test.describe('Accessibility', () => {
           page.getByText(/about ski tripper/i).waitFor({ state: 'visible' })
         )
       await page.keyboard.press('Escape')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
     })
   })
 
@@ -74,12 +71,12 @@ test.describe('Accessibility', () => {
         await page.keyboard.press('Tab')
       }
       await page.keyboard.press('Enter')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
     })
   })
 
   test('form fields have visible labels', async ({ page }) => {
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
 
     await test.step('auth form fields have associated labels', async () => {
       const emailInput = page.getByTestId('auth-email')
@@ -118,7 +115,7 @@ test.describe('Accessibility', () => {
   })
 
   test('axe-core scan on auth screen', async ({ page }) => {
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
     await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
   })
 
@@ -132,7 +129,7 @@ test.describe('Accessibility', () => {
 
     await test.step('resorts accessibility', async () => {
       await clickNavTab(page, 'resorts')
-      await page.waitForTimeout(1000)
+      await waitForAnimation(page, 1000)
       await assertNoAccessibilityViolations(page, undefined, ['color-contrast'])
     })
 
@@ -151,14 +148,14 @@ test.describe('Accessibility', () => {
 
   test.skip('contrast check on all screens', async ({ page }) => {
     const proj = projectName()
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
     await assertNoContrastViolations(page)
 
     await setupUserWithTrip(page, 'Contrast trip')
     await assertNoContrastViolations(page)
 
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(500)
+    await waitForAnimation(page, 500)
     await assertNoContrastViolations(page)
 
     await clickNavTab(page, 'proposals')
@@ -184,13 +181,13 @@ test.describe('Accessibility', () => {
 
     await test.step('tab order matches visual order', async () => {
       await clickNavTab(page, 'overview')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       await clickNavTab(page, 'resorts')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       await clickNavTab(page, 'proposals')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       await clickNavTab(page, 'poll')
-      await page.waitForTimeout(300)
+      await waitForAnimation(page)
       await screenshot(page, 'a11y', 'tab-roles', proj)
     })
   })
@@ -199,7 +196,7 @@ test.describe('Accessibility', () => {
     const proj = projectName()
     await setupUserWithTrip(page, 'A11y table trip')
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(2000)
+    await waitForAnimation(page, 2000)
 
     await test.step('table has appropriate ARIA', async () => {
       const table = page.locator('[role="grid"], [role="table"], table').first()
@@ -217,9 +214,9 @@ test.describe('Accessibility', () => {
       const aboutBtn = page.getByRole('button', { name: /about/i })
       if (await aboutBtn.isVisible()) {
         await aboutBtn.click()
-        await page.waitForTimeout(300)
+        await waitForAnimation(page)
         await page.keyboard.press('Escape')
-        await page.waitForTimeout(300)
+        await waitForAnimation(page)
         const modalVisible = await page
           .getByRole('dialog')
           .isVisible()
@@ -233,16 +230,16 @@ test.describe('Accessibility', () => {
       if (await menuTrigger.isVisible()) {
         await menuTrigger.click()
         await page.getByRole('menuitem', { name: /preferences/i }).click()
-        await page.waitForTimeout(300)
+        await waitForAnimation(page)
         await page.keyboard.press('Escape')
-        await page.waitForTimeout(300)
+        await waitForAnimation(page)
       }
     })
   })
 
   test.skip('dark mode contrast check on all screens', async ({ page }) => {
     const proj = projectName()
-    await page.goto(process.env.PUBLIC_EXTERNAL_URL!)
+    await page.goto('/')
     await page.evaluate(() => {
       document.documentElement.dataset.theme = 'dark'
       localStorage.setItem('theme', 'dark')
@@ -254,7 +251,7 @@ test.describe('Accessibility', () => {
 
     await assertNoContrastViolations(page)
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(500)
+    await waitForAnimation(page, 500)
     await assertNoContrastViolations(page)
     await clickNavTab(page, 'proposals')
     await assertNoContrastViolations(page)

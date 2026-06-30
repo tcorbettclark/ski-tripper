@@ -1,18 +1,12 @@
 import { expect, test } from '@playwright/test'
-import { clickNavTab } from './helpers/navigation'
-import { screenshot } from './helpers/screenshot'
-import {
-  deleteAllEmails,
-  setupUserWithSubmittedProposal,
-} from './helpers/setup'
+import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { projectName, screenshot } from './helpers/screenshot'
+import { setupUserWithSubmittedProposal } from './helpers/setup'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
-
-function projectName(): string {
-  return test.info().project.name
-}
 
 test.describe('SSE streaming (LLM responses)', () => {
   test('proposal analysis streams content', async ({ page }) => {
@@ -39,7 +33,7 @@ test.describe('SSE streaming (LLM responses)', () => {
     })
 
     await test.step('content completes', async () => {
-      await page.waitForTimeout(3000)
+      await waitForAnimation(page, 3000)
       await screenshot(page, 'sse-analysis', 'complete', proj)
     })
   })
@@ -49,7 +43,7 @@ test.describe('SSE streaming (LLM responses)', () => {
     await setupUserWithSubmittedProposal(page, 'Search trip', 'SearchResort')
 
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(1000)
+    await waitForAnimation(page, 1000)
 
     const sparkleBtn = page.getByRole('button', { name: /ai|sparkle|search/i })
     if (await sparkleBtn.isVisible()) {
@@ -96,9 +90,9 @@ test.describe('SSE streaming (LLM responses)', () => {
     const analyseBtn = page.getByRole('button', { name: /analyse/i })
     if (await analyseBtn.isVisible()) {
       await analyseBtn.click()
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
       await clickNavTab(page, 'overview')
-      await page.waitForTimeout(1000)
+      await waitForAnimation(page, 1000)
 
       const consoleErrors: string[] = []
       page.on('console', (msg) => {
@@ -106,7 +100,7 @@ test.describe('SSE streaming (LLM responses)', () => {
       })
 
       await clickNavTab(page, 'proposals')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
 
       const uncaughtErrors = consoleErrors.filter(
         (e) => e.includes('unhandled') || e.includes('UnhandledRejection')
@@ -137,14 +131,14 @@ test.describe('SSE streaming (LLM responses)', () => {
     if (await analyseBtn.isVisible()) {
       await analyseBtn.click()
 
-      await page.waitForTimeout(1000)
+      await waitForAnimation(page, 1000)
 
       const retryBtn = page.getByRole('button', {
         name: /retry|try again|analyse/i,
       })
       if (await retryBtn.isVisible()) {
         await retryBtn.click()
-        await page.waitForTimeout(1000)
+        await waitForAnimation(page, 1000)
         await screenshot(page, 'sse-retry', 'after-retry', proj)
       }
     }

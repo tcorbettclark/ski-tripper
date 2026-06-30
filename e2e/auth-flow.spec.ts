@@ -1,15 +1,12 @@
 import { expect, test } from '@playwright/test'
+import { logout } from './helpers/auth'
 import { deleteAllEmails } from './helpers/mailpit'
-import { screenshot } from './helpers/screenshot'
+import { projectName, screenshot } from './helpers/screenshot'
 import { AuthPage, generateTestUser } from './pages/auth.page'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
-
-function projectName(): string {
-  return test.info().project.name
-}
 
 test.describe('Auth flow', () => {
   test('signup and OTP verification', async ({ page }) => {
@@ -51,18 +48,7 @@ test.describe('Auth flow', () => {
     })
 
     await test.step('logout and navigate to forgot password', async () => {
-      await page.evaluate(() => {
-        localStorage.clear()
-        const pb = (
-          window as unknown as Record<
-            string,
-            { authStore: { clear: () => void } }
-          >
-        ).__pocketbase__
-        if (pb) pb.authStore.clear()
-      })
-      await auth.goto()
-      await expect(auth.emailInput).toBeVisible()
+      await logout(page)
     })
 
     await test.step('reset password via OTP', async () => {

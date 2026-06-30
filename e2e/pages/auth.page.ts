@@ -1,8 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test'
 import { extractOtp, waitForEmail } from '../helpers/mailpit'
 
-const BASE_URL = process.env.PUBLIC_EXTERNAL_URL!
-
 export class AuthPage {
   readonly page: Page
   readonly nameInput: Locator
@@ -23,7 +21,7 @@ export class AuthPage {
   }
 
   async goto() {
-    await this.page.goto(BASE_URL)
+    await this.page.goto('/')
     await expect(this.emailInput).toBeVisible()
   }
 

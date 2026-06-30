@@ -1,10 +1,20 @@
-import type { Page } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
+
+export async function waitForAnimation(page: Page, ms = 300): Promise<void> {
+  await page.waitForTimeout(ms)
+}
+
+export async function navigateTo(page: Page, path: string): Promise<void> {
+  await page.goto(path)
+}
 
 export async function openMobileMenuIfNeeded(page: Page): Promise<void> {
   const menuButton = page.getByRole('button', { name: /open menu/i })
   if (await menuButton.isVisible()) {
     await menuButton.click()
-    await page.waitForTimeout(300)
+    await expect(page.getByRole('menuitem', { name: /sign out/i })).toBeVisible(
+      { timeout: 2000 }
+    )
   }
 }
 

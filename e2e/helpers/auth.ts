@@ -1,9 +1,13 @@
 import { expect, type Page } from '@playwright/test'
 
-const BASE_URL = process.env.PUBLIC_EXTERNAL_URL!
-
 export async function logout(page: Page): Promise<void> {
-  await page.evaluate(() => localStorage.clear())
-  await page.goto(BASE_URL)
+  await page.evaluate(() => {
+    localStorage.clear()
+    const pb = (
+      window as unknown as Record<string, { authStore: { clear: () => void } }>
+    ).__pocketbase__
+    if (pb) pb.authStore.clear()
+  })
+  await page.goto('/')
   await expect(page.getByTestId('auth-email')).toBeVisible()
 }

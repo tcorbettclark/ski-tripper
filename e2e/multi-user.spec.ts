@@ -1,7 +1,9 @@
 import { expect, test } from '@playwright/test'
+import { withTwoPages } from './helpers/browser'
+import { deleteAllEmails } from './helpers/mailpit'
 import { clickNavTab } from './helpers/navigation'
-import { screenshot } from './helpers/screenshot'
-import { deleteAllEmails, signupVerifyAndLogin } from './helpers/setup'
+import { projectName, screenshot } from './helpers/screenshot'
+import { signupVerifyAndLogin } from './helpers/setup'
 import { PollPage } from './pages/poll.page'
 import { PreferencesPage } from './pages/preferences.page'
 import { ProposalsPage } from './pages/proposals.page'
@@ -11,18 +13,9 @@ test.beforeEach(async () => {
   await deleteAllEmails()
 })
 
-function projectName(): string {
-  return test.info().project.name
-}
-
 test.describe('Multi-user scenarios', () => {
   test('user A creates proposal, user B sees it', async ({ browser }) => {
-    const ctx1 = await browser.newContext()
-    const ctx2 = await browser.newContext()
-    const page1 = await ctx1.newPage()
-    const page2 = await ctx2.newPage()
-
-    try {
+    await withTwoPages(browser, async (page1, page2) => {
       await test.step('user A creates trip and submits proposal', async () => {
         await signupVerifyAndLogin(page1)
         const preferences1 = new PreferencesPage(page1)
@@ -57,21 +50,13 @@ test.describe('Multi-user scenarios', () => {
         const trips2 = new TripsPage(page2)
         await trips2.joinTrip(code)
       })
-    } finally {
-      await ctx1.close()
-      await ctx2.close()
-    }
+    })
   })
 
   test('coordinator permissions: only coordinator can create and close polls', async ({
     browser,
   }) => {
-    const ctx1 = await browser.newContext()
-    const ctx2 = await browser.newContext()
-    const page1 = await ctx1.newPage()
-    const page2 = await ctx2.newPage()
-
-    try {
+    await withTwoPages(browser, async (page1, page2) => {
       await signupVerifyAndLogin(page1)
       const preferences1 = new PreferencesPage(page1)
       await preferences1.fillAndSave({
@@ -130,21 +115,13 @@ test.describe('Multi-user scenarios', () => {
         const createPollBtn = page2.getByTestId('create-poll-btn')
         expect(await createPollBtn.isVisible().catch(() => false)).toBe(false)
       })
-    } finally {
-      await ctx1.close()
-      await ctx2.close()
-    }
+    })
   })
 
   test('concurrent voting: both users can vote independently', async ({
     browser,
   }) => {
-    const ctx1 = await browser.newContext()
-    const ctx2 = await browser.newContext()
-    const page1 = await ctx1.newPage()
-    const page2 = await ctx2.newPage()
-
-    try {
+    await withTwoPages(browser, async (page1, page2) => {
       await signupVerifyAndLogin(page1)
       const preferences1 = new PreferencesPage(page1)
       await preferences1.fillAndSave({
@@ -197,9 +174,6 @@ test.describe('Multi-user scenarios', () => {
       })
 
       await screenshot(page1, 'multi-user', 'concurrent-voting', projectName())
-    } finally {
-      await ctx1.close()
-      await ctx2.close()
-    }
+    })
   })
 })

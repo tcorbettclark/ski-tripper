@@ -1,19 +1,13 @@
 import { test } from '@playwright/test'
-import { clickNavTab } from './helpers/navigation'
-import { screenshot } from './helpers/screenshot'
-import {
-  deleteAllEmails,
-  setupUserWithPreferences,
-  setupUserWithTrip,
-} from './helpers/setup'
+import { logout } from './helpers/auth'
+import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab, waitForAnimation } from './helpers/navigation'
+import { projectName, screenshot } from './helpers/screenshot'
+import { setupUserWithPreferences, setupUserWithTrip } from './helpers/setup'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
 })
-
-function projectName(): string {
-  return test.info().project.name
-}
 
 test.describe('Error states and edge cases', () => {
   test('network failure shows error message', async ({ page }) => {
@@ -48,25 +42,8 @@ test.describe('Error states and edge cases', () => {
     await setupUserWithTrip(page, 'Expiry trip')
 
     await test.step('clear auth and verify redirect', async () => {
-      await page.evaluate(() => {
-        const pb = (
-          window as unknown as Record<
-            string,
-            { authStore: { clear: () => void } }
-          >
-        ).__pocketbase__
-        if (pb) pb.authStore.clear()
-      })
-      await page.reload()
-      await page.waitForTimeout(1000)
-
-      const onLoginPage = await page
-        .getByTestId('auth-email')
-        .isVisible()
-        .catch(() => false)
-      if (onLoginPage) {
-        await screenshot(page, 'error-states', 'token-expired', proj)
-      }
+      await logout(page)
+      await screenshot(page, 'error-states', 'token-expired', proj)
     })
   })
 
@@ -104,13 +81,13 @@ test.describe('Error states and edge cases', () => {
 
     await test.step('tabs still work after potential errors', async () => {
       await clickNavTab(page, 'resorts')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
       await clickNavTab(page, 'proposals')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
       await clickNavTab(page, 'poll')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
       await clickNavTab(page, 'overview')
-      await page.waitForTimeout(500)
+      await waitForAnimation(page, 500)
       await screenshot(page, 'error-states', 'boundary-recovery', proj)
     })
   })
@@ -125,12 +102,12 @@ test.describe('Error states and edge cases', () => {
       )
 
       await clickNavTab(page, 'proposals')
-      await page.waitForTimeout(1000)
+      await waitForAnimation(page, 1000)
 
       await page.unroute('**/api/collections/**')
 
       await clickNavTab(page, 'overview')
-      await page.waitForTimeout(1000)
+      await waitForAnimation(page, 1000)
       await screenshot(page, 'error-states', 'network-recovered', proj)
     })
   })
@@ -147,7 +124,7 @@ test.describe('Error states and edge cases', () => {
     )
 
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(2000)
+    await waitForAnimation(page, 2000)
 
     const onLoginPage = await page
       .getByTestId('auth-email')
@@ -170,7 +147,7 @@ test.describe('Error states and edge cases', () => {
     )
 
     await clickNavTab(page, 'resorts')
-    await page.waitForTimeout(1000)
+    await waitForAnimation(page, 1000)
     await screenshot(page, 'error-states', 'no-resorts', proj)
   })
 })
