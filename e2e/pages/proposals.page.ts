@@ -201,7 +201,9 @@ export class ProposalsPage {
     await urlInput.waitFor({ state: 'visible' })
     await urlInput.click()
     await urlInput.pressSequentially('https://example.com')
-    await this.page.getByTestId('acc-save-btn').click()
+    const saveBtn = this.page.getByTestId('acc-save-btn')
+    await expect(saveBtn).toBeEnabled()
+    await saveBtn.click()
     await expect(this.page.getByText(name)).toBeVisible()
   }
 

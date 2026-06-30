@@ -132,12 +132,6 @@ export default function ProposalCard({
   useEffect(() => {
     listAccommodations(proposal.id).then(setAccommodations).catch(onAuthError)
   }, [proposal.id, listAccommodations, onAuthError])
-
-  useEffect(() => {
-    if (activeTab === 'accommodations') {
-      listAccommodations(proposal.id).then(setAccommodations).catch(onAuthError)
-    }
-  }, [activeTab, proposal.id, listAccommodations, onAuthError])
   const [discussionCount, setDiscussionCount] = useState(0)
   const [hoveredWebsite, setHoveredWebsite] = useState<string | null>(null)
   const [showAnalysisModal, setShowAnalysisModal] = useState(false)
@@ -239,10 +233,6 @@ export default function ProposalCard({
     }
   }
 
-  function handleAccommodationsChanged() {
-    listAccommodations(proposal.id).then(setAccommodations).catch(onAuthError)
-  }
-
   async function handleAddAccommodation(data: {
     name: string
     url: string
@@ -250,9 +240,13 @@ export default function ProposalCard({
     description?: string
   }) {
     try {
-      await createAccommodation(proposal.id, userId, data)
+      const newAcc = (await createAccommodation(
+        proposal.id,
+        userId,
+        data
+      )) as Accommodation
+      setAccommodations((prev) => [...prev, newAcc])
       setAddingAccommodation(false)
-      handleAccommodationsChanged()
     } catch (err) {
       toast(getErrorMessage(err), 'error')
     }
@@ -263,9 +257,15 @@ export default function ProposalCard({
     data: { name?: string; url?: string; cost?: string; description?: string }
   ) {
     try {
-      await updateAccommodation(accommodationId, userId, data)
+      const updated = (await updateAccommodation(
+        accommodationId,
+        userId,
+        data
+      )) as Accommodation
+      setAccommodations((prev) =>
+        prev.map((a) => (a.id === updated.id ? updated : a))
+      )
       setEditingAccommodationId(null)
-      handleAccommodationsChanged()
     } catch (err) {
       toast(getErrorMessage(err), 'error')
     }
@@ -276,9 +276,9 @@ export default function ProposalCard({
     setDeletingAccommodationError(null)
     try {
       await deleteAccommodation(accommodationId, userId)
+      setAccommodations((prev) => prev.filter((a) => a.id !== accommodationId))
       setDeletingAccommodationId(null)
       setConfirmDeleteAccommodationId(null)
-      handleAccommodationsChanged()
     } catch (err) {
       setDeletingAccommodationId(null)
       setDeletingAccommodationError(getErrorMessage(err))

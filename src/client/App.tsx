@@ -581,8 +581,8 @@ export default function App({
               <Proposals
                 user={user}
                 tripId={selectedTripId}
-                key={refreshProposalsKey}
                 resorts={resorts}
+                refreshTrigger={refreshProposalsKey}
                 statusFilter={proposalsStatusFilter}
                 onStatusFilterChange={setProposalsStatusFilter}
                 proposalDetail={proposalDetail ?? undefined}

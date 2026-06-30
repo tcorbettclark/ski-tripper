@@ -43,6 +43,8 @@ interface ProposalsProps {
     subTab: 'proposal' | 'accommodations' | 'discussion'
   }
   onRefresh?: () => void
+  /** Incrementing this triggers a data refetch without remounting the component. */
+  refreshTrigger?: number
   onAuthError?: (err: unknown) => void
   listProposals?: (
     tripId: string,
@@ -121,6 +123,7 @@ export default function Proposals({
   onStatusFilterChange,
   proposalDetail,
   onRefresh: _onRefresh,
+  refreshTrigger = 0,
   onAuthError = noopAuthError,
   listProposals = _listProposals,
   createProposal = _createProposal,
@@ -152,6 +155,7 @@ export default function Proposals({
   }, [])
 
   const lastFetchedTripIdRef = useRef<string | null>(null)
+  const lastFetchedTriggerRef = useRef(0)
   const listProposalsRef = useRef(listProposals)
   const getCoordinatorParticipantRef = useRef(getCoordinatorParticipant)
   const onAuthErrorRef = useRef(onAuthError)
@@ -165,10 +169,16 @@ export default function Proposals({
       setIsCoordinator(false)
       setLoading(false)
       lastFetchedTripIdRef.current = null
+      lastFetchedTriggerRef.current = 0
       return
     }
-    if (lastFetchedTripIdRef.current === tripId) return
+    if (
+      lastFetchedTripIdRef.current === tripId &&
+      lastFetchedTriggerRef.current === refreshTrigger
+    )
+      return
     lastFetchedTripIdRef.current = tripId
+    lastFetchedTriggerRef.current = refreshTrigger
     setLoading(false)
     setProposalsLoading(true)
     Promise.all([
@@ -189,7 +199,7 @@ export default function Proposals({
       .finally(() => {
         if (mountedRef.current) setProposalsLoading(false)
       })
-  }, [tripId, user.id])
+  }, [tripId, user.id, refreshTrigger])
 
   const handleCreated = useCallback((proposal: unknown) => {
     setProposals((p) => [proposal as Proposal, ...p])
