@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { withTwoPages } from './helpers/browser'
 import { deleteAllEmails } from './helpers/mailpit'
-import { setupUserWithTrip, signupVerifyAndLogin } from './helpers/setup'
+import { setupUserWithPreferences, setupUserWithTrip } from './helpers/setup'
 import { TripsPage } from './pages/trips.page'
 
 test.beforeEach(async () => {
@@ -10,19 +10,13 @@ test.beforeEach(async () => {
 
 test.describe('Trip lifecycle', () => {
   test('create a trip and view overview', async ({ page }) => {
-    await test.step('signup, verify, and login', async () => {
-      await signupVerifyAndLogin(page)
-    })
+    const { tripDescription } = await setupUserWithTrip(
+      page,
+      'Weekend in Chamonix'
+    )
 
-    await test.step('fill preferences and create trip', async () => {
-      const { tripDescription } = await setupUserWithTrip(
-        page,
-        'Weekend in Chamonix'
-      )
+    await test.step('assert trip and invite code are visible', async () => {
       await expect(page.getByText(tripDescription)).toBeVisible()
-    })
-
-    await test.step('assert invite code is visible', async () => {
       await expect(page.getByTestId('invite-code')).toBeVisible()
     })
   })
@@ -32,16 +26,13 @@ test.describe('Trip lifecycle', () => {
       let inviteCode: string
 
       await test.step('user 1 signs up and creates trip', async () => {
-        const { tripDescription: _tripDescription } = await setupUserWithTrip(
-          page1,
-          'Zermatt 2026'
-        )
+        await setupUserWithTrip(page1, 'Zermatt 2026')
         const trips1 = new TripsPage(page1)
         inviteCode = await trips1.getInviteCode()
       })
 
       await test.step('user 2 signs up and joins trip', async () => {
-        await signupVerifyAndLogin(page2)
+        await setupUserWithPreferences(page2)
         const trips2 = new TripsPage(page2)
         await trips2.joinTrip(inviteCode!)
       })

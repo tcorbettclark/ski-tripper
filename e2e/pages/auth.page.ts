@@ -22,11 +22,15 @@ export class AuthPage {
 
   async goto() {
     await this.page.goto('/')
+  }
+
+  async waitForLoginForm() {
     await expect(this.emailInput).toBeVisible()
   }
 
   async signup(user: { name: string; email: string }) {
     await this.goto()
+    await this.waitForLoginForm()
     await this.switchModeButton.click()
     await this.nameInput.fill(user.name)
     await this.emailInput.fill(user.email)
@@ -51,6 +55,7 @@ export class AuthPage {
 
   async login(user: { email: string; password: string }) {
     await this.goto()
+    await this.waitForLoginForm()
     await this.emailInput.fill(user.email)
     await this.passwordInput.fill(user.password)
     await this.submitButton.click()
