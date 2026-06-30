@@ -34,7 +34,7 @@ export class PollPage {
 
   async saveVote() {
     await this.saveVoteButton.click()
-    await expect(this.saveVoteButton).toBeDisabled()
+    await expect(this.saveVoteButton).toHaveText('Save Vote')
   }
 
   async closePoll(outcome: string) {

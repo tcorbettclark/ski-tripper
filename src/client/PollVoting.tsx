@@ -133,6 +133,7 @@ export default function PollVoting({
               name={name}
               count={count}
               remaining={remaining}
+              saving={saving}
               onAdd={handleAdd}
               onRemove={handleRemove}
             />
@@ -176,6 +177,7 @@ function ProposalRow({
   name,
   count,
   remaining,
+  saving,
   onAdd,
   onRemove,
 }: {
@@ -183,6 +185,7 @@ function ProposalRow({
   name: string
   count: number
   remaining: number
+  saving: boolean
   onAdd: (id: string) => void
   onRemove: (id: string) => void
 }) {
@@ -255,10 +258,10 @@ function ProposalRow({
           type="button"
           aria-label={`Remove vote from ${name}`}
           onClick={() => onRemove(proposal.id)}
-          disabled={count === 0}
+          disabled={saving || count === 0}
           style={{
             ...styles.stepperButton,
-            ...(count === 0 ? styles.stepperButtonDisabled : {}),
+            ...(saving || count === 0 ? styles.stepperButtonDisabled : {}),
           }}
         >
           −
@@ -273,10 +276,10 @@ function ProposalRow({
           type="button"
           aria-label={`Add vote to ${name}`}
           onClick={() => onAdd(proposal.id)}
-          disabled={remaining === 0}
+          disabled={saving || remaining === 0}
           style={{
             ...styles.stepperButton,
-            ...(remaining === 0 ? styles.stepperButtonDisabled : {}),
+            ...(saving || remaining === 0 ? styles.stepperButtonDisabled : {}),
           }}
         >
           +
