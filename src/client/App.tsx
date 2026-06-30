@@ -21,7 +21,6 @@ import {
   listTrips as _listTrips,
   updateName as _updateName,
   updateTrip as _updateTrip,
-  getPb,
 } from './backend'
 import ErrorBoundary from './ErrorBoundary'
 import Footer from './Footer'
@@ -139,8 +138,15 @@ export default function App({
   listTripParticipants = defaultListTripParticipants,
 }: AppProps) {
   const isSmall = useIsSmallScreenHook()
+  const resetAuthPageState = useCallback(() => {
+    setPage('login')
+    setOtpId(null)
+    setOtpEmail(null)
+    setNeedsPassword(false)
+  }, [])
+
   const { user, checking, login, logout, onAuthError, refreshUser } =
-    useAuthHook({ hasSession })
+    useAuthHook({ hasSession, onLogout: resetAuthPageState })
   const [page, setPage] = useState<PageState>('login')
   const [otpId, setOtpId] = useState<string | null>(null)
   const [otpEmail, setOtpEmail] = useState<string | null>(null)
@@ -266,10 +272,7 @@ export default function App({
 
   async function handleLogout() {
     try {
-      getPb().authStore.clear()
       logout()
-      setNeedsPassword(false)
-      setPage('login')
     } catch (err) {
       toast(getErrorMessage(err), 'error')
     }

@@ -19,8 +19,10 @@ function mapUser(record: Record<string, unknown>): User {
 export default function useAuth(options?: {
   hasSession?: () => boolean
   getUser?: () => User | null
+  onLogout?: () => void
 }) {
   const hasSessionRef = useRef(options?.hasSession ?? _hasSession)
+  const onLogoutRef = useRef(options?.onLogout)
   const pbRef = useRef(getPb())
 
   const [user, setUser] = useState<User | null>(null)
@@ -36,30 +38,24 @@ export default function useAuth(options?: {
 
   const logout = useCallback(
     (message?: string) => {
+      pbRef.current.authStore.clear()
       setUser(null)
       if (message) {
         toast(message, 'error')
       }
       clearTimers()
+      onLogoutRef.current?.()
     },
     [clearTimers]
-  )
-
-  const autoLogout = useCallback(
-    (message?: string) => {
-      pbRef.current.authStore.clear()
-      logout(message)
-    },
-    [logout]
   )
 
   const onAuthError = useCallback(
     (err: unknown) => {
       if (err instanceof ClientResponseError && err.status === 401) {
-        autoLogout('Your session has expired. Please sign in again.')
+        logout('Your session has expired. Please sign in again.')
       }
     },
-    [autoLogout]
+    [logout]
   )
 
   useEffect(() => {
@@ -100,9 +96,9 @@ export default function useAuth(options?: {
       clearTimeout(idleTimeoutRef.current)
     }
     idleTimeoutRef.current = setTimeout(() => {
-      autoLogout('You have been signed out due to inactivity.')
+      logout('You have been signed out due to inactivity.')
     }, IDLE_TIMEOUT_MS)
-  }, [autoLogout])
+  }, [logout])
 
   useEffect(() => {
     if (!user) return
@@ -157,7 +153,6 @@ export default function useAuth(options?: {
     checking,
     login,
     logout,
-    autoLogout,
     onAuthError,
     refreshUser,
   }

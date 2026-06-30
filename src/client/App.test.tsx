@@ -7,17 +7,18 @@ import { dayjs } from './utils'
 
 const mockLogin = mock((_user: User) => {})
 const mockLogout = mock((_message?: string) => {})
-const mockAutoLogout = mock((_message?: string) => {})
 
 function createMockAuth(
   overrides: { user?: User | null; checking?: boolean } = {}
 ) {
-  return (_options?: { hasSession?: () => boolean }) => ({
+  return (options?: { hasSession?: () => boolean; onLogout?: () => void }) => ({
     user: overrides.user ?? null,
     checking: overrides.checking ?? false,
     login: mockLogin,
-    logout: mockLogout,
-    autoLogout: mockAutoLogout,
+    logout: (...args: Parameters<typeof mockLogout>) => {
+      mockLogout(...args)
+      options?.onLogout?.()
+    },
     onAuthError: mock(() => {}),
     refreshUser: mock(() => {}),
   })
