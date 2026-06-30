@@ -32,7 +32,7 @@ export async function clickNavTab(
 
 export async function navigateToMyTrips(page: Page): Promise<void> {
   await openMobileMenuIfNeeded(page)
-  await page.getByRole('button', { name: /my trips/i }).click()
+  await page.getByTestId('nav-my-trips').click()
 }
 
 export async function openUserMenu(page: Page): Promise<void> {

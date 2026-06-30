@@ -183,6 +183,7 @@ function MobileMenu({
     <div style={headerStyles.mobileMenuOverlay} ref={menuRef} role="menu">
       <button
         type="button"
+        data-testid="nav-my-trips"
         onClick={() => {
           onClose()
           onViewAllTrips()
@@ -385,6 +386,7 @@ export default function Header({
       <div style={headerStyles.leftControls}>
         <button
           type="button"
+          data-testid="nav-my-trips"
           onClick={onViewAllTrips}
           style={headerStyles.backButton}
         >
