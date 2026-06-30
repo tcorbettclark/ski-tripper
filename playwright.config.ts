@@ -16,6 +16,7 @@ export default defineConfig({
   timeout: 30_000,
   expect: {
     // TODO: Remove once UI changes are stabilised and snapshots are updated
+    // TODO: also remove e2e/snapshots from .gitignore (since once stable, we can commit)
     toHaveScreenshot: { maxDiffPixelRatio: 1 },
   },
   use: {

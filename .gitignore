@@ -14,3 +14,4 @@ tools/data/resorts/lifts.csv
 tools/data/resorts/runs.csv
 tools/data/resorts/thinking/
 *.tar
+e2e/snapshots/
