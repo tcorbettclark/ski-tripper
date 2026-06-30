@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { withTwoPages } from './helpers/browser'
 import { deleteAllEmails } from './helpers/mailpit'
+import { clickNavTab } from './helpers/navigation'
 import { projectName, screenshot } from './helpers/screenshot'
 import {
   setupUserWithPreferences,
@@ -24,6 +25,7 @@ test.describe('Multi-user scenarios', () => {
           'Shared trip',
           'SharedResort'
         )
+        await clickNavTab(page1, 'overview')
         const trips1 = new TripsPage(page1)
         inviteCode = await trips1.getInviteCode()
       })
@@ -48,6 +50,7 @@ test.describe('Multi-user scenarios', () => {
           'Permissions trip',
           'PermResort'
         )
+        await clickNavTab(page1, 'overview')
         const trips1 = new TripsPage(page1)
         inviteCode = await trips1.getInviteCode()
       })
@@ -97,6 +100,7 @@ test.describe('Multi-user scenarios', () => {
 
       await test.step('user A creates trip and submits proposal', async () => {
         await setupUserWithSubmittedProposal(page1, 'Voting trip', 'VoteResort')
+        await clickNavTab(page1, 'overview')
         const trips1 = new TripsPage(page1)
         inviteCode = await trips1.getInviteCode()
       })
