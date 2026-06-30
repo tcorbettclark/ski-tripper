@@ -1,6 +1,12 @@
-import { describe, expect, it, mock } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import DateRangeField from './DateRangeField'
+
+let isSmallScreenValue = false
+
+mock.module('./useIsSmallScreen', () => ({
+  default: () => isSmallScreenValue,
+}))
 
 function renderField(props = {}) {
   const defaults = {
@@ -13,6 +19,14 @@ function renderField(props = {}) {
 }
 
 describe('DateRangeField', () => {
+  beforeEach(() => {
+    isSmallScreenValue = false
+  })
+
+  afterEach(() => {
+    isSmallScreenValue = false
+  })
+
   it('renders the label', () => {
     renderField()
     expect(screen.getByText('Trip Dates')).toBeTruthy()
@@ -28,10 +42,18 @@ describe('DateRangeField', () => {
     expect(screen.getByText('End date must be after start date')).toBeTruthy()
   })
 
-  it('renders day picker calendar', () => {
+  it('renders two months on large screens', () => {
+    isSmallScreenValue = false
     const { container } = renderField()
     const tables = container.querySelectorAll('table')
-    expect(tables.length).toBeGreaterThanOrEqual(1)
+    expect(tables.length).toBe(2)
+  })
+
+  it('renders one month on small screens', () => {
+    isSmallScreenValue = true
+    const { container } = renderField()
+    const tables = container.querySelectorAll('table')
+    expect(tables.length).toBe(1)
   })
 
   it('allows selecting a date range via calendar clicks', async () => {

@@ -1,5 +1,6 @@
 import { type DateRange, DayPicker } from 'react-day-picker'
 import { colors, fieldStyles, formStyles } from './theme'
+import useIsSmallScreen from './useIsSmallScreen'
 import { dayjs } from './utils'
 import 'react-day-picker/style.css'
 
@@ -33,6 +34,9 @@ export default function DateRangeField({
       }
     : undefined
 
+  const isSmall = useIsSmallScreen()
+  const numberOfMonths = isSmall ? 1 : 2
+
   const defaultMonth = startDate
     ? dayjs(startDate).toDate()
     : minDate || new Date()
@@ -54,7 +58,7 @@ export default function DateRangeField({
         mode="range"
         selected={selected}
         onSelect={handleSelect}
-        numberOfMonths={2}
+        numberOfMonths={numberOfMonths}
         defaultMonth={defaultMonth}
         weekStartsOn={6}
         showWeekNumber
@@ -80,7 +84,7 @@ export default function DateRangeField({
             color: colors.textPrimary,
           },
           months: {
-            flexWrap: 'nowrap',
+            flexWrap: isSmall ? 'wrap' : 'nowrap',
           },
           weekday: {
             color: colors.textSecondary,
