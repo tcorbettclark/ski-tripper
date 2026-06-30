@@ -41,6 +41,10 @@ export class TripsPage {
     await this.navigateToTrip(description)
   }
 
+  async navigateToTripList() {
+    await this.page.getByRole('button', { name: /my trips/i }).click()
+  }
+
   async joinTrip(code: string) {
     await this.joinTripButton.click()
     await this.tripCodeInput.fill(code)

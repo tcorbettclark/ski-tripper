@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test'
 import { withTwoPages } from './helpers/browser'
 import { deleteAllEmails } from './helpers/mailpit'
-import { clickNavTab } from './helpers/navigation'
 import { projectName, screenshot } from './helpers/screenshot'
-import { signupVerifyAndLogin } from './helpers/setup'
+import {
+  setupUserWithPreferences,
+  setupUserWithSubmittedProposal,
+} from './helpers/setup'
 import { PollPage } from './pages/poll.page'
-import { PreferencesPage } from './pages/preferences.page'
-import { ProposalsPage } from './pages/proposals.page'
 import { TripsPage } from './pages/trips.page'
 
 test.beforeEach(async () => {
@@ -16,39 +16,22 @@ test.beforeEach(async () => {
 test.describe('Multi-user scenarios', () => {
   test('user A creates proposal, user B sees it', async ({ browser }) => {
     await withTwoPages(browser, async (page1, page2) => {
+      let inviteCode: string
+
       await test.step('user A creates trip and submits proposal', async () => {
-        await signupVerifyAndLogin(page1)
-        const preferences1 = new PreferencesPage(page1)
-        await preferences1.fillAndSave({
-          sports: ['Ski'],
-          levels: ['Red'],
-          types: ['On-Piste'],
-          accommodations: ['Chalet'],
-        })
+        await setupUserWithSubmittedProposal(
+          page1,
+          'Shared trip',
+          'SharedResort'
+        )
         const trips1 = new TripsPage(page1)
-        await trips1.createAndNavigateTo('Shared trip')
-        const proposals1 = new ProposalsPage(page1)
-        await proposals1.goToProposalsTab()
-        await proposals1.createDraftProposal('SharedResort')
-        await proposals1.addAccommodation('Hotel Shared')
-        await proposals1.submitProposal()
+        inviteCode = await trips1.getInviteCode()
       })
 
       await test.step('user B joins and sees proposal', async () => {
-        await signupVerifyAndLogin(page2)
-        const preferences2 = new PreferencesPage(page2)
-        await preferences2.fillAndSave({
-          sports: ['Ski'],
-          levels: ['Red'],
-          types: ['On-Piste'],
-          accommodations: ['Chalet'],
-        })
-        const trips1 = new TripsPage(page1)
-        await clickNavTab(page1, 'overview')
-        const code = await trips1.getInviteCode()
-
+        await setupUserWithPreferences(page2)
         const trips2 = new TripsPage(page2)
-        await trips2.joinTrip(code)
+        await trips2.joinTrip(inviteCode!)
       })
     })
   })
@@ -57,35 +40,23 @@ test.describe('Multi-user scenarios', () => {
     browser,
   }) => {
     await withTwoPages(browser, async (page1, page2) => {
-      await signupVerifyAndLogin(page1)
-      const preferences1 = new PreferencesPage(page1)
-      await preferences1.fillAndSave({
-        sports: ['Ski'],
-        levels: ['Red'],
-        types: ['On-Piste'],
-        accommodations: ['Chalet'],
-      })
-      const trips1 = new TripsPage(page1)
-      await trips1.createAndNavigateTo('Permissions trip')
-      const proposals1 = new ProposalsPage(page1)
-      await proposals1.goToProposalsTab()
-      await proposals1.createDraftProposal('PermResort')
-      await proposals1.addAccommodation('Hotel Perm')
-      await proposals1.submitProposal()
+      let inviteCode: string
 
-      await clickNavTab(page1, 'overview')
-      const code = await trips1.getInviteCode()
-
-      await signupVerifyAndLogin(page2)
-      const preferences2 = new PreferencesPage(page2)
-      await preferences2.fillAndSave({
-        sports: ['Ski'],
-        levels: ['Red'],
-        types: ['On-Piste'],
-        accommodations: ['Chalet'],
+      await test.step('user A creates trip and submits proposal', async () => {
+        await setupUserWithSubmittedProposal(
+          page1,
+          'Permissions trip',
+          'PermResort'
+        )
+        const trips1 = new TripsPage(page1)
+        inviteCode = await trips1.getInviteCode()
       })
-      const trips2 = new TripsPage(page2)
-      await trips2.joinTrip(code)
+
+      await test.step('user B joins trip', async () => {
+        await setupUserWithPreferences(page2)
+        const trips2 = new TripsPage(page2)
+        await trips2.joinTrip(inviteCode!)
+      })
 
       await test.step('coordinator can create a poll', async () => {
         const poll1 = new PollPage(page1)
@@ -122,35 +93,19 @@ test.describe('Multi-user scenarios', () => {
     browser,
   }) => {
     await withTwoPages(browser, async (page1, page2) => {
-      await signupVerifyAndLogin(page1)
-      const preferences1 = new PreferencesPage(page1)
-      await preferences1.fillAndSave({
-        sports: ['Ski'],
-        levels: ['Red'],
-        types: ['On-Piste'],
-        accommodations: ['Chalet'],
-      })
-      const trips1 = new TripsPage(page1)
-      await trips1.createAndNavigateTo('Voting trip')
-      const proposals1 = new ProposalsPage(page1)
-      await proposals1.goToProposalsTab()
-      await proposals1.createDraftProposal('VoteResort')
-      await proposals1.addAccommodation('Hotel Vote')
-      await proposals1.submitProposal()
+      let inviteCode: string
 
-      await clickNavTab(page1, 'overview')
-      const code = await trips1.getInviteCode()
-
-      await signupVerifyAndLogin(page2)
-      const preferences2 = new PreferencesPage(page2)
-      await preferences2.fillAndSave({
-        sports: ['Ski'],
-        levels: ['Red'],
-        types: ['On-Piste'],
-        accommodations: ['Chalet'],
+      await test.step('user A creates trip and submits proposal', async () => {
+        await setupUserWithSubmittedProposal(page1, 'Voting trip', 'VoteResort')
+        const trips1 = new TripsPage(page1)
+        inviteCode = await trips1.getInviteCode()
       })
-      const trips2 = new TripsPage(page2)
-      await trips2.joinTrip(code)
+
+      await test.step('user B joins trip', async () => {
+        await setupUserWithPreferences(page2)
+        const trips2 = new TripsPage(page2)
+        await trips2.joinTrip(inviteCode!)
+      })
 
       const poll1 = new PollPage(page1)
       await poll1.clickVotingTab()

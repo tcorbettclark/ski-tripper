@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { test } from '@playwright/test'
 import { deleteAllEmails } from './helpers/mailpit'
 import { setupUserWithTrip } from './helpers/setup'
 import { ProposalsPage } from './pages/proposals.page'
@@ -15,8 +15,6 @@ test.describe('Accommodation flow', () => {
     await proposals.goToProposalsTab()
     await proposals.createDraftProposal('TestResort')
     await proposals.addAccommodation('Hotel Test')
-    await proposals.selectProposalTab()
-    await proposals.proposalSubmitBtn.click()
-    await expect(page.getByText(/submitted/i)).toBeVisible()
+    await proposals.submitProposal()
   })
 })

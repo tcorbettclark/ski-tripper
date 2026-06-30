@@ -6,18 +6,14 @@ export class ProposalsPage {
   readonly page: Page
   readonly resortNameInput: Locator
   readonly submitButton: Locator
-  readonly cancelButton: Locator
   readonly proposalSubmitBtn: Locator
-  readonly proposalDeleteBtn: Locator
   readonly newProposalBtn: Locator
 
   constructor(page: Page) {
     this.page = page
     this.resortNameInput = page.getByTestId('proposal-resort-name')
     this.submitButton = page.getByTestId('proposal-submit')
-    this.cancelButton = page.getByTestId('proposal-cancel')
     this.proposalSubmitBtn = page.getByTestId('proposal-submit-btn')
-    this.proposalDeleteBtn = page.getByTestId('proposal-delete')
     this.newProposalBtn = page.getByTestId('new-proposal-btn')
   }
 
@@ -29,15 +25,11 @@ export class ProposalsPage {
     await this.page.getByRole('button', { name: /^proposal$/i }).click()
   }
 
-  async selectAccommodationsTab() {
+  async selectDiscussionTab() {
     await this.page
-      .getByRole('button', { name: /^accommodations/i })
+      .getByRole('button', { name: /^discussion/i })
       .first()
       .click()
-  }
-
-  async selectDiscussionTab() {
-    await this.page.getByRole('button', { name: /^discussion/i }).click()
   }
 
   async clickNewProposal() {
@@ -221,5 +213,18 @@ export class ProposalsPage {
     await this.selectProposalTab()
     await this.proposalSubmitBtn.click()
     await waitForToast(this.page, 'Submitted')
+  }
+
+  async postComment(text: string) {
+    await this.selectDiscussionTab()
+    await this.page
+      .getByPlaceholder(/comment|write/i)
+      .first()
+      .fill(text)
+    await this.page
+      .getByRole('button', { name: /post|send/i })
+      .first()
+      .click()
+    await expect(this.page.getByText(text)).toBeVisible()
   }
 }

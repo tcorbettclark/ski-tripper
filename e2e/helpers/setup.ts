@@ -41,7 +41,7 @@ export async function setupUserWithTrip(
   return { user, tripDescription }
 }
 
-export async function setupUserWithSubmittedProposal(
+export async function setupUserWithDraftProposal(
   page: Page,
   tripDescription = 'Proposal trip',
   resortName = 'TestResort'
@@ -54,7 +54,26 @@ export async function setupUserWithSubmittedProposal(
   const proposals = new ProposalsPage(page)
   await proposals.goToProposalsTab()
   await proposals.createDraftProposal(resortName)
+  return { user, tripDescription, resortName }
+}
+
+export async function setupUserWithSubmittedProposal(
+  page: Page,
+  tripDescription = 'Proposal trip',
+  resortName = 'TestResort'
+): Promise<{
+  user: TestUser
+  tripDescription: string
+  resortName: string
+}> {
+  const { user } = await setupUserWithDraftProposal(
+    page,
+    tripDescription,
+    resortName
+  )
+  const proposals = new ProposalsPage(page)
   await proposals.addAccommodation('Hotel Test')
   await proposals.submitProposal()
+  await page.getByRole('button', { name: /^SUBMITTED/i }).click()
   return { user, tripDescription, resortName }
 }

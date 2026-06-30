@@ -13,10 +13,6 @@ export class PreferencesPage {
     await this.page.getByRole('checkbox', { name: label }).check()
   }
 
-  async uncheckOption(label: string) {
-    await this.page.getByRole('checkbox', { name: label }).uncheck()
-  }
-
   async fillAndSave(preferences: {
     sports?: string[]
     levels?: string[]

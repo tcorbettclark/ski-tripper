@@ -8,6 +8,7 @@ import {
 } from './helpers/setup'
 import { PollPage } from './pages/poll.page'
 import { ProposalsPage } from './pages/proposals.page'
+import { TripsPage } from './pages/trips.page'
 
 test.beforeEach(async () => {
   await deleteAllEmails()
@@ -44,10 +45,9 @@ test.describe('Data integrity', () => {
     await setupUserWithTrip(page, 'Invalid code trip')
 
     await test.step('joining with invalid code shows error', async () => {
-      await page.getByRole('button', { name: /my trips/i }).click()
-      await page.getByTestId('join-trip-btn').click()
-      await page.getByTestId('trip-code').fill('invalid-code-xyz')
-      await page.getByTestId('trip-join').click()
+      const trips = new TripsPage(page)
+      await trips.navigateToTripList()
+      await trips.joinTrip('invalid-code-xyz')
 
       const errorVisible = await page
         .getByText(/error|invalid|not found|no trip/i)
