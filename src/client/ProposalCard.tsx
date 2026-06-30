@@ -1009,7 +1009,6 @@ const styles = {
     border: borders.card,
     borderRadius: '14px',
     padding: '24px',
-    height: '80vh',
     display: 'flex',
     flexDirection: 'column' as const,
     boxShadow: '0 2px 12px var(--color-shadow)',
@@ -1073,9 +1072,6 @@ const styles = {
     borderTop: borders.subtle,
     paddingTop: '10px',
     marginBottom: '10px',
-    flex: '1 1 0%',
-    minHeight: 0,
-    overflowY: 'auto' as const,
   },
   tabs: {
     display: 'flex',
@@ -1088,9 +1084,6 @@ const styles = {
   tabContent: {
     display: 'flex',
     flexDirection: 'column' as const,
-    flex: '1 1 0%',
-    minHeight: 0,
-    overflow: 'hidden',
   },
   tabActive: {
     padding: '10px 20px',
@@ -1132,9 +1125,6 @@ const styles = {
   accommodationsSection: {
     paddingTop: '10px',
     marginBottom: '10px',
-    flex: '1 1 0%',
-    minHeight: 0,
-    overflowY: 'auto' as const,
   },
   noAccommodations: {
     fontFamily: fonts.body,

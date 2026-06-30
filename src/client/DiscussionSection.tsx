@@ -290,13 +290,8 @@ const sectionStyles = {
   container: {
     display: 'flex',
     flexDirection: 'column' as const,
-    flex: '1 1 0%',
-    minHeight: 0,
-    overflow: 'hidden',
   },
   commentList: {
-    flex: '1 1 auto',
-    overflowY: 'auto' as const,
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '12px',
