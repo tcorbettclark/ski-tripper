@@ -43,12 +43,29 @@ export default function DiscussionSection({
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: listDiscussion is a stable module-level function; only refetch when proposalId changes
   useEffect(() => {
+    let cancelled = false
     listDiscussion(proposalId)
-      .then((result) => setComments(result))
-      .catch((err) => toast(getErrorMessage(err), 'error'))
-      .finally(() => setLoading(false))
-  }, [proposalId, listDiscussion])
+      .then((result) => {
+        if (cancelled) return
+        setComments((prev) => {
+          const serverIds = new Set(result.map((c) => c.id))
+          const localOnly = prev.filter((c) => !serverIds.has(c.id))
+          return [...result, ...localOnly]
+        })
+      })
+      .catch((err) => {
+        if (cancelled) return
+        toast(getErrorMessage(err), 'error')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [proposalId])
 
   async function handlePost() {
     if (!newBody.trim()) return
