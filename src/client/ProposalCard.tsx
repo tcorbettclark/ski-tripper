@@ -415,16 +415,16 @@ export default function ProposalCard({
               </DetailField>
             )}
           </div>
-          {proposal.linkedResortsDescription && (
-            <div style={styles.descriptionSection}>
-              <DetailField label="Linked Resorts">
+          <div style={styles.descriptionSection}>
+            <DetailField label="Linked Resorts">
+              {proposal.linkedResortsDescription ? (
                 <Paragraphs
                   text={proposal.linkedResortsDescription}
                   style={detailStyles.descriptionText}
                 />
-              </DetailField>
-            </div>
-          )}
+              ) : null}
+            </DetailField>
+          </div>
           {proposal.description && (
             <DetailField label="Description">
               <Paragraphs
