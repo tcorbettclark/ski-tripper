@@ -147,6 +147,21 @@ SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`
 | PocketBase | `journalctl -u ski-tripper-pb`  |
 | API server | `journalctl -u ski-tripper-api` |
 
+## Backups
+
+PocketBase supports full data backups via its HTTP API. Backups are created on the production server, downloaded locally to `infra/backups/`, and can be restored to production or loaded into the dev environment.
+
+Backup filenames use the format `YYYY-MM-DD_HH-MM-SS.zip` (e.g. `2026-03-02_14-34-03.zip`). The `list` command shows record counts for each collection inside each backup.
+
+| Command                                            | Description                                                |
+| -------------------------------------------------- | ---------------------------------------------------------- |
+| `bun run infra:backup`                             | Create a backup on prod and download it locally            |
+| `bun run infra:restore <file>`                     | Restore a backup to production (replaces all PB data)       |
+| `bun run infra:list-backups`                       | List local backups with record counts per collection        |
+| `bun run infra:load-backup <file>`                 | Load a backup into the dev environment (stops if PB running)|
+
+The `create` and `restore` commands use `env:prod` automatically. The `load` and `list` commands work locally with no env prefix needed.
+
 ## Resort data
 
 The resort catalogue is generated offline via a pipeline and uploaded to PocketBase. Hence, adding or improving the resort catalogue does not involve any server-side changes or changes to the source code.
