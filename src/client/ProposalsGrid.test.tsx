@@ -121,7 +121,7 @@ describe('ProposalsGrid', () => {
     }))
     await renderGrid({ proposals: allDrafts })
 
-    const resortNames = screen.getAllByText(/Resort/)
+    const resortNames = screen.getAllByText(/^[AZ] Resort/)
     expect(resortNames.length).toBe(2)
     expect(resortNames[0].textContent).toContain('A Resort')
     expect(resortNames[1].textContent).toContain('Z Resort')
