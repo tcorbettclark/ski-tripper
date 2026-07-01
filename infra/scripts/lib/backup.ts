@@ -1,30 +1,17 @@
-#!/usr/bin/env bun
-
 import { Database } from 'bun:sqlite'
 import { execSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import PocketBase from 'pocketbase'
-import {
-  CYAN,
-  error,
-  fail,
-  GREEN,
-  help,
-  info,
-  RESET,
-  step,
-  success,
-  warn,
-} from './lib/log'
+import { CYAN, fail, GREEN, info, RESET, step, success, warn } from './log'
 
-const PROJECT_ROOT = resolve(import.meta.dir, '../..')
-const BACKUPS_DIR = resolve(PROJECT_ROOT, 'infra/backups')
+export const PROJECT_ROOT = resolve(import.meta.dir, '../../..')
+export const BACKUPS_DIR = resolve(PROJECT_ROOT, 'infra/backups')
 const DEV_PB_DATA_DIR = resolve(PROJECT_ROOT, 'dev/pb_data')
 
 const STATS_COLLECTIONS = ['users', 'trips', 'proposals', 'polls']
 
-function requireEnv(name: string): string {
+export function requireEnv(name: string): string {
   const value = process.env[name]
   if (!value) {
     fail(`Required env var ${name} is not set`)
@@ -96,12 +83,10 @@ function getBackupStats(zipPath: string): Record<string, number> | null {
     }
     mkdirSync(tmpDir, { recursive: true })
 
-    // Extract the entire archive — data.db may be at root or inside pb_data/
     execSync(`unzip -o "${zipPath}" -d "${tmpDir}"`, {
       stdio: 'pipe',
     })
 
-    // Find data.db — could be at root or inside pb_data/
     let dbPath = join(tmpDir, 'data.db')
     if (!existsSync(dbPath)) {
       dbPath = join(tmpDir, 'pb_data', 'data.db')
@@ -120,7 +105,6 @@ function getBackupStats(zipPath: string): Record<string, number> | null {
           .get() as { count: number } | null
         stats[collection] = result?.count ?? 0
       } catch {
-        // collection table doesn't exist in this backup
         stats[collection] = 0
       }
     }
@@ -136,9 +120,12 @@ function getBackupStats(zipPath: string): Record<string, number> | null {
   }
 }
 
-// ── Commands ──
+export function resolveBackupFile(fileArg: string): string {
+  const filename = fileArg.endsWith('.zip') ? fileArg : `${fileArg}.zip`
+  return resolve(BACKUPS_DIR, filename)
+}
 
-async function create(): Promise<void> {
+export async function create(): Promise<void> {
   const pbUrl = requireEnv('POCKETBASE_EXTERNAL_URL')
   const dateStr = todayBackupName()
   const pbBackupKey = pbKeyFromDate(dateStr)
@@ -212,16 +199,15 @@ async function create(): Promise<void> {
   pb.authStore.clear()
 }
 
-async function restore(fileArg: string): Promise<void> {
+export async function restore(fileArg: string): Promise<void> {
   const pbUrl = requireEnv('POCKETBASE_EXTERNAL_URL')
-  const filename = fileArg.endsWith('.zip') ? fileArg : `${fileArg}.zip`
-  const localPath = resolve(BACKUPS_DIR, filename)
+  const localPath = resolveBackupFile(fileArg)
 
   if (!existsSync(localPath)) {
     fail(`Backup file not found: ${localPath}`)
   }
 
-  // Extract the date part from the filename (e.g., "2026-Jul-01.zip" -> "2026-Jul-01")
+  const filename = localPath.split('/').pop()!
   const dateStr = filename.replace(/\.zip$/, '')
   const pbBackupKey = pbKeyFromDate(dateStr)
 
@@ -248,8 +234,6 @@ async function restore(fileArg: string): Promise<void> {
   success('Restore initiated — PocketBase will restart')
 
   step('Waiting for PocketBase to become healthy')
-  // The auth token will be invalid after restart, so we need to re-authenticate
-  // but first wait for PB to come back
   await waitForPocketBase(pbUrl)
 
   step('Cleaning up backup from prod storage')
@@ -268,21 +252,18 @@ async function restore(fileArg: string): Promise<void> {
   success('Restore complete!')
 }
 
-async function load(fileArg: string): Promise<void> {
-  const filename = fileArg.endsWith('.zip') ? fileArg : `${fileArg}.zip`
-  const localPath = resolve(BACKUPS_DIR, filename)
+export async function load(fileArg: string): Promise<void> {
+  const localPath = resolveBackupFile(fileArg)
 
   if (!existsSync(localPath)) {
     fail(`Backup file not found: ${localPath}`)
   }
 
-  // Check if dev PB is running by trying to lock the data.db
   const dbPath = join(DEV_PB_DATA_DIR, 'data.db')
   if (existsSync(dbPath)) {
     let db: Database | null = null
     try {
       db = new Database(dbPath, { readonly: true })
-      // Try an exclusive lock — if PB is running, this will fail or the DB will be locked
       db.exec('BEGIN EXCLUSIVE')
       db.exec('ROLLBACK')
       db.close()
@@ -330,12 +311,10 @@ async function load(fileArg: string): Promise<void> {
   )
 }
 
-async function list(): Promise<void> {
+export async function list(): Promise<void> {
   if (!existsSync(BACKUPS_DIR)) {
     info('No backups directory found (infra/backups/)')
-    info(
-      'Run `bun run env:prod bun run infra:backup create` to create a backup.'
-    )
+    info('Run `bun run env:prod bun run infra:backup` to create a backup.')
     return
   }
 
@@ -346,9 +325,7 @@ async function list(): Promise<void> {
 
   if (files.length === 0) {
     info('No backups found in infra/backups/')
-    info(
-      'Run `bun run env:prod bun run infra:backup create` to create a backup.'
-    )
+    info('Run `bun run env:prod bun run infra:backup` to create a backup.')
     return
   }
 
@@ -370,71 +347,3 @@ async function list(): Promise<void> {
     }
   }
 }
-
-// ── Main ──
-
-const HELP_TEXT = `Usage: bun run infra:backup <command> [options]
-
-Commands:
-  create              Create a backup from production and download it locally
-  restore <file>      Restore a backup file to production (dangerous!)
-  load <file>         Load a backup file into the local dev environment
-  list                List available backups with stats
-
-Options:
-  --help, -h          Show this help message
-
-File arguments:
-  Use just the date-time part (e.g. "2026-03-02_14-34-03") or the full filename (e.g. "2026-03-02_14-34-03.zip").
-  Backup files are stored in infra/backups/.
-
-Examples:
-  bun run env:prod bun run infra:backup create                        Create a backup from prod
-  bun run env:prod bun run infra:backup restore 2026-03-02_14-34-03  Restore a backup to prod
-  bun run infra:backup load 2026-03-02_14-34-03                      Load a backup into dev
-  bun run infra:backup list                                           List available backups`
-
-async function main() {
-  const command = process.argv[2]
-
-  if (!command || command === '--help' || command === '-h') {
-    help(HELP_TEXT, command ? 0 : 1)
-  }
-
-  switch (command) {
-    case 'create':
-      await create()
-      break
-    case 'restore': {
-      const file = process.argv[3]
-      if (!file) {
-        error('Missing file argument')
-        info('Usage: bun run env:prod bun run infra:backup restore <file>')
-        process.exit(1)
-      }
-      await restore(file)
-      break
-    }
-    case 'load': {
-      const file = process.argv[3]
-      if (!file) {
-        error('Missing file argument')
-        info('Usage: bun run infra:backup load <file>')
-        process.exit(1)
-      }
-      await load(file)
-      break
-    }
-    case 'list':
-      await list()
-      break
-    default:
-      error(`Unknown command: ${command}`)
-      help(HELP_TEXT, 1)
-  }
-}
-
-main().catch((err) => {
-  error(`Backup command failed: ${err}`)
-  process.exitCode = 1
-})

@@ -151,7 +151,7 @@ SSH into the server with `bun run infra:ssh` (or `doctl compute ssh ski-tripper`
 
 PocketBase supports full data backups via its HTTP API. Backups are created on the production server, downloaded locally to `infra/backups/`, and can be restored to production or loaded into the dev environment.
 
-Backup filenames use the format `YYYY-MM-DD_HH-MM-SS.zip` (e.g. `2026-03-02_14-34-03.zip`). The `list` command shows record counts for each collection inside each backup.
+Backup filenames use the format `YYYY-MM-DD_HH-MM-SS.zip` (e.g. `2026-03-02_14-34-03.zip`). The `list-backups` command shows record counts for each collection inside each backup.
 
 | Command                                            | Description                                                |
 | -------------------------------------------------- | ---------------------------------------------------------- |
@@ -160,7 +160,7 @@ Backup filenames use the format `YYYY-MM-DD_HH-MM-SS.zip` (e.g. `2026-03-02_14-3
 | `bun run infra:list-backups`                       | List local backups with record counts per collection        |
 | `bun run infra:load-backup <file>`                 | Load a backup into the dev environment (stops if PB running)|
 
-The `create` and `restore` commands use `env:prod` automatically. The `load` and `list` commands work locally with no env prefix needed.
+The `backup` and `restore` commands use `env:prod` automatically. The `load-backup` and `list-backups` commands work locally with no env prefix needed.
 
 ## Resort data
 
