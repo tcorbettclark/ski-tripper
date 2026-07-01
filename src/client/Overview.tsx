@@ -513,7 +513,8 @@ export default function Overview({
                           ...(isClickable
                             ? overviewStyles.nameCellClickable
                             : overviewStyles.nameCell),
-                          flex: '0 0 100px',
+                          flex: '0 1 auto',
+                          minWidth: '100px',
                         }}
                       >
                         <span style={overviewStyles.participantName}>
@@ -707,9 +708,6 @@ const overviewStyles = {
     position: 'sticky' as const,
     left: 0,
     zIndex: 1,
-    overflow: 'hidden' as const,
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap' as const,
   },
   gridCellClickable: {
     cursor: 'pointer',
@@ -731,9 +729,6 @@ const overviewStyles = {
     position: 'sticky' as const,
     left: 0,
     zIndex: 1,
-    overflow: 'hidden' as const,
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap' as const,
   },
   gridCell: {
     display: 'flex',
