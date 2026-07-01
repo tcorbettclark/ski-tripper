@@ -406,7 +406,7 @@ describe('CreateProposalForm', () => {
       expect(desc.value).toBe('A famous ski resort')
     })
 
-    it('allows free-text entry for resort name not in catalog', () => {
+    it('allows free-text entry for resort name not in catalogue', () => {
       const { container } = renderForm({ resorts: sampleResorts })
       typeInResortInput(container, 'My Custom Resort')
       const input = container.querySelector(

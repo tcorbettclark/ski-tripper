@@ -140,7 +140,7 @@ describe('Resorts', () => {
 
   it('renders heading and search input', () => {
     render(<Resorts {...defaultProps()} />)
-    expect(screen.getByText('Resorts Catalog')).toBeTruthy()
+    expect(screen.getByText('Resorts Catalogue')).toBeTruthy()
     expect(screen.getByPlaceholderText('Semantic search')).toBeTruthy()
   })
 

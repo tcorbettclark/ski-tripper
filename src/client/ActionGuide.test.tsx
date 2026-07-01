@@ -52,7 +52,7 @@ describe('ActionGuide', () => {
       renderActionGuide()
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
       expect(screen.getByText('Draft Proposals')).toBeTruthy()
       expect(screen.getByText('Submitted Proposals')).toBeTruthy()
       expect(screen.getByText('Voting')).toBeTruthy()
@@ -247,9 +247,9 @@ describe('ActionGuide', () => {
       renderActionGuide({ onNavigateToTab })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
-    fireEvent.click(screen.getByText('Resort Catalog'))
+    fireEvent.click(screen.getByText('Resort Catalogue'))
     expect(onNavigateToTab).toHaveBeenCalledWith(
       'resorts',
       undefined,
@@ -455,10 +455,10 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 5 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
     const resortsNode = screen
-      .getByText('Resort Catalog')
+      .getByText('Resort Catalogue')
       .closest('[data-node]')
     expect(resortsNode?.getAttribute('data-status')).toBe('active')
   })
@@ -468,10 +468,10 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 0 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
     const resortsNode = screen
-      .getByText('Resort Catalog')
+      .getByText('Resort Catalogue')
       .closest('[data-node]')
     expect(resortsNode?.getAttribute('data-status')).toBe('pending')
   })
@@ -481,7 +481,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 3, draftCount: 1 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
     const connectors = document.querySelectorAll('svg[data-connector]')
     expect(connectors.length).toBeGreaterThanOrEqual(1)
@@ -492,7 +492,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 3, draftCount: 1 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
     const resortsWrap = document.querySelector('[data-node="resorts"]')!
       .parentElement!
@@ -506,7 +506,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 0, draftCount: 0 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
     const resortsWrap = document.querySelector('[data-node="resorts"]')!
       .parentElement!
@@ -520,7 +520,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 3, draftCount: 0 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
     const resortsWrap = document.querySelector('[data-node="resorts"]')!
       .parentElement!
@@ -534,7 +534,7 @@ describe('ActionGuide', () => {
       renderActionGuide({ resortCount: 0, draftCount: 0 })
     })
     await waitFor(() => {
-      expect(screen.getByText('Resort Catalog')).toBeTruthy()
+      expect(screen.getByText('Resort Catalogue')).toBeTruthy()
     })
     const resortsWrap = document.querySelector('[data-node="resorts"]')!
       .parentElement!

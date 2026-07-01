@@ -175,7 +175,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
     {
       nodeId: 'resorts',
       icon: Mountain,
-      title: 'Resort Catalog',
+      title: 'Resort Catalogue',
       stats: [],
       actions: resortsActions,
       status: props.resortCount > 0 ? 'active' : 'pending',
