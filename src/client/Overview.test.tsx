@@ -767,3 +767,43 @@ it('uses current user name from user prop instead of stale participant name', as
     expect(screen.getByText('Alice Updated')).toBeTruthy()
   })
 })
+
+it('calls onViewPreferences with user id and name when clicking any participant row', async () => {
+  const eventUser = userEvent.setup()
+  const onViewPreferences = mock(() => {})
+  await act(async () => {
+    renderOverview({ onViewPreferences })
+  })
+  await waitFor(() => {
+    expect(screen.getByText('Bob')).toBeTruthy()
+  })
+
+  const bobRow = screen
+    .getAllByRole('button')
+    .find((el) => el.textContent?.includes('Bob'))
+  expect(bobRow).toBeDefined()
+  await eventUser.click(bobRow!)
+
+  expect(onViewPreferences).toHaveBeenCalledWith('user-2', 'Bob')
+})
+
+it('calls onViewPreferences with current user id and name when clicking own row', async () => {
+  const eventUser = userEvent.setup()
+  const onViewPreferences = mock(() => {})
+  await act(async () => {
+    renderOverview({ onViewPreferences })
+  })
+  await waitFor(() => {
+    const aliceRows = screen
+      .getAllByRole('button')
+      .filter((el) => el.textContent?.includes('Alice'))
+    expect(aliceRows.length).toBeGreaterThan(0)
+  })
+
+  const aliceRow = screen
+    .getAllByRole('button')
+    .find((el) => el.textContent?.includes('Alice'))
+  await eventUser.click(aliceRow!)
+
+  expect(onViewPreferences).toHaveBeenCalledWith('user-1', 'Alice')
+})

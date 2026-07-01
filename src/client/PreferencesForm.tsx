@@ -51,6 +51,7 @@ interface PreferencesFormProps {
   updateName?: (name: string) => Promise<unknown>
   formId?: string
   hideActions?: boolean
+  readOnly?: boolean
 }
 
 export default function PreferencesForm({
@@ -66,6 +67,7 @@ export default function PreferencesForm({
   updateName: _updateName,
   formId,
   hideActions,
+  readOnly,
 }: PreferencesFormProps) {
   const initialSkiSnowboard = initial?.skiSnowboard ?? []
   const initialDifficulty = initial?.difficulty ?? []
@@ -191,6 +193,7 @@ export default function PreferencesForm({
                   checked={checked}
                   onChange={() => toggleOption(opt, selected, setter)}
                   style={styles.checkbox}
+                  disabled={readOnly}
                   data-testid={`pref-${opt.toLowerCase().replace(/ /g, '-')}`}
                 />
                 {icons?.[i] && (
@@ -214,7 +217,7 @@ export default function PreferencesForm({
 
   return (
     <form id={formId} onSubmit={handleSubmit} style={styles.form}>
-      {_updateName && (
+      {_updateName && !readOnly && (
         <div style={styles.group}>
           <label htmlFor="name" style={styles.groupLabel}>
             Name
@@ -269,6 +272,7 @@ export default function PreferencesForm({
                 value={timeAllocation[i]}
                 onChange={(e) => handleTimeChange(i, Number(e.target.value))}
                 style={styles.slider}
+                disabled={readOnly}
               />
               <span style={styles.sliderValue}>{timeAllocation[i]}%</span>
             </div>
@@ -312,12 +316,13 @@ export default function PreferencesForm({
           placeholder="Tell us what matters most to you on a ski trip — the more detail the better! For example: &quot;I love long lunches in mountain restaurants, good snow, and lively après-ski&quot;"
           rows={4}
           style={styles.textareaInput}
+          disabled={readOnly}
         />
       </div>
 
       {error && <p style={formStyles.error}>{error}</p>}
 
-      {!hideActions && (
+      {!hideActions && !readOnly && (
         <div style={styles.actions}>
           <button
             type="submit"

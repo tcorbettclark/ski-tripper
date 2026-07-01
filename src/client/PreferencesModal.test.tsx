@@ -165,4 +165,96 @@ describe('PreferencesModal', () => {
       expect(mockNameUpdated).toHaveBeenCalledTimes(1)
     })
   })
+
+  describe('read-only mode', () => {
+    it('shows user name in title when readOnly', async () => {
+      await act(async () => {
+        render(
+          <PreferencesModal
+            userId="user-2"
+            userName="Bob"
+            initial={defaultPreferences}
+            open
+            onClose={mock(() => {})}
+            onSaved={mock(() => {})}
+            readOnly
+          />
+        )
+      })
+      expect(screen.getByText("Bob's Preferences")).toBeDefined()
+    })
+
+    it('disables all form inputs when readOnly', async () => {
+      await act(async () => {
+        render(
+          <PreferencesModal
+            userId="user-2"
+            userName="Bob"
+            initial={defaultPreferences}
+            open
+            onClose={mock(() => {})}
+            onSaved={mock(() => {})}
+            readOnly
+          />
+        )
+      })
+      expect(
+        (
+          screen.getByRole('checkbox', {
+            name: /snowboard/i,
+          }) as HTMLInputElement
+        ).disabled
+      ).toBe(true)
+      expect(
+        (screen.getByRole('checkbox', { name: /red/i }) as HTMLInputElement)
+          .disabled
+      ).toBe(true)
+      expect(
+        screen
+          .getAllByRole('slider')
+          .every((el) => (el as HTMLInputElement).disabled)
+      ).toBe(true)
+      expect(
+        (screen.getByLabelText(/notes/i) as HTMLTextAreaElement).disabled
+      ).toBe(true)
+    })
+
+    it('hides save and cancel buttons when readOnly', async () => {
+      await act(async () => {
+        render(
+          <PreferencesModal
+            userId="user-2"
+            userName="Bob"
+            initial={defaultPreferences}
+            open
+            onClose={mock(() => {})}
+            onSaved={mock(() => {})}
+            readOnly
+          />
+        )
+      })
+      expect(
+        screen.queryByRole('button', { name: /update preferences/i })
+      ).toBeNull()
+      expect(screen.queryByRole('button', { name: /cancel/i })).toBeNull()
+    })
+
+    it('does not show name input when readOnly', async () => {
+      await act(async () => {
+        render(
+          <PreferencesModal
+            userId="user-2"
+            userName="Bob"
+            initial={defaultPreferences}
+            open
+            onClose={mock(() => {})}
+            onSaved={mock(() => {})}
+            updateName={mock(() => Promise.resolve({}))}
+            readOnly
+          />
+        )
+      })
+      expect(screen.queryByLabelText('Name')).toBeNull()
+    })
+  })
 })

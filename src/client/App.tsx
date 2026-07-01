@@ -156,6 +156,9 @@ export default function App({
     setPreferencesUpdated(null)
     setCheckingPreferences(false)
     setShowPreferencesModal(false)
+    setViewingUserId(null)
+    setViewingUserName(null)
+    setViewingPreferences(null)
     setActivePollEndDate(null)
     setResorts([])
     setAboutOpen(false)
@@ -191,6 +194,10 @@ export default function App({
   } | null>(null)
   const [checkingPreferences, setCheckingPreferences] = useState(false)
   const [showPreferencesModal, setShowPreferencesModal] = useState(false)
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null)
+  const [viewingUserName, setViewingUserName] = useState<string | null>(null)
+  const [viewingPreferences, setViewingPreferences] =
+    useState<Preferences | null>(null)
   const [activePollEndDate, setActivePollEndDate] = useState<string | null>(
     null
   )
@@ -586,7 +593,17 @@ export default function App({
                 onAuthError={onAuthError}
                 updateTrip={updateTrip}
                 preferencesUpdated={preferencesUpdated}
-                onOpenPreferences={() => setShowPreferencesModal(true)}
+                onViewPreferences={(userId, userName) => {
+                  if (userId === user.id) {
+                    setShowPreferencesModal(true)
+                  } else {
+                    getPreferences(userId).then((prefs) => {
+                      setViewingUserId(userId)
+                      setViewingUserName(userName)
+                      setViewingPreferences(prefs)
+                    })
+                  }
+                }}
                 listTripParticipants={listTripParticipants}
               />
             </ErrorBoundary>
@@ -645,6 +662,21 @@ export default function App({
         createPreferences={createPreferences}
         updateName={updateName}
       />
+      {viewingUserId && viewingUserId !== user.id && (
+        <PreferencesModal
+          userId={viewingUserId}
+          userName={viewingUserName || ''}
+          initial={viewingPreferences}
+          open
+          onClose={() => {
+            setViewingUserId(null)
+            setViewingUserName(null)
+            setViewingPreferences(null)
+          }}
+          onSaved={() => {}}
+          readOnly
+        />
+      )}
       <Footer useAutoHideFooterHook={useAutoHideFooterHook} isSmall={isSmall} />
       <ToastContainer />
     </main>

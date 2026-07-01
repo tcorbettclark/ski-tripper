@@ -71,7 +71,7 @@ interface OverviewProps {
   ) => Promise<Trip>
   getPreferences?: (userId: string) => Promise<Preferences | null>
   preferencesUpdated?: { userId: string; preferences: Preferences } | null
-  onOpenPreferences?: () => void
+  onViewPreferences?: (userId: string, userName: string) => void
 }
 
 const noopAuthError = () => {}
@@ -92,7 +92,7 @@ export default function Overview({
   updateTrip = _updateTrip,
   getPreferences = _getPreferences,
   preferencesUpdated,
-  onOpenPreferences,
+  onViewPreferences,
 }: OverviewProps) {
   const isSmall = useIsSmallScreen()
   const [participants, setParticipants] = useState<Participant[]>([])
@@ -536,13 +536,13 @@ export default function Overview({
               <style>{`.participant-name-cell { background: transparent; transition: background 0.15s; } .participant-grid-row-clickable { transition: background 0.15s; } .participant-grid-row-clickable:hover { background: color-mix(in srgb, var(--color-accent) 25%, var(--color-bgCard)); cursor: pointer; } .participant-grid-row-clickable:hover .participant-name-cell { background: transparent; }`}</style>
               {sortedParticipants.map((p) => {
                 const prefs = preferencesMap[p.user]
-                const isCurrentUser = p.user === user.id && !!onOpenPreferences
+                const isClickable = !!onViewPreferences
                 return (
                   <div key={p.id}>
-                    {/* biome-ignore lint/a11y/noStaticElementInteractions: row is interactive only for the current user, role and keyboard handler are set conditionally */}
+                    {/* biome-ignore lint/a11y/noStaticElementInteractions: row is interactive, role and keyboard handler are set */}
                     <div
                       className={
-                        isCurrentUser
+                        isClickable
                           ? 'participant-grid-row-clickable'
                           : undefined
                       }
@@ -556,21 +556,26 @@ export default function Overview({
                             }
                           : {}),
                       }}
-                      onClick={isCurrentUser ? onOpenPreferences : undefined}
+                      onClick={
+                        isClickable
+                          ? () => onViewPreferences(p.user, p.userName)
+                          : undefined
+                      }
                       onKeyDown={
-                        isCurrentUser
+                        isClickable
                           ? (e) => {
-                              if (e.key === 'Enter') onOpenPreferences()
+                              if (e.key === 'Enter')
+                                onViewPreferences(p.user, p.userName)
                             }
                           : undefined
                       }
-                      tabIndex={isCurrentUser ? 0 : undefined}
-                      role={isCurrentUser ? 'button' : undefined}
+                      tabIndex={isClickable ? 0 : undefined}
+                      role={isClickable ? 'button' : undefined}
                     >
                       <span
                         className="participant-name-cell"
                         style={{
-                          ...(isCurrentUser
+                          ...(isClickable
                             ? overviewStyles.nameCellClickable
                             : overviewStyles.nameCell),
                           flex: '0 0 auto',
@@ -585,7 +590,7 @@ export default function Overview({
                         <span
                           key={col}
                           style={{
-                            ...(isCurrentUser
+                            ...(isClickable
                               ? overviewStyles.gridCellClickable
                               : overviewStyles.gridCell),
                             flex: '0 0 auto',

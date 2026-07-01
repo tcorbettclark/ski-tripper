@@ -14,6 +14,7 @@ interface PreferencesModalProps {
   onClose: () => void
   onSaved: (preferences: Preferences) => void
   onNameUpdated?: () => void
+  readOnly?: boolean
   createPreferences?: (
     userId: string,
     data: Omit<Preferences, 'id' | 'created' | 'updated' | 'user'>
@@ -33,6 +34,7 @@ export default function PreferencesModal({
   onClose,
   onSaved,
   onNameUpdated,
+  readOnly,
   createPreferences,
   updatePreferences,
   updateName,
@@ -73,7 +75,9 @@ export default function PreferencesModal({
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div style={overlayStyles.panelHeader}>
-          <h3 style={overlayStyles.panelTitle}>My Preferences</h3>
+          <h3 style={overlayStyles.panelTitle}>
+            {readOnly ? `${userName}'s Preferences` : 'My Preferences'}
+          </h3>
           <button
             type="button"
             onClick={onClose}
@@ -87,6 +91,7 @@ export default function PreferencesModal({
           <PreferencesForm
             formId={FORM_ID}
             hideActions
+            readOnly={readOnly}
             userId={userId}
             userName={userName}
             initial={savedPreferences ?? initial}
@@ -102,18 +107,20 @@ export default function PreferencesModal({
             updateName={updateName}
           />
         </div>
-        <div style={overlayStyles.panelFooter}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={formStyles.cancelButton}
-          >
-            Cancel
-          </button>
-          <button type="submit" form={FORM_ID} style={formStyles.saveButton}>
-            {isExisting ? 'Update Preferences' : 'Save Preferences'}
-          </button>
-        </div>
+        {!readOnly && (
+          <div style={overlayStyles.panelFooter}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={formStyles.cancelButton}
+            >
+              Cancel
+            </button>
+            <button type="submit" form={FORM_ID} style={formStyles.saveButton}>
+              {isExisting ? 'Update Preferences' : 'Save Preferences'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
