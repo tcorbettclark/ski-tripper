@@ -314,34 +314,6 @@ describe('Overview', () => {
     })
   })
 
-  it('shows most important aspect popup on heart click and closes on X or outside click', async () => {
-    const eventUser = userEvent.setup()
-    await act(async () => {
-      renderOverview()
-    })
-    await waitFor(() => {
-      expect(
-        screen.getByRole('button', { name: /show description/i })
-      ).toBeTruthy()
-    })
-    expect(screen.queryByText('Snow quality')).toBeNull()
-
-    await eventUser.click(
-      screen.getByRole('button', { name: /show description/i })
-    )
-
-    await waitFor(() => {
-      expect(screen.getByText('Snow quality')).toBeTruthy()
-      expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy()
-    })
-
-    await eventUser.click(screen.getByRole('button', { name: 'Close' }))
-
-    await waitFor(() => {
-      expect(screen.queryByText('Snow quality')).toBeNull()
-    })
-  })
-
   it('handles participants with no preferences', async () => {
     const participantNoPrefs: Participant = {
       id: 'part-3',

@@ -1,4 +1,4 @@
-import { Copy, Heart, Pencil, X } from 'lucide-react'
+import { Copy, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type {
   Participant,
@@ -34,7 +34,6 @@ import {
   SkiIcon,
   SnowboardIcon,
 } from './Icons'
-import Paragraphs from './Paragraphs'
 import { borders, colors, fontSizes, fonts, mix } from './theme'
 import { toast } from './toast'
 import useIsSmallScreen from './useIsSmallScreen'
@@ -105,12 +104,6 @@ export default function Overview({
   const [userVotedInActivePoll, setUserVotedInActivePoll] = useState(false)
   const [isCoordinator, setIsCoordinator] = useState(false)
   const [editingDescription, setEditingDescription] = useState(false)
-  const [aspectPopup, setAspectPopup] = useState<{
-    userId: string
-    text: string
-    x: number
-    y: number
-  } | null>(null)
 
   const mountedRef = useRef(true)
 
@@ -237,8 +230,7 @@ export default function Overview({
 
   function renderPreferenceCell(
     prefs: Preferences | null | undefined,
-    column: string,
-    user?: string
+    column: string
   ) {
     if (!prefs) return <span style={overviewStyles.cellEmpty}>—</span>
 
@@ -363,61 +355,17 @@ export default function Overview({
       )
     }
 
-    if (column === 'aspect') {
-      if (!prefs.notes) return <span style={overviewStyles.cellEmpty}>—</span>
-      const isOpen = aspectPopup?.userId === user
-      return (
-        <button
-          type="button"
-          data-aspect-toggle={user}
-          onClick={(e) => {
-            e.stopPropagation()
-            if (!user) return
-            if (isOpen) {
-              setAspectPopup(null)
-            } else {
-              const rect = e.currentTarget.getBoundingClientRect()
-              setAspectPopup({
-                userId: user,
-                text: prefs.notes,
-                x: rect.right + 8,
-                y: rect.top,
-              })
-            }
-          }}
-          style={{
-            ...overviewStyles.aspectToggleButton,
-            opacity: isOpen ? 1 : 0.7,
-          }}
-          title="Show description"
-          aria-label="Show description"
-          aria-expanded={isOpen}
-        >
-          <Heart size={14} />
-        </button>
-      )
-    }
-
     return null
   }
 
-  const prefColumns = [
-    'ski',
-    'diff',
-    'piste',
-    'accom',
-    'time',
-    'aspect',
-  ] as const
+  const prefColumns = ['ski', 'diff', 'piste', 'accom', 'time'] as const
 
   const colWidths: Record<string, string> = {
-    name: '100px',
     ski: '48px',
     diff: '54px',
     piste: '48px',
     accom: '68px',
     time: '170px',
-    aspect: '90px',
   }
 
   const sortedParticipants = [...participants]
@@ -440,19 +388,6 @@ export default function Overview({
       .then(() => toast('Copied!', 'success'))
       .catch(() => toast('Failed to copy', 'error'))
   }
-
-  useEffect(() => {
-    if (!aspectPopup) return
-    function handleClickOutside(e: MouseEvent) {
-      const target = e.target as HTMLElement
-      if (target.closest('[data-aspect-popup]')) return
-      if (target.closest('[data-aspect-toggle]')) return
-      if (!mountedRef.current) return
-      setAspectPopup(null)
-    }
-    document.addEventListener('click', handleClickOutside)
-    return () => document.removeEventListener('click', handleClickOutside)
-  }, [aspectPopup])
 
   return (
     <div
@@ -578,14 +513,14 @@ export default function Overview({
                           ...(isClickable
                             ? overviewStyles.nameCellClickable
                             : overviewStyles.nameCell),
-                          flex: '0 0 auto',
-                          minWidth: colWidths.name,
+                          flex: '0 0 100px',
                         }}
                       >
                         <span style={overviewStyles.participantName}>
                           {p.userName}
                         </span>
                       </span>
+                      <span style={overviewStyles.spacer} />
                       {prefColumns.map((col) => (
                         <span
                           key={col}
@@ -597,7 +532,7 @@ export default function Overview({
                             minWidth: colWidths[col],
                           }}
                         >
-                          {renderPreferenceCell(prefs, col, p.user)}
+                          {renderPreferenceCell(prefs, col)}
                         </span>
                       ))}
                     </div>
@@ -621,33 +556,6 @@ export default function Overview({
         isCoordinator={isCoordinator}
         onNavigateToTab={onNavigateToTab}
       />
-
-      {aspectPopup && (
-        <div
-          data-aspect-popup
-          style={{
-            ...overviewStyles.aspectPopup,
-            top: aspectPopup.y,
-            left: Math.min(aspectPopup.x, window.innerWidth - 260),
-          }}
-        >
-          <div style={overviewStyles.aspectPopupHeader}>
-            <Heart size={12} style={overviewStyles.aspectPopupIcon} />
-            <button
-              type="button"
-              onClick={() => setAspectPopup(null)}
-              style={overviewStyles.aspectPopupClose}
-              aria-label="Close"
-            >
-              <X size={12} />
-            </button>
-          </div>
-          <Paragraphs
-            text={aspectPopup.text}
-            style={overviewStyles.aspectPopupText}
-          />
-        </div>
-      )}
     </div>
   )
 }
@@ -780,6 +688,9 @@ const overviewStyles = {
     padding: '10px 16px',
     minWidth: '560px',
   },
+  spacer: {
+    flex: '1 0 0%',
+  },
 
   nameCellClickable: {
     cursor: 'pointer',
@@ -791,10 +702,14 @@ const overviewStyles = {
     textAlign: 'left' as const,
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     gap: '6px',
     position: 'sticky' as const,
     left: 0,
     zIndex: 1,
+    overflow: 'hidden' as const,
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
   },
   gridCellClickable: {
     cursor: 'pointer',
@@ -805,21 +720,25 @@ const overviewStyles = {
     color: 'inherit',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   nameCell: {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     gap: '6px',
     paddingRight: '8px',
     position: 'sticky' as const,
     left: 0,
     zIndex: 1,
+    overflow: 'hidden' as const,
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
   },
   gridCell: {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   cellEmpty: {
     fontFamily: fonts.body,
@@ -831,55 +750,7 @@ const overviewStyles = {
     gap: '2px',
     alignItems: 'center',
   },
-  aspectToggleButton: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: colors.accent,
-    padding: '2px',
-    lineHeight: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aspectPopup: {
-    position: 'fixed' as const,
-    zIndex: 1000,
-    background: colors.bgCard,
-    border: borders.accent,
-    borderRadius: '8px',
-    padding: '10px 12px',
-    maxWidth: '240px',
-    minWidth: '160px',
-    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.15)',
-  },
-  aspectPopupHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: '6px',
-  },
-  aspectPopupIcon: {
-    color: colors.accent,
-  },
-  aspectPopupClose: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: colors.textSecondary,
-    padding: '2px',
-    lineHeight: 1,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aspectPopupText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    color: colors.textData,
-    lineHeight: '1.5',
-    wordBreak: 'break-word' as const,
-  },
+
   participantName: {
     fontFamily: fonts.body,
     fontSize: fontSizes.md,
