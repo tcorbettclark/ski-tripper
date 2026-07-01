@@ -420,7 +420,6 @@ describe('Overview', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /^Submit:/ })[0])
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'prop-1',
-      subTab: 'proposal',
     })
   })
 

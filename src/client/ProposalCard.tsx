@@ -1,4 +1,4 @@
-import { MapPin, Sparkles } from 'lucide-react'
+import { MapPin, MessageSquare, Sparkles } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { getCountryFlagUrl } from '../shared/countries'
 import type { Accommodation, Discussion, Proposal } from '../shared/types.d'
@@ -52,7 +52,6 @@ interface ProposalCardProps {
   userName?: string
   isCoordinator?: boolean
   previewMode?: boolean
-  initialTab?: 'proposal' | 'accommodations' | 'discussion'
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
   onSubmitted: (proposal: unknown) => void
@@ -97,7 +96,6 @@ export default function ProposalCard({
   userName = '',
   isCoordinator = false,
   previewMode = false,
-  initialTab,
   onUpdated,
   onDeleted,
   onSubmitted,
@@ -118,16 +116,8 @@ export default function ProposalCard({
   const isSmall = useIsSmallScreen()
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [activeTab, setActiveTab] = useState<
-    'proposal' | 'accommodations' | 'discussion'
-  >(initialTab ?? 'proposal')
+  const [showNotes, setShowNotes] = useState(false)
   const [accommodations, setAccommodations] = useState<Accommodation[]>([])
-
-  useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab)
-    }
-  }, [initialTab])
 
   useEffect(() => {
     listAccommodations(proposal.id).then(setAccommodations).catch(onAuthError)
@@ -330,288 +320,243 @@ export default function ProposalCard({
             )}
           </div>
           {!previewMode && (
-            <button
-              type="button"
-              onClick={() => setShowAnalysisModal(true)}
-              style={styles.aiButton}
-              aria-label="AI Analysis"
-            >
-              <Sparkles size={16} />
-            </button>
+            <div style={styles.headerActions}>
+              <button
+                type="button"
+                data-testid="notes-button"
+                onClick={() => setShowNotes(true)}
+                style={styles.notesButton}
+                aria-label={`Notes${discussionCount > 0 ? ` (${discussionCount})` : ''}`}
+              >
+                <MessageSquare size={14} />
+                {discussionCount > 0 && ` (${discussionCount})`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAnalysisModal(true)}
+                style={styles.aiButton}
+                aria-label="AI Analysis"
+              >
+                <Sparkles size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div style={styles.section}>
+          <div
+            style={{
+              ...styles.grid,
+              gridTemplateColumns: isSmall ? '1fr' : '1fr 1fr',
+            }}
+          >
+            <DetailField
+              label="Start Date"
+              value={formatDate(proposal.startDate)}
+            />
+            <DetailField
+              label="End Date"
+              value={formatDate(proposal.endDate)}
+            />
+            <DetailField
+              label="Altitude Range"
+              value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
+            />
+            <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
+            <DetailField label="Piste Breakdown">
+              <PisteBreakdown
+                beginnerPct={proposal.beginnerPct}
+                intermediatePct={proposal.intermediatePct}
+                advancedPct={proposal.advancedPct}
+              />
+            </DetailField>
+            <DetailField label="Lifts" value={String(proposal.liftCount)} />
+            <DetailField
+              label="Snow Reliability"
+              value={
+                snowReliabilityLabels[proposal.snowReliability] ??
+                proposal.snowReliability
+              }
+            />
+            <DetailField label="Ski Season" value={proposal.skiSeasonMonths} />
+            <DetailField
+              label="Nearest Airport"
+              value={proposal.nearestAirport}
+            />
+            <DetailField
+              label="Transfer Time"
+              value={formatTransferTime(proposal.transferTime)}
+            />
+            {proposal.websites && proposal.websites.length > 0 && (
+              <DetailField
+                label="Websites"
+                style={{ gridColumn: isSmall ? '1' : 'span 2' }}
+              >
+                <ul style={styles.websiteList}>
+                  {proposal.websites.map((url) => (
+                    <li key={url}>
+                      <a
+                        href={sanitizeUrl(ensureUrlScheme(url))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          ...detailStyles.websiteLink,
+                          textDecoration:
+                            hoveredWebsite === url ? 'underline' : 'none',
+                        }}
+                        onMouseEnter={() => setHoveredWebsite(url)}
+                        onMouseLeave={() => setHoveredWebsite(null)}
+                      >
+                        {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </DetailField>
+            )}
+          </div>
+          {proposal.linkedResortsDescription && (
+            <div style={styles.descriptionSection}>
+              <DetailField label="Linked Resorts">
+                <Paragraphs
+                  text={proposal.linkedResortsDescription}
+                  style={detailStyles.descriptionText}
+                />
+              </DetailField>
+            </div>
+          )}
+          {proposal.description && (
+            <DetailField label="Description">
+              <Paragraphs
+                text={proposal.description}
+                style={detailStyles.descriptionText}
+              />
+            </DetailField>
+          )}
+          {canAct && (
+            <div style={styles.editButtonRow}>
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                style={styles.accommodationEditButton}
+                aria-label="Edit proposal"
+              >
+                Edit
+              </button>
+            </div>
           )}
         </div>
 
         {!previewMode && (
-          <div style={styles.tabs}>
-            <button
-              type="button"
-              onClick={() => setActiveTab('proposal')}
-              style={
-                activeTab === 'proposal' ? styles.tabActive : styles.tabInactive
-              }
-            >
-              Proposal
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('accommodations')}
-              style={
-                activeTab === 'accommodations'
-                  ? styles.tabActive
-                  : styles.tabInactive
-              }
-            >
-              Accommodations {`(${accommodations.length})`}
-            </button>
-            <button
-              type="button"
-              data-testid="discussion-tab"
-              onClick={() => setActiveTab('discussion')}
-              style={
-                activeTab === 'discussion'
-                  ? styles.tabActive
-                  : styles.tabInactive
-              }
-            >
-              Discussion {discussionCount > 0 && `(${discussionCount})`}
-            </button>
+          <div style={styles.accommodationsSection}>
+            <div style={styles.accommodationsHeader}>Accommodations</div>
+            {accommodations.length === 0 && !addingAccommodation && (
+              <p style={styles.noAccommodations}>No accommodations yet.</p>
+            )}
+            {accommodations.map((acc) =>
+              editingAccommodationId === acc.id ? (
+                <AccommodationEditForm
+                  key={acc.id}
+                  isSmall={isSmall}
+                  initialData={{
+                    name: acc.name,
+                    url: acc.url,
+                    cost: acc.cost,
+                    description: acc.description,
+                  }}
+                  onSave={(data) => handleEditAccommodation(acc.id, data)}
+                  onCancel={() => {
+                    setEditingAccommodationId(null)
+                  }}
+                />
+              ) : (
+                <div key={acc.id}>
+                  <div style={styles.accommodationItem}>
+                    <div style={styles.accommodationItemContent}>
+                      <div
+                        style={{
+                          ...styles.grid,
+                          gridTemplateColumns: isSmall ? '1fr' : '1fr 1fr',
+                        }}
+                      >
+                        <DetailField label="Name">
+                          <a
+                            href={sanitizeUrl(acc.url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={styles.accommodationLink}
+                          >
+                            {acc.name || '—'}
+                          </a>
+                        </DetailField>
+                        <DetailField label="Cost" value={acc.cost} />
+                        <div
+                          style={{
+                            gridColumn: '1/-1',
+                            maxWidth: isSmall ? '100%' : '75%',
+                          }}
+                        >
+                          <DetailField
+                            label="Description"
+                            value={acc.description}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    {canAct && (
+                      <div style={styles.accommodationItemActions}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setConfirmDeleteAccommodationId(acc.id)
+                          }
+                          style={styles.accommodationDeleteButton}
+                          aria-label={`Delete accommodation ${acc.name}`}
+                        >
+                          Delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingAccommodationId(acc.id)
+                          }}
+                          style={styles.accommodationEditButton}
+                          aria-label={`Edit accommodation ${acc.name}`}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <hr style={styles.accommodationDivider} />
+                </div>
+              )
+            )}
+            {addingAccommodation && (
+              <AccommodationEditForm
+                isSmall={isSmall}
+                onSave={handleAddAccommodation}
+                onCancel={() => {
+                  setAddingAccommodation(false)
+                }}
+              />
+            )}
+            {canAct && !addingAccommodation && accommodations.length < 5 && (
+              <button
+                type="button"
+                data-testid="add-accommodation-btn"
+                onClick={() => {
+                  setAddingAccommodation(true)
+                }}
+                style={styles.addAccommodationButton}
+              >
+                + Add Accommodation
+              </button>
+            )}
           </div>
         )}
 
-        <div style={previewMode ? undefined : styles.tabContent}>
-          {(previewMode || activeTab === 'proposal') && (
-            <div style={styles.section}>
-              <div
-                style={{
-                  ...styles.grid,
-                  gridTemplateColumns: isSmall ? '1fr' : '1fr 1fr',
-                }}
-              >
-                <DetailField
-                  label="Start Date"
-                  value={formatDate(proposal.startDate)}
-                />
-                <DetailField
-                  label="End Date"
-                  value={formatDate(proposal.endDate)}
-                />
-                <DetailField
-                  label="Altitude Range"
-                  value={`${proposal.baseAltitude}m – ${proposal.summitAltitude}m`}
-                />
-                <DetailField label="Piste" value={`${proposal.pisteKm} km`} />
-                <DetailField label="Piste Breakdown">
-                  <PisteBreakdown
-                    beginnerPct={proposal.beginnerPct}
-                    intermediatePct={proposal.intermediatePct}
-                    advancedPct={proposal.advancedPct}
-                  />
-                </DetailField>
-                <DetailField label="Lifts" value={String(proposal.liftCount)} />
-                <DetailField
-                  label="Snow Reliability"
-                  value={
-                    snowReliabilityLabels[proposal.snowReliability] ??
-                    proposal.snowReliability
-                  }
-                />
-                <DetailField
-                  label="Ski Season"
-                  value={proposal.skiSeasonMonths}
-                />
-                <DetailField
-                  label="Nearest Airport"
-                  value={proposal.nearestAirport}
-                />
-                <DetailField
-                  label="Transfer Time"
-                  value={formatTransferTime(proposal.transferTime)}
-                />
-                {proposal.websites && proposal.websites.length > 0 && (
-                  <DetailField
-                    label="Websites"
-                    style={{ gridColumn: isSmall ? '1' : 'span 2' }}
-                  >
-                    <ul style={styles.websiteList}>
-                      {proposal.websites.map((url) => (
-                        <li key={url}>
-                          <a
-                            href={sanitizeUrl(ensureUrlScheme(url))}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              ...detailStyles.websiteLink,
-                              textDecoration:
-                                hoveredWebsite === url ? 'underline' : 'none',
-                            }}
-                            onMouseEnter={() => setHoveredWebsite(url)}
-                            onMouseLeave={() => setHoveredWebsite(null)}
-                          >
-                            {ensureUrlScheme(url).replace(/^https?:\/\//, '')}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </DetailField>
-                )}
-              </div>
-              {proposal.linkedResortsDescription && (
-                <div style={styles.descriptionSection}>
-                  <DetailField label="Linked Resorts">
-                    <Paragraphs
-                      text={proposal.linkedResortsDescription}
-                      style={detailStyles.descriptionText}
-                    />
-                  </DetailField>
-                </div>
-              )}
-              {proposal.description && (
-                <DetailField label="Description">
-                  <Paragraphs
-                    text={proposal.description}
-                    style={detailStyles.descriptionText}
-                  />
-                </DetailField>
-              )}
-              {canAct && (
-                <div style={styles.editButtonRow}>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    style={styles.accommodationEditButton}
-                    aria-label="Edit proposal"
-                  >
-                    Edit
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
-          {!previewMode && activeTab === 'accommodations' && (
-            <div style={styles.accommodationsSection}>
-              {accommodations.length === 0 && !addingAccommodation && (
-                <p style={styles.noAccommodations}>No accommodations yet.</p>
-              )}
-              {accommodations.map((acc) =>
-                editingAccommodationId === acc.id ? (
-                  <AccommodationEditForm
-                    key={acc.id}
-                    isSmall={isSmall}
-                    initialData={{
-                      name: acc.name,
-                      url: acc.url,
-                      cost: acc.cost,
-                      description: acc.description,
-                    }}
-                    onSave={(data) => handleEditAccommodation(acc.id, data)}
-                    onCancel={() => {
-                      setEditingAccommodationId(null)
-                    }}
-                  />
-                ) : (
-                  <div key={acc.id}>
-                    <div style={styles.accommodationItem}>
-                      <div style={styles.accommodationItemContent}>
-                        <div
-                          style={{
-                            ...styles.grid,
-                            gridTemplateColumns: isSmall ? '1fr' : '1fr 1fr',
-                          }}
-                        >
-                          <DetailField label="Name">
-                            <a
-                              href={sanitizeUrl(acc.url)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={styles.accommodationLink}
-                            >
-                              {acc.name || '—'}
-                            </a>
-                          </DetailField>
-                          <DetailField label="Cost" value={acc.cost} />
-                          <div
-                            style={{
-                              gridColumn: '1/-1',
-                              maxWidth: isSmall ? '100%' : '75%',
-                            }}
-                          >
-                            <DetailField
-                              label="Description"
-                              value={acc.description}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      {canAct && (
-                        <div style={styles.accommodationItemActions}>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setConfirmDeleteAccommodationId(acc.id)
-                            }
-                            style={styles.accommodationDeleteButton}
-                            aria-label={`Delete accommodation ${acc.name}`}
-                          >
-                            Delete
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingAccommodationId(acc.id)
-                            }}
-                            style={styles.accommodationEditButton}
-                            aria-label={`Edit accommodation ${acc.name}`}
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <hr style={styles.accommodationDivider} />
-                  </div>
-                )
-              )}
-              {addingAccommodation && (
-                <AccommodationEditForm
-                  isSmall={isSmall}
-                  onSave={handleAddAccommodation}
-                  onCancel={() => {
-                    setAddingAccommodation(false)
-                  }}
-                />
-              )}
-              {canAct && !addingAccommodation && accommodations.length < 5 && (
-                <button
-                  type="button"
-                  data-testid="add-accommodation-btn"
-                  onClick={() => {
-                    setAddingAccommodation(true)
-                  }}
-                  style={styles.addAccommodationButton}
-                >
-                  + Add Accommodation
-                </button>
-              )}
-            </div>
-          )}
-
-          {!previewMode && activeTab === 'discussion' && (
-            <DiscussionSection
-              proposalId={proposal.id}
-              userId={userId}
-              userName={userName}
-              listDiscussion={listDiscussion}
-              onCommentsChanged={() => {
-                listDiscussion(proposal.id)
-                  .then((rows) => setDiscussionCount(rows.length))
-                  .catch(onAuthError)
-              }}
-            />
-          )}
-        </div>
-
-        {!previewMode && activeTab === 'proposal' && hasActions && (
+        {!previewMode && hasActions && (
           <div style={styles.actions}>
             {canAct && (
               <>
@@ -679,6 +624,60 @@ export default function ProposalCard({
         />
       )}
 
+      {showNotes && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Notes"
+          style={styles.backdrop}
+          onClick={() => {
+            setShowNotes(false)
+            listDiscussion(proposal.id)
+              .then((rows) => setDiscussionCount(rows.length))
+              .catch(onAuthError)
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowNotes(false)
+              listDiscussion(proposal.id)
+                .then((rows) => setDiscussionCount(rows.length))
+                .catch(onAuthError)
+            }
+          }}
+        >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: stops click propagation from modal card */}
+          <div
+            role="presentation"
+            style={styles.notesModal}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+          >
+            <div style={styles.notesModalHeader}>
+              <span style={styles.notesModalTitle}>Notes</span>
+              <button
+                type="button"
+                onClick={() => setShowNotes(false)}
+                style={styles.notesCloseButton}
+                aria-label="Close notes"
+              >
+                ×
+              </button>
+            </div>
+            <DiscussionSection
+              proposalId={proposal.id}
+              userId={userId}
+              userName={userName}
+              listDiscussion={listDiscussion}
+              onCommentsChanged={() => {
+                // Don't update discussionCount while modal is open — it causes
+                // re-renders that detach DOM elements mid-interaction.
+                // Refresh on close instead.
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {showDeleteConfirm && (
         <div
           role="dialog"
@@ -744,7 +743,11 @@ export default function ProposalCard({
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >
-            <h4 id="submit-confirm-title" style={styles.confirmTitle}>
+            <h4
+              id="submit-confirm-title"
+              data-testid="no-accommodations-title"
+              style={styles.confirmTitle}
+            >
               No Accommodations
             </h4>
             <p style={styles.confirmText}>
@@ -1037,6 +1040,27 @@ const styles = {
     color: colors.textSecondary,
     fontStyle: 'italic' as const,
   },
+  headerActions: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    flexShrink: 0,
+  },
+  notesButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    background: 'transparent',
+    border: `1px solid ${mix('--color-accent', 0.3)}`,
+    borderRadius: '6px',
+    color: colors.accent,
+    cursor: 'pointer',
+    padding: '5px 10px',
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    fontWeight: '500' as const,
+    lineHeight: 1,
+  },
   aiButton: {
     display: 'inline-flex',
     alignItems: 'center',
@@ -1072,42 +1096,6 @@ const styles = {
     paddingTop: '10px',
     marginBottom: '10px',
   },
-  tabs: {
-    display: 'flex',
-    gap: '4px',
-    marginBottom: '0',
-    borderBottom: borders.subtle,
-    paddingBottom: '0',
-    flexShrink: 0,
-  },
-  tabContent: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-  },
-  tabActive: {
-    padding: '10px 20px',
-    borderRadius: '8px 8px 0 0',
-    border: 'none',
-    borderBottom: `2px solid ${colors.accent}`,
-    background: mix('--color-accent', 0.15),
-    color: colors.textPrimary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    fontWeight: '600' as const,
-    cursor: 'pointer',
-  },
-  tabInactive: {
-    padding: '10px 20px',
-    borderRadius: '8px 8px 0 0',
-    border: 'none',
-    borderBottom: '2px solid transparent',
-    background: 'transparent',
-    color: colors.textSecondary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    fontWeight: '500' as const,
-    cursor: 'pointer',
-  },
   websiteList: {
     listStyleType: 'disc' as const,
     paddingLeft: '20px',
@@ -1122,8 +1110,18 @@ const styles = {
     gap: '18px',
   },
   accommodationsSection: {
+    borderTop: borders.subtle,
     paddingTop: '10px',
     marginBottom: '10px',
+  },
+  accommodationsHeader: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    fontWeight: '600' as const,
+    color: colors.textSecondary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.08em',
+    marginBottom: '8px',
   },
   noAccommodations: {
     fontFamily: fonts.body,
@@ -1271,6 +1269,39 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1000,
+  },
+  notesModal: {
+    background: colors.bgCard,
+    border: borders.card,
+    borderRadius: '14px',
+    padding: '24px',
+    maxHeight: '85vh',
+    overflowY: 'auto',
+    width: '90vw',
+    maxWidth: '600px',
+    boxShadow: '0 24px 80px var(--color-shadow)',
+  },
+  notesModalHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '16px',
+  },
+  notesModalTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.lg,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    margin: 0,
+  },
+  notesCloseButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '20px',
+    color: colors.textSecondary,
+    cursor: 'pointer',
+    padding: '4px 8px',
+    lineHeight: 1,
   },
   confirmCard: {
     background: colors.bgCard,

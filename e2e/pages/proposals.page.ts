@@ -22,11 +22,15 @@ export class ProposalsPage {
   }
 
   async selectProposalTab() {
-    await this.page.getByRole('button', { name: /^proposal$/i }).click()
+    // Proposal content is always visible now (no tab to switch to)
+  }
+
+  async openNotes() {
+    await this.page.getByTestId('notes-button').click()
   }
 
   async selectDiscussionTab() {
-    await this.page.getByTestId('discussion-tab').click()
+    await this.openNotes()
   }
 
   async clickNewProposal() {
@@ -170,13 +174,6 @@ export class ProposalsPage {
   }
 
   async addAccommodation(name: string) {
-    await expect(
-      this.page.getByRole('button', { name: /^accommodations/i }).first()
-    ).toBeVisible()
-    const accTab = this.page
-      .getByRole('button', { name: /^accommodations/i })
-      .first()
-    await accTab.click()
     const addBtn = this.page.getByTestId('add-accommodation-btn')
     await expect(addBtn).toBeVisible()
     await addBtn.click()
@@ -199,13 +196,12 @@ export class ProposalsPage {
   }
 
   async submitProposal() {
-    await this.selectProposalTab()
     await this.proposalSubmitBtn.click()
     await waitForToast(this.page, 'Submitted')
   }
 
   async postComment(text: string) {
-    await this.selectDiscussionTab()
+    await this.openNotes()
     await this.page.getByTestId('comment-input').fill(text)
     await this.page.getByTestId('comment-post-btn').click()
     await expect(this.page.getByText(text)).toBeVisible()

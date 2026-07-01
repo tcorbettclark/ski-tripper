@@ -29,7 +29,6 @@ interface ProposalsGridProps {
   /** When provided, the ProposalCard with this ID will open to the specified sub-tab. */
   proposalDetail?: {
     proposalId: string
-    subTab: 'proposal' | 'accommodations' | 'discussion'
   }
   onUpdated: (proposal: unknown) => void
   onDeleted: (proposalId: string) => void
@@ -76,7 +75,7 @@ export default function ProposalsGrid({
   isCoordinator = false,
   statusFilter: controlledStatusFilter,
   onStatusFilterChange,
-  proposalDetail,
+  proposalDetail: _proposalDetail,
   onUpdated,
   onDeleted,
   onSubmitted,
@@ -251,11 +250,6 @@ export default function ProposalsGrid({
               userId={userId}
               userName={userName}
               isCoordinator={isCoordinator}
-              initialTab={
-                proposalDetail?.proposalId === proposal.id
-                  ? proposalDetail.subTab
-                  : undefined
-              }
               onUpdated={onUpdated}
               onDeleted={onDeleted}
               onSubmitted={onSubmitted}

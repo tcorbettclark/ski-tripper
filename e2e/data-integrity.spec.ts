@@ -83,13 +83,12 @@ test.describe('Data integrity', () => {
     await test.step('cannot submit proposal without accommodation', async () => {
       await proposals.createDraftProposal('NoAccommResort')
       await proposals.proposalSubmitBtn.click()
-      await expect(page.getByText(/no accommodations/i)).toBeVisible()
+      await expect(page.getByTestId('no-accommodations-title')).toBeVisible()
       await proposals.dismissSubmitDialog()
     })
 
     await test.step('add accommodation and submit successfully', async () => {
       await proposals.addAccommodation('Hotel Lifecycle')
-      await proposals.selectProposalTab()
       await proposals.proposalSubmitBtn.click()
       await expect(page.getByText(/submitted \(1\)/i)).toBeVisible()
     })

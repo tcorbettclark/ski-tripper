@@ -40,7 +40,6 @@ interface ProposalsProps {
   /** When provided, the ProposalCard with this ID will open to the specified sub-tab. */
   proposalDetail?: {
     proposalId: string
-    subTab: 'proposal' | 'accommodations' | 'discussion'
   }
   onRefresh?: () => void
   /** Incrementing this triggers a data refetch without remounting the component. */

@@ -310,7 +310,6 @@ describe('ActionGuide', () => {
     )
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'p1',
-      subTab: 'accommodations',
     })
   })
 
@@ -333,7 +332,6 @@ describe('ActionGuide', () => {
     )
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'p2',
-      subTab: 'discussion',
     })
   })
 
@@ -354,7 +352,6 @@ describe('ActionGuide', () => {
     fireEvent.click(screen.getByRole('button', { name: /Submit: Chamonix/ }))
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'DRAFT', {
       proposalId: 'p1',
-      subTab: 'proposal',
     })
   })
 
@@ -419,7 +416,6 @@ describe('ActionGuide', () => {
     fireEvent.click(screen.getByRole('button', { name: /Discuss: Chamonix/ }))
     expect(onNavigateToTab).toHaveBeenCalledWith('proposals', 'SUBMITTED', {
       proposalId: 'p3',
-      subTab: 'discussion',
     })
   })
 

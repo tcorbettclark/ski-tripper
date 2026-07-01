@@ -27,15 +27,11 @@ test.describe('Discussion and comments', () => {
     const proposals = new ProposalsPage(page)
     await proposals.postComment('Original comment')
 
-    const editBtn = page.getByRole('button', { name: /edit/i }).first()
-    if (await editBtn.isVisible()) {
-      await editBtn.click()
-      const editArea = page.locator('textarea').first()
-      await editArea.fill('Edited comment')
-      const saveBtn = page.getByRole('button', { name: /save/i }).first()
-      await saveBtn.click()
-      await expect(page.getByText('Edited comment')).toBeVisible()
-    }
+    const notesDialog = page.getByRole('dialog', { name: 'Notes' })
+    await notesDialog.getByRole('button', { name: 'Edit' }).click()
+    await notesDialog.locator('textarea').first().fill('Edited comment')
+    await notesDialog.getByRole('button', { name: 'Save' }).click()
+    await expect(notesDialog.getByText('Edited comment')).toBeVisible()
   })
 
   test('can delete own comment', async ({ page }) => {
@@ -44,10 +40,8 @@ test.describe('Discussion and comments', () => {
     const proposals = new ProposalsPage(page)
     await proposals.postComment('Comment to delete')
 
-    const deleteBtn = page.getByRole('button', { name: /delete/i }).first()
-    if (await deleteBtn.isVisible()) {
-      await deleteBtn.click()
-    }
+    const notesDialog = page.getByRole('dialog', { name: 'Notes' })
+    await notesDialog.getByRole('button', { name: 'Delete' }).click()
   })
 
   test('cannot edit or delete another users comment', async ({ browser }) => {
@@ -72,12 +66,21 @@ test.describe('Discussion and comments', () => {
 
         const proposals2 = new ProposalsPage(page2)
         await proposals2.goToProposalsTab()
-        await proposals2.selectDiscussionTab()
+        await proposals2.openNotes()
 
-        const editBtn = page2.getByRole('button', { name: /edit/i }).first()
-        const deleteBtn = page2.getByRole('button', { name: /delete/i }).first()
-        expect(await editBtn.isVisible().catch(() => false)).toBe(false)
-        expect(await deleteBtn.isVisible().catch(() => false)).toBe(false)
+        const notesDialog = page2.getByRole('dialog', { name: 'Notes' })
+        expect(
+          await notesDialog
+            .getByRole('button', { name: 'Edit' })
+            .isVisible()
+            .catch(() => false)
+        ).toBe(false)
+        expect(
+          await notesDialog
+            .getByRole('button', { name: 'Delete' })
+            .isVisible()
+            .catch(() => false)
+        ).toBe(false)
       })
     })
   })

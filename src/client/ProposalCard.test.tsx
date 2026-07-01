@@ -323,7 +323,7 @@ describe('ProposalCard', () => {
     expect(onDeleted).not.toHaveBeenCalled()
   })
 
-  it('shows discussion count in tab', async () => {
+  it('shows discussion count on Notes button', async () => {
     const comments: Discussion[] = [
       {
         id: 'd-1',
@@ -340,12 +340,11 @@ describe('ProposalCard', () => {
 
     await renderCard({ userName: 'Alice', listDiscussion })
 
-    await screen.findByRole('button', { name: /Discussion/i })
-    expect(screen.getByText(/\(1\)/)).toBeDefined()
+    await screen.findByRole('button', { name: /Notes/i })
+    expect(screen.getByText('(1)')).toBeDefined()
   })
 
-  it('renders accommodations in tab', async () => {
-    const user = userEvent.setup()
+  it('renders accommodations inline without switching tabs', async () => {
     const accommodations = [
       {
         id: 'acc-1',
@@ -367,17 +366,12 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
-
-    expect(screen.getByText(/Chalet Mont Blanc/)).toBeDefined()
+    expect(await screen.findByText(/Chalet Mont Blanc/)).toBeDefined()
     expect(screen.getByText('€150/night')).toBeDefined()
   })
 
   it('shows add accommodation button for owner of DRAFT', async () => {
-    const user = userEvent.setup()
     await renderCard()
-
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
     expect(
       screen.getByRole('button', { name: '+ Add Accommodation' })
@@ -385,10 +379,7 @@ describe('ProposalCard', () => {
   })
 
   it('hides add accommodation button for non-owner', async () => {
-    const user = userEvent.setup()
     await renderCard({ userId: 'user-2' })
-
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
     expect(
       screen.queryByRole('button', { name: '+ Add Accommodation' })
@@ -396,45 +387,12 @@ describe('ProposalCard', () => {
   })
 
   it('hides add accommodation button for SUBMITTED proposal', async () => {
-    const user = userEvent.setup()
     const submittedProposal = { ...baseProposal, state: 'SUBMITTED' as const }
     await renderCard({ proposal: submittedProposal })
-
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
     expect(
       screen.queryByRole('button', { name: '+ Add Accommodation' })
     ).toBeNull()
-  })
-
-  it('switches to accommodations tab and shows count', async () => {
-    const user = userEvent.setup()
-    const accommodations = [
-      {
-        id: 'acc-1',
-        created: '2024-01-01T00:00:00Z',
-        updated: '2024-01-01T00:00:00Z',
-        proposal: 'proposal-1',
-        name: 'Chalet Mont Blanc',
-        url: '',
-        cost: '€100/night',
-        description: 'A hotel',
-      },
-    ]
-
-    render(
-      <ProposalCard
-        {...defaultProps({
-          listAccommodations: mock(() => Promise.resolve(accommodations)),
-        })}
-      />
-    )
-
-    expect(await screen.findByText(/\(1\)/)).toBeDefined()
-
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
-
-    expect(await screen.findByText('€100/night')).toBeDefined()
   })
 
   it('shows edit button on accommodations for owner of DRAFT', async () => {
@@ -450,7 +408,6 @@ describe('ProposalCard', () => {
         description: '',
       },
     ]
-    const user = userEvent.setup()
 
     render(
       <ProposalCard
@@ -460,9 +417,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
-
-    const accommodationEditButtons = screen.getAllByRole('button', {
+    const accommodationEditButtons = await screen.findAllByRole('button', {
       name: /Edit accommodation/,
     })
     expect(accommodationEditButtons.length).toBeGreaterThanOrEqual(1)
@@ -481,7 +436,6 @@ describe('ProposalCard', () => {
         description: '',
       },
     ]
-    const user = userEvent.setup()
 
     render(
       <ProposalCard
@@ -492,8 +446,7 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
-
+    await screen.findByText(/Hotel Test/)
     expect(
       screen.queryByRole('button', { name: /Edit accommodation/ })
     ).toBeNull()
@@ -514,7 +467,6 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -547,7 +499,6 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -577,7 +528,6 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -607,7 +557,6 @@ describe('ProposalCard', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
     await user.click(
       screen.getByRole('button', { name: '+ Add Accommodation' })
     )
@@ -652,7 +601,6 @@ describe('ProposalCard', () => {
     })
 
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: /Accommodations/ }))
 
     await user.click(
       screen.getByRole('button', { name: 'Delete accommodation Hotel' })
@@ -664,39 +612,34 @@ describe('ProposalCard', () => {
     await screen.findByText('delete failed')
   })
 
-  it('defaults to proposal tab showing proposal details', async () => {
+  it('shows proposal details and accommodations inline by default', async () => {
     await renderCard()
 
     expect(screen.getByText('600 km')).toBeDefined()
-    expect(screen.getByRole('button', { name: 'Proposal' })).toBeDefined()
+    expect(screen.getByText('Accommodations')).toBeDefined()
   })
 
-  it('switches to discussion tab and shows discussion section', async () => {
+  it('opens Notes modal when clicking the Notes button', async () => {
     const listDiscussion = mock(async () => [])
 
     await renderCard({ userName: 'Alice', listDiscussion })
 
     const user = userEvent.setup()
-    await user.click(screen.getByRole('button', { name: /Discussion/ }))
+    await user.click(screen.getByRole('button', { name: /Notes/i }))
 
     expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()
   })
 
-  it('opens accommodations tab when initialTab is accommodations', async () => {
-    await renderCard({ initialTab: 'accommodations' })
-
-    expect(screen.getByText('No accommodations yet.')).toBeDefined()
-  })
-
-  it('opens discussion tab when initialTab is discussion', async () => {
+  it('closes Notes modal when clicking the close button', async () => {
     const listDiscussion = mock(async () => [])
 
-    await renderCard({
-      userName: 'Alice',
-      initialTab: 'discussion',
-      listDiscussion,
-    })
+    await renderCard({ userName: 'Alice', listDiscussion })
 
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: /Notes/i }))
     expect(screen.getByPlaceholderText('Write a comment…')).toBeDefined()
+
+    await user.click(screen.getByRole('button', { name: 'Close notes' }))
+    expect(screen.queryByPlaceholderText('Write a comment…')).toBeNull()
   })
 })

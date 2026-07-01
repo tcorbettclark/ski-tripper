@@ -118,7 +118,6 @@ type TripDetailTab = 'overview' | 'resorts' | 'proposals' | 'voting'
 
 type ProposalDetail = {
   proposalId: string
-  subTab: 'proposal' | 'accommodations' | 'discussion'
 }
 
 export default function App({

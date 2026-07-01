@@ -16,7 +16,6 @@ type NodeStatus = 'pending' | 'active'
 
 export type ProposalDetail = {
   proposalId: string
-  subTab: 'proposal' | 'accommodations' | 'discussion'
 }
 
 interface ActionChip {
@@ -87,7 +86,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       boldSuffix: draft.resortName,
       tab: 'proposals',
       statusFilter: 'DRAFT',
-      detail: { proposalId: draft.proposalId, subTab: 'accommodations' },
+      detail: { proposalId: draft.proposalId },
       variant: 'primary',
     })
   }
@@ -97,7 +96,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       boldSuffix: draft.resortName,
       tab: 'proposals',
       statusFilter: 'DRAFT',
-      detail: { proposalId: draft.proposalId, subTab: 'discussion' },
+      detail: { proposalId: draft.proposalId },
       variant: 'primary',
     })
   }
@@ -110,7 +109,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       statusFilter: 'DRAFT',
       detail:
         props.myDrafts.length === 1
-          ? { proposalId: props.myDrafts[0].proposalId, subTab: 'proposal' }
+          ? { proposalId: props.myDrafts[0].proposalId }
           : undefined,
       variant: 'primary',
     })
@@ -131,7 +130,7 @@ function buildGuideNodes(props: ActionGuideProps): GuideNodeData[] {
       boldSuffix: proposal.resortName,
       tab: 'proposals',
       statusFilter: 'SUBMITTED',
-      detail: { proposalId: proposal.proposalId, subTab: 'discussion' },
+      detail: { proposalId: proposal.proposalId },
       variant: 'primary',
     })
   }
@@ -385,7 +384,7 @@ function GuideNode({ data }: { data: GuideNodeData }) {
             <button
               key={
                 action.detail
-                  ? `${action.detail.proposalId}-${action.detail.subTab}`
+                  ? `${action.detail.proposalId}-${action.label}`
                   : action.label
               }
               type="button"
