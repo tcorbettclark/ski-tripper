@@ -328,7 +328,7 @@ export default function ProposalCard({
                 style={styles.notesButton}
                 aria-label={`Notes${discussionCount > 0 ? ` (${discussionCount})` : ''}`}
               >
-                <MessageSquare size={14} />
+                <MessageSquare size={16} />
                 {discussionCount > 0 && ` (${discussionCount})`}
               </button>
               <button
@@ -1043,7 +1043,7 @@ const styles = {
   headerActions: {
     display: 'flex',
     alignItems: 'center',
-    gap: '6px',
+    gap: '12px',
     flexShrink: 0,
   },
   notesButton: {
