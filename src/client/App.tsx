@@ -144,8 +144,32 @@ export default function App({
     setNeedsPassword(false)
   }, [])
 
+  const resetMainAppState = useCallback(() => {
+    setView('tripList')
+    setTripDetailTab('overview')
+    setProposalsStatusFilter('DRAFT')
+    setProposalDetail(null)
+    setTrips([])
+    setSelectedTripId(null)
+    setRefreshProposalsKey(0)
+    setPreferences(null)
+    setPreferencesUpdated(null)
+    setCheckingPreferences(false)
+    setShowPreferencesModal(false)
+    setActivePollEndDate(null)
+    setResorts([])
+    setAboutOpen(false)
+    autoSelectedRef.current = false
+    preferencesFetchedRef.current = false
+  }, [])
+
+  const onLogoutReset = useCallback(() => {
+    resetAuthPageState()
+    resetMainAppState()
+  }, [resetAuthPageState, resetMainAppState])
+
   const { user, checking, login, logout, onAuthError, refreshUser } =
-    useAuthHook({ hasSession, onLogout: resetAuthPageState })
+    useAuthHook({ hasSession, onLogout: onLogoutReset })
   const [page, setPage] = useState<PageState>('login')
   const [otpId, setOtpId] = useState<string | null>(null)
   const [otpEmail, setOtpEmail] = useState<string | null>(null)
