@@ -1,9 +1,11 @@
+import { execSync } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
+import type { SSHExecutionContext } from '@xec-sh/core'
 import { $, configure, dispose } from '@xec-sh/core'
 import JSON5 from 'json5'
-import { fail, retrying, step, success } from './log'
+import { fail, info, retrying, step, success } from './log'
 
 configure({ timeout: 600000 })
 
@@ -28,7 +30,124 @@ export const REPO_DIR = config.repoDir
 export const INSTALL_DIR = config.installDir
 export const REPO_URL = config.repoUrl
 
+export const FINGERPRINT_PATH = `${config.installDir}/provision-fingerprint.json`
+
+const PROVISION_CONFIG_KEYS = [
+  'bunVersion',
+  'pocketbaseVersion',
+  'caddyVersion',
+  'swapSizeMb',
+  'repoDir',
+  'installDir',
+] as const
+
+export interface ProvisionFingerprint {
+  timestamp: string
+  git: {
+    branch: string | null
+    commit: string
+    tag: string | null
+  }
+  config: Record<(typeof PROVISION_CONFIG_KEYS)[number], string | number>
+}
+
 export { $, configure, dispose }
+
+export function buildFingerprint(): ProvisionFingerprint {
+  const gitCommit = execSync('git rev-parse --short HEAD', {
+    cwd: PROJECT_ROOT,
+    encoding: 'utf-8',
+  }).trim()
+  const gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+    cwd: PROJECT_ROOT,
+    encoding: 'utf-8',
+  }).trim()
+  const gitTag =
+    execSync('git tag --points-at HEAD', {
+      cwd: PROJECT_ROOT,
+      encoding: 'utf-8',
+    }).trim() || null
+
+  const fingerprintConfig: Record<string, string | number> = {}
+  for (const key of PROVISION_CONFIG_KEYS) {
+    fingerprintConfig[key] = config[key]
+  }
+
+  return {
+    timestamp: new Date().toISOString(),
+    git: { branch: gitBranch, commit: gitCommit, tag: gitTag },
+    config: fingerprintConfig,
+  }
+}
+
+export async function writeFingerprint(
+  root: SSHExecutionContext
+): Promise<void> {
+  const fingerprint = buildFingerprint()
+  const content = JSON.stringify(fingerprint, null, 2)
+  const b64 = Buffer.from(content).toString('base64')
+  await root`bash -c "echo ${b64} | base64 -d > ${FINGERPRINT_PATH}"`
+  success(`Provision fingerprint written to ${FINGERPRINT_PATH}`)
+  info(
+    `  Config: bun=${fingerprint.config.bunVersion} pb=${fingerprint.config.pocketbaseVersion} caddy=${fingerprint.config.caddyVersion}`
+  )
+  info(
+    `  Git: ${fingerprint.git.commit} (${fingerprint.git.tag ?? fingerprint.git.branch})`
+  )
+}
+
+export async function checkFingerprint(
+  root: SSHExecutionContext
+): Promise<void> {
+  step('Checking provision fingerprint')
+  const exists =
+    (await root`test -f ${FINGERPRINT_PATH}`.nothrow()).exitCode === 0
+  if (!exists) {
+    fail(
+      `Server not provisioned. ${FINGERPRINT_PATH} not found.\n` +
+        `Run 'bun run infra:provision configure' first.`
+    )
+  }
+
+  const raw = await root`cat ${FINGERPRINT_PATH}`.text()
+  let serverFingerprint: ProvisionFingerprint
+  try {
+    serverFingerprint = JSON.parse(raw)
+  } catch {
+    fail(
+      `Corrupt provision fingerprint at ${FINGERPRINT_PATH}:\n${raw}\n` +
+        `Re-run 'bun run infra:provision configure' to fix.`
+    )
+  }
+
+  const localFingerprint = buildFingerprint()
+
+  const serverConfig = serverFingerprint.config
+  const localConfig = localFingerprint.config
+  const mismatches: string[] = []
+  for (const key of PROVISION_CONFIG_KEYS) {
+    if (serverConfig[key] !== localConfig[key]) {
+      mismatches.push(
+        `  ${key}: server=${serverConfig[key]} local=${localConfig[key]}`
+      )
+    }
+  }
+
+  if (mismatches.length > 0) {
+    fail(
+      `Provision config mismatch (server vs local config):\n${mismatches.join('\n')}\n` +
+        `Re-run 'bun run infra:provision configure' to update.`
+    )
+  }
+
+  if (serverFingerprint.git) {
+    const gitInfo = serverFingerprint.git
+    info(
+      `  Server provisioned at ${serverFingerprint.timestamp} from ${gitInfo.commit} (${gitInfo.tag ?? gitInfo.branch ?? 'detached'})`
+    )
+  }
+  success('Provision fingerprint matches')
+}
 
 const APT_LOCK_PATTERNS = [
   'Could not get lock',

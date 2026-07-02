@@ -1,5 +1,6 @@
 import { execSync } from 'node:child_process'
 import {
+  checkFingerprint,
   dispose,
   getAppSsh,
   getDropletIp,
@@ -110,6 +111,8 @@ async function deploy() {
   await waitForSsh(ip)
   const root = getRootSsh(ip)
   const app = getAppSsh(ip)
+
+  await checkFingerprint(root)
 
   step(`Checking out code from GitHub`)
   await app`cd ${REPO_DIR} && git fetch --all`

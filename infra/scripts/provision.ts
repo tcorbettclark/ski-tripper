@@ -22,6 +22,7 @@ import {
   scanHostKey,
   waitForSsh,
   withAptRetry,
+  writeFingerprint,
 } from './lib/infra'
 import { error, fail, help, step, success, warn } from './lib/log'
 
@@ -277,6 +278,9 @@ EOF"`
   success('Caddy config installed')
 
   await root`mkdir -p /etc/caddy`
+
+  step('Writing provision fingerprint')
+  await writeFingerprint(root)
 }
 
 async function destroyDroplet(forgetReservedIp: boolean) {
