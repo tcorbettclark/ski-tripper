@@ -1,23 +1,41 @@
 import { existsSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { fail, section, step, success } from './lib/log'
+import { error, fail, section, step, success, warn } from './lib/log'
 
 const PROJECT_ROOT = resolve(import.meta.dir, '../..')
 const SQUASHED_MIGRATION_NAME = '0000_init_collections.js'
 const MIGRATIONS_DIR = resolve(PROJECT_ROOT, 'src/pb_migrations')
 const PB_DATA_DIR = resolve(PROJECT_ROOT, 'dev/pb_data')
 
-function runPocketbase(command: string, options?: { autoConfirm?: boolean }) {
+function runPocketbase(
+  command: string,
+  options?: { autoConfirm?: boolean }
+): void {
   const args = command.split(' ')
   const result = Bun.spawnSync(['pocketbase', ...args], {
     cwd: PROJECT_ROOT,
-    stdout: 'inherit',
-    stderr: 'inherit',
+    stdout: 'pipe',
+    stderr: 'pipe',
     stdin: options?.autoConfirm ? Buffer.from('y\n') : undefined,
   })
+  const isPromptLine = (l: string) =>
+    l.startsWith('Do you really want') || /^\(y\/N\)/.test(l)
+  const filterOutput = (raw: string): string[] =>
+    raw
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !isPromptLine(l))
+
+  const outLines = filterOutput(result.stdout.toString())
+  const errLines = filterOutput(result.stderr.toString())
+
   if (result.exitCode !== 0) {
+    for (const line of errLines) error(line)
     fail(`pocketbase ${command} failed with exit code ${result.exitCode}`)
   }
+
+  for (const line of outLines) success(line)
+  for (const line of errLines) success(line)
 }
 
 function getJsFiles(dir: string): string[] {
@@ -31,7 +49,6 @@ step('Applying all current migrations to dev database...')
 runPocketbase(
   `migrate up --dir ${PB_DATA_DIR} --migrationsDir ${MIGRATIONS_DIR}`
 )
-success('All migrations applied')
 
 const preExistingFiles = getJsFiles(MIGRATIONS_DIR)
 
@@ -75,6 +92,10 @@ step('Applying squashed migration to fresh database...')
 runPocketbase(
   `migrate up --dir ${PB_DATA_DIR} --migrationsDir ${MIGRATIONS_DIR}`
 )
-success('Squashed migration applied to fresh database')
 
 section('Done')
+warn('If other environments have existing _migrations tables, run:')
+warn('  pocketbase migrate history-sync')
+warn(
+  'This removes entries for deleted migration files that are now baked into the squashed snapshot.'
+)
