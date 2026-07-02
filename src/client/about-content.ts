@@ -4,7 +4,7 @@ export const aboutContent = `# Ski Tripper
 
 Ski Tripper helps a ski group find and agree on a great ski destination without the "entertaining" chaos of a WhatsApp debate.
 
-Built-in AI uses everyone’s ski holiday preferences to guide searches of an enriched catalogue and generate narrative assessments on who will (or won’t) enjoy a resort; everyone creates proposals and enters them into voting rounds and so arrive at a collective decision.
+Built-in AI uses everyone’s ski holiday preferences to guide searches of an enriched catalogue and generate narrative assessments on who will (or won’t) enjoy a resort; everyone creates proposals and enters them into voting rounds to reach a collective decision.
 
 Unlike booking sites that push the user towards choosing flights and hotels i.e. commercial aspects, Ski Tripper focuses on what really matters: the mountain experience and resort vibe.
 
