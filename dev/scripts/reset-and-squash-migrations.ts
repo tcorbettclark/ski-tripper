@@ -106,7 +106,8 @@ if (biomeResult.exitCode !== 0) {
 }
 success('Formatted squashed migration')
 
-section('Done')
+section('Manual considerations')
+step('Migration')
 warn('If other environments have existing _migrations tables, run:')
 warn('  pocketbase migrate history-sync')
 warn(
