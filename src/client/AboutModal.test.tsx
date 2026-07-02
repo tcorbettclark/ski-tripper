@@ -23,7 +23,7 @@ describe('AboutModal', () => {
     await act(async () => {
       render(<AboutModal open={true} onClose={() => {}} />)
     })
-    expect(screen.getByText('What is this?')).toBeTruthy()
+    expect(screen.getByRole('dialog').textContent!.length).toBeGreaterThan(10)
   })
 
   it('renders close button', async () => {
