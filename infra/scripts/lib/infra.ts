@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import type { SSHExecutionContext } from '@xec-sh/core'
 import { $, configure, dispose } from '@xec-sh/core'
 import JSON5 from 'json5'
-import { fail, info, retrying, step, success } from './log'
+import { fail, info, step, success } from './log'
 
 configure({ timeout: 600000 })
 
@@ -147,80 +147,6 @@ export async function checkFingerprint(
     )
   }
   success('Provision fingerprint matches')
-}
-
-const APT_LOCK_PATTERNS = [
-  'Could not get lock',
-  'dpkg lock',
-  'lock-frontend',
-  'Resource temporarily unavailable',
-  'Unable to acquire the dpkg lock',
-  'Could not open lock file',
-]
-
-export async function waitForApt(root: SSHExecutionContext): Promise<void> {
-  step('Waiting for background apt processes to finish')
-  for (let i = 0; i < 60; i++) {
-    const result =
-      await root`bash -c "pgrep -f '(apt|dpkg|unattended-upgrade)' || true"`.text()
-    if (!result.trim()) {
-      success('No background apt processes running')
-      return
-    }
-    if (i === 0) {
-      info('  Background apt processes detected, waiting...')
-    }
-    await new Promise((resolve) => setTimeout(resolve, 5000))
-  }
-  fail('Timed out waiting for background apt processes to finish')
-}
-
-export async function retryOnFailure<T>(
-  run: () => Promise<T>,
-  maxAttempts = 3,
-  delayMs = 5000
-): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await run()
-    } catch (err: unknown) {
-      if (attempt >= maxAttempts - 1) {
-        throw err
-      }
-      if (attempt === 0) {
-        retrying('Command failed, retrying...')
-      }
-      await new Promise((resolve) => setTimeout(resolve, delayMs))
-    }
-  }
-}
-
-export async function withAptRetry<T>(
-  run: () => Promise<T>,
-  maxAttempts = 60,
-  delayMs = 5000
-): Promise<T> {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      return await run()
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message +
-            (err.cause instanceof Error ? `\n${err.cause.message}` : '')
-          : String(err)
-      const isLockError = APT_LOCK_PATTERNS.some((p) =>
-        message.toLowerCase().includes(p.toLowerCase())
-      )
-      if (!isLockError || attempt >= maxAttempts) {
-        throw err
-      }
-      if (attempt === 0) {
-        retrying('Apt lock busy, retrying...')
-      }
-      await new Promise((resolve) => setTimeout(resolve, delayMs))
-    }
-  }
 }
 
 function getDefaultPrivateKey(): string | undefined {

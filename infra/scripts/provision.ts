@@ -18,12 +18,9 @@ import {
   REPO_DIR,
   REPO_URL,
   requireDoctl,
-  retryOnFailure,
   SWAP_SIZE_MB,
   scanHostKey,
-  waitForApt,
   waitForSsh,
-  withAptRetry,
   writeFingerprint,
 } from './lib/infra'
 import { error, fail, help, step, success, warn } from './lib/log'
@@ -97,10 +94,6 @@ async function configureDroplet() {
   await scanHostKey(ip)
   await waitForSsh(ip)
   const root = getRootSsh(ip)
-
-  step('Configuring unattended upgrades')
-  await withAptRetry(() => root`dpkg-reconfigure -plow unattended-upgrades`)
-  success('Unattended upgrades configured')
 
   step('Configuring journald log rotation')
   await root`bash -c "cat > /etc/systemd/journald.conf << 'EOF'
@@ -204,26 +197,13 @@ EOF"`
     success('User caddy already exists')
   }
 
-  step('Updating apt package index')
-  await waitForApt(root)
-  await retryOnFailure(() => root`apt-get update -y`, 6, 10000)
-  success('Apt package index updated')
-
-  const unzipCheck = await root`which unzip`.nothrow().text()
-  if (!unzipCheck.trim()) {
-    step('Installing unzip')
-    await withAptRetry(() => root`apt-get install -y --fix-broken unzip`)
-    success('unzip installed')
-  } else {
-    success('unzip already installed')
-  }
-
   const bunCheck = await root`/usr/local/bin/bun --version`.nothrow().text()
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
+    // Use python3 to extract zip archives (avoids needing apt-get/unzip on fresh droplets)
     const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip`
     await root`curl -fsSL ${bunUrl} -o /tmp/bun.zip`
-    await root`unzip -o /tmp/bun.zip -d /tmp/bun`
+    await root`python3 -m zipfile -e /tmp/bun.zip /tmp/bun`
     await root`mv /tmp/bun/bun-linux-x64/bun /usr/local/bin/bun`
     await root`chmod +x /usr/local/bin/bun`
     await root`rm -rf /tmp/bun /tmp/bun.zip`
@@ -241,7 +221,7 @@ EOF"`
     const pbArch = arch.trim() === 'amd64' ? 'amd64' : 'arm64'
     const pbUrl = `https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/pocketbase_${POCKETBASE_VERSION}_linux_${pbArch}.zip`
     await root`curl -L ${pbUrl} -o /tmp/pocketbase.zip`
-    await root`unzip -o /tmp/pocketbase.zip -d /tmp/pocketbase`
+    await root`python3 -m zipfile -e /tmp/pocketbase.zip /tmp/pocketbase`
     await root`mv /tmp/pocketbase/pocketbase /usr/local/bin/pocketbase`
     await root`chmod +x /usr/local/bin/pocketbase`
     await root`rm -rf /tmp/pocketbase /tmp/pocketbase.zip`
