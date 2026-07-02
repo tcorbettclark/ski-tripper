@@ -785,8 +785,8 @@ migrate(
         otp: {
           duration: 180,
           emailTemplate: {
-            body: "<p>Hello,</p>\n<p>Your one-time password is: <strong>{OTP}</strong></p>\n<p><i>If you didn't ask for the one-time password, you can ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>",
-            subject: 'OTP for {APP_NAME}',
+            body: "<p>Hello,</p>\n<p>Your verification code is: <strong>{OTP}</strong></p>\n<p><i>If you didn't request this code, please ignore this email.</i></p>\n<p>\n  Thanks,<br/>\n  {APP_NAME} team\n</p>",
+            subject: 'Your {APP_NAME} verification code',
           },
           enabled: true,
           length: 8,
@@ -1192,7 +1192,7 @@ migrate(
             name: 'summit_altitude',
             onlyInt: false,
             presentable: false,
-            required: true,
+            required: false,
             system: false,
             type: 'number',
           },
@@ -1205,7 +1205,7 @@ migrate(
             name: 'base_altitude',
             onlyInt: false,
             presentable: false,
-            required: true,
+            required: false,
             system: false,
             type: 'number',
           },
@@ -1218,7 +1218,7 @@ migrate(
             name: 'piste_km',
             onlyInt: false,
             presentable: false,
-            required: true,
+            required: false,
             system: false,
             type: 'number',
           },
@@ -1231,7 +1231,7 @@ migrate(
             name: 'beginner_pct',
             onlyInt: false,
             presentable: false,
-            required: true,
+            required: false,
             system: false,
             type: 'number',
           },
@@ -1244,7 +1244,7 @@ migrate(
             name: 'intermediate_pct',
             onlyInt: false,
             presentable: false,
-            required: true,
+            required: false,
             system: false,
             type: 'number',
           },
@@ -1257,7 +1257,7 @@ migrate(
             name: 'advanced_pct',
             onlyInt: false,
             presentable: false,
-            required: true,
+            required: false,
             system: false,
             type: 'number',
           },
@@ -1270,7 +1270,7 @@ migrate(
             name: 'lift_count',
             onlyInt: false,
             presentable: false,
-            required: true,
+            required: false,
             system: false,
             type: 'number',
           },
@@ -1863,7 +1863,7 @@ migrate(
             id: 'number2678873079',
             max: null,
             min: null,
-            name: 'time_eating',
+            name: 'time_huts',
             onlyInt: false,
             presentable: false,
             required: false,
@@ -2310,7 +2310,7 @@ migrate(
 
     return app.importCollections(snapshot, false)
   },
-  (_app) => {
+  (app) => {
     return null
   }
 )
