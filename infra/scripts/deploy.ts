@@ -184,6 +184,16 @@ async function deploy() {
   await app`/usr/local/bin/pocketbase --dir ${pbDataDir} superuser upsert ${adminEmail} ${adminPassword}`
   success('PocketBase superuser ready')
 
+  step('Running PocketBase migrations')
+  const migrationsDir = `${INSTALL_DIR}/pb_migrations`
+  const migrateResult =
+    await app`/usr/local/bin/pocketbase migrate up --dir ${pbDataDir} --migrationsDir ${migrationsDir}`.text()
+  if (migrateResult.trim().includes('No new migrations to apply')) {
+    success('No new migrations to apply')
+  } else {
+    success('Migrations applied')
+  }
+
   step('Writing systemd environment override')
   const overrideDir = '/etc/systemd/system/ski-tripper-api.service.d'
   await root`mkdir -p ${overrideDir}`
