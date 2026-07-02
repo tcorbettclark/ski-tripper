@@ -1,4 +1,3 @@
-import { AlertTriangle, Bug } from 'lucide-react'
 import { useRef, useState } from 'react'
 import packageJson from '../../package.json' with { type: 'json' }
 import { colors, fontSizes, fonts } from './theme'
@@ -6,7 +5,6 @@ import useAutoHideFooter from './useAutoHideFooter'
 
 const VERSION = packageJson.version
 const GITHUB_URL = 'https://github.com/tcorbettclark/ski-tripper'
-const ISSUES_URL = `${GITHUB_URL}/issues`
 const AUTHOR_URL = 'https://www.corbettclark.com'
 
 interface FooterProps {
@@ -73,21 +71,7 @@ export default function Footer({
           </svg>
         </a>
         <span style={footerStyles.separator}>·</span>
-        <a
-          href={ISSUES_URL}
-          style={footerStyles.iconLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Report a Bug"
-        >
-          <Bug size={16} />
-        </a>
-        <span style={footerStyles.separator}>·</span>
         <span style={footerStyles.text}>v{VERSION}</span>
-        <span style={footerStyles.warning}>
-          <AlertTriangle size={14} />
-          Pre-release software — not yet ready for use!
-        </span>
       </footer>
     </>
   )
@@ -124,18 +108,6 @@ const footerStyles = {
     textDecoration: 'none',
     display: 'inline-flex',
     alignItems: 'center',
-  },
-  warning: {
-    background: colors.error,
-    color: colors.bgPrimary,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    fontWeight: '600',
-    padding: '3px 8px',
-    borderRadius: '4px',
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '5px',
   },
   separator: {
     color: colors.textSecondary,
