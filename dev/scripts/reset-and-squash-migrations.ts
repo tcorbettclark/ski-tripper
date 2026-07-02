@@ -93,6 +93,19 @@ runPocketbase(
   `migrate up --dir ${PB_DATA_DIR} --migrationsDir ${MIGRATIONS_DIR}`
 )
 
+step('Formatting squashed migration...')
+const squashedPath = resolve(MIGRATIONS_DIR, SQUASHED_MIGRATION_NAME)
+const biomeResult = Bun.spawnSync(
+  ['bun', 'biome', 'check', '--write', '--unsafe', squashedPath],
+  { cwd: PROJECT_ROOT, stdout: 'pipe', stderr: 'pipe' }
+)
+if (biomeResult.exitCode !== 0) {
+  fail(
+    `biome check failed with exit code ${biomeResult.exitCode}: ${biomeResult.stderr.toString().trim()}`
+  )
+}
+success('Formatted squashed migration')
+
 section('Done')
 warn('If other environments have existing _migrations tables, run:')
 warn('  pocketbase migrate history-sync')
