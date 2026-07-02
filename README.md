@@ -156,9 +156,9 @@ Backup filenames use the format `YYYY-MM-DD_HH-MM-SS.zip` (e.g. `2026-03-02_14-3
 | Command                                            | Description                                                |
 | -------------------------------------------------- | ---------------------------------------------------------- |
 | `bun run infra:backup`                             | Create a backup on prod and download it locally            |
-| `bun run infra:restore <file>`                     | Restore a backup to production (replaces all PB data)       |
+| `bun run infra:restore <prefix>`                    | Restore a backup to production (replaces all PB data)       |
 | `bun run infra:list-backups`                       | List local backups with record counts per collection        |
-| `bun run infra:load-backup <file>`                 | Load a backup into the dev environment (stops if PB running)|
+| `bun run infra:load-backup <prefix>`               | Load a backup into the dev environment (stops if PB running)|
 
 The `backup` and `restore` commands use `env:prod` automatically. The `load-backup` and `list-backups` commands work locally with no env prefix needed.
 

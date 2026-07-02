@@ -121,8 +121,35 @@ function getBackupStats(zipPath: string): Record<string, number> | null {
 }
 
 export function resolveBackupFile(fileArg: string): string {
-  const filename = fileArg.endsWith('.zip') ? fileArg : `${fileArg}.zip`
-  return resolve(BACKUPS_DIR, filename)
+  if (!existsSync(BACKUPS_DIR)) {
+    fail(`Backups directory not found: ${BACKUPS_DIR}`)
+  }
+
+  if (fileArg.endsWith('.zip')) {
+    const candidate = resolve(BACKUPS_DIR, fileArg)
+    if (existsSync(candidate)) return candidate
+  }
+
+  const exact = resolve(
+    BACKUPS_DIR,
+    fileArg.endsWith('.zip') ? fileArg : `${fileArg}.zip`
+  )
+  if (existsSync(exact)) return exact
+
+  const matches = readdirSync(BACKUPS_DIR)
+    .filter((f) => f.startsWith(fileArg) && f.endsWith('.zip'))
+    .sort()
+
+  if (matches.length === 0) {
+    fail(`No backup matching "${fileArg}" found in ${BACKUPS_DIR}`)
+  }
+  if (matches.length > 1) {
+    fail(
+      `Ambiguous prefix "${fileArg}" matches ${matches.length} backups:\n${matches.map((m) => `  ${m}`).join('\n')}\nUse a more specific prefix.`
+    )
+  }
+
+  return resolve(BACKUPS_DIR, matches[0])
 }
 
 export async function create(): Promise<void> {
