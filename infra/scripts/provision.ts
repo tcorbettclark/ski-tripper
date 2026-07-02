@@ -202,10 +202,22 @@ EOF"`
     success('User caddy already exists')
   }
 
+  step('Updating apt package index')
+  await withAptRetry(() => root`apt-get update -y`)
+  success('Apt package index updated')
+
+  const unzipCheck = await root`which unzip`.nothrow().text()
+  if (!unzipCheck.trim()) {
+    step('Installing unzip')
+    await withAptRetry(() => root`apt-get install -y --fix-broken unzip`)
+    success('unzip installed')
+  } else {
+    success('unzip already installed')
+  }
+
   const bunCheck = await root`/usr/local/bin/bun --version`.nothrow().text()
   if (!bunCheck.includes(BUN_VERSION)) {
     step(`Installing Bun ${BUN_VERSION}`)
-    await withAptRetry(() => root`apt-get install -y unzip`)
     const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${BUN_VERSION}/bun-linux-x64.zip`
     await root`curl -fsSL ${bunUrl} -o /tmp/bun.zip`
     await root`unzip -o /tmp/bun.zip -d /tmp/bun`
