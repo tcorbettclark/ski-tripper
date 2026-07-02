@@ -14,6 +14,7 @@ import {
   getRootSsh,
   INSTALL_DIR,
   POCKETBASE_VERSION,
+  PROJECT_ROOT,
   REPO_DIR,
   REPO_URL,
   requireDoctl,
@@ -250,13 +251,30 @@ EOF"`
 
   step('Installing systemd units')
   await root`mkdir -p /etc/systemd/system`
-  await root`cp ${REPO_DIR}/infra/systemd/caddy.service /etc/systemd/system/caddy.service`
-  await root`cp ${REPO_DIR}/infra/systemd/ski-tripper-pb.service /etc/systemd/system/ski-tripper-pb.service`
-  await root`cp ${REPO_DIR}/infra/systemd/ski-tripper-api.service /etc/systemd/system/ski-tripper-api.service`
-
+  await root.uploadFile(
+    `${PROJECT_ROOT}/infra/systemd/caddy.service`,
+    '/etc/systemd/system/caddy.service'
+  )
+  await root.uploadFile(
+    `${PROJECT_ROOT}/infra/systemd/ski-tripper-pb.service`,
+    '/etc/systemd/system/ski-tripper-pb.service'
+  )
+  await root.uploadFile(
+    `${PROJECT_ROOT}/infra/systemd/ski-tripper-api.service`,
+    '/etc/systemd/system/ski-tripper-api.service'
+  )
   await root`systemctl daemon-reload`
   await root`systemctl enable ski-tripper-pb ski-tripper-api caddy`
   success('Systemd units installed and enabled')
+
+  step('Installing Caddy config')
+  await root`mkdir -p /etc/caddy/pb-includes`
+  await root.uploadFile(
+    `${PROJECT_ROOT}/infra/caddy/block-pb-admin.caddy`,
+    '/etc/caddy/pb-includes/block-pb-admin.caddy'
+  )
+  await root`chown -R caddy:caddy /etc/caddy/pb-includes`
+  success('Caddy config installed')
 
   await root`mkdir -p /etc/caddy`
 }

@@ -7,7 +7,7 @@ Requires=network-online.target
 Type=simple
 User=ski-tripper
 Group=ski-tripper
-ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/pb_migrations --dir /var/lib/ski-tripper/pb_data
+ExecStart=/usr/local/bin/pocketbase serve --http 127.0.0.1:8090 --migrationsDir /opt/ski-tripper/pb_migrations --dir /var/lib/ski-tripper/pb_data --automigrate=0
 WorkingDirectory=/opt/ski-tripper
 StateDirectory=ski-tripper
 Restart=on-failure
