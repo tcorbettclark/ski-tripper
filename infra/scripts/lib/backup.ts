@@ -3,7 +3,7 @@ import { execSync } from 'node:child_process'
 import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import PocketBase from 'pocketbase'
-import { CYAN, fail, GREEN, info, RESET, step, success, warn } from './log'
+import { CYAN, fail, GREEN, info, RESET, step, success } from './log'
 
 export const PROJECT_ROOT = resolve(import.meta.dir, '../../..')
 export const BACKUPS_DIR = resolve(PROJECT_ROOT, 'infra/backups')
@@ -48,6 +48,29 @@ async function authenticate(pb: PocketBase): Promise<void> {
   const email = requireEnv('POCKETBASE_ADMIN_EMAIL')
   const password = requireEnv('POCKETBASE_ADMIN_PASSWORD')
   await pb.collection('_superusers').authWithPassword(email, password)
+}
+
+async function getRecordCounts(
+  pb: PocketBase
+): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {}
+  for (const collection of STATS_COLLECTIONS) {
+    try {
+      const result = await pb.collection(collection).getList(1, 1, {
+        fields: 'id',
+      })
+      counts[collection] = result.totalItems
+    } catch {
+      counts[collection] = -1
+    }
+  }
+  return counts
+}
+
+function formatCounts(counts: Record<string, number>): string {
+  return Object.entries(counts)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(', ')
 }
 
 async function waitForPocketBase(
@@ -168,22 +191,18 @@ export async function create(): Promise<void> {
 
   const pb = new PocketBase(pbUrl)
 
-  step('Authenticating as superuser')
+  step('Authenticating')
   await authenticate(pb)
+  success('Authenticated')
 
-  step(`Creating backup on prod: ${pbBackupKey}`)
-  await pb.send('/api/backups', {
-    method: 'POST',
-    body: { name: pbBackupKey },
-  })
-  success('Backup creation initiated')
+  step(`Creating backup: ${pbBackupKey}`)
+  await pb.backups.create(pbBackupKey)
+  success('Backup created on PocketBase')
 
-  step('Waiting for backup to appear in backup list')
+  step('Waiting for backup to be ready')
   let backupReady = false
   for (let i = 0; i < 60; i++) {
-    const backups = (await pb.send('/api/backups', {
-      method: 'GET',
-    })) as { key: string; size: number; modified: string }[]
+    const backups = await pb.backups.getFullList()
     if (backups.some((b) => b.key === pbBackupKey)) {
       backupReady = true
       break
@@ -195,13 +214,12 @@ export async function create(): Promise<void> {
   }
   success('Backup is ready')
 
-  step('Getting file download token')
-  const tokenResult = (await pb.send('/api/files/token', {
-    method: 'POST',
-  })) as { token: string }
+  step('Getting download token')
+  const token = await pb.files.getToken()
+  success('Got download token')
 
   step('Downloading backup')
-  const downloadUrl = `${pbUrl}/api/backups/${pbBackupKey}?token=${tokenResult.token}`
+  const downloadUrl = pb.backups.getDownloadURL(token, pbBackupKey)
   const response = await fetch(downloadUrl)
   if (!response.ok) {
     fail(
@@ -211,17 +229,7 @@ export async function create(): Promise<void> {
   const buffer = await response.arrayBuffer()
   const { writeFileSync } = await import('node:fs')
   writeFileSync(localPath, Buffer.from(buffer))
-  success(`Downloaded to ${localPath} (${formatBytes(buffer.byteLength)})`)
-
-  step('Deleting backup from prod storage')
-  try {
-    await pb.send(`/api/backups/${pbBackupKey}`, { method: 'DELETE' })
-    success('Backup deleted from prod storage')
-  } catch (err) {
-    warn(
-      `Could not delete backup from prod storage: ${err instanceof Error ? err.message : String(err)}`
-    )
-  }
+  success(`Saved to ${localPath} (${formatBytes(buffer.byteLength)})`)
 
   pb.authStore.clear()
 }
@@ -236,45 +244,107 @@ export async function restore(fileArg: string): Promise<void> {
 
   const filename = localPath.split('/').pop()!
   const dateStr = filename.replace(/\.zip$/, '')
-  const pbBackupKey = pbKeyFromDate(dateStr)
 
   const pb = new PocketBase(pbUrl)
 
-  step('Authenticating as superuser')
+  step('Authenticating')
   await authenticate(pb)
+  success('Authenticated')
 
-  step('Uploading backup to prod')
-  const fileContent = await import('node:fs').then((fs) =>
-    fs.readFileSync(localPath)
-  )
-  const blob = new Blob([fileContent], { type: 'application/zip' })
-  await pb.send('/api/backups/upload', {
-    method: 'POST',
-    body: { file: blob },
-  })
-  success('Backup uploaded')
+  step('Recording current record counts')
+  const preRestoreCounts = await getRecordCounts(pb)
+  info(`Before restore: ${formatCounts(preRestoreCounts)}`)
 
-  step('Triggering restore (this will restart PocketBase)')
-  await pb.send(`/api/backups/${pbBackupKey}/restore`, {
-    method: 'POST',
-  })
-  success('Restore initiated — PocketBase will restart')
+  const backupStats = getBackupStats(localPath)
+  if (backupStats) {
+    info(`Backup contains: ${formatCounts(backupStats)}`)
+  }
 
-  step('Waiting for PocketBase to become healthy')
+  step('Checking for existing backup on PocketBase')
+  let backupKey: string
+  const existingBackups = await pb.backups.getFullList()
+  const existing =
+    existingBackups.find((b) => b.key === filename) ??
+    existingBackups.find((b) => b.key.includes(dateStr))
+  if (existing) {
+    backupKey = existing.key
+    success(`Backup already on PocketBase: ${backupKey}`)
+  } else {
+    success('No existing backup found, uploading')
+    step('Uploading backup')
+    const fileContent = await import('node:fs').then((fs) =>
+      fs.readFileSync(localPath)
+    )
+    await pb.backups.upload({
+      file: new File([fileContent], filename, { type: 'application/zip' }),
+    })
+    success('Backup uploaded')
+
+    step('Locating uploaded backup')
+    const backups = await pb.backups.getFullList()
+    const uploaded =
+      backups.find((b) => b.key === filename) ??
+      backups.find((b) => b.key.includes(dateStr))
+    if (!uploaded) {
+      fail('Could not locate uploaded backup in backup list')
+    }
+    backupKey = uploaded.key
+    success(`Found backup: ${backupKey}`)
+  }
+
+  step('Restoring from backup')
+  try {
+    await pb.backups.restore(backupKey)
+    success('Restore initiated')
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      (err.message.includes('abort') ||
+        err.message.includes('ECONNREFUSED') ||
+        err.message.includes('ECONNRESET') ||
+        err.message.includes('fetch failed'))
+    ) {
+      success('Restore initiated (connection closed by server restart)')
+    } else {
+      throw err
+    }
+  }
+
+  step('Waiting for PocketBase to restart')
   await waitForPocketBase(pbUrl)
 
-  step('Cleaning up backup from prod storage')
+  step('Verifying restore')
   const pb2 = new PocketBase(pbUrl)
-  try {
-    await authenticate(pb2)
-    await pb2.send(`/api/backups/${pbBackupKey}`, { method: 'DELETE' })
-    success('Backup deleted from prod storage')
-  } catch (err) {
-    warn(
-      `Could not delete backup from prod storage: ${err instanceof Error ? err.message : String(err)}`
+  await authenticate(pb2)
+  const postRestoreCounts = await getRecordCounts(pb2)
+  info(`After restore: ${formatCounts(postRestoreCounts)}`)
+
+  let restored = false
+  for (const collection of STATS_COLLECTIONS) {
+    if (
+      backupStats &&
+      backupStats[collection] >= 0 &&
+      postRestoreCounts[collection] >= 0
+    ) {
+      if (postRestoreCounts[collection] === backupStats[collection]) {
+        restored = true
+      } else if (
+        postRestoreCounts[collection] === preRestoreCounts[collection]
+      ) {
+        fail(
+          `Restore may not have taken effect: ${collection} count (${postRestoreCounts[collection]}) matches pre-restore, not backup (${backupStats[collection]})`
+        )
+      }
+    }
+  }
+
+  if (restored) {
+    success('Restore verified: record counts match backup')
+  } else {
+    fail(
+      'Could not verify restore — record counts could not be confirmed against backup'
     )
   }
-  pb2.authStore.clear()
 
   success('Restore complete!')
 }
