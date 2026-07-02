@@ -51,7 +51,7 @@
     "check": "bun tsc --noEmit && biome ci",
     "check:fix": "bun tsc --noEmit && biome check --write",
     "preversion": "bun run check && bun run test",
-    "version:bump": "test \"$(git rev-parse --git-dir)\" = \".git\" && bun pm version || { echo 'Error: cannot bump version in a git worktree' >&2; exit 1; }",
+    "version:bump": "bun run dev/scripts/version-bump.ts",
     "infra:provision": "bun run infra/scripts/provision.ts",
     "infra:deploy": "bun run env:prod bun run infra/scripts/deploy.ts",
     "infra:status": "bun run infra/scripts/status.ts",
