@@ -1,0 +1,20 @@
+{
+  // DigitalOcean droplet configuration
+  "dropletName": "ski-tripper",
+  "dropletSize": "s-1vcpu-1gb",
+  "dropletRegion": "lon1",
+  "dropletImage": "ubuntu-24-04-x64",
+  "swapSizeMb": 1024,
+
+  // Pinned software versions — update and re-provision to upgrade
+  "bunVersion": "1.3.14",
+  "pocketbaseVersion": "0.39.5",
+  "caddyVersion": "2.11.4",
+
+  // Server directory layout
+  "repoDir": "/home/ski-tripper/ski-tripper",
+  "installDir": "/opt/ski-tripper",
+
+  // Git repository
+  "repoUrl": "https://github.com/tcorbettclark/ski-tripper"
+}

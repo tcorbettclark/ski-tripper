@@ -2,26 +2,31 @@ import { existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { resolve } from 'node:path'
 import { $, configure, dispose } from '@xec-sh/core'
+import JSON5 from 'json5'
 import { fail, retrying, step, success } from './log'
 
 configure({ timeout: 600000 })
 
 export const PROJECT_ROOT = resolve(import.meta.dir, '../../..')
 
-export const DROPLET_NAME = 'ski-tripper'
-export const DROPLET_SIZE = 's-1vcpu-1gb'
-export const DROPLET_REGION = 'lon1'
-export const DROPLET_IMAGE = 'ubuntu-24-04-x64'
-export const SWAP_SIZE_MB = 1024
+const config = JSON5.parse(
+  readFileSync(resolve(PROJECT_ROOT, 'infra/config.jsonc'), 'utf-8')
+)
+
+export const DROPLET_NAME = config.dropletName
+export const DROPLET_SIZE = config.dropletSize
+export const DROPLET_REGION = config.dropletRegion
+export const DROPLET_IMAGE = config.dropletImage
+export const SWAP_SIZE_MB = config.swapSizeMb
 export const RESERVED_IP_REGION = DROPLET_REGION
 
-export const BUN_VERSION = '1.3.14'
-export const POCKETBASE_VERSION = '0.39.4'
-export const CADDY_VERSION = '2.11.4'
+export const BUN_VERSION = config.bunVersion
+export const POCKETBASE_VERSION = config.pocketbaseVersion
+export const CADDY_VERSION = config.caddyVersion
 
-export const REPO_DIR = '/home/ski-tripper/ski-tripper'
-export const INSTALL_DIR = '/opt/ski-tripper'
-export const REPO_URL = 'https://github.com/tcorbettclark/ski-tripper'
+export const REPO_DIR = config.repoDir
+export const INSTALL_DIR = config.installDir
+export const REPO_URL = config.repoUrl
 
 export { $, configure, dispose }
 
