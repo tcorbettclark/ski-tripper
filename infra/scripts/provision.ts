@@ -18,8 +18,10 @@ import {
   REPO_DIR,
   REPO_URL,
   requireDoctl,
+  retryOnFailure,
   SWAP_SIZE_MB,
   scanHostKey,
+  waitForApt,
   waitForSsh,
   withAptRetry,
   writeFingerprint,
@@ -203,7 +205,8 @@ EOF"`
   }
 
   step('Updating apt package index')
-  await withAptRetry(() => root`apt-get update -y`)
+  await waitForApt(root)
+  await retryOnFailure(() => root`apt-get update -y`, 6, 10000)
   success('Apt package index updated')
 
   const unzipCheck = await root`which unzip`.nothrow().text()

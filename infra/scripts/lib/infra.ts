@@ -158,6 +158,43 @@ const APT_LOCK_PATTERNS = [
   'Could not open lock file',
 ]
 
+export async function waitForApt(root: SSHExecutionContext): Promise<void> {
+  step('Waiting for background apt processes to finish')
+  for (let i = 0; i < 60; i++) {
+    const result =
+      await root`bash -c "pgrep -f '(apt|dpkg|unattended-upgrade)' || true"`.text()
+    if (!result.trim()) {
+      success('No background apt processes running')
+      return
+    }
+    if (i === 0) {
+      info('  Background apt processes detected, waiting...')
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5000))
+  }
+  fail('Timed out waiting for background apt processes to finish')
+}
+
+export async function retryOnFailure<T>(
+  run: () => Promise<T>,
+  maxAttempts = 3,
+  delayMs = 5000
+): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await run()
+    } catch (err: unknown) {
+      if (attempt >= maxAttempts - 1) {
+        throw err
+      }
+      if (attempt === 0) {
+        retrying('Command failed, retrying...')
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+  }
+}
+
 export async function withAptRetry<T>(
   run: () => Promise<T>,
   maxAttempts = 60,
